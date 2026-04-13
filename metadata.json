@@ -1,0 +1,8 @@
+{
+  "name": "TuitionHub",
+  "description": "A comprehensive Tuition Management Application for teachers and BCA students featuring QR attendance, fee management, and study materials.",
+  "requestFramePermissions": [
+    "camera",
+    "geolocation"
+  ]
+}

@@ -1,0 +1,315 @@
+{
+  "entities": {
+    "users": {
+      "title": "User",
+      "description": "User profile for teachers and students",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "email": { "type": "string" },
+        "role": { "type": "string", "enum": ["teacher", "student", "admin"] },
+        "rollNumber": { "type": "string" },
+        "semester": { "type": "string" },
+        "courseId": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "profileComplete": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "email", "role"]
+    },
+    "courses": {
+      "title": "Course",
+      "description": "Tuition courses managed by the teacher",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "subjects": { "type": "array", "items": { "type": "string" } },
+        "classDays": { "type": "array", "items": { "type": "string" } },
+        "classTime": { "type": "string" },
+        "feeAmount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "subjects", "classDays", "classTime"]
+    },
+    "attendance": {
+      "title": "Attendance",
+      "description": "Attendance records for students",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "courseId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "time": { "type": "string" },
+        "status": { "type": "string", "enum": ["present", "absent"] },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        }
+      },
+      "required": ["studentId", "courseId", "date", "status"]
+    },
+    "fees": {
+      "title": "Fee",
+      "description": "Fee structure for students/courses",
+      "type": "object",
+      "properties": {
+        "studentUid": { "type": "string" },
+        "courseId": { "type": "string" },
+        "amount": { "type": "number" },
+        "dueDate": { "type": "string", "format": "date" },
+        "status": { "type": "string", "enum": ["paid", "pending", "overdue"] },
+        "semester": { "type": "string" }
+      },
+      "required": ["studentUid", "amount", "dueDate", "status"]
+    },
+    "payments": {
+      "title": "Payment",
+      "description": "Payment records and screenshots",
+      "type": "object",
+      "properties": {
+        "studentId": { "type": "string" },
+        "courseId": { "type": "string" },
+        "amount": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "paid", "overdue"] },
+        "dueDate": { "type": "string", "format": "date-time" },
+        "paidDate": { "type": "string", "format": "date-time" },
+        "screenshotUrl": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentId", "courseId", "amount", "status"]
+    },
+    "materials": {
+      "title": "Material",
+      "description": "Study materials (PDFs, links, images)",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "type": { "type": "string", "enum": ["pdf", "link", "image"] },
+        "url": { "type": "string" },
+        "semester": { "type": "string" },
+        "subject": { "type": "string" },
+        "chapter": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "type", "url", "semester", "subject"]
+    },
+    "announcements": {
+      "title": "Announcement",
+      "description": "Notices for students",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "type": { "type": "string", "enum": ["urgent", "normal", "holiday"] },
+        "targetBatch": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "content", "type"]
+    },
+    "schedules": {
+      "title": "Schedule",
+      "description": "Weekly class timings",
+      "type": "object",
+      "properties": {
+        "batchId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "day": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "subject": { "type": "string" },
+        "teacherName": { "type": "string" }
+      },
+      "required": ["batchId", "startTime", "endTime"]
+    },
+    "assignments": {
+      "title": "Assignment",
+      "description": "Assignments created by teachers",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "dueDate": { "type": "string", "format": "date" },
+        "batchId": { "type": "string" },
+        "subject": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "dueDate", "batchId", "subject"]
+    },
+    "submissions": {
+      "title": "Submission",
+      "description": "Student submissions for assignments",
+      "type": "object",
+      "properties": {
+        "assignmentId": { "type": "string" },
+        "studentUid": { "type": "string" },
+        "submissionUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["submitted", "reviewed", "needs-revision"] },
+        "feedback": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["assignmentId", "studentUid", "submissionUrl", "status"]
+    },
+    "quizzes": {
+      "title": "Quiz",
+      "description": "Quizzes created by teachers",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "batchId": { "type": "string" },
+        "subject": { "type": "string" },
+        "timeLimit": { "type": "number", "description": "Time limit in minutes" },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "question": { "type": "string" },
+              "options": { "type": "array", "items": { "type": "string" } },
+              "correctAnswerIndex": { "type": "number" }
+            }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "batchId", "subject", "questions"]
+    },
+    "quiz_results": {
+      "title": "Quiz Result",
+      "description": "Student performance in a quiz",
+      "type": "object",
+      "properties": {
+        "quizId": { "type": "string" },
+        "studentUid": { "type": "string" },
+        "score": { "type": "number" },
+        "totalQuestions": { "type": "number" },
+        "answers": { "type": "array", "items": { "type": "number" } },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["quizId", "studentUid", "score", "totalQuestions"]
+    },
+    "doubts": {
+      "title": "Doubt",
+      "description": "Questions posted by students",
+      "type": "object",
+      "properties": {
+        "studentUid": { "type": "string" },
+        "studentName": { "type": "string" },
+        "batchId": { "type": "string" },
+        "subject": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "status": { "type": "string", "enum": ["open", "resolved"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["studentUid", "studentName", "batchId", "title", "content", "status"]
+    },
+    "replies": {
+      "title": "Reply",
+      "description": "Replies to doubts",
+      "type": "object",
+      "properties": {
+        "doubtId": { "type": "string" },
+        "userUid": { "type": "string" },
+        "userName": { "type": "string" },
+        "userRole": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["doubtId", "userUid", "userName", "userRole", "content"]
+    },
+    "sessions": {
+      "title": "Session",
+      "description": "Individual class sessions held",
+      "type": "object",
+      "properties": {
+        "batchId": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "subject": { "type": "string" },
+        "teacherUid": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["batchId", "date", "subject"]
+    },
+    "config": {
+      "title": "Configuration",
+      "description": "App-wide configuration settings",
+      "type": "object",
+      "properties": {
+        "lat": { "type": "number" },
+        "lng": { "type": "number" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "users",
+      "description": "User profiles"
+    },
+    "/courses/{courseId}": {
+      "schema": "courses",
+      "description": "Tuition courses"
+    },
+    "/attendance/{attendanceId}": {
+      "schema": "attendance",
+      "description": "Attendance records"
+    },
+    "/fees/{feeId}": {
+      "schema": "fees",
+      "description": "Fee records"
+    },
+    "/payments/{paymentId}": {
+      "schema": "payments",
+      "description": "Payment transactions"
+    },
+    "/materials/{materialId}": {
+      "schema": "materials",
+      "description": "Study materials"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "announcements",
+      "description": "Class notices and updates"
+    },
+    "/schedules/{scheduleId}": {
+      "schema": "schedules",
+      "description": "Weekly class timings"
+    },
+    "/assignments/{assignmentId}": {
+      "schema": "assignments",
+      "description": "Class assignments"
+    },
+    "/submissions/{submissionId}": {
+      "schema": "submissions",
+      "description": "Student assignment submissions"
+    },
+    "/quizzes/{quizId}": {
+      "schema": "quizzes",
+      "description": "Class quizzes and MCQs"
+    },
+    "/quiz_results/{resultId}": {
+      "schema": "quiz_results",
+      "description": "Student quiz performance records"
+    },
+    "/doubts/{doubtId}": {
+      "schema": "doubts",
+      "description": "Student questions and doubts"
+    },
+    "/replies/{replyId}": {
+      "schema": "replies",
+      "description": "Replies to student doubts"
+    },
+    "/sessions/{sessionId}": {
+      "schema": "sessions",
+      "description": "Individual class sessions"
+    },
+    "/config/{configId}": {
+      "schema": "config",
+      "description": "App configuration settings"
+    }
+  }
+}
