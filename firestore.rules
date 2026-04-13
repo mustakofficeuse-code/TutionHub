@@ -39,7 +39,7 @@ service cloud.firestore {
 
     // Blacklist
     match /blacklist/{email} {
-      allow read: if isAuthenticated();
+      allow read: if true;
       allow write: if isAdmin();
     }
 
