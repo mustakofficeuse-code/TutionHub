@@ -113,9 +113,11 @@ export default function FeeManagement() {
 
   const fetchData = async () => {
     try {
-      const studentQuery = query(collection(db, 'users'), where('role', '==', 'student'));
-      const studentSnap = await getDocs(studentQuery);
-      setStudents(studentSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      // Instead of an exact where() query which might miss capitalization differences, fetch all users and filter
+      const userSnap = await getDocs(collection(db, 'users'));
+      const allUsers = userSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
+      const studentUsers = allUsers.filter(u => String(u.role).toLowerCase() === 'student' || u.studentId);
+      setStudents(studentUsers);
 
       const courseSnap = await getDocs(collection(db, 'courses'));
       setCourses(courseSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -475,13 +477,30 @@ export default function FeeManagement() {
                   <option value="">
                     {!modalDepartment || !semester ? 'Select Dept & Sem first' : 'Choose Student'}
                   </option>
-                  {students
-                    .filter(s => {
-                      // Robustly normalize courseName to handle legacy "B.Tech", "B.Sc", " BTECH " etc.
-                      const rawDept = s.courseName?.toUpperCase().replace(/[\.\s]/g, '') || s.department?.toUpperCase().replace(/[\.\s]/g, '') || '';
-                      return rawDept === modalDepartment && s.semester?.toString() === semester;
-                    })
-                    .map(s => <option key={s.id} value={s.uid}>{s.name} ({s.studentId || 'No ID'})</option>)}
+                  
+                  {/* Matching Students */}
+                  <optgroup label={`Matches: ${modalDepartment} Sem ${semester}`}>
+                    {students
+                      .filter(s => {
+                        const cleanStr = (str) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
+                        const cleanNum = (str) => String(str || '').replace(/\D/g, '');
+                        const rawDept = cleanStr(s.courseId) || cleanStr(s.courseName) || cleanStr(s.department) || '';
+                        return rawDept === cleanStr(modalDepartment) && cleanNum(s.semester) === cleanNum(semester);
+                      })
+                      .map(s => <option key={s.id} value={s.uid || s.id}>{s.name} ({s.studentId || 'No ID'})</option>)}
+                  </optgroup>
+
+                  {/* Other Students */}
+                  <optgroup label="Other Students">
+                    {students
+                      .filter(s => {
+                        const cleanStr = (str) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
+                        const cleanNum = (str) => String(str || '').replace(/\D/g, '');
+                        const rawDept = cleanStr(s.courseId) || cleanStr(s.courseName) || cleanStr(s.department) || '';
+                        return !(rawDept === cleanStr(modalDepartment) && cleanNum(s.semester) === cleanNum(semester));
+                      })
+                      .map(s => <option key={s.id} value={s.uid || s.id}>{s.name} ({s.courseName || s.courseId || s.department || 'No Dept'} Sem {s.semester || '?'})</option>)}
+                  </optgroup>
                 </select>
               </div>
 
