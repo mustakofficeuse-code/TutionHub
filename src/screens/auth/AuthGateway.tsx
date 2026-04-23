@@ -20,6 +20,7 @@ export default function AuthGateway() {
   const [studentId, setStudentId] = useState('');
   const [studentPassword, setStudentPassword] = useState('');
   const [generatedId, setGeneratedId] = useState('');
+  const [isExistingStudent, setIsExistingStudent] = useState(false);
   
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,6 +29,9 @@ export default function AuthGateway() {
   const { refreshProfile } = useAuth();
 
   useEffect(() => {
+    if (localStorage.getItem('isExistingStudent') === 'true') {
+      setIsExistingStudent(true);
+    }
     checkSetup();
   }, []);
 
@@ -158,10 +162,35 @@ export default function AuthGateway() {
         } catch (err: any) {
           lastError = err;
           // If the error is our custom blacklist error, throw it immediately
-          if (err.message.includes('revoked')) {
+          if (err.message && err.message.includes('revoked')) {
             throw err;
           }
-          // Otherwise, loop to try the next email format
+          
+          // Legacy Auto-Migration: If it's auth/invalid-credential or user-not-found, 
+          // and they are using the old Name-based login format AND we are connected to the new Firebase project,
+          // instantly create their account behind the scenes so old students aren't locked out of the new project.
+          if ((err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found') && !cleanId.startsWith('th')) {
+             try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, studentPassword);
+                const user = userCredential.user;
+                await setDoc(doc(db, 'users', user.uid), {
+                  uid: user.uid,
+                  studentId: cleanId,
+                  name: studentId, // original typed text
+                  email: email,
+                  role: 'student',
+                  semester: '1', // default fallback
+                  courseName: 'Legacy Student',
+                  courseId: 'legacy',
+                  createdAt: new Date().toISOString(),
+                  profileComplete: true
+                });
+                loginSuccess = true;
+                break;
+             } catch (createErr) {
+               // ignore and let it loop
+             }
+          }
         }
       }
 
@@ -169,6 +198,7 @@ export default function AuthGateway() {
         throw lastError || new Error('Invalid Student ID or Password.');
       }
 
+      localStorage.setItem('isExistingStudent', 'true');
       await refreshProfile();
       navigate('/');
     } catch (err: any) {
@@ -220,6 +250,7 @@ export default function AuthGateway() {
         type: 'enrollment'
       });
 
+      localStorage.setItem('isExistingStudent', 'true');
       setGeneratedId(uniqueId);
       // We don't navigate immediately, we let them see their ID first.
     } catch (err: any) {
@@ -382,22 +413,24 @@ export default function AuthGateway() {
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Login'}
               </button>
-              <div className="flex justify-between mt-4">
-                <button
-                  type="button"
-                  onClick={() => setView('student-enroll')}
-                  className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
-                >
-                  New Student? Enroll Here
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setView('teacher-login')}
-                  className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
-                >
-                  Teacher Login
-                </button>
-              </div>
+              {!isExistingStudent && (
+                <div className="flex justify-between mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setView('student-enroll')}
+                    className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
+                  >
+                    New Student? Enroll Here
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setView('teacher-login')}
+                    className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
+                  >
+                    Teacher Login
+                  </button>
+                </div>
+              )}
             </form>
           </>
         )}
@@ -451,7 +484,9 @@ export default function AuthGateway() {
                       onChange={(e) => setDepartment(e.target.value)}
                     >
                       <option value="BCA">BCA</option>
-                      <option value="BSC">BSC</option>
+                      <option value="MCA">MCA</option>
+                      <option value="B.Tech">B.Tech</option>
+                      <option value="B.Sc">B.Sc</option>
                     </select>
                   </div>
                 </div>

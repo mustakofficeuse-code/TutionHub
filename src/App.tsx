@@ -19,6 +19,7 @@ import DoubtSection from './screens/shared/DoubtSection';
 import StudentAnalytics from './screens/student/Analytics';
 import TeacherAnalytics from './screens/teacher/Analytics';
 import AdminDashboard from './screens/admin/AdminDashboard';
+import AddStudent from './screens/admin/AddStudent';
 import Profile from './screens/shared/Profile';
 import { Loader2 } from 'lucide-react';
 
@@ -53,6 +54,7 @@ function AppRoutes() {
         } 
       />
       <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin/students/add" element={<AddStudent />} />
       <Route path="/attendance/scan" element={<AttendanceScanner />} />
       <Route path="/attendance/generate" element={<AttendanceGenerator />} />
       <Route path="/fees/manage" element={<FeeManagement />} />

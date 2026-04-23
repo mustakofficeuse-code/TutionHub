@@ -297,14 +297,16 @@ export default function Profile() {
 
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                        <CalendarIcon className="w-4 h-4 text-slate-400" /> Course
+                        <CalendarIcon className="w-4 h-4 text-slate-400" /> Department
                       </label>
                       <input 
                         type="text" 
-                        disabled
-                        className="w-full px-4 py-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-500 dark:text-slate-400 dark:text-slate-600 cursor-not-allowed"
-                        value={profile?.courseName || 'Not Assigned'}
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        placeholder="e.g. BCA, MCA, B.Tech"
+                        value={courseId}
+                        onChange={(e) => setCourseId(e.target.value.toLowerCase())}
                       />
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500">Update your Department (e.g. "bca") if it says "legacy"</p>
                     </div>
                   </>
                 )}

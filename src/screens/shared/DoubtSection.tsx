@@ -15,7 +15,12 @@ import {
   Send,
   MoreVertical,
   Trash2,
-  MessageCircle
+  MessageCircle,
+  Paperclip,
+  File,
+  FileText,
+  Image as ImageIcon,
+  X as XIcon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -30,23 +35,76 @@ export default function DoubtSection() {
   const [submitting, setSubmitting] = useState(false);
   const [selectedDoubt, setSelectedDoubt] = useState<any>(null);
   const [replyText, setReplyText] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [replyFile, setReplyFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState('');
+
+  const [viewMaterial, setViewMaterial] = useState<any>(null);
+
+  const uploadFile = async (file: File) => {
+    // 10MB Limit for Cloudinary Free Tier
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error(`File size too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum is 10MB. Please use a smaller file or compress it.`);
+    }
+
+    return new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const base64 = reader.result as string;
+          const fileName = `doubts/${Date.now()}_${file.name}`;
+          const response = await fetch('/api/upload-capture', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              base64,
+              fileName,
+              contentType: file.type
+            })
+          });
+
+          if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Upload failed');
+          }
+
+          const { url } = await response.json();
+          resolve(url);
+        } catch (err) {
+          reject(err);
+        }
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
 
   // Form state
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [subject, setSubject] = useState('');
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
 
   useEffect(() => {
     if (!profile) return;
 
-    // Fetch doubts for the student's course or all doubts for teacher
+    // Fetch doubts: Teachers see all, students see their own + public doubts for their department
     const doubtsRef = collection(db, 'doubts');
     const q = profile.role === 'teacher' 
       ? query(doubtsRef, orderBy('createdAt', 'desc'))
-      : query(doubtsRef, where('courseId', '==', profile.courseId || ''), orderBy('createdAt', 'desc'));
+      : query(doubtsRef, where('department', '==', profile.courseId || ''), orderBy('createdAt', 'desc'));
 
     const unsubscribeDoubts = onSnapshot(q, (snapshot) => {
-      setDoubts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      let fetchedDoubts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // Client-side filtering for students to respect visibility
+      if (profile.role === 'student') {
+        fetchedDoubts = fetchedDoubts.filter((d: any) => 
+          d.studentId === profile.uid || d.visibility === 'public'
+        );
+      }
+      
+      setDoubts(fetchedDoubts);
       setLoading(false);
     });
 
@@ -65,14 +123,25 @@ export default function DoubtSection() {
     if (!profile) return;
 
     setSubmitting(true);
+    setUploadProgress(selectedFile ? 'Uploading file...' : '');
     try {
+      let fileUrl = '';
+      if (selectedFile) {
+        fileUrl = await uploadFile(selectedFile);
+      }
+
       await addDoc(collection(db, 'doubts'), {
         studentId: profile.uid,
         studentName: profile.name,
-        courseId: profile.courseId,
+        department: profile.courseId || 'unknown',
+        semester: profile.semester || 'unknown',
         subject,
         title,
         content,
+        visibility,
+        attachmentUrl: fileUrl,
+        attachmentName: selectedFile?.name || '',
+        attachmentType: selectedFile?.type || '',
         status: 'open',
         createdAt: new Date().toISOString()
       });
@@ -80,29 +149,46 @@ export default function DoubtSection() {
       setTitle('');
       setContent('');
       setSubject('');
-    } catch (error) {
+      setVisibility('public');
+      setSelectedFile(null);
+    } catch (error: any) {
       console.error("Error adding doubt:", error);
+      alert(error.message || "Failed to add doubt");
     } finally {
       setSubmitting(false);
+      setUploadProgress('');
     }
   };
 
   const handleAddReply = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!replyText || !selectedDoubt || !profile) return;
+    if ((!replyText && !replyFile) || !selectedDoubt || !profile) return;
 
+    setSubmitting(true);
     try {
+      let fileUrl = '';
+      if (replyFile) {
+        fileUrl = await uploadFile(replyFile);
+      }
+
       await addDoc(collection(db, 'replies'), {
         doubtId: selectedDoubt.id,
         userUid: profile.uid,
         userName: profile.name,
         userRole: profile.role,
         content: replyText,
+        attachmentUrl: fileUrl,
+        attachmentName: replyFile?.name || '',
+        attachmentType: replyFile?.type || '',
         createdAt: new Date().toISOString()
       });
       setReplyText('');
-    } catch (error) {
+      setReplyFile(null);
+    } catch (error: any) {
       console.error("Error adding reply:", error);
+      alert(error.message || "Failed to add reply");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -186,7 +272,12 @@ export default function DoubtSection() {
                       }`}>
                         {d.status}
                       </span>
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 dark:text-slate-400 uppercase">{d.subject}</span>
+                      {d.visibility === 'private' && (
+                        <span className="px-2 py-0.5 ml-2 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400">
+                          Private
+                        </span>
+                      )}
+                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-auto">{d.subject} • Sem {d.semester || 'N/A'}</span>
                     </div>
                     <h3 className="font-bold text-slate-900 dark:text-white text-sm mb-1 line-clamp-1">{d.title}</h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">{d.content}</p>
@@ -195,7 +286,9 @@ export default function DoubtSection() {
                         <div className="w-5 h-5 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
                           <User className="w-3 h-3 text-slate-400 dark:text-slate-500 dark:text-slate-400" />
                         </div>
-                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">{d.studentName}</span>
+                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">
+                          {d.studentName} {profile?.role === 'teacher' ? `(${d.department?.toUpperCase()})` : ''}
+                        </span>
                       </div>
                       <span className="text-[10px] text-slate-400 dark:text-slate-500 dark:text-slate-400">{new Date(d.createdAt).toLocaleDateString()}</span>
                     </div>
@@ -246,6 +339,33 @@ export default function DoubtSection() {
                     </div>
                   </div>
                   <p className="text-slate-600 dark:text-slate-300 text-sm whitespace-pre-wrap">{selectedDoubt.content}</p>
+                  
+                  {selectedDoubt.attachmentUrl && (
+                    <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 inline-block">
+                      {selectedDoubt.attachmentType.startsWith('image/') ? (
+                        <div className="space-y-2">
+                          <img 
+                            src={selectedDoubt.attachmentUrl} 
+                            alt="Attachment" 
+                            className="max-w-full h-auto rounded-xl max-h-64 object-contain shadow-sm cursor-pointer"
+                            onClick={() => setViewMaterial({ url: selectedDoubt.attachmentUrl, title: selectedDoubt.attachmentName, type: 'image' })}
+                          />
+                          <p className="text-[10px] text-slate-400 font-medium truncate max-w-[200px]">
+                            {selectedDoubt.attachmentName}
+                          </p>
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => setViewMaterial({ url: selectedDoubt.attachmentUrl, title: selectedDoubt.attachmentName, type: 'pdf' })}
+                          className="flex items-center gap-3 text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          <FileText className="w-5 h-5" />
+                          <span className="text-sm font-medium">{selectedDoubt.attachmentName || 'View Attachment'}</span>
+                        </button>
+                      )}
+                    </div>
+                  )}
+
                   <div className="mt-4 flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">
                     <div className="flex items-center gap-2">
                       <div className="w-6 h-6 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
@@ -287,6 +407,26 @@ export default function DoubtSection() {
                               : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-tl-none shadow-sm'
                           }`}>
                             {r.content}
+                            {r.attachmentUrl && (
+                              <div className={`mt-2 ${r.userUid === profile?.uid ? 'border-white/20' : 'border-slate-100 dark:border-slate-700'} border-t pt-2`}>
+                                {r.attachmentType.startsWith('image/') ? (
+                                  <img 
+                                    src={r.attachmentUrl} 
+                                    alt="Reply Attachment" 
+                                    className="max-w-full h-auto rounded-lg max-h-48 object-contain cursor-pointer"
+                                    onClick={() => setViewMaterial({ url: r.attachmentUrl, title: r.attachmentName, type: 'image' })}
+                                  />
+                                ) : (
+                                  <button 
+                                    onClick={() => setViewMaterial({ url: r.attachmentUrl, title: r.attachmentName, type: 'pdf' })}
+                                    className={`flex items-center gap-2 text-xs hover:underline ${r.userUid === profile?.uid ? 'text-blue-100' : 'text-blue-600 dark:text-blue-400'}`}
+                                  >
+                                    <Paperclip className="w-4 h-4" />
+                                    <span className="truncate max-w-[150px]">{r.attachmentName || 'Attachment'}</span>
+                                  </button>
+                                )}
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -296,7 +436,29 @@ export default function DoubtSection() {
 
                 {/* Reply Input */}
                 <div className="p-4 border-t border-slate-50 dark:border-slate-800">
+                  {replyFile && (
+                    <div className="mb-3 flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 p-2 rounded-xl border border-blue-100 dark:border-blue-800">
+                      <div className="flex items-center gap-2 overflow-hidden text-blue-600 dark:text-blue-400">
+                        <Paperclip className="w-4 h-4 flex-shrink-0" />
+                        <span className="text-xs font-bold truncate">{replyFile.name}</span>
+                      </div>
+                      <button 
+                        onClick={() => setReplyFile(null)}
+                        className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-lg text-blue-600 dark:text-blue-400"
+                      >
+                        <XIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
                   <form onSubmit={handleAddReply} className="flex gap-2">
+                    <label className="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-all">
+                      <Paperclip className="w-5 h-5" />
+                      <input 
+                        type="file" 
+                        className="hidden" 
+                        onChange={(e) => setReplyFile(e.target.files?.[0] || null)}
+                      />
+                    </label>
                     <input 
                       type="text" 
                       placeholder="Type your reply..."
@@ -306,7 +468,7 @@ export default function DoubtSection() {
                     />
                     <button 
                       type="submit"
-                      disabled={!replyText}
+                      disabled={submitting || (!replyText && !replyFile)}
                       className="p-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all disabled:opacity-50 disabled:bg-slate-300 dark:disabled:bg-slate-700"
                     >
                       <Send className="w-5 h-5" />
@@ -328,6 +490,51 @@ export default function DoubtSection() {
           </div>
         </div>
       </div>
+
+      {/* Viewer Modal */}
+      {viewMaterial && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-slate-900 w-full max-w-5xl h-[90vh] rounded-3xl overflow-hidden flex flex-col relative">
+            <button 
+              onClick={() => setViewMaterial(null)}
+              className="absolute top-4 right-4 p-2 bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 rounded-full transition-all z-10"
+            >
+              <XIcon className="w-6 h-6 text-slate-700 dark:text-slate-300" />
+            </button>
+            
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white line-clamp-1">{viewMaterial.title || 'Attachment View'}</h2>
+            </div>
+
+            <div className="flex-1 bg-slate-100 dark:bg-slate-950 overflow-hidden flex items-center justify-center">
+              {viewMaterial.type === 'pdf' ? (
+                <iframe 
+                  src={viewMaterial.url} 
+                  className="w-full h-full border-none" 
+                  title="PDF Viewer"
+                />
+              ) : (
+                <img 
+                  src={viewMaterial.url} 
+                  alt="Full View" 
+                  className="max-w-full max-h-full object-contain"
+                />
+              )}
+            </div>
+            
+            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-right">
+              <a 
+                href={viewMaterial.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
+              >
+                Open in New Tab
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Doubt Modal */}
       <AnimatePresence>
@@ -374,6 +581,50 @@ export default function DoubtSection() {
                     onChange={(e) => setContent(e.target.value)}
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Who can see this?</label>
+                  <select 
+                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium"
+                    value={visibility}
+                    onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
+                  >
+                    <option value="public">Everyone (Students & Teacher can help)</option>
+                    <option value="private">Only Teacher (Private discussion)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Attachment (Optional)</label>
+                  <label className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl cursor-pointer hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all group">
+                    {selectedFile ? (
+                      <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400">
+                        {selectedFile.type.startsWith('image/') ? <ImageIcon className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
+                        <span className="text-sm font-bold truncate max-w-[200px]">{selectedFile.name}</span>
+                        <button 
+                          onClick={(e) => { e.preventDefault(); setSelectedFile(null); }}
+                          className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-lg"
+                        >
+                          <XIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <Paperclip className="w-6 h-6 text-slate-400 group-hover:text-blue-500 transition-colors" />
+                        <span className="text-sm font-medium text-slate-500 group-hover:text-blue-600 transition-colors">Attach Photo or Document</span>
+                      </>
+                    )}
+                    <input 
+                      type="file" 
+                      className="hidden" 
+                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                    />
+                  </label>
+                  <p className="text-[10px] text-slate-400 mt-2">Max size: 10MB (PDF, PNG, JPG, JPEG)</p>
+                </div>
+                {uploadProgress && (
+                  <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-xs font-bold animate-pulse">
+                    <Loader2 className="w-3 h-3 animate-spin" /> {uploadProgress}
+                  </div>
+                )}
                 <div className="flex gap-3 pt-6">
                   <button 
                     type="button"

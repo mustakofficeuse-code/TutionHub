@@ -4,7 +4,9 @@ import fs from 'fs';
 
 const config = JSON.parse(fs.readFileSync('./firebase-applet-config.json', 'utf8'));
 const app = initializeApp(config);
-const db = getFirestore(app, config.firestoreDatabaseId);
+const db = (config.firestoreDatabaseId && config.firestoreDatabaseId !== "(default)" && config.firestoreDatabaseId !== "")
+  ? getFirestore(app, config.firestoreDatabaseId)
+  : getFirestore(app);
 
 async function clearData() {
   console.log("Clearing old courses...");

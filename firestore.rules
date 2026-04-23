@@ -12,10 +12,12 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      return isAuthenticated() && 
-        (request.auth.token.email == "mustak.office.use@gmail.com" ||
-         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin']));
+      return isAuthenticated() && (
+        request.auth.token.email == "mustak.office.use@gmail.com" ||
+        request.auth.token.email == "teacher@tutionhub.com" ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin'])
+      );
     }
 
     function hasOnlyAllowedFields(fields) {
@@ -38,7 +40,7 @@ service cloud.firestore {
     }
 
     // Blacklist
-    match /blacklist/{email} {
+    match /blacklist/{docId} {
       allow read: if true;
       allow write: if isAdmin();
     }

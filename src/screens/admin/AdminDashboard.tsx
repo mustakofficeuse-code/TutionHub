@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, getDocs, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -16,6 +16,7 @@ import {
   Trash2,
   UserCheck,
   UserX,
+  UserPlus,
   Moon,
   Sun,
   LayoutDashboard
@@ -26,6 +27,7 @@ export default function AdminDashboard() {
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
+  const [blacklist, setBlacklist] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [userToDelete, setUserToDelete] = useState<any | null>(null);
@@ -33,7 +35,18 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchUsers();
+    fetchBlacklist();
   }, []);
+
+  const fetchBlacklist = async () => {
+    try {
+      const q = query(collection(db, 'blacklist'));
+      const querySnapshot = await getDocs(q);
+      setBlacklist(querySnapshot.docs.map(doc => doc.id));
+    } catch (error) {
+      console.error("Error fetching blacklist:", error);
+    }
+  };
 
   const fetchUsers = async () => {
     try {
@@ -72,10 +85,37 @@ export default function AdminDashboard() {
     }
   };
 
-  const filteredUsers = users.filter(u => 
-    u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    u.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const toggleBlock = async (email: string, currentlyBlocked: boolean) => {
+    if (!email) {
+      alert("Student email is missing.");
+      return;
+    }
+    try {
+      const blacklistRef = doc(db, 'blacklist', email);
+      if (currentlyBlocked) {
+        await deleteDoc(blacklistRef);
+      } else {
+        await setDoc(blacklistRef, {
+          blockedAt: new Date().toISOString(),
+          reason: 'Blocked by admin',
+          blockedUserEmail: email
+        });
+      }
+      await fetchBlacklist();
+    } catch (error: any) {
+      console.error("Error toggling block status:", error);
+      alert(`Failed to update block status: ${error.message || 'Missing or insufficient permissions.'}`);
+    }
+  };
+
+  const [filter, setFilter] = useState<'all' | 'blocked'>('all');
+
+  const filteredUsers = users.filter(u => {
+    const matchesSearch = u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                          u.email?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filter === 'all' || (filter === 'blocked' && blacklist.includes(u.email));
+    return matchesSearch && matchesFilter;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -148,15 +188,31 @@ export default function AdminDashboard() {
         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
           <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4">
             <h2 className="text-lg font-bold text-slate-900 dark:text-white">User Management</h2>
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <input 
-                type="text" 
-                placeholder="Search users..."
-                className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+            <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+              <button 
+                onClick={() => navigate('/admin/students/add')}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-lg shadow-indigo-100 dark:shadow-none"
+              >
+                <UserPlus className="w-4 h-4" /> Enroll Student
+              </button>
+              <select
+                className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white outline-none"
+                value={filter}
+                onChange={(e) => setFilter(e.target.value as 'all' | 'blocked')}
+              >
+                <option value="all">All Users</option>
+                <option value="blocked">Blocked Students</option>
+              </select>
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                <input 
+                  type="text" 
+                  placeholder="Search users..."
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
           </div>
 
@@ -212,7 +268,7 @@ export default function AdminDashboard() {
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-2 items-center">
                           <select 
                             className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 outline-none text-slate-600 dark:text-slate-400"
                             value={user.role}
@@ -222,9 +278,22 @@ export default function AdminDashboard() {
                             <option value="teacher">Teacher</option>
                             <option value="admin">Admin</option>
                           </select>
+                          {user.role === 'student' && (
+                            <button 
+                              onClick={() => toggleBlock(user.email, blacklist.includes(user.email))}
+                              className={`p-2 transition-colors rounded-lg ${
+                                blacklist.includes(user.email) 
+                                  ? 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20' 
+                                  : 'text-slate-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                              }`}
+                              title={blacklist.includes(user.email) ? "Unblock Student" : "Block Student"}
+                            >
+                              {blacklist.includes(user.email) ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                            </button>
+                          )}
                           <button 
                             onClick={() => setUserToDelete(user)}
-                            className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                            className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

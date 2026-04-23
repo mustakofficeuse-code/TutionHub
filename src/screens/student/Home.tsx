@@ -32,6 +32,8 @@ export default function StudentHome() {
 
   const [attendanceCount, setAttendanceCount] = useState(0);
   const [sessionCount, setSessionCount] = useState(0);
+  const [feeStructure, setFeeStructure] = useState<any>({});
+  const [studentFees, setStudentFees] = useState<any[]>([]);
   const [stats, setStats] = useState({
     attendance: '0%',
     feesStatus: 'No Data',
@@ -60,33 +62,22 @@ export default function StudentHome() {
       (error) => console.error("Error fetching sessions:", error)
     );
 
-    // 3. Fees Status
-    const unsubFees = onSnapshot(
-      query(collection(db, 'payments'), where('studentId', '==', user.uid), orderBy('timestamp', 'desc'), limit(1)),
-      (snapshot) => {
-        if (snapshot.empty) {
-          setStats(prev => ({ ...prev, feesStatus: 'No Data' }));
-        } else {
-          const latest = snapshot.docs[0].data();
-          setStats(prev => ({ ...prev, feesStatus: latest.status.charAt(0).toUpperCase() + latest.status.slice(1) }));
-        }
-      },
-      (error) => console.error("Error fetching fees:", error)
-    );
-
-    // 4. Fee Structure & Payable Fee
-    const unsubFeeStructure = onSnapshot(
+    // 3. Fee Structure Listener
+    const unsubStructure = onSnapshot(
       doc(db, 'config', 'feeStructure'),
       (snapshot) => {
-        if (snapshot.exists()) {
-          const structure = snapshot.data();
-          const dept = profile.courseName || 'BCA';
-          const sem = profile.semester || '1';
-          const fee = structure[dept]?.[sem] || 0;
-          setStats(prev => ({ ...prev, payableFee: `₹${fee.toLocaleString()}` }));
-        }
+        if (snapshot.exists()) setFeeStructure(snapshot.data());
       },
       (error) => console.error("Error fetching fee structure:", error)
+    );
+
+    // 4. Student Fees Listener
+    const unsubFees = onSnapshot(
+      query(collection(db, 'fees'), where('studentId', '==', user.uid)),
+      (snapshot) => {
+        setStudentFees(snapshot.docs.map(d => d.data()));
+      },
+      (error) => console.error("Error fetching fees:", error)
     );
 
     // 5. Upcoming Classes
@@ -106,19 +97,46 @@ export default function StudentHome() {
     return () => {
       unsubAtt();
       unsubSess();
+      unsubStructure();
       unsubFees();
-      unsubFeeStructure();
       unsubSchedule();
     };
   }, [user?.uid, profile?.courseId, profile?.courseName, profile?.semester]);
 
   useEffect(() => {
     const attPercentage = sessionCount > 0 ? Math.round((attendanceCount / sessionCount) * 100) : 0;
+    
+    // Calculate Fee Stats
+    // Ensure department name matches the structure keys (BCA, BSC, BTECH, MCA)
+    const rawDept = profile?.courseName || 'BCA';
+    const dept = rawDept.toUpperCase().includes('TECH') ? 'BTECH' : rawDept.toUpperCase();
+    const sem = profile?.semester || '1';
+    const structFee = feeStructure[dept]?.[sem] || 0;
+    
+    const pendingFees = studentFees.filter(f => f.status !== 'paid');
+    const totalPending = pendingFees.reduce((acc, f) => acc + (f.amount || 0), 0);
+    
+    // The user wants the structured 'Amount' to be displayed in 'Payable Fee'
+    // If there are specific unpaid bills, we show those. 
+    // Otherwise, we show the default structure fee for their semester.
+    const displayAmount = totalPending > 0 ? totalPending : structFee;
+    
+    let status = 'Not Set';
+    if (totalPending > 0) {
+      status = 'Pending';
+    } else if (studentFees.length > 0) {
+      status = 'Paid';
+    } else if (structFee > 0) {
+      status = 'Due';
+    }
+
     setStats(prev => ({
       ...prev,
-      attendance: `${attPercentage}%`
+      attendance: `${attPercentage}%`,
+      payableFee: `₹${displayAmount.toLocaleString()}`,
+      feesStatus: status
     }));
-  }, [attendanceCount, sessionCount]);
+  }, [attendanceCount, sessionCount, feeStructure, studentFees, profile?.courseName, profile?.semester]);
 
   const quickStats = [
     { label: 'Attendance', value: stats.attendance, icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50' },
@@ -158,6 +176,21 @@ export default function StudentHome() {
       </header>
 
       <main className="px-6 -mt-12 relative z-10 space-y-8">
+        {profile?.courseId === 'legacy' && (
+          <div className="bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200 p-4 rounded-3xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-12">
+            <div>
+              <p className="font-bold text-sm">Account Migration</p>
+              <p className="text-xs mt-1">Please update your Department (e.g. BCA) and Semester in your profile so you can access your study materials.</p>
+            </div>
+            <button 
+              onClick={() => navigate('/profile')} 
+              className="px-4 py-2 bg-yellow-500 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-yellow-600 transition-colors whitespace-nowrap"
+            >
+              Update Profile
+            </button>
+          </div>
+        )}
+
         {loading ? (
           <div className="bg-white dark:bg-slate-900 p-12 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center">
             <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
