@@ -166,24 +166,40 @@ export default function PaymentHistory() {
               </h2>
               {(() => {
                 let hasAnyDues = false;
-                const cards = semestersDue.map(sem => {
-                  const expectedAmount = feeStructure[dept]?.[sem] || 0;
-                  const semPayments = payments.filter(p => Number(p.semester) === sem);
-                  const paidAmount = semPayments
-                    .filter(p => p.status === 'confirmed')
-                    .reduce((sum, p) => sum + Number(p.amount), 0);
-                  const pendingAmount = semPayments
-                    .filter(p => p.status === 'pending')
-                    .reduce((sum, p) => sum + Number(p.amount), 0);
-                  const dueAmount = Math.max(0, expectedAmount - paidAmount);
+                
+                // Find the first semester with due fees
+                const firstDueSem = semestersDue.find(sem => {
+                    const expectedAmount = feeStructure[dept]?.[sem] || 0;
+                    const semPayments = payments.filter(p => Number(p.semester) === sem);
+                    const paidAmount = semPayments
+                      .filter(p => p.status === 'confirmed')
+                      .reduce((sum, p) => sum + Number(p.amount), 0);
+                    const dueAmount = Math.max(0, expectedAmount - paidAmount);
+                    return expectedAmount > 0 && dueAmount > 0;
+                });
 
-                  if (expectedAmount === 0 || dueAmount === 0) {
-                    return null; // Don't show fully paid or uninitialized semesters
-                  }
+                if (!firstDueSem) {
+                    return (
+                       <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 rounded-3xl shadow-lg text-center text-white">
+                          <CheckCircle className="w-16 h-16 text-white/80 mx-auto mb-4" />
+                          <h3 className="text-2xl font-bold mb-2">Fully Paid!</h3>
+                          <p className="text-green-50">You have no pending dues or uninitialized fees.</p>
+                       </div>
+                    );
+                }
 
-                  hasAnyDues = true;
+                const sem = firstDueSem;
+                const expectedAmount = feeStructure[dept]?.[sem] || 0;
+                const semPayments = payments.filter(p => Number(p.semester) === sem);
+                const paidAmount = semPayments
+                  .filter(p => p.status === 'confirmed')
+                  .reduce((sum, p) => sum + Number(p.amount), 0);
+                const pendingAmount = semPayments
+                  .filter(p => p.status === 'pending')
+                  .reduce((sum, p) => sum + Number(p.amount), 0);
+                const dueAmount = Math.max(0, expectedAmount - paidAmount);
 
-                  return (
+                return (
                     <div key={sem} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-6 mb-4">
                       <div className="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
                         <div>
@@ -225,20 +241,7 @@ export default function PaymentHistory() {
                         </button>
                       </div>
                     </div>
-                  );
-                });
-
-                if (!hasAnyDues) {
-                  return (
-                     <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 rounded-3xl shadow-lg text-center text-white">
-                        <CheckCircle className="w-16 h-16 text-white/80 mx-auto mb-4" />
-                        <h3 className="text-2xl font-bold mb-2">Fully Paid!</h3>
-                        <p className="text-green-50">You have no pending dues or uninitialized fees.</p>
-                     </div>
-                  );
-                }
-
-                return cards;
+                );
               })()}
             </div>
           </div>
