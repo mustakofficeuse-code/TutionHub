@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -82,16 +82,33 @@ export default function StudentAnalytics() {
       const assignRate = totalAssign > 0 ? Math.round((totalSub / totalAssign) * 100) : 0;
 
       // 4. Fees
+      const feeStructureRef = doc(db, 'config', 'feeStructure');
+      const feeStructureSnap = await getDoc(feeStructureRef);
+      const feeStructure = feeStructureSnap.exists() ? feeStructureSnap.data() : {};
+      
+      const cleanStr = (str: string) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
+      const dept = cleanStr(profile.courseId) || cleanStr(profile.courseName) || cleanStr(profile.department) || 'BCA';
+      const currentSem = Number(profile.semester) || 1;
+
+      let totalExpected = 0;
+      for (let s = 1; s <= currentSem; s++) {
+        totalExpected += feeStructure[dept]?.[s] || 0;
+      }
+
       const feeQuery = query(collection(db, 'payments'), where('studentId', '==', uid));
       const feeSnap = await getDocs(feeQuery);
       const fees = feeSnap.docs.map(d => d.data());
-      const pendingFees = fees.some(f => f.status !== 'paid');
+      const totalPaid = fees
+        .filter(f => f.status === 'confirmed')
+        .reduce((acc, f) => acc + Number(f.amount || 0), 0);
+
+      const isFullyPaid = totalExpected > 0 && totalPaid >= totalExpected;
 
       setStats({
         attendance: attPercent,
         quizAvg,
         assignmentRate: assignRate,
-        feeStatus: pendingFees ? 'Pending' : 'Paid'
+        feeStatus: isFullyPaid ? 'Paid' : 'Pending'
       });
     } catch (error) {
       console.error("Error fetching analytics:", error);

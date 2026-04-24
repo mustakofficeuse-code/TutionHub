@@ -166,9 +166,12 @@ export default function PaymentHistory() {
               </h2>
               {(() => {
                 let totalDue = 0;
+                const cleanDeptKey = (str: any) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
+                const currentDept = cleanDeptKey(profile?.courseId) || cleanDeptKey(profile?.courseName) || cleanDeptKey(profile?.department) || 'BCA';
+
                 // Calculate total outstanding due across all semesters
                 semestersDue.forEach(sem => {
-                    const expectedAmount = feeStructure[dept]?.[sem] || 0;
+                    const expectedAmount = feeStructure[currentDept]?.[sem] || 0;
                     const semPayments = payments.filter(p => Number(p.semester) === sem && p.status === 'confirmed');
                     const paidAmount = semPayments.reduce((sum, p) => sum + Number(p.amount), 0);
                     totalDue += Math.max(0, expectedAmount - paidAmount);
@@ -176,7 +179,7 @@ export default function PaymentHistory() {
 
                 // Find only the oldest semester with remaining due to show as a single "Pay Now" card
                 const overdueSemData = semestersDue.map(sem => {
-                    const expectedAmount = feeStructure[dept]?.[sem] || 0;
+                    const expectedAmount = feeStructure[currentDept]?.[sem] || 0;
                     const semPayments = payments.filter(p => Number(p.semester) === sem);
                     const paidAmount = semPayments
                       .filter(p => p.status === 'confirmed')
@@ -189,11 +192,11 @@ export default function PaymentHistory() {
                     if (expectedAmount === 0 || dueAmount === 0) return null;
 
                     return { sem, expectedAmount, paidAmount, pendingAmount, dueAmount };
-                }).filter(Boolean);
+                }).filter((item): item is NonNullable<typeof item> => item !== null);
 
                 const currentSelection = overdueSemData[0]; // ONLY show the oldest (first) one
 
-                if (!currentSelection) {
+                if (!currentSelection && totalDue <= 0) {
                     return (
                        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 rounded-3xl shadow-lg text-center text-white">
                           <CheckCircle className="w-16 h-16 text-white/80 mx-auto mb-4" />
@@ -202,8 +205,6 @@ export default function PaymentHistory() {
                        </div>
                     );
                 }
-
-                const { sem, expectedAmount, paidAmount, pendingAmount, dueAmount } = currentSelection;
 
                 return (
                     <div className="space-y-6">
@@ -216,47 +217,49 @@ export default function PaymentHistory() {
                             </div>
                         )}
                         
-                        <div key={sem} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-6">
-                            <div className="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
-                                <div>
-                                    <h3 className="font-bold text-slate-900 dark:text-white text-lg">Semester {sem} Tuition Fee</h3>
-                                    <p className="text-sm text-slate-500 dark:text-slate-400">Department: {dept}</p>
-                                </div>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${paidAmount > 0 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
-                                    {paidAmount > 0 ? 'Partly Paid' : 'Due'}
-                                </span>
-                            </div>
+                        {currentSelection && (
+                          <div key={currentSelection.sem} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-6">
+                              <div className="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
+                                  <div>
+                                      <h3 className="font-bold text-slate-900 dark:text-white text-lg">Semester {currentSelection.sem} Tuition Fee</h3>
+                                      <p className="text-sm text-slate-500 dark:text-slate-400">Department: {currentDept}</p>
+                                  </div>
+                                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${currentSelection.paidAmount > 0 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
+                                      {currentSelection.paidAmount > 0 ? 'Partly Paid' : 'Due'}
+                                  </span>
+                              </div>
 
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center">
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Expected Fee</p>
-                                    <p className="font-bold text-slate-900 dark:text-white">₹{expectedAmount.toLocaleString()}</p>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Paid Amount</p>
-                                    <p className="font-bold text-green-600">₹{paidAmount.toLocaleString()}</p>
-                                </div>
-                                {pendingAmount > 0 && (
-                                    <div className="flex justify-between items-center text-orange-500 bg-orange-50 dark:bg-orange-900/10 p-3 rounded-xl border border-orange-100 dark:border-orange-900/30">
-                                        <p className="text-sm font-bold uppercase tracking-wider">Processing</p>
-                                        <p className="font-bold">₹{pendingAmount.toLocaleString()}</p>
-                                    </div>
-                                )}
-                            </div>
+                              <div className="space-y-4">
+                                  <div className="flex justify-between items-center">
+                                      <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Expected Fee</p>
+                                      <p className="font-bold text-slate-900 dark:text-white">₹{currentSelection.expectedAmount.toLocaleString()}</p>
+                                  </div>
+                                  <div className="flex justify-between items-center">
+                                      <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Paid Amount</p>
+                                      <p className="font-bold text-green-600">₹{currentSelection.paidAmount.toLocaleString()}</p>
+                                  </div>
+                                  {currentSelection.pendingAmount > 0 && (
+                                      <div className="flex justify-between items-center text-orange-500 bg-orange-50 dark:bg-orange-900/10 p-3 rounded-xl border border-orange-100 dark:border-orange-900/30">
+                                          <p className="text-sm font-bold uppercase tracking-wider">Processing</p>
+                                          <p className="font-bold">₹{currentSelection.pendingAmount.toLocaleString()}</p>
+                                      </div>
+                                  )}
+                              </div>
 
-                            <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                                <div>
-                                    <p className="text-xs text-red-500 uppercase font-bold tracking-wider mb-1">Remaining Due (Sem {sem})</p>
-                                    <p className="text-3xl font-bold text-red-600">₹{dueAmount.toLocaleString()}</p>
-                                </div>
-                                <button 
-                                    onClick={() => setSelectedSemester(sem)}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
-                                >
-                                    <Upload className="w-5 h-5" /> Pay Now
-                                </button>
-                            </div>
-                        </div>
+                              <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                                  <div>
+                                      <p className="text-xs text-red-500 uppercase font-bold tracking-wider mb-1">Remaining Due (Sem {currentSelection.sem})</p>
+                                      <p className="text-3xl font-bold text-red-600">₹{currentSelection.dueAmount.toLocaleString()}</p>
+                                  </div>
+                                  <button 
+                                      onClick={() => setSelectedSemester(currentSelection.sem)}
+                                      className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
+                                  >
+                                      <Upload className="w-5 h-5" /> Pay Now
+                                  </button>
+                              </div>
+                          </div>
+                        )}
                     </div>
                 );
               })()

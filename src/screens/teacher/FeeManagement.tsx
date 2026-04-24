@@ -298,34 +298,37 @@ export default function FeeManagement() {
                       const dept = cleanStr(student.courseId) || cleanStr(student.courseName) || cleanStr(student.department);
                       const currentSem = Number(student.semester) || 1;
                       
-                      // For dashboard cleanliness, only show their current active semester calculation
-                      const expectedAmount = feeStructure[dept]?.[currentSem] || 0;
+                      // Calculate cumulative totals for accurate overview
+                      let totalExpected = 0;
+                      for (let s = 1; s <= currentSem; s++) {
+                        totalExpected += feeStructure[dept]?.[s] || 0;
+                      }
                       
-                      const semPayments = payments.filter(p => p.studentId === studentId && Number(p.semester) === currentSem);
-                      const paidAmount = semPayments
+                      const allStudentPayments = payments.filter(p => p.studentId === studentId && Number(p.semester) <= currentSem);
+                      const totalPaid = allStudentPayments
                          .filter(p => p.status === 'confirmed')
                          .reduce((sum, p) => sum + Number(p.amount), 0);
                       
-                      const pendingPayments = semPayments.filter(p => p.status === 'pending');
+                      const pendingPayments = allStudentPayments.filter(p => p.status === 'pending');
                          
-                      const amountDue = Math.max(0, expectedAmount - paidAmount);
+                      const amountDue = Math.max(0, totalExpected - totalPaid);
                       
                       let statusText = 'Due';
                       let statusColor = 'bg-orange-100 text-orange-700';
                       
-                      if (amountDue <= 0 && expectedAmount > 0) {
+                      if (totalExpected > 0 && amountDue <= 0) {
                         statusText = 'Full Paid';
                         statusColor = 'bg-green-100 text-green-700';
-                      } else if (paidAmount > 0) {
+                      } else if (totalPaid > 0) {
                         statusText = 'Partly Paid';
                         statusColor = 'bg-blue-100 text-blue-700';
-                      } else if (expectedAmount === 0) {
+                      } else if (totalExpected === 0) {
                         statusText = 'No Fee Set';
                         statusColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
                       }
 
-                      const lastPayment = semPayments.filter(p => p.status === 'confirmed').sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-                      const lastPaymentDate = lastPayment ? new Date(lastPayment.date).toLocaleDateString() : 'N/A';
+                      const lastPayment = allStudentPayments.filter(p => p.status === 'confirmed').sort((a,b) => new Date(b.date || b.timestamp).getTime() - new Date(a.date || a.timestamp).getTime())[0];
+                      const lastPaymentDate = lastPayment ? new Date(lastPayment.date || lastPayment.timestamp).toLocaleDateString() : 'N/A';
 
                       return (
                         <tr key={studentId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
@@ -355,17 +358,17 @@ export default function FeeManagement() {
                             </div>
                           </td>
                           <td className="p-4 align-middle">
-                            <span className="font-bold text-slate-900 dark:text-white">₹{expectedAmount.toLocaleString()}</span>
+                            <span className="font-bold text-slate-900 dark:text-white">₹{totalExpected.toLocaleString()}</span>
                           </td>
                           <td className="p-4 align-middle">
-                            <span className="font-bold text-green-600">₹{paidAmount.toLocaleString()}</span>
+                            <span className="font-bold text-green-600">₹{totalPaid.toLocaleString()}</span>
                           </td>
                           <td className="p-4 align-middle">
                             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{lastPaymentDate}</span>
                           </td>
                           <td className="p-4 align-middle text-right">
                              <button 
-                               onClick={() => setViewDetailsStudent({ ...student, expectedAmount, paidAmount, amountDue, semPayments })}
+                               onClick={() => setViewDetailsStudent({ ...student, expectedAmount: totalExpected, paidAmount: totalPaid, amountDue, semPayments: allStudentPayments })}
                                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-colors shadow-sm"
                              >
                                View Details
