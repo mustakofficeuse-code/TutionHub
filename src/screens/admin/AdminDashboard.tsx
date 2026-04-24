@@ -32,6 +32,8 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [userToDelete, setUserToDelete] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -82,6 +84,26 @@ export default function AdminDashboard() {
       alert("Failed to delete user");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleFactoryReset = async () => {
+    setIsResetting(true);
+    try {
+      const collectionsToWipe = ['users', 'blacklist', 'assignments', 'schedules', 'quizzes', 'materials', 'doubts', 'payments', 'attendance', 'notifications', 'config'];
+      for (const colName of collectionsToWipe) {
+        const querySnapshot = await getDocs(query(collection(db, colName)));
+        for (const document of querySnapshot.docs) {
+           await deleteDoc(doc(db, colName, document.id));
+        }
+      }
+      setShowResetConfirm(false);
+      window.location.href = '/'; // Redirect to start setup again
+    } catch (error) {
+      console.error("Error resetting database:", error);
+      alert("Failed to reset the database. See console for details.");
+    } finally {
+      setIsResetting(false);
     }
   };
 
@@ -173,14 +195,18 @@ export default function AdminDashboard() {
           </div>
           <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800">
             <div className="flex items-center gap-4 mb-2">
-              <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-600 dark:text-blue-400">
-                <LayoutDashboard className="w-6 h-6" />
+              <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-xl text-red-600 dark:text-red-400">
+                <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="font-bold text-slate-900 dark:text-white">Students</h3>
+              <h3 className="font-bold text-slate-900 dark:text-white">Danger Zone</h3>
             </div>
-            <p className="text-3xl font-black text-slate-900 dark:text-white">
-              {users.filter(u => u.role === 'student').length}
-            </p>
+            <p className="text-sm text-slate-500 mb-4">Reset the entire database for fresh testing.</p>
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              className="w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold transition-all shadow-lg shadow-red-100 dark:shadow-none"
+            >
+              Factory Reset Data
+            </button>
           </div>
         </div>
 
@@ -332,6 +358,37 @@ export default function AdminDashboard() {
                 className="flex-1 py-3 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 dark:shadow-none flex items-center justify-center gap-2"
               >
                 {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Delete User'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Factory Reset Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800">
+            <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+              <Trash2 className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white text-center mb-2">FACTORY RESET?</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-center mb-8">
+              This will irreversibly delete ALL users, teachers, payments, assignments, and config from Firebase. 
+              The application will return back to its "Teacher Setup" initial state.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowResetConfirm(false)}
+                className="flex-1 py-3 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleFactoryReset}
+                disabled={isResetting}
+                className="flex-1 py-3 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 dark:shadow-none flex items-center justify-center gap-2"
+              >
+                {isResetting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Yes, Delete Everything'}
               </button>
             </div>
           </div>
