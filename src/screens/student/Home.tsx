@@ -116,37 +116,27 @@ export default function StudentHome() {
     const dept = cleanStr(profile?.courseId) || cleanStr(profile?.courseName) || cleanStr(profile?.department) || 'BCA';
     const currentSem = Number(profile?.semester) || 1;
     
-    // Find the oldest unpaid semester to show that specific due amount
-    let nextDueAmount = 0;
-    let nextDueStatus = 'Paid';
-    let oldestDueFound = false;
-
-    for (let s = 1; s <= currentSem; s++) {
-      const expected = feeStructure[dept]?.[s] || 0;
-      const paid = studentFees
-        .filter(f => f.status === 'confirmed' && Number(f.semester) === s)
-        .reduce((acc, f) => acc + Number(f.amount || 0), 0);
-      
-      const due = Math.max(0, expected - paid);
-      
-      if (due > 0 && !oldestDueFound) {
-        nextDueAmount = due;
-        nextDueStatus = paid > 0 ? 'Partly Paid' : 'Due';
-        oldestDueFound = true;
-      }
-    }
+    // Calculate dues ONLY for the current semester
+    const expected = feeStructure[dept]?.[currentSem] || 0;
+    const paid = studentFees
+      .filter(f => f.status === 'confirmed' && Number(f.semester) === currentSem)
+      .reduce((acc, f) => acc + Number(f.amount || 0), 0);
     
-    if (!oldestDueFound) {
-      // If all are paid, maybe show 0
-      nextDueAmount = 0;
-      nextDueStatus = 'Paid';
+    const amountDue = Math.max(0, expected - paid);
+    let status = 'Due';
+    
+    if (expected > 0) {
+      if (amountDue === 0) status = 'Paid';
+      else if (paid > 0) status = 'Partly Paid';
+    } else {
+      status = 'No Fee Set';
     }
 
     setStats(prev => ({
       ...prev,
       attendance: `${attPercentage}%`,
-      payableFee: `₹${nextDueAmount.toLocaleString()}`,
-      feesStatus: nextDueStatus
+      payableFee: `₹${amountDue.toLocaleString()}`,
+      feesStatus: status
     }));
   }, [attendanceCount, sessionCount, feeStructure, studentFees, profile?.courseName, profile?.semester, profile?.courseId, profile?.department]);
 

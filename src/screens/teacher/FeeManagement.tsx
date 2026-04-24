@@ -273,8 +273,8 @@ export default function FeeManagement() {
                   <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
                     <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Student</th>
                     <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Due</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Paid</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Current Sem Due</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Current Sem Paid</th>
                     <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
                     <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Details</th>
                   </tr>
@@ -298,13 +298,10 @@ export default function FeeManagement() {
                       const dept = cleanStr(student.courseId) || cleanStr(student.courseName) || cleanStr(student.department);
                       const currentSem = Number(student.semester) || 1;
                       
-                      // Calculate cumulative totals for accurate overview
-                      let totalExpected = 0;
-                      for (let s = 1; s <= currentSem; s++) {
-                        totalExpected += feeStructure[dept]?.[s] || 0;
-                      }
+                      // Show totals ONLY for the student's current active semester
+                      const totalExpected = feeStructure[dept]?.[currentSem] || 0;
                       
-                      const allStudentPayments = payments.filter(p => p.studentId === studentId && Number(p.semester) <= currentSem);
+                      const allStudentPayments = payments.filter(p => p.studentId === studentId && Number(p.semester) === currentSem);
                       const totalPaid = allStudentPayments
                          .filter(p => p.status === 'confirmed')
                          .reduce((sum, p) => sum + Number(p.amount), 0);
@@ -608,15 +605,15 @@ export default function FeeManagement() {
               <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Financial Status (Semester {viewDetailsStudent.semester || 1})</h4>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
                 <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Total Fee</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Sem Fee</p>
                   <p className="text-xl font-bold text-slate-900 dark:text-white">₹{viewDetailsStudent.expectedAmount.toLocaleString()}</p>
                 </div>
                 <div className="bg-green-50 dark:bg-green-900/10 p-4 rounded-2xl border border-green-100 dark:border-green-900/30">
-                  <p className="text-xs text-green-600 dark:text-green-500 font-bold uppercase tracking-wider mb-1">Total Paid</p>
+                  <p className="text-xs text-green-600 dark:text-green-500 font-bold uppercase tracking-wider mb-1">Sem Paid</p>
                   <p className="text-xl font-bold text-green-700 dark:text-green-400">₹{viewDetailsStudent.paidAmount.toLocaleString()}</p>
                 </div>
                 <div className="bg-orange-50 dark:bg-orange-900/10 p-4 rounded-2xl border border-orange-100 dark:border-orange-900/30">
-                  <p className="text-xs text-orange-600 dark:text-orange-500 font-bold uppercase tracking-wider mb-1">Amount Left</p>
+                  <p className="text-xs text-orange-600 dark:text-orange-500 font-bold uppercase tracking-wider mb-1">Sem Left</p>
                   <p className="text-xl font-bold text-orange-700 dark:text-orange-400">₹{viewDetailsStudent.amountDue.toLocaleString()}</p>
                 </div>
               </div>

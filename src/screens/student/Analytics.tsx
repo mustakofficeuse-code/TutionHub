@@ -90,19 +90,20 @@ export default function StudentAnalytics() {
       const dept = cleanStr(profile.courseId) || cleanStr(profile.courseName) || cleanStr(profile.department) || 'BCA';
       const currentSem = Number(profile.semester) || 1;
 
-      let totalExpected = 0;
-      for (let s = 1; s <= currentSem; s++) {
-        totalExpected += feeStructure[dept]?.[s] || 0;
-      }
+      // Logic changed to focus ONLY on current semester
+      const expectedAmount = feeStructure[dept]?.[currentSem] || 0;
 
-      const feeQuery = query(collection(db, 'payments'), where('studentId', '==', uid));
+      const feeQuery = query(collection(db, 'payments'), 
+        where('studentId', 'in', [profile.uid, profile.studentId, profile.id].filter(Boolean)),
+        where('semester', '==', currentSem)
+      );
       const feeSnap = await getDocs(feeQuery);
       const fees = feeSnap.docs.map(d => d.data());
       const totalPaid = fees
         .filter(f => f.status === 'confirmed')
         .reduce((acc, f) => acc + Number(f.amount || 0), 0);
 
-      const isFullyPaid = totalExpected > 0 && totalPaid >= totalExpected;
+      const isFullyPaid = expectedAmount > 0 && totalPaid >= expectedAmount;
 
       setStats({
         attendance: attPercent,
