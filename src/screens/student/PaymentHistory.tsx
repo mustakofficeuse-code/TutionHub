@@ -42,9 +42,14 @@ export default function PaymentHistory() {
       }
       
       // Fetch all payments made by this student
-      const q = query(collection(db, 'payments'), where('studentId', '==', profile?.uid));
-      const querySnapshot = await getDocs(q);
-      setPayments(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
+      const studentIds = [profile?.uid, profile?.studentId, profile?.id].filter(Boolean);
+      let loadedPayments: any[] = [];
+      if (studentIds.length > 0) {
+        const q = query(collection(db, 'payments'), where('studentId', 'in', studentIds));
+        const querySnapshot = await getDocs(q);
+        loadedPayments = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      }
+      setPayments(loadedPayments);
     } catch (error) {
       console.error("Error fetching fee details:", error);
     } finally {
@@ -157,82 +162,83 @@ export default function PaymentHistory() {
             {/* Right Side: Pay Now Dashboard */}
             <div className="space-y-6">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <CreditCard className="w-6 h-6 text-slate-400" /> Current Dashboard
+                <CreditCard className="w-6 h-6 text-slate-400" /> Pay Now Dashboard
               </h2>
               {(() => {
-                const expectedAmount = feeStructure[dept]?.[currentSem] || 0;
-                const semPayments = payments.filter(p => Number(p.semester) === currentSem);
-                const paidAmount = semPayments
-                  .filter(p => p.status === 'confirmed')
-                  .reduce((sum, p) => sum + Number(p.amount), 0);
-                const pendingAmount = semPayments
-                  .filter(p => p.status === 'pending')
-                  .reduce((sum, p) => sum + Number(p.amount), 0);
-                const dueAmount = Math.max(0, expectedAmount - paidAmount);
+                let hasAnyDues = false;
+                const cards = semestersDue.map(sem => {
+                  const expectedAmount = feeStructure[dept]?.[sem] || 0;
+                  const semPayments = payments.filter(p => Number(p.semester) === sem);
+                  const paidAmount = semPayments
+                    .filter(p => p.status === 'confirmed')
+                    .reduce((sum, p) => sum + Number(p.amount), 0);
+                  const pendingAmount = semPayments
+                    .filter(p => p.status === 'pending')
+                    .reduce((sum, p) => sum + Number(p.amount), 0);
+                  const dueAmount = Math.max(0, expectedAmount - paidAmount);
 
-                if (expectedAmount === 0) {
+                  if (expectedAmount === 0 || dueAmount === 0) {
+                    return null; // Don't show fully paid or uninitialized semesters
+                  }
+
+                  hasAnyDues = true;
+
                   return (
-                    <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl border border-slate-100 dark:border-slate-800 text-center">
-                      <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                      <p className="text-slate-500 dark:text-slate-400 font-semibold mb-1">Fee Not Initialized</p>
-                      <p className="text-sm text-slate-400">The teacher has not set the fee for semester {currentSem} yet.</p>
+                    <div key={sem} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-6 mb-4">
+                      <div className="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
+                        <div>
+                          <h3 className="font-bold text-slate-900 dark:text-white text-lg">Semester {sem} Tuition Fee</h3>
+                          <p className="text-sm text-slate-500 dark:text-slate-400">Department: {dept}</p>
+                        </div>
+                        <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-700">
+                           {paidAmount > 0 ? 'Partly Paid' : 'Due'}
+                        </span>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Expected Fee</p>
+                          <p className="font-bold text-slate-900 dark:text-white">₹{expectedAmount.toLocaleString()}</p>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Paid Amount</p>
+                          <p className="font-bold text-green-600">₹{paidAmount.toLocaleString()}</p>
+                        </div>
+                        {pendingAmount > 0 && (
+                          <div className="flex justify-between items-center text-orange-500 bg-orange-50 dark:bg-orange-900/10 p-3 rounded-xl border border-orange-100 dark:border-orange-900/30">
+                            <p className="text-sm font-bold uppercase tracking-wider">Processing</p>
+                            <p className="font-bold">₹{pendingAmount.toLocaleString()}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                        <div>
+                           <p className="text-xs text-red-500 uppercase font-bold tracking-wider mb-1">Remaining Due</p>
+                           <p className="text-3xl font-bold text-red-600">₹{dueAmount.toLocaleString()}</p>
+                        </div>
+                        <button 
+                          onClick={() => setSelectedSemester(sem)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
+                        >
+                          <Upload className="w-5 h-5" /> Pay Now
+                        </button>
+                      </div>
                     </div>
                   );
-                }
+                });
 
-                if (dueAmount === 0) {
+                if (!hasAnyDues) {
                   return (
                      <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 rounded-3xl shadow-lg text-center text-white">
                         <CheckCircle className="w-16 h-16 text-white/80 mx-auto mb-4" />
                         <h3 className="text-2xl font-bold mb-2">Fully Paid!</h3>
-                        <p className="text-green-50">You have no pending dues for Semester {currentSem}.</p>
+                        <p className="text-green-50">You have no pending dues or uninitialized fees.</p>
                      </div>
                   );
                 }
 
-                return (
-                  <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-6">
-                    <div className="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
-                      <div>
-                        <h3 className="font-bold text-slate-900 dark:text-white text-lg">Semester {currentSem} Tuition Fee</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Department: {dept}</p>
-                      </div>
-                      <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-700">
-                         {paidAmount > 0 ? 'Partly Paid' : 'Due'}
-                      </span>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Expected Fee</p>
-                        <p className="font-bold text-slate-900 dark:text-white">₹{expectedAmount.toLocaleString()}</p>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Paid Amount</p>
-                        <p className="font-bold text-green-600">₹{paidAmount.toLocaleString()}</p>
-                      </div>
-                      {pendingAmount > 0 && (
-                        <div className="flex justify-between items-center text-orange-500 bg-orange-50 dark:bg-orange-900/10 p-3 rounded-xl border border-orange-100 dark:border-orange-900/30">
-                          <p className="text-sm font-bold uppercase tracking-wider">Processing</p>
-                          <p className="font-bold">₹{pendingAmount.toLocaleString()}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                      <div>
-                         <p className="text-xs text-red-500 uppercase font-bold tracking-wider mb-1">Remaining Due</p>
-                         <p className="text-3xl font-bold text-red-600">₹{dueAmount.toLocaleString()}</p>
-                      </div>
-                      <button 
-                        onClick={() => setSelectedSemester(currentSem)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
-                      >
-                        <Upload className="w-5 h-5" /> Pay Now
-                      </button>
-                    </div>
-                  </div>
-                );
+                return cards;
               })()}
             </div>
           </div>

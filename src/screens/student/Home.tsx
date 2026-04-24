@@ -72,8 +72,9 @@ export default function StudentHome() {
     );
 
     // 4. Student Payments Listener
+    const studentIds = [user.uid, profile.studentId, profile.id].filter(Boolean);
     const unsubFees = onSnapshot(
-      query(collection(db, 'payments'), where('studentId', '==', user.uid)),
+      query(collection(db, 'payments'), where('studentId', 'in', studentIds)),
       (snapshot) => {
         setStudentFees(snapshot.docs.map(d => d.data()));
       },
@@ -111,8 +112,8 @@ export default function StudentHome() {
     const attPercentage = sessionCount > 0 ? Math.round((attendanceCount / sessionCount) * 100) : 0;
     
     // Calculate Fee Stats
-    const rawDept = profile?.courseName || 'BCA';
-    const dept = rawDept.toUpperCase().replace(/[^A-Z]/g, '');
+    const cleanStr = (str: string) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
+    const dept = cleanStr(profile?.courseId) || cleanStr(profile?.courseName) || cleanStr(profile?.department) || 'BCA';
     const sem = profile?.semester || '1';
     const structFee = feeStructure[dept]?.[sem] || 0;
     
@@ -133,7 +134,7 @@ export default function StudentHome() {
       payableFee: `₹${amountDue.toLocaleString()}`,
       feesStatus: status
     }));
-  }, [attendanceCount, sessionCount, feeStructure, studentFees, profile?.courseName, profile?.semester]);
+  }, [attendanceCount, sessionCount, feeStructure, studentFees, profile?.courseName, profile?.semester, profile?.courseId, profile?.department]);
 
   const quickStats = [
     { label: 'Attendance', value: stats.attendance, icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50', link: '/student/analytics' },

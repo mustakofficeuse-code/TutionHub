@@ -108,7 +108,8 @@ export default function Profile() {
 
       if (profile.role === 'student') {
         updates.semester = semester;
-        updates.courseId = courseId;
+        updates.courseId = courseId.toLowerCase();
+        updates.courseName = courseId.toUpperCase();
       }
 
       await updateDoc(userRef, updates);

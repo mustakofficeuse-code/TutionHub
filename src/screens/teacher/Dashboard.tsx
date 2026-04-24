@@ -48,6 +48,7 @@ export default function TeacherDashboard() {
 
   const [allStudents, setAllStudents] = useState<any[]>([]);
   const [blacklist, setBlacklist] = useState<string[]>([]);
+  const [blacklistDocs, setBlacklistDocs] = useState<any[]>([]);
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
   const [locationConfigured, setLocationConfigured] = useState<boolean>(true);
   
@@ -96,6 +97,7 @@ export default function TeacherDashboard() {
 
   const listenToBlacklist = () => {
     return onSnapshot(collection(db, 'blacklist'), (snapshot) => {
+      setBlacklistDocs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setBlacklist(snapshot.docs.map(doc => doc.id));
     });
   };
@@ -204,20 +206,21 @@ export default function TeacherDashboard() {
   ];
 
   const handleToggleBlock = async (student: any) => {
-    if (!student || !student.email) return;
+    const emailToUse = student.email || student.id;
+    if (!emailToUse) return;
     setIsBlocking(true);
 
-    const isCurrentlyBlocked = blacklist.includes(student.email);
+    const isCurrentlyBlocked = blacklist.includes(emailToUse);
 
     try {
       if (isCurrentlyBlocked) {
         // Unblock
-        await deleteDoc(doc(db, 'blacklist', student.email));
+        await deleteDoc(doc(db, 'blacklist', emailToUse));
       } else {
         // Block
-        await setDoc(doc(db, 'blacklist', student.email), {
-          email: student.email,
-          name: student.name,
+        await setDoc(doc(db, 'blacklist', emailToUse), {
+          email: emailToUse,
+          name: student.name || 'Unknown Student',
           blockedAt: new Date().toISOString()
         });
       }
@@ -260,7 +263,7 @@ export default function TeacherDashboard() {
 
   const renderStudentGroup = (department: string) => {
     const deptUpper = department.toUpperCase();
-    const deptStudents = allStudents.filter(s => (s.courseName && s.courseName.toUpperCase() === deptUpper) || (s.courseId && s.courseId.toUpperCase() === deptUpper));
+    const deptStudents = allStudents.filter(s => String(s.courseId || s.courseName || 'General').toUpperCase() === deptUpper);
     
     // Group by semester
     const bySemester = deptStudents.reduce((acc: any, student) => {
@@ -526,13 +529,13 @@ export default function TeacherDashboard() {
                     Course Management
                   </h2>
                   <div className="flex gap-2">
-                    {(Array.from(new Set(allStudents.filter(s => s.courseName).map(s => String(s.courseName).toUpperCase()))) as string[]).map(dept => (
+                    {(Array.from(new Set(allStudents.map(s => String(s.courseId || s.courseName || 'General').toUpperCase()))) as string[]).map(dept => (
                       <span key={dept} className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-xs font-bold uppercase">{dept}</span>
                     ))}
                   </div>
                 </div>
-                {(Array.from(new Set(allStudents.filter(s => s.courseName).map(s => String(s.courseName).toUpperCase()))) as string[]).length > 0 ? (
-                  (Array.from(new Set(allStudents.filter(s => s.courseName).map(s => String(s.courseName).toUpperCase()))) as string[]).map(dept => (
+                {(Array.from(new Set(allStudents.map(s => String(s.courseId || s.courseName || 'General').toUpperCase()))) as string[]).length > 0 ? (
+                  (Array.from(new Set(allStudents.map(s => String(s.courseId || s.courseName || 'General').toUpperCase()))) as string[]).map(dept => (
                     <div key={dept}>
                       {renderStudentGroup(dept || 'BCA')}
                     </div>
@@ -555,13 +558,13 @@ export default function TeacherDashboard() {
                     </div>
                   </div>
                   
-                  {allStudents.filter(s => blacklist.includes(s.email)).length === 0 ? (
+                  {blacklistDocs.length === 0 ? (
                     <div className="text-center py-8 text-slate-500 dark:text-slate-400">
                       No blocked students.
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {allStudents.filter(s => blacklist.includes(s.email)).map((student: any) => (
+                      {blacklistDocs.map((student: any) => (
                         <div key={student.id} className="flex items-center justify-between p-3 rounded-xl border transition-all bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-red-100 dark:bg-red-900/20">
@@ -569,12 +572,12 @@ export default function TeacherDashboard() {
                             </div>
                             <div>
                               <div className="flex items-center gap-2">
-                                <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name}</p>
+                                <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name || 'Unknown Student'}</p>
                                 <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 uppercase tracking-widest">
                                   Suspended
                                 </span>
                               </div>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">{student.email}</p>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">{student.email || student.id}</p>
                             </div>
                           </div>
                           <button 
@@ -757,15 +760,15 @@ export default function TeacherDashboard() {
       {studentToBlock && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 mx-auto ${blacklist.includes(studentToBlock.email) ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
-              <Trash2 className={`w-8 h-8 ${blacklist.includes(studentToBlock.email) ? 'text-orange-600' : 'text-red-600'}`} />
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 mx-auto ${blacklist.includes(studentToBlock.email || studentToBlock.id) ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+              <Trash2 className={`w-8 h-8 ${blacklist.includes(studentToBlock.email || studentToBlock.id) ? 'text-orange-600' : 'text-red-600'}`} />
             </div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-white text-center mb-2">
-              {blacklist.includes(studentToBlock.email) ? 'Unblock Student?' : 'Suspend Student?'}
+              {blacklist.includes(studentToBlock.email || studentToBlock.id) ? 'Unblock Student?' : 'Suspend Student?'}
             </h3>
             <p className="text-slate-500 dark:text-slate-400 text-center mb-8">
-              Are you sure you want to {blacklist.includes(studentToBlock.email) ? 'unblock' : 'suspend'} <span className="font-bold text-slate-900 dark:text-white">{studentToBlock.name}</span>? 
-              {blacklist.includes(studentToBlock.email) ? ' They will regain access to their account.' : ' They will be logged out and blocked from accessing their account.'}
+              Are you sure you want to {blacklist.includes(studentToBlock.email || studentToBlock.id) ? 'unblock' : 'suspend'} <span className="font-bold text-slate-900 dark:text-white">{studentToBlock.name || 'this student'}</span>? 
+              {blacklist.includes(studentToBlock.email || studentToBlock.id) ? ' They will regain access to their account.' : ' They will be logged out and blocked from accessing their account.'}
             </p>
             <div className="flex gap-3">
               <button 
@@ -777,9 +780,9 @@ export default function TeacherDashboard() {
               <button 
                 onClick={() => handleToggleBlock(studentToBlock)}
                 disabled={isBlocking}
-                className={`flex-1 py-3 text-white font-bold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 ${blacklist.includes(studentToBlock.email) ? 'bg-orange-600 hover:bg-orange-700 shadow-orange-100 dark:shadow-none' : 'bg-red-600 hover:bg-red-700 shadow-red-100 dark:shadow-none'}`}
+                className={`flex-1 py-3 text-white font-bold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 ${blacklist.includes(studentToBlock.email || studentToBlock.id) ? 'bg-orange-600 hover:bg-orange-700 shadow-orange-100 dark:shadow-none' : 'bg-red-600 hover:bg-red-700 shadow-red-100 dark:shadow-none'}`}
               >
-                {isBlocking ? <Loader2 className="w-5 h-5 animate-spin" /> : (blacklist.includes(studentToBlock.email) ? 'Unblock' : 'Suspend')}
+                {isBlocking ? <Loader2 className="w-5 h-5 animate-spin" /> : (blacklist.includes(studentToBlock.email || studentToBlock.id) ? 'Unblock' : 'Suspend')}
               </button>
             </div>
           </div>
