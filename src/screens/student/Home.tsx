@@ -157,7 +157,7 @@ export default function StudentHome() {
           <div>
             <p className="text-blue-100 text-sm font-medium">Welcome back,</p>
             <h1 className="text-2xl font-bold">{profile?.name}</h1>
-            <p className="text-blue-100 text-xs mt-1">Roll: {profile?.rollNumber} • Sem {profile?.semester}</p>
+            <p className="text-blue-100 text-xs mt-1">Sem {profile?.semester}</p>
           </div>
           <div className="flex gap-2">
             <button

@@ -43,7 +43,6 @@ export default function Profile() {
   // Form state
   const [name, setName] = useState(profile?.name || '');
   const [phoneNumber, setPhoneNumber] = useState(profile?.phoneNumber || '');
-  const [rollNumber, setRollNumber] = useState(profile?.rollNumber || '');
   const [semester, setSemester] = useState(profile?.semester || '');
   const [courseId, setCourseId] = useState(profile?.courseId || '');
   
@@ -57,7 +56,6 @@ export default function Profile() {
     if (profile) {
       setName(profile.name || '');
       setPhoneNumber(profile.phoneNumber || '');
-      setRollNumber(profile.rollNumber || '');
       setSemester(profile.semester || '');
       setCourseId(profile.courseId || '');
       
@@ -109,7 +107,6 @@ export default function Profile() {
       };
 
       if (profile.role === 'student') {
-        updates.rollNumber = rollNumber;
         updates.semester = semester;
         updates.courseId = courseId;
       }
@@ -298,19 +295,6 @@ export default function Profile() {
 
                 {profile?.role === 'student' && (
                   <>
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                        <Hash className="w-4 h-4 text-slate-400" /> Roll Number
-                      </label>
-                      <input 
-                        type="text" 
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                        placeholder="BCA/2024/001"
-                        value={rollNumber}
-                        onChange={(e) => setRollNumber(e.target.value)}
-                      />
-                    </div>
-
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                         <BookOpen className="w-4 h-4 text-slate-400" /> Semester
