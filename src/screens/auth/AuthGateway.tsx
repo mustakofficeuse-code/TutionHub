@@ -157,7 +157,27 @@ export default function AuthGateway() {
             throw new Error('Your access has been revoked by the teacher. Please contact your teacher for permission.');
           }
 
-          await signInWithEmailAndPassword(auth, email, studentPassword);
+          const userCredential = await signInWithEmailAndPassword(auth, email, studentPassword);
+          const user = userCredential.user;
+          
+          // Verify user document exists (recreate if deleted mistakenly)
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (!userDocSnap.exists()) {
+            await setDoc(userDocRef, {
+              uid: user.uid,
+              studentId: cleanId.startsWith('th') ? cleanId.toUpperCase() : cleanId,
+              name: 'Student (Recovered)', // They can update this in profile
+              email: email,
+              role: 'student',
+              semester: '1',
+              courseName: 'General',
+              courseId: 'general',
+              createdAt: new Date().toISOString(),
+              profileComplete: true
+            });
+          }
+          
           loginSuccess = true;
           break; // Stop trying if successful
         } catch (err: any) {

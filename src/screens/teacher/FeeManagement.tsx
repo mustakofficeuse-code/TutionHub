@@ -28,7 +28,8 @@ export default function FeeManagement() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentStudent, setPaymentStudent] = useState<any>(null);
-  const [paymentSemester, setPaymentSemester] = useState<number>(0);
+  const [paymentSemester, setPaymentSemester] = useState<number>(1);
+  const [modalDepartment, setModalDepartment] = useState<string>('');
   const [isManualPayment, setIsManualPayment] = useState(false);
 
   const [feeStructure, setFeeStructure] = useState<any>({
@@ -195,6 +196,7 @@ export default function FeeManagement() {
                onClick={() => {
                  setPaymentStudent(null);
                  setPaymentSemester(1);
+                 setModalDepartment('');
                  setPaymentAmount('');
                  setIsManualPayment(true);
                  setShowPaymentModal(true);
@@ -486,6 +488,43 @@ export default function FeeManagement() {
                  <>
                    <div>
                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                       Department
+                     </label>
+                     <select
+                       required
+                       className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-sm mb-4"
+                       value={modalDepartment}
+                       onChange={(e) => {
+                         setModalDepartment(e.target.value);
+                         setPaymentStudent(null);
+                       }}
+                     >
+                       <option value="" disabled>Select Department</option>
+                       {departments.map(d => (
+                         <option key={d} value={d}>{d}</option>
+                       ))}
+                     </select>
+                   </div>
+                   <div>
+                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                       Semester
+                     </label>
+                     <select
+                       required
+                       className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-sm mb-4"
+                       value={paymentSemester}
+                       onChange={(e) => {
+                         setPaymentSemester(Number(e.target.value));
+                         setPaymentStudent(null);
+                       }}
+                     >
+                       {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
+                         <option key={sem} value={sem}>Semester {sem}</option>
+                       ))}
+                     </select>
+                   </div>
+                   <div>
+                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                        Select Student
                      </label>
                      <select
@@ -496,27 +535,21 @@ export default function FeeManagement() {
                          const student = students.find(s => s.id === e.target.value || s.uid === e.target.value);
                          setPaymentStudent(student || null);
                        }}
+                       disabled={!modalDepartment || !paymentSemester}
                      >
-                       <option value="" disabled>Select a student</option>
-                       {students.map(s => (
-                         <option key={s.id || s.uid} value={s.id || s.uid}>
-                           {s.name} ({s.courseName || s.department || 'N/A'})
-                         </option>
-                       ))}
-                     </select>
-                   </div>
-                   <div>
-                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                       Semester
-                     </label>
-                     <select
-                       required
-                       className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-sm"
-                       value={paymentSemester}
-                       onChange={(e) => setPaymentSemester(Number(e.target.value))}
-                     >
-                       {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
-                         <option key={sem} value={sem}>Semester {sem}</option>
+                       <option value="" disabled>
+                         {!modalDepartment ? 'Select Department First' : 'Select Student'}
+                       </option>
+                       {students
+                         .filter(s => {
+                           const cName = cleanStr(s.courseId) || cleanStr(s.courseName) || cleanStr(s.department) || '';
+                           const sSem = Number(String(s.semester || '').replace(/\D/g, '')) || 0;
+                           return cName === modalDepartment && (sSem === paymentSemester || !s.semester);
+                         })
+                         .map(s => (
+                           <option key={s.id || s.uid} value={s.id || s.uid}>
+                             {s.name} ({s.studentId || 'No ID'})
+                           </option>
                        ))}
                      </select>
                    </div>
@@ -529,23 +562,52 @@ export default function FeeManagement() {
                    </div>
                  )
                )}
-               <div>
-                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                   Amount Received (₹)
-                 </label>
-                 <input
-                   type="number"
-                   required
-                   autoFocus
-                   placeholder="e.g. 5000"
-                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-lg"
-                   value={paymentAmount}
-                   onChange={(e) => setPaymentAmount(e.target.value)}
-                 />
-               </div>
+
+               {paymentStudent && (() => {
+                 const studentDept = cleanStr(paymentStudent?.courseId || paymentStudent?.courseName || paymentStudent?.department);
+                 const targetDept = isManualPayment ? modalDepartment : studentDept;
+                 const targetSemFee = feeStructure[targetDept]?.[paymentSemester] || 0;
+                 const totalPaidForSem = payments
+                   .filter(p => (p.studentId === paymentStudent?.id || p.studentId === paymentStudent?.uid) && Number(p.semester) === paymentSemester && p.status === 'confirmed')
+                   .reduce((sum, p) => sum + Number(p.amount), 0);
+                 const maxAllowed = Math.max(0, targetSemFee - totalPaidForSem);
+
+                 return (
+                   <div>
+                     <div className="flex justify-between items-end mb-2">
+                       <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                         Amount Received (₹)
+                       </label>
+                       {targetSemFee > 0 && (
+                         <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
+                           Max ₹{maxAllowed} Allowed
+                         </span>
+                       )}
+                     </div>
+                     <input
+                       type="number"
+                       required
+                       autoFocus
+                       placeholder="e.g. 5000"
+                       max={targetSemFee > 0 ? maxAllowed : undefined}
+                       className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-lg"
+                       value={paymentAmount}
+                       onChange={(e) => {
+                         const val = Number(e.target.value);
+                         if (targetSemFee > 0 && val > maxAllowed) {
+                           setPaymentAmount(maxAllowed.toString());
+                         } else {
+                           setPaymentAmount(e.target.value);
+                         }
+                       }}
+                     />
+                   </div>
+                 );
+               })()}
+
                <button 
                  type="submit"
-                 disabled={!paymentAmount}
+                 disabled={!paymentAmount || !paymentStudent || (feeStructure[isManualPayment ? modalDepartment : cleanStr(paymentStudent?.courseId || paymentStudent?.courseName || paymentStudent?.department)]?.[paymentSemester] > 0 && Number(paymentAmount) > Math.max(0, (feeStructure[isManualPayment ? modalDepartment : cleanStr(paymentStudent?.courseId || paymentStudent?.courseName || paymentStudent?.department)]?.[paymentSemester] || 0) - payments.filter(p => (p.studentId === paymentStudent?.id || p.studentId === paymentStudent?.uid) && Number(p.semester) === paymentSemester && p.status === 'confirmed').reduce((sum, p) => sum + Number(p.amount), 0)))}
                  className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none disabled:bg-slate-300 disabled:shadow-none mt-4"
                >
                  Confirm Receipt
