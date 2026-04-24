@@ -166,7 +166,16 @@ export default function PaymentHistory() {
               </h2>
               {(() => {
                 let totalDue = 0;
-                const overdueCards = semestersDue.map(sem => {
+                // Calculate total outstanding due across all semesters
+                semestersDue.forEach(sem => {
+                    const expectedAmount = feeStructure[dept]?.[sem] || 0;
+                    const semPayments = payments.filter(p => Number(p.semester) === sem && p.status === 'confirmed');
+                    const paidAmount = semPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+                    totalDue += Math.max(0, expectedAmount - paidAmount);
+                });
+
+                // Find only the oldest semester with remaining due to show as a single "Pay Now" card
+                const overdueSemData = semestersDue.map(sem => {
                     const expectedAmount = feeStructure[dept]?.[sem] || 0;
                     const semPayments = payments.filter(p => Number(p.semester) === sem);
                     const paidAmount = semPayments
@@ -179,10 +188,35 @@ export default function PaymentHistory() {
                     
                     if (expectedAmount === 0 || dueAmount === 0) return null;
 
-                    totalDue += dueAmount;
+                    return { sem, expectedAmount, paidAmount, pendingAmount, dueAmount };
+                }).filter(Boolean);
 
+                const currentSelection = overdueSemData[0]; // ONLY show the oldest (first) one
+
+                if (!currentSelection) {
                     return (
-                        <div key={sem} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-6 mb-4">
+                       <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 rounded-3xl shadow-lg text-center text-white">
+                          <CheckCircle className="w-16 h-16 text-white/80 mx-auto mb-4" />
+                          <h3 className="text-2xl font-bold mb-2">Fully Paid!</h3>
+                          <p className="text-green-50">You have no pending dues or uninitialized fees.</p>
+                       </div>
+                    );
+                }
+
+                const { sem, expectedAmount, paidAmount, pendingAmount, dueAmount } = currentSelection;
+
+                return (
+                    <div className="space-y-6">
+                        {totalDue > 0 && (
+                            <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-3xl border border-red-100 dark:border-red-900/30 flex justify-between items-center">
+                                <div>
+                                    <p className="text-sm text-red-800 dark:text-red-200 font-bold uppercase tracking-wider mb-1">Total Outstanding Due</p>
+                                    <p className="text-4xl font-bold text-red-600 dark:text-red-400">₹{totalDue.toLocaleString()}</p>
+                                </div>
+                            </div>
+                        )}
+                        
+                        <div key={sem} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-6">
                             <div className="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
                                 <div>
                                     <h3 className="font-bold text-slate-900 dark:text-white text-lg">Semester {sem} Tuition Fee</h3>
@@ -212,7 +246,7 @@ export default function PaymentHistory() {
 
                             <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
                                 <div>
-                                    <p className="text-xs text-red-500 uppercase font-bold tracking-wider mb-1">Remaining Due</p>
+                                    <p className="text-xs text-red-500 uppercase font-bold tracking-wider mb-1">Remaining Due (Sem {sem})</p>
                                     <p className="text-3xl font-bold text-red-600">₹{dueAmount.toLocaleString()}</p>
                                 </div>
                                 <button 
@@ -223,33 +257,10 @@ export default function PaymentHistory() {
                                 </button>
                             </div>
                         </div>
-                    );
-                }).filter(Boolean);
-
-                if (overdueCards.length === 0) {
-                    return (
-                       <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 rounded-3xl shadow-lg text-center text-white">
-                          <CheckCircle className="w-16 h-16 text-white/80 mx-auto mb-4" />
-                          <h3 className="text-2xl font-bold mb-2">Fully Paid!</h3>
-                          <p className="text-green-50">You have no pending dues or uninitialized fees.</p>
-                       </div>
-                    );
-                }
-
-                return (
-                    <div className="space-y-6">
-                        {totalDue > 0 && (
-                            <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-3xl border border-red-100 dark:border-red-900/30 flex justify-between items-center">
-                                <div>
-                                    <p className="text-sm text-red-800 dark:text-red-200 font-bold uppercase tracking-wider mb-1">Total Outstanding Due</p>
-                                    <p className="text-4xl font-bold text-red-600 dark:text-red-400">₹{totalDue.toLocaleString()}</p>
-                                </div>
-                            </div>
-                        )}
-                        {overdueCards}
                     </div>
                 );
-              })()}
+              })()
+            }
             </div>
           </div>
         )}

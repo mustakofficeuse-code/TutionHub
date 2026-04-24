@@ -116,29 +116,37 @@ export default function StudentHome() {
     const dept = cleanStr(profile?.courseId) || cleanStr(profile?.courseName) || cleanStr(profile?.department) || 'BCA';
     const currentSem = Number(profile?.semester) || 1;
     
-    // Calculate total dues across all semesters
-    let totalExpected = 0;
-    let totalPaid = 0;
+    // Find the oldest unpaid semester to show that specific due amount
+    let nextDueAmount = 0;
+    let nextDueStatus = 'Paid';
+    let oldestDueFound = false;
+
     for (let s = 1; s <= currentSem; s++) {
-      totalExpected += feeStructure[dept]?.[s] || 0;
+      const expected = feeStructure[dept]?.[s] || 0;
+      const paid = studentFees
+        .filter(f => f.status === 'confirmed' && Number(f.semester) === s)
+        .reduce((acc, f) => acc + Number(f.amount || 0), 0);
+      
+      const due = Math.max(0, expected - paid);
+      
+      if (due > 0 && !oldestDueFound) {
+        nextDueAmount = due;
+        nextDueStatus = paid > 0 ? 'Partly Paid' : 'Due';
+        oldestDueFound = true;
+      }
     }
-    totalPaid = studentFees
-      .filter(f => f.status === 'confirmed' && Number(f.semester) <= currentSem)
-      .reduce((acc, f) => acc + Number(f.amount || 0), 0);
-    const amountDue = Math.max(0, totalExpected - totalPaid);
     
-    let status = 'No Fee Set';
-    if (totalExpected > 0) {
-      if (amountDue === 0) status = 'Paid';
-      else if (totalPaid > 0) status = 'Partly Paid';
-      else status = 'Due';
+    if (!oldestDueFound) {
+      // If all are paid, maybe show 0
+      nextDueAmount = 0;
+      nextDueStatus = 'Paid';
     }
 
     setStats(prev => ({
       ...prev,
       attendance: `${attPercentage}%`,
-      payableFee: `₹${amountDue.toLocaleString()}`,
-      feesStatus: status
+      payableFee: `₹${nextDueAmount.toLocaleString()}`,
+      feesStatus: nextDueStatus
     }));
   }, [attendanceCount, sessionCount, feeStructure, studentFees, profile?.courseName, profile?.semester, profile?.courseId, profile?.department]);
 
