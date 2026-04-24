@@ -34,7 +34,7 @@ function AppRoutes() {
     );
   }
 
-  if (!user) {
+  if (!user || !profile) {
     return (
       <Routes>
         <Route path="/auth" element={<AuthGateway />} />

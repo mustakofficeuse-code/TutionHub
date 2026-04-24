@@ -64,10 +64,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setProfile({ ...data, uid: currentUser.uid });
             setRole(data.role);
           } else {
-            // Profile deleted - force logout
+            // Profile missing - let AuthGateway handle recovery
             setProfile(null);
             setRole(null);
-            auth.signOut();
           }
           setLoading(false);
         }, (error) => {
