@@ -90,17 +90,16 @@ export default function DoubtSection() {
 
     // Fetch doubts: Teachers see all, students see their own + public doubts for their department
     const doubtsRef = collection(db, 'doubts');
-    const q = profile.role === 'teacher' 
-      ? query(doubtsRef, orderBy('createdAt', 'desc'))
-      : query(doubtsRef, where('department', '==', profile.courseId || ''), orderBy('createdAt', 'desc'));
+    const q = query(doubtsRef, orderBy('createdAt', 'desc'));
 
     const unsubscribeDoubts = onSnapshot(q, (snapshot) => {
       let fetchedDoubts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
-      // Client-side filtering for students to respect visibility
+      // Client-side filtering for students to respect visibility and department
       if (profile.role === 'student') {
+        const studentDept = profile.courseId || profile.courseName || profile.department || '';
         fetchedDoubts = fetchedDoubts.filter((d: any) => 
-          d.studentId === profile.uid || d.visibility === 'public'
+          d.department === studentDept && (d.studentId === profile.uid || d.visibility === 'public')
         );
       }
       

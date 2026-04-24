@@ -34,12 +34,18 @@ export default function StudentAssignments() {
     if (profile?.courseId) {
       const q = query(
         collection(db, 'assignments'), 
-        where('courseId', '==', profile.courseId),
-        orderBy('createdAt', 'desc')
+        where('courseId', '==', profile.courseId)
       );
       
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        setAssignments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const assignmentsData = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .sort((a: any, b: any) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+          });
+        setAssignments(assignmentsData);
         setLoading(false);
       });
 

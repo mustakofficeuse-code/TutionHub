@@ -25,12 +25,18 @@ export default function QuizList() {
     if (profile?.courseId) {
       const q = query(
         collection(db, 'quizzes'), 
-        where('courseId', '==', profile.courseId),
-        orderBy('createdAt', 'desc')
+        where('courseId', '==', profile.courseId)
       );
       
       const unsubscribe = onSnapshot(q, (snapshot) => {
-        setQuizzes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const quizzesData = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .sort((a: any, b: any) => {
+            const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+            const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+            return dateB - dateA;
+          });
+        setQuizzes(quizzesData);
         setLoading(false);
       });
 

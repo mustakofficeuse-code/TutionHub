@@ -82,9 +82,13 @@ export default function StudentHome() {
 
     // 5. Upcoming Classes
     const unsubSchedule = onSnapshot(
-      query(collection(db, 'schedules'), where('courseId', '==', profile.courseId), where('date', '>=', today)),
+      query(collection(db, 'schedules'), where('courseId', '==', profile.courseId)),
       (snapshot) => {
-        const classes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        const classes = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .filter((c: any) => c.date && c.date >= today)
+          .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          
         setUpcomingClasses(classes);
         setLoading(false);
       },
