@@ -135,9 +135,10 @@ export default function AdminDashboard() {
   const filteredUsers = users.filter(u => {
     const matchesSearch = u.name?.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           u.email?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filter === 'all' || (filter === 'blocked' && blacklist.includes(u.email));
-    return matchesSearch && matchesFilter;
+    return matchesSearch && !blacklist.includes(u.email);
   });
+
+  const blockedUsers = users.filter(u => blacklist.includes(u.email));
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
@@ -221,14 +222,6 @@ export default function AdminDashboard() {
               >
                 <UserPlus className="w-4 h-4" /> Enroll Student
               </button>
-              <select
-                className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white outline-none"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value as 'all' | 'blocked')}
-              >
-                <option value="all">All Users</option>
-                <option value="blocked">Blocked Students</option>
-              </select>
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                 <input 
@@ -304,17 +297,13 @@ export default function AdminDashboard() {
                             <option value="teacher">Teacher</option>
                             <option value="admin">Admin</option>
                           </select>
-                          {user.role === 'student' && (
+                          {user.role === 'student' && !blacklist.includes(user.email) && (
                             <button 
-                              onClick={() => toggleBlock(user.email, blacklist.includes(user.email))}
-                              className={`p-2 transition-colors rounded-lg ${
-                                blacklist.includes(user.email) 
-                                  ? 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20' 
-                                  : 'text-slate-400 hover:text-orange-500 hover:bg-orange-50 dark:hover:bg-orange-900/20'
-                              }`}
-                              title={blacklist.includes(user.email) ? "Unblock Student" : "Block Student"}
+                              onClick={() => toggleBlock(user.email, false)}
+                              className="p-2 transition-colors rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                              title="Block Student"
                             >
-                              {blacklist.includes(user.email) ? <UserX className="w-4 h-4" /> : <UserCheck className="w-4 h-4" />}
+                              <UserX className="w-4 h-4" />
                             </button>
                           )}
                           <button 
@@ -324,6 +313,65 @@ export default function AdminDashboard() {
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Blocks List Table */}
+        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
+          <div className="p-6 border-b border-slate-50 dark:border-slate-800">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <UserX className="w-5 h-5 text-red-500" /> Blocks List
+            </h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Students suspended by the teacher.</p>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-red-50/50 dark:bg-red-900/10 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
+                  <th className="px-6 py-4">Student</th>
+                  <th className="px-6 py-4">Status</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                {blockedUsers.length === 0 ? (
+                  <tr>
+                    <td colSpan={3} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                      No blocked students.
+                    </td>
+                  </tr>
+                ) : (
+                  blockedUsers.map((user) => (
+                    <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center text-red-500">
+                            <UserX className="w-5 h-5" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-slate-900 dark:text-white">{user.name}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
+                          Suspended
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <button 
+                          onClick={() => toggleBlock(user.email, true)}
+                          className="px-4 py-2 bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40 text-orange-600 dark:text-orange-400 rounded-xl text-sm font-bold transition-all"
+                        >
+                          Unblock
+                        </button>
                       </td>
                     </tr>
                   ))

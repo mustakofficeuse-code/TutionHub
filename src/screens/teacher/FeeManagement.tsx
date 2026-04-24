@@ -31,6 +31,7 @@ export default function FeeManagement() {
   const [paymentSemester, setPaymentSemester] = useState<number>(1);
   const [modalDepartment, setModalDepartment] = useState<string>('');
   const [isManualPayment, setIsManualPayment] = useState(false);
+  const [viewDetailsStudent, setViewDetailsStudent] = useState<any>(null);
 
   const [feeStructure, setFeeStructure] = useState<any>({
     BCA: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 },
@@ -203,7 +204,7 @@ export default function FeeManagement() {
                }}
                className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold transition-all text-sm flex items-center gap-2"
              >
-               + Record Payment
+               + Receive Payment
              </button>
             <button 
               onClick={handleClearData}
@@ -271,20 +272,23 @@ export default function FeeManagement() {
                 <thead>
                   <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
                     <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Student</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status & Ledger</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Actions</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Due</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Paid</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Details</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                   {loading ? (
                     <tr>
-                      <td colSpan={3} className="p-12 text-center">
+                      <td colSpan={6} className="p-12 text-center">
                         <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
                       </td>
                     </tr>
                   ) : filteredStudents.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="p-12 text-center text-slate-500 dark:text-slate-400">
+                      <td colSpan={6} className="p-12 text-center text-slate-500 dark:text-slate-400">
                         No students found matching your filters.
                       </td>
                     </tr>
@@ -320,9 +324,12 @@ export default function FeeManagement() {
                         statusColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
                       }
 
+                      const lastPayment = semPayments.filter(p => p.status === 'confirmed').sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+                      const lastPaymentDate = lastPayment ? new Date(lastPayment.date).toLocaleDateString() : 'N/A';
+
                       return (
                         <tr key={studentId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                          <td className="p-4 align-top w-1/3">
+                          <td className="p-4 align-middle">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center shrink-0">
                                 <User className="text-blue-600 w-5 h-5" />
@@ -335,90 +342,34 @@ export default function FeeManagement() {
                               </div>
                             </div>
                           </td>
-                          <td className="p-4 align-top w-1/3">
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2">
-                                <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${statusColor}`}>
-                                  {statusText}
-                                </span>
-                                {pendingPayments.length > 0 && (
-                                   <span className="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-yellow-100 text-yellow-700 shrink-0">
-                                     Verification Pending!
-                                   </span>
-                                )}
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-2 text-sm">
-                                <div>
-                                  <p className="text-[10px] uppercase text-slate-400 font-bold">Total Due</p>
-                                  <p className="font-bold text-slate-900 dark:text-white">₹{expectedAmount.toLocaleString()}</p>
-                                </div>
-                                <div>
-                                  <p className="text-[10px] uppercase text-slate-400 font-bold">Total Paid</p>
-                                  <p className="font-bold text-green-600">₹{paidAmount.toLocaleString()}</p>
-                                </div>
-                              </div>
-                              
-                              {/* Pending Approvals Queue */}
+                          <td className="p-4 align-middle">
+                            <div className="flex flex-col gap-2 items-start">
+                              <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${statusColor}`}>
+                                {statusText}
+                              </span>
                               {pendingPayments.length > 0 && (
-                                <div className="mt-2 space-y-2">
-                                  {pendingPayments.map(p => (
-                                    <div key={p.id} className="bg-blue-50 dark:bg-blue-900/10 p-2 rounded-lg border border-blue-100 dark:border-blue-900/30 flex justify-between items-center">
-                                      <div>
-                                        <p className="text-xs font-bold text-slate-900 dark:text-white">₹{Number(p.amount).toLocaleString()}</p>
-                                        <p className="text-[10px] font-mono text-slate-500 flex items-center gap-1">
-                                          <Hash className="w-3 h-3" /> {p.transactionId}
-                                        </p>
-                                      </div>
-                                      <button 
-                                        onClick={() => confirmPayment(p.id)}
-                                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-bold transition-colors shadow-sm"
-                                      >
-                                        Verify
-                                      </button>
-                                    </div>
-                                  ))}
-                                </div>
+                                 <span className="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-yellow-100 text-yellow-700 shrink-0">
+                                   Verification Pending!
+                                 </span>
                               )}
                             </div>
                           </td>
-                          <td className="p-4 align-top text-right w-1/3">
-                            <div className="flex flex-col sm:flex-row justify-end gap-2">
-                               {amountDue > 0 ? (
-                                  <>
-                                    <button 
-                                      onClick={() => {
-                                        setPaymentStudent(student);
-                                        setPaymentSemester(currentSem);
-                                        setPaymentAmount(amountDue.toString());
-                                        setIsManualPayment(false);
-                                        setShowPaymentModal(true);
-                                      }}
-                                      className="px-4 py-2 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors whitespace-nowrap"
-                                    >
-                                      Mark Full Paid
-                                    </button>
-                                    <button 
-                                      onClick={() => {
-                                        setPaymentStudent(student);
-                                        setPaymentSemester(currentSem);
-                                        setPaymentAmount('');
-                                        setIsManualPayment(false);
-                                        setShowPaymentModal(true);
-                                      }}
-                                      className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
-                                    >
-                                      Mark Partly Paid
-                                    </button>
-                                  </>
-                               ) : expectedAmount > 0 ? (
-                                  <span className="text-green-600 font-bold text-sm flex items-center gap-1 justify-end mt-2">
-                                    <CheckCircle className="w-4 h-4" /> Cleared
-                                  </span>
-                               ) : (
-                                  <span className="text-slate-400 text-xs italic mt-2 inline-block">Set fee first</span>
-                               )}
-                            </div>
+                          <td className="p-4 align-middle">
+                            <span className="font-bold text-slate-900 dark:text-white">₹{expectedAmount.toLocaleString()}</span>
+                          </td>
+                          <td className="p-4 align-middle">
+                            <span className="font-bold text-green-600">₹{paidAmount.toLocaleString()}</span>
+                          </td>
+                          <td className="p-4 align-middle">
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{lastPaymentDate}</span>
+                          </td>
+                          <td className="p-4 align-middle text-right">
+                             <button 
+                               onClick={() => setViewDetailsStudent({ ...student, expectedAmount, paidAmount, amountDue, semPayments })}
+                               className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-colors shadow-sm"
+                             >
+                               View Details
+                             </button>
                           </td>
                         </tr>
                       );
@@ -615,6 +566,99 @@ export default function FeeManagement() {
              </form>
            </div>
          </div>
+      )}
+
+      {/* Student Details Modal */}
+      {viewDetailsStudent && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900 sticky top-0 z-10">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <User className="text-blue-600 w-6 h-6" />
+                Student Details
+              </h3>
+              <button 
+                onClick={() => setViewDetailsStudent(null)}
+                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-6 overflow-y-auto flex-1">
+              {/* Profile Info */}
+              <div className="flex gap-4 items-center mb-8 border-b border-slate-100 dark:border-slate-800 pb-6">
+                <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center text-blue-600">
+                  <User className="w-8 h-8" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">{viewDetailsStudent.name}</h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    ID: {viewDetailsStudent.studentId || viewDetailsStudent.uid || 'N/A'} • 
+                    Dept: {cleanStr(viewDetailsStudent.courseId) || cleanStr(viewDetailsStudent.courseName) || cleanStr(viewDetailsStudent.department) || 'N/A'} • 
+                    Sem: {viewDetailsStudent.semester || 1}
+                  </p>
+                </div>
+              </div>
+
+              {/* Financial Status */}
+              <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Financial Status (Semester {viewDetailsStudent.semester || 1})</h4>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Total Fee</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">₹{viewDetailsStudent.expectedAmount.toLocaleString()}</p>
+                </div>
+                <div className="bg-green-50 dark:bg-green-900/10 p-4 rounded-2xl border border-green-100 dark:border-green-900/30">
+                  <p className="text-xs text-green-600 dark:text-green-500 font-bold uppercase tracking-wider mb-1">Total Paid</p>
+                  <p className="text-xl font-bold text-green-700 dark:text-green-400">₹{viewDetailsStudent.paidAmount.toLocaleString()}</p>
+                </div>
+                <div className="bg-orange-50 dark:bg-orange-900/10 p-4 rounded-2xl border border-orange-100 dark:border-orange-900/30">
+                  <p className="text-xs text-orange-600 dark:text-orange-500 font-bold uppercase tracking-wider mb-1">Amount Left</p>
+                  <p className="text-xl font-bold text-orange-700 dark:text-orange-400">₹{viewDetailsStudent.amountDue.toLocaleString()}</p>
+                </div>
+              </div>
+
+              {/* Payment History */}
+              <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Payment Transactions</h4>
+              {viewDetailsStudent.semPayments.length === 0 ? (
+                <p className="text-slate-500 dark:text-slate-400 text-sm italic">No records found for this semester.</p>
+              ) : (
+                <div className="space-y-3">
+                  {viewDetailsStudent.semPayments.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((p: any) => (
+                    <div key={p.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-bold text-slate-900 dark:text-white text-lg">₹{Number(p.amount).toLocaleString()}</p>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${p.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                            {p.status}
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate-500 font-mono">Txn ID: {p.transactionId}</p>
+                        <p className="text-xs text-slate-400 mt-1">{new Date(p.date).toLocaleString()}</p>
+                      </div>
+                      {p.status === 'pending' && (
+                        <button 
+                          onClick={() => {
+                            confirmPayment(p.id);
+                            setViewDetailsStudent((prev: any) => ({
+                              ...prev,
+                              semPayments: prev.semPayments.map((sp: any) => sp.id === p.id ? { ...sp, status: 'confirmed' } : sp),
+                              paidAmount: prev.paidAmount + Number(p.amount),
+                              amountDue: Math.max(0, prev.expectedAmount - (prev.paidAmount + Number(p.amount)))
+                            }));
+                          }}
+                          className="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold transition-colors shadow-sm whitespace-nowrap"
+                        >
+                          Verify Payment
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

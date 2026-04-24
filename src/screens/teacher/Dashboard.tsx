@@ -29,7 +29,8 @@ import {
   Trophy,
   Edit,
   Trash2,
-  X
+  X,
+  UserX
 } from 'lucide-react';
 import { auth } from '../../firebase';
 import { signOut } from 'firebase/auth';
@@ -530,6 +531,53 @@ export default function TeacherDashboard() {
                 </div>
                 {renderStudentGroup('BCA')}
                 {renderStudentGroup('BSC')}
+                
+                {/* Blocks List */}
+                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 mt-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center">
+                      <UserX className="w-6 h-6 text-red-600" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-900 dark:text-white">Blocks List</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Suspended students by teacher</p>
+                    </div>
+                  </div>
+                  
+                  {allStudents.filter(s => blacklist.includes(s.email)).length === 0 ? (
+                    <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                      No blocked students.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {allStudents.filter(s => blacklist.includes(s.email)).map((student: any) => (
+                        <div key={student.id} className="flex items-center justify-between p-3 rounded-xl border transition-all bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-red-100 dark:bg-red-900/20">
+                              <UserX className="w-5 h-5 text-red-500" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name}</p>
+                                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 uppercase tracking-widest">
+                                  Suspended
+                                </span>
+                              </div>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">{student.email}</p>
+                            </div>
+                          </div>
+                          <button 
+                            onClick={() => setStudentToBlock(student)}
+                            className="px-4 py-2 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 rounded-xl text-sm font-bold shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                            title="Unblock Student"
+                          >
+                            Unblock
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
 
               {/* Attendance Feed */}

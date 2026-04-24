@@ -71,13 +71,13 @@ export default function StudentHome() {
       (error) => console.error("Error fetching fee structure:", error)
     );
 
-    // 4. Student Fees Listener
+    // 4. Student Payments Listener
     const unsubFees = onSnapshot(
-      query(collection(db, 'fees'), where('studentId', '==', user.uid)),
+      query(collection(db, 'payments'), where('studentId', '==', user.uid)),
       (snapshot) => {
         setStudentFees(snapshot.docs.map(d => d.data()));
       },
-      (error) => console.error("Error fetching fees:", error)
+      (error) => console.error("Error fetching payments:", error)
     );
 
     // 5. Upcoming Classes
@@ -111,41 +111,34 @@ export default function StudentHome() {
     const attPercentage = sessionCount > 0 ? Math.round((attendanceCount / sessionCount) * 100) : 0;
     
     // Calculate Fee Stats
-    // Ensure department name matches the structure keys (BCA, BSC, BTECH, MCA)
     const rawDept = profile?.courseName || 'BCA';
-    const dept = rawDept.toUpperCase().includes('TECH') ? 'BTECH' : rawDept.toUpperCase();
+    const dept = rawDept.toUpperCase().replace(/[^A-Z]/g, '');
     const sem = profile?.semester || '1';
     const structFee = feeStructure[dept]?.[sem] || 0;
     
-    const pendingFees = studentFees.filter(f => f.status !== 'paid');
-    const totalPending = pendingFees.reduce((acc, f) => acc + (f.amount || 0), 0);
+    const semPayments = studentFees.filter(f => Number(f.semester) === Number(sem));
+    const paidAmount = semPayments.filter(f => f.status === 'confirmed').reduce((acc, f) => acc + Number(f.amount || 0), 0);
+    const amountDue = Math.max(0, structFee - paidAmount);
     
-    // The user wants the structured 'Amount' to be displayed in 'Payable Fee'
-    // If there are specific unpaid bills, we show those. 
-    // Otherwise, we show the default structure fee for their semester.
-    const displayAmount = totalPending > 0 ? totalPending : structFee;
-    
-    let status = 'Not Set';
-    if (totalPending > 0) {
-      status = 'Pending';
-    } else if (studentFees.length > 0) {
-      status = 'Paid';
-    } else if (structFee > 0) {
-      status = 'Due';
+    let status = 'No Fee Set';
+    if (structFee > 0) {
+      if (amountDue === 0) status = 'Paid';
+      else if (paidAmount > 0) status = 'Partly Paid';
+      else status = 'Due';
     }
 
     setStats(prev => ({
       ...prev,
       attendance: `${attPercentage}%`,
-      payableFee: `₹${displayAmount.toLocaleString()}`,
+      payableFee: `₹${amountDue.toLocaleString()}`,
       feesStatus: status
     }));
   }, [attendanceCount, sessionCount, feeStructure, studentFees, profile?.courseName, profile?.semester]);
 
   const quickStats = [
-    { label: 'Attendance', value: stats.attendance, icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Payable Fee', value: stats.payableFee, icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-50' },
-    { label: 'Status', value: stats.feesStatus, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Attendance', value: stats.attendance, icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50', link: '/student/analytics' },
+    { label: 'Payable Fee', value: stats.payableFee, icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/fees/history' },
+    { label: 'Status', value: stats.feesStatus, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', link: '/fees/history' },
   ];
 
   return (
@@ -205,7 +198,11 @@ export default function StudentHome() {
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-4">
               {quickStats.map((stat, i) => (
-                <div key={i} className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center">
+                <div 
+                  key={i} 
+                  onClick={() => stat.link ? navigate(stat.link) : null}
+                  className={`bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center ${stat.link ? 'cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors' : ''}`}
+                >
                   <div className={`${stat.bg} dark:bg-slate-800 p-2 rounded-lg mb-2`}>
                     <stat.icon className={`${stat.color} w-5 h-5`} />
                   </div>
