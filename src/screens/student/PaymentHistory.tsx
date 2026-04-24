@@ -89,7 +89,7 @@ export default function PaymentHistory() {
 
   // Helper to extract clean dept name
   const cleanStr = (str: string) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
-  const dept = cleanStr(profile?.courseId) || cleanStr(profile?.courseName) || cleanStr(profile?.department) || '';
+  const dept = cleanStr(profile?.courseId) || cleanStr(profile?.courseName) || cleanStr(profile?.department) || 'BCA';
   const currentSem = Number(profile?.semester) || 1;
 
   // Generate an array of semesters from 1 to the student's current semester
@@ -167,18 +167,67 @@ export default function PaymentHistory() {
               {(() => {
                 let hasAnyDues = false;
                 
-                // Find the first semester with due fees
-                const firstDueSem = semestersDue.find(sem => {
+                const cards = semestersDue.map(sem => {
                     const expectedAmount = feeStructure[dept]?.[sem] || 0;
                     const semPayments = payments.filter(p => Number(p.semester) === sem);
                     const paidAmount = semPayments
                       .filter(p => p.status === 'confirmed')
                       .reduce((sum, p) => sum + Number(p.amount), 0);
+                    const pendingAmount = semPayments
+                      .filter(p => p.status === 'pending')
+                      .reduce((sum, p) => sum + Number(p.amount), 0);
                     const dueAmount = Math.max(0, expectedAmount - paidAmount);
-                    return expectedAmount > 0 && dueAmount > 0;
-                });
+                    
+                    if (expectedAmount === 0 || dueAmount === 0) return null;
 
-                if (!firstDueSem) {
+                    hasAnyDues = true;
+
+                    return (
+                        <div key={sem} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-6 mb-4">
+                            <div className="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
+                                <div>
+                                    <h3 className="font-bold text-slate-900 dark:text-white text-lg">Semester {sem} Tuition Fee</h3>
+                                    <p className="text-sm text-slate-500 dark:text-slate-400">Department: {dept}</p>
+                                </div>
+                                <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-700">
+                                    {paidAmount > 0 ? 'Partly Paid' : 'Due'}
+                                </span>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center">
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Expected Fee</p>
+                                    <p className="font-bold text-slate-900 dark:text-white">₹{expectedAmount.toLocaleString()}</p>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Paid Amount</p>
+                                    <p className="font-bold text-green-600">₹{paidAmount.toLocaleString()}</p>
+                                </div>
+                                {pendingAmount > 0 && (
+                                    <div className="flex justify-between items-center text-orange-500 bg-orange-50 dark:bg-orange-900/10 p-3 rounded-xl border border-orange-100 dark:border-orange-900/30">
+                                        <p className="text-sm font-bold uppercase tracking-wider">Processing</p>
+                                        <p className="font-bold">₹{pendingAmount.toLocaleString()}</p>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                                <div>
+                                    <p className="text-xs text-red-500 uppercase font-bold tracking-wider mb-1">Remaining Due</p>
+                                    <p className="text-3xl font-bold text-red-600">₹{dueAmount.toLocaleString()}</p>
+                                </div>
+                                <button 
+                                    onClick={() => setSelectedSemester(sem)}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
+                                >
+                                    <Upload className="w-5 h-5" /> Pay Now
+                                </button>
+                            </div>
+                        </div>
+                    );
+                }).filter(Boolean);
+
+                if (cards.length === 0) {
                     return (
                        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 rounded-3xl shadow-lg text-center text-white">
                           <CheckCircle className="w-16 h-16 text-white/80 mx-auto mb-4" />
@@ -188,60 +237,7 @@ export default function PaymentHistory() {
                     );
                 }
 
-                const sem = firstDueSem;
-                const expectedAmount = feeStructure[dept]?.[sem] || 0;
-                const semPayments = payments.filter(p => Number(p.semester) === sem);
-                const paidAmount = semPayments
-                  .filter(p => p.status === 'confirmed')
-                  .reduce((sum, p) => sum + Number(p.amount), 0);
-                const pendingAmount = semPayments
-                  .filter(p => p.status === 'pending')
-                  .reduce((sum, p) => sum + Number(p.amount), 0);
-                const dueAmount = Math.max(0, expectedAmount - paidAmount);
-
-                return (
-                    <div key={sem} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-6 mb-4">
-                      <div className="flex justify-between items-start border-b border-slate-100 dark:border-slate-800 pb-4">
-                        <div>
-                          <h3 className="font-bold text-slate-900 dark:text-white text-lg">Semester {sem} Tuition Fee</h3>
-                          <p className="text-sm text-slate-500 dark:text-slate-400">Department: {dept}</p>
-                        </div>
-                        <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-700">
-                           {paidAmount > 0 ? 'Partly Paid' : 'Due'}
-                        </span>
-                      </div>
-
-                      <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                          <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Expected Fee</p>
-                          <p className="font-bold text-slate-900 dark:text-white">₹{expectedAmount.toLocaleString()}</p>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <p className="text-sm text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">Paid Amount</p>
-                          <p className="font-bold text-green-600">₹{paidAmount.toLocaleString()}</p>
-                        </div>
-                        {pendingAmount > 0 && (
-                          <div className="flex justify-between items-center text-orange-500 bg-orange-50 dark:bg-orange-900/10 p-3 rounded-xl border border-orange-100 dark:border-orange-900/30">
-                            <p className="text-sm font-bold uppercase tracking-wider">Processing</p>
-                            <p className="font-bold">₹{pendingAmount.toLocaleString()}</p>
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                        <div>
-                           <p className="text-xs text-red-500 uppercase font-bold tracking-wider mb-1">Remaining Due</p>
-                           <p className="text-3xl font-bold text-red-600">₹{dueAmount.toLocaleString()}</p>
-                        </div>
-                        <button 
-                          onClick={() => setSelectedSemester(sem)}
-                          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
-                        >
-                          <Upload className="w-5 h-5" /> Pay Now
-                        </button>
-                      </div>
-                    </div>
-                );
+                return cards;
               })()}
             </div>
           </div>

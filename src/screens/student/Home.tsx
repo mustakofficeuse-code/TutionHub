@@ -114,17 +114,23 @@ export default function StudentHome() {
     // Calculate Fee Stats
     const cleanStr = (str: string) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
     const dept = cleanStr(profile?.courseId) || cleanStr(profile?.courseName) || cleanStr(profile?.department) || 'BCA';
-    const sem = profile?.semester || '1';
-    const structFee = feeStructure[dept]?.[sem] || 0;
+    const currentSem = Number(profile?.semester) || 1;
     
-    const semPayments = studentFees.filter(f => Number(f.semester) === Number(sem));
-    const paidAmount = semPayments.filter(f => f.status === 'confirmed').reduce((acc, f) => acc + Number(f.amount || 0), 0);
-    const amountDue = Math.max(0, structFee - paidAmount);
+    // Calculate total dues across all semesters
+    let totalExpected = 0;
+    let totalPaid = 0;
+    for (let s = 1; s <= currentSem; s++) {
+      totalExpected += feeStructure[dept]?.[s] || 0;
+    }
+    totalPaid = studentFees
+      .filter(f => f.status === 'confirmed' && Number(f.semester) <= currentSem)
+      .reduce((acc, f) => acc + Number(f.amount || 0), 0);
+    const amountDue = Math.max(0, totalExpected - totalPaid);
     
     let status = 'No Fee Set';
-    if (structFee > 0) {
+    if (totalExpected > 0) {
       if (amountDue === 0) status = 'Paid';
-      else if (paidAmount > 0) status = 'Partly Paid';
+      else if (totalPaid > 0) status = 'Partly Paid';
       else status = 'Due';
     }
 
