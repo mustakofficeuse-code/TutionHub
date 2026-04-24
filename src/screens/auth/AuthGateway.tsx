@@ -34,7 +34,37 @@ export default function AuthGateway() {
       setIsExistingStudent(true);
     }
     checkSetup();
-  }, []);
+    
+    // Auto-recover deleted profile if user is already authenticated
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        try {
+          const userDocRef = doc(db, 'users', user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+          if (!userDocSnap.exists()) {
+             // Recreate minimum profile
+             await setDoc(userDocRef, {
+               uid: user.uid,
+               name: user.email?.split('@')[0] || 'Recovered Student',
+               email: user.email,
+               role: user.email === 'teacher@tutionhub.com' || user.email === 'admin@tutionhub.com' ? 'teacher' : 'student',
+               semester: '1',
+               courseName: 'General',
+               courseId: 'general',
+               createdAt: new Date().toISOString(),
+               profileComplete: true
+             });
+             refreshProfile();
+             navigate('/');
+          }
+        } catch (e) {
+          console.error("Auto recovery failed", e);
+        }
+      }
+    });
+    
+    return () => unsubscribe();
+  }, [navigate, refreshProfile]);
 
   const checkSetup = async () => {
     try {

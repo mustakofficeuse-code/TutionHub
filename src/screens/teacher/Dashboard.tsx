@@ -259,7 +259,8 @@ export default function TeacherDashboard() {
   };
 
   const renderStudentGroup = (department: string) => {
-    const deptStudents = allStudents.filter(s => s.courseName === department || s.courseId === department.toLowerCase());
+    const deptUpper = department.toUpperCase();
+    const deptStudents = allStudents.filter(s => (s.courseName && s.courseName.toUpperCase() === deptUpper) || (s.courseId && s.courseId.toUpperCase() === deptUpper));
     
     // Group by semester
     const bySemester = deptStudents.reduce((acc: any, student) => {
@@ -525,12 +526,22 @@ export default function TeacherDashboard() {
                     Course Management
                   </h2>
                   <div className="flex gap-2">
-                    <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-xs font-bold uppercase">BCA</span>
-                    <span className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-400 rounded-full text-xs font-bold uppercase">BSC</span>
+                    {(Array.from(new Set(allStudents.filter(s => s.courseName).map(s => String(s.courseName).toUpperCase()))) as string[]).map(dept => (
+                      <span key={dept} className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-xs font-bold uppercase">{dept}</span>
+                    ))}
                   </div>
                 </div>
-                {renderStudentGroup('BCA')}
-                {renderStudentGroup('BSC')}
+                {(Array.from(new Set(allStudents.filter(s => s.courseName).map(s => String(s.courseName).toUpperCase()))) as string[]).length > 0 ? (
+                  (Array.from(new Set(allStudents.filter(s => s.courseName).map(s => String(s.courseName).toUpperCase()))) as string[]).map(dept => (
+                    <div key={dept}>
+                      {renderStudentGroup(dept || 'BCA')}
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8 text-slate-500 dark:text-slate-400">
+                    No students enrolled yet.
+                  </div>
+                )}
                 
                 {/* Blocks List */}
                 <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 mt-8">
