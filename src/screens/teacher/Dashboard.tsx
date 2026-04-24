@@ -46,6 +46,7 @@ export default function TeacherDashboard() {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const [allStudents, setAllStudents] = useState<any[]>([]);
+  const [blacklist, setBlacklist] = useState<string[]>([]);
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
   const [locationConfigured, setLocationConfigured] = useState<boolean>(true);
   
@@ -56,9 +57,9 @@ export default function TeacherDashboard() {
   const [editDepartment, setEditDepartment] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   
-  // Delete Confirmation State
-  const [studentToDelete, setStudentToDelete] = useState<any | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  // Block Confirmation State
+  const [studentToBlock, setStudentToBlock] = useState<any | null>(null);
+  const [isBlocking, setIsBlocking] = useState(false);
   
   // Real-time stats
   const [totalStudents, setTotalStudents] = useState(0);
@@ -80,6 +81,7 @@ export default function TeacherDashboard() {
     const unsubFees = listenToPendingFees();
     const unsubRecent = listenToRecentAttendance();
     const unsubNotifs = listenToNotifications();
+    const unsubBlacklist = listenToBlacklist();
 
     return () => {
       unsubStudents();
@@ -87,8 +89,15 @@ export default function TeacherDashboard() {
       unsubFees();
       unsubRecent();
       unsubNotifs();
+      unsubBlacklist();
     };
   }, []);
+
+  const listenToBlacklist = () => {
+    return onSnapshot(collection(db, 'blacklist'), (snapshot) => {
+      setBlacklist(snapshot.docs.map(doc => doc.id));
+    });
+  };
 
   const listenToNotifications = () => {
     const q = query(collection(db, 'notifications'), orderBy('timestamp', 'desc'), limit(10));
@@ -193,30 +202,30 @@ export default function TeacherDashboard() {
     },
   ];
 
-  const handleDeleteStudent = async () => {
-    if (!studentToDelete) return;
-    setIsDeleting(true);
+  const handleToggleBlock = async (student: any) => {
+    if (!student || !student.email) return;
+    setIsBlocking(true);
+
+    const isCurrentlyBlocked = blacklist.includes(student.email);
 
     try {
-      // 1. Add to blacklist to prevent re-enrollment
-      if (studentToDelete.email) {
-        await setDoc(doc(db, 'blacklist', studentToDelete.email), {
-          email: studentToDelete.email,
-          name: studentToDelete.name,
-          deletedAt: new Date().toISOString()
+      if (isCurrentlyBlocked) {
+        // Unblock
+        await deleteDoc(doc(db, 'blacklist', student.email));
+      } else {
+        // Block
+        await setDoc(doc(db, 'blacklist', student.email), {
+          email: student.email,
+          name: student.name,
+          blockedAt: new Date().toISOString()
         });
       }
-
-      // 2. Delete the user document
-      await deleteDoc(doc(db, 'users', studentToDelete.id));
-      
-      // Note: The AuthContext listener will detect the deletion and force logout for the student
-      setStudentToDelete(null);
+      setStudentToBlock(null);
     } catch (error) {
-      console.error("Error deleting student:", error);
-      alert("Failed to delete student");
+      console.error("Error toggling block status:", error);
+      alert("Failed to update student access");
     } finally {
-      setIsDeleting(false);
+      setIsBlocking(false);
     }
   };
 
@@ -290,14 +299,23 @@ export default function TeacherDashboard() {
                   <div className="h-px bg-slate-100 dark:bg-slate-800 flex-1"></div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-4 border-l-2 border-slate-50 dark:border-slate-900">
-                  {bySemester[sem].map((student: any) => (
-                    <div key={student.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800 group/item hover:border-blue-200 dark:hover:border-blue-900 transition-all">
+                  {bySemester[sem].map((student: any) => {
+                    const isBlocked = blacklist.includes(student.email);
+                    return (
+                    <div key={student.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${isBlocked ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900'}`}>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-lg flex items-center justify-center">
-                          <User className="w-5 h-5 text-slate-400" />
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isBlocked ? 'bg-red-100 dark:bg-red-900/20' : 'bg-white dark:bg-slate-900'}`}>
+                          <User className={`w-5 h-5 ${isBlocked ? 'text-red-500' : 'text-slate-400'}`} />
                         </div>
                         <div>
-                          <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name}</p>
+                            {isBlocked && (
+                              <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 uppercase tracking-widest">
+                                Suspended
+                              </span>
+                            )}
+                          </div>
                           <p className="text-xs text-slate-500 dark:text-slate-400">{student.email}</p>
                         </div>
                       </div>
@@ -310,15 +328,15 @@ export default function TeacherDashboard() {
                           <Edit className="w-4 h-4" />
                         </button>
                         <button 
-                          onClick={() => setStudentToDelete(student)}
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
-                          title="Delete Student"
+                          onClick={() => setStudentToBlock(student)}
+                          className={`p-2 rounded-lg transition-all ${isBlocked ? 'text-red-500 bg-red-50 dark:bg-red-900/20 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/40' : 'text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
+                          title={isBlocked ? "Unblock Student" : "Block Student"}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
                     </div>
-                  ))}
+                  )})}
                 </div>
               </div>
             ))}
@@ -676,31 +694,33 @@ export default function TeacherDashboard() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {studentToDelete && (
+      {/* Block Confirmation Modal */}
+      {studentToBlock && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800">
-            <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mb-6 mx-auto">
-              <Trash2 className="w-8 h-8 text-red-600" />
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 mx-auto ${blacklist.includes(studentToBlock.email) ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
+              <Trash2 className={`w-8 h-8 ${blacklist.includes(studentToBlock.email) ? 'text-orange-600' : 'text-red-600'}`} />
             </div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white text-center mb-2">Delete Student?</h3>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white text-center mb-2">
+              {blacklist.includes(studentToBlock.email) ? 'Unblock Student?' : 'Suspend Student?'}
+            </h3>
             <p className="text-slate-500 dark:text-slate-400 text-center mb-8">
-              Are you sure you want to delete <span className="font-bold text-slate-900 dark:text-white">{studentToDelete.name}</span>? 
-              They will be logged out immediately and blocked from re-enrolling.
+              Are you sure you want to {blacklist.includes(studentToBlock.email) ? 'unblock' : 'suspend'} <span className="font-bold text-slate-900 dark:text-white">{studentToBlock.name}</span>? 
+              {blacklist.includes(studentToBlock.email) ? ' They will regain access to their account.' : ' They will be logged out and blocked from accessing their account.'}
             </p>
             <div className="flex gap-3">
               <button 
-                onClick={() => setStudentToDelete(null)}
+                onClick={() => setStudentToBlock(null)}
                 className="flex-1 py-3 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all"
               >
                 Cancel
               </button>
               <button 
-                onClick={handleDeleteStudent}
-                disabled={isDeleting}
-                className="flex-1 py-3 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all shadow-lg shadow-red-100 dark:shadow-none flex items-center justify-center gap-2"
+                onClick={() => handleToggleBlock(studentToBlock)}
+                disabled={isBlocking}
+                className={`flex-1 py-3 text-white font-bold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 ${blacklist.includes(studentToBlock.email) ? 'bg-orange-600 hover:bg-orange-700 shadow-orange-100 dark:shadow-none' : 'bg-red-600 hover:bg-red-700 shadow-red-100 dark:shadow-none'}`}
               >
-                {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Delete Student'}
+                {isBlocking ? <Loader2 className="w-5 h-5 animate-spin" /> : (blacklist.includes(studentToBlock.email) ? 'Unblock' : 'Suspend')}
               </button>
             </div>
           </div>

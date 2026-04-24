@@ -29,7 +29,8 @@ export default function FeeManagement() {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentStudent, setPaymentStudent] = useState<any>(null);
   const [paymentSemester, setPaymentSemester] = useState<number>(0);
-  
+  const [isManualPayment, setIsManualPayment] = useState(false);
+
   const [feeStructure, setFeeStructure] = useState<any>({
     BCA: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 },
     BSC: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 },
@@ -190,6 +191,18 @@ export default function FeeManagement() {
             <p className="text-slate-500 dark:text-slate-400">Track and manage student tuition fees seamlessly</p>
           </div>
           <div className="flex items-center gap-3">
+             <button
+               onClick={() => {
+                 setPaymentStudent(null);
+                 setPaymentSemester(1);
+                 setPaymentAmount('');
+                 setIsManualPayment(true);
+                 setShowPaymentModal(true);
+               }}
+               className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold transition-all text-sm flex items-center gap-2"
+             >
+               + Record Payment
+             </button>
             <button 
               onClick={handleClearData}
               className="px-4 py-3 border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-2xl font-bold transition-all text-sm"
@@ -376,6 +389,7 @@ export default function FeeManagement() {
                                         setPaymentStudent(student);
                                         setPaymentSemester(currentSem);
                                         setPaymentAmount(amountDue.toString());
+                                        setIsManualPayment(false);
                                         setShowPaymentModal(true);
                                       }}
                                       className="px-4 py-2 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors whitespace-nowrap"
@@ -387,6 +401,7 @@ export default function FeeManagement() {
                                         setPaymentStudent(student);
                                         setPaymentSemester(currentSem);
                                         setPaymentAmount('');
+                                        setIsManualPayment(false);
                                         setShowPaymentModal(true);
                                       }}
                                       className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
@@ -459,7 +474,7 @@ export default function FeeManagement() {
         )}
       </div>
 
-      {showPaymentModal && paymentStudent && (
+      {showPaymentModal && (
          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
              <div className="flex justify-between items-center mb-6">
@@ -467,10 +482,53 @@ export default function FeeManagement() {
                <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-600"><X className="w-6 h-6"/></button>
              </div>
              <form onSubmit={handleTeacherPaymentReceipt} className="space-y-4 text-left">
-               <div>
-                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Student: <span className="text-blue-600">{paymentStudent.name}</span></p>
-                  <p className="text-xs text-slate-500">Sem {paymentSemester}</p>
-               </div>
+               {isManualPayment ? (
+                 <>
+                   <div>
+                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                       Select Student
+                     </label>
+                     <select
+                       required
+                       className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-sm"
+                       value={paymentStudent?.id || paymentStudent?.uid || ''}
+                       onChange={(e) => {
+                         const student = students.find(s => s.id === e.target.value || s.uid === e.target.value);
+                         setPaymentStudent(student || null);
+                       }}
+                     >
+                       <option value="" disabled>Select a student</option>
+                       {students.map(s => (
+                         <option key={s.id || s.uid} value={s.id || s.uid}>
+                           {s.name} ({s.courseName || s.department || 'N/A'})
+                         </option>
+                       ))}
+                     </select>
+                   </div>
+                   <div>
+                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                       Semester
+                     </label>
+                     <select
+                       required
+                       className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-sm"
+                       value={paymentSemester}
+                       onChange={(e) => setPaymentSemester(Number(e.target.value))}
+                     >
+                       {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
+                         <option key={sem} value={sem}>Semester {sem}</option>
+                       ))}
+                     </select>
+                   </div>
+                 </>
+               ) : (
+                 paymentStudent && (
+                   <div>
+                      <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Student: <span className="text-blue-600">{paymentStudent.name}</span></p>
+                      <p className="text-xs text-slate-500">Sem {paymentSemester}</p>
+                   </div>
+                 )
+               )}
                <div>
                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
                    Amount Received (₹)
