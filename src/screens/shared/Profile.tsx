@@ -148,9 +148,21 @@ export default function Profile() {
     setPasswordMessage({ type: '', text: '' });
 
     try {
-      // Re-authenticate first to prevent 'auth/requires-recent-login' error
-      const credential = EmailAuthProvider.credential(auth.currentUser.email, currentPassword);
-      await reauthenticateWithCredential(auth.currentUser, credential);
+      if (auth.currentUser.email) {
+        // Re-authenticate first to prevent 'auth/requires-recent-login' error
+        const credential = EmailAuthProvider.credential(auth.currentUser.email, currentPassword);
+        try {
+          await reauthenticateWithCredential(auth.currentUser, credential);
+        } catch (reauthErr: any) {
+          console.error("Re-authentication failed:", reauthErr);
+          if (reauthErr.code === 'auth/wrong-password' || reauthErr.code === 'auth/invalid-credential') {
+             setPasswordMessage({ type: 'error', text: 'Incorrect current password.' });
+             setPasswordLoading(false);
+             return;
+          }
+          throw reauthErr; // Let the main catch block handle other reauth errors
+        }
+      }
 
       await updatePassword(auth.currentUser, newPassword);
       setPasswordMessage({ type: 'success', text: 'Password updated successfully!' });
@@ -162,9 +174,9 @@ export default function Profile() {
       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         setPasswordMessage({ type: 'error', text: 'Incorrect current password.' });
       } else if (error.code === 'auth/requires-recent-login') {
-        setPasswordMessage({ type: 'error', text: 'Session expired. Please logout and login again.' });
+        setPasswordMessage({ type: 'error', text: 'Session expired. Please logout and login again to change your password.' });
       } else {
-        setPasswordMessage({ type: 'error', text: 'Failed to update password.' });
+        setPasswordMessage({ type: 'error', text: 'Failed to update password. ' + (error.message || '') });
       }
     } finally {
       setPasswordLoading(false);

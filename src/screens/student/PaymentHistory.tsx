@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, getDoc, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -12,31 +12,41 @@ import {
   Loader2,
   Hash,
   XCircle,
-  User
+  User,
+  Info
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function PaymentHistory() {
   const { profile } = useAuth();
   const navigate = useNavigate();
-  const [fees, setFees] = useState<any[]>([]);
+  const [payments, setPayments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [selectedFee, setSelectedFee] = useState<any>(null);
+  const [selectedSemester, setSelectedSemester] = useState<number | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'offline' | 'online' | null>(null);
   const [transactionId, setTransactionId] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [feeStructure, setFeeStructure] = useState<any>({});
 
   useEffect(() => {
-    if (profile) fetchFees();
+    if (profile) fetchData();
   }, [profile]);
 
-  const fetchFees = async () => {
+  const fetchData = async () => {
     try {
-      const q = query(collection(db, 'fees'), where('studentId', '==', profile?.uid));
+      // Fetch global fee structure
+      const structSnap = await getDoc(doc(db, 'config', 'feeStructure'));
+      if (structSnap.exists()) {
+        setFeeStructure(structSnap.data());
+      }
+      
+      // Fetch all payments made by this student
+      const q = query(collection(db, 'payments'), where('studentId', '==', profile?.uid));
       const querySnapshot = await getDocs(q);
-      setFees(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setPayments(querySnapshot.docs.map(d => ({ id: d.id, ...d.data() })));
     } catch (error) {
-      console.error("Error fetching fees:", error);
+      console.error("Error fetching fee details:", error);
     } finally {
       setLoading(false);
     }
@@ -44,23 +54,26 @@ export default function PaymentHistory() {
 
   const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!transactionId || !selectedFee || !profile) return;
+    if (!transactionId || !selectedSemester || !profile || !paymentAmount) return;
 
     setSubmitting(true);
     try {
       await addDoc(collection(db, 'payments'), {
         studentId: profile.uid,
-        feeId: selectedFee.id,
-        courseId: profile.courseId || '',
-        amount: selectedFee.amount,
+        semester: selectedSemester,
+        courseId: profile.courseId || profile.department || profile.courseName || '',
+        amount: Number(paymentAmount),
         transactionId,
         status: 'pending',
         timestamp: new Date().toISOString()
       });
 
-      setSelectedFee(null);
+      setSelectedSemester(null);
       setTransactionId('');
+      setPaymentAmount('');
+      setPaymentMethod(null);
       alert('Payment reference submitted successfully! Teacher will verify it soon.');
+      fetchData();
     } catch (error) {
       console.error("Error submitting payment:", error);
       alert('Failed to submit payment reference.');
@@ -68,6 +81,14 @@ export default function PaymentHistory() {
       setSubmitting(false);
     }
   };
+
+  // Helper to extract clean dept name
+  const cleanStr = (str: string) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
+  const dept = cleanStr(profile?.courseId) || cleanStr(profile?.courseName) || cleanStr(profile?.department) || '';
+  const currentSem = Number(profile?.semester) || 1;
+
+  // Generate an array of semesters from 1 to the student's current semester
+  const semestersDue = Array.from({ length: currentSem }, (_, i) => i + 1);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24">
@@ -93,60 +114,95 @@ export default function PaymentHistory() {
             <div className="flex justify-center py-12">
               <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
             </div>
-          ) : fees.length === 0 ? (
-            <div className="bg-white dark:bg-slate-900 p-12 rounded-3xl text-center border border-slate-100 dark:border-slate-800">
-              <p className="text-slate-500 dark:text-slate-400">No fee records found.</p>
-            </div>
           ) : (
-            fees.map((fee) => (
-              <div key={fee.id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-lg">Semester {fee.semester} Tuition Fee</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
-                      <Clock className="w-4 h-4" /> Due: {new Date(fee.dueDate).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                    fee.status === 'paid' ? 'bg-green-100 text-green-700' :
-                    fee.status === 'overdue' ? 'bg-red-100 text-red-700' :
-                    'bg-orange-100 text-orange-700'
-                  }`}>
-                    {fee.status}
-                  </span>
-                </div>
+            semestersDue.map((sem) => {
+              const expectedAmount = feeStructure[dept]?.[sem] || 0;
+              const semPayments = payments.filter(p => Number(p.semester) === sem);
+              const paidAmount = semPayments
+                .filter(p => p.status === 'confirmed')
+                .reduce((sum, p) => sum + Number(p.amount), 0);
+              
+              const pendingAmount = semPayments
+                .filter(p => p.status === 'pending')
+                .reduce((sum, p) => sum + Number(p.amount), 0);
+                
+              const dueAmount = Math.max(0, expectedAmount - paidAmount);
+              
+              let statusText = 'Due';
+              let statusColor = 'bg-orange-100 text-orange-700';
+              
+              if (dueAmount === 0 && expectedAmount > 0) {
+                statusText = 'Full Paid';
+                statusColor = 'bg-green-100 text-green-700';
+              } else if (paidAmount > 0) {
+                statusText = 'Partly Paid';
+                statusColor = 'bg-blue-100 text-blue-700';
+              } else if (expectedAmount === 0) {
+                statusText = 'TBD';
+                statusColor = 'bg-slate-100 text-slate-700';
+              }
 
-                <div className="flex justify-between items-center pt-4 border-t border-slate-50">
-                  <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Amount</p>
-                    <p className="text-2xl font-bold text-slate-900 dark:text-white">₹{fee.amount.toLocaleString()}</p>
+              return (
+                <div key={sem} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-slate-900 dark:text-white text-lg">Semester {sem} Tuition Fee</h3>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1">
+                         Department: {dept}
+                      </p>
+                    </div>
+                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${statusColor}`}>
+                      {statusText}
+                    </span>
                   </div>
-                  {fee.status !== 'paid' && (
-                    <button 
-                      onClick={() => setSelectedFee(fee)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100"
-                    >
-                      <Upload className="w-4 h-4" /> Pay Now
-                    </button>
+
+                  <div className="flex justify-between items-center pt-4 border-t border-slate-50 dark:border-slate-800">
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Expected Fee</p>
+                      <p className="text-lg font-bold text-slate-900 dark:text-white">₹{expectedAmount.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 uppercase font-bold tracking-wider">Paid / Processing</p>
+                      <p className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <span className="text-green-600">₹{paidAmount.toLocaleString()}</span>
+                        {pendingAmount > 0 && <span className="text-orange-500 text-sm">(+ ₹{pendingAmount.toLocaleString()} pending)</span>}
+                      </p>
+                    </div>
+                  </div>
+
+                  {dueAmount > 0 && (
+                    <div className="pt-4 border-t border-slate-50 flex justify-between items-center dark:border-slate-800">
+                      <div>
+                         <p className="text-xs text-red-500 uppercase font-bold tracking-wider">Remaining Due</p>
+                         <p className="text-2xl font-bold text-red-600">₹{dueAmount.toLocaleString()}</p>
+                      </div>
+                      <button 
+                        onClick={() => setSelectedSemester(sem)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-2 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
+                      >
+                        <Upload className="w-4 h-4" /> Pay Now
+                      </button>
+                    </div>
                   )}
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
 
       {/* Payment Modal */}
-      {selectedFee && (
+      {selectedSemester && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50 overflow-y-auto">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl my-8">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">Choose Payment Method</h3>
               <button 
                 onClick={() => {
-                  setSelectedFee(null);
+                  setSelectedSemester(null);
                   setPaymentMethod(null);
                   setTransactionId('');
+                  setPaymentAmount('');
                 }}
                 className="text-slate-400 hover:text-slate-600"
               >
@@ -221,17 +277,31 @@ export default function PaymentHistory() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">Scan to Pay ₹{selectedFee.amount.toLocaleString()}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white">Upload Reference for Sem {selectedSemester}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 italic px-4">
                       "Education is the most powerful weapon which you can use to change the world. Your timely fee payment helps us maintain the quality of education and support your learning journey."
                     </p>
                   </div>
                 </div>
 
-                <form onSubmit={handleUpload} className="space-y-4">
+                <form onSubmit={handleUpload} className="space-y-4 text-left">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                      Transaction ID / Reference Number
+                      Amount Paid (₹)
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      placeholder="e.g. 5000"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                    />
+                  </div>
+                
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                      Transaction UID / UTR
                     </label>
                     <div className="relative">
                       <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
@@ -246,7 +316,7 @@ export default function PaymentHistory() {
                     </div>
                   </div>
 
-                  <div className="flex gap-3">
+                  <div className="flex gap-3 pt-2">
                     <button 
                       type="button"
                       onClick={() => setPaymentMethod(null)}
@@ -256,8 +326,8 @@ export default function PaymentHistory() {
                     </button>
                     <button 
                       type="submit"
-                      disabled={!transactionId || submitting}
-                      className="flex-2 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none disabled:bg-slate-300 disabled:shadow-none flex items-center justify-center gap-2"
+                      disabled={!transactionId || !paymentAmount || submitting}
+                      className="flex-2 w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none disabled:bg-slate-300 disabled:shadow-none flex items-center justify-center gap-2"
                     >
                       {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Submit Proof'}
                     </button>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, getDocs, addDoc, updateDoc, doc, where, getDoc, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, query, getDocs, updateDoc, doc, getDoc, setDoc, writeBatch, addDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { 
   CreditCard, 
@@ -7,10 +7,8 @@ import {
   Search, 
   Filter, 
   CheckCircle, 
-  XCircle, 
-  Clock, 
+  X,
   ArrowLeft,
-  Plus,
   Loader2,
   User,
   MoreVertical,
@@ -22,16 +20,16 @@ export default function FeeManagement() {
   const navigate = useNavigate();
   const [students, setStudents] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
-  const [fees, setFees] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [showAddFee, setShowAddFee] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState('');
-  const [selectedCourse, setSelectedCourse] = useState('all');
-  const [modalDepartment, setModalDepartment] = useState('');
-  const [amount, setAmount] = useState('');
-  const [dueDate, setDueDate] = useState('');
-  const [semester, setSemester] = useState('');
   const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCourse, setSelectedCourse] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentStudent, setPaymentStudent] = useState<any>(null);
+  const [paymentSemester, setPaymentSemester] = useState<number>(0);
+  
   const [feeStructure, setFeeStructure] = useState<any>({
     BCA: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 },
     BSC: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 },
@@ -47,14 +45,6 @@ export default function FeeManagement() {
     fetchData();
     fetchFeeStructure();
   }, []);
-
-  useEffect(() => {
-    // Auto-populate amount when department and semester are selected
-    if (showAddFee && modalDepartment && semester && feeStructure[modalDepartment]) {
-      const structFee = feeStructure[modalDepartment][semester] || 0;
-      setAmount(structFee.toString());
-    }
-  }, [modalDepartment, semester, showAddFee, feeStructure]);
 
   const fetchFeeStructure = async () => {
     try {
@@ -72,26 +62,7 @@ export default function FeeManagement() {
     setSavingStructure(true);
     try {
       await setDoc(doc(db, 'config', 'feeStructure'), feeStructure);
-      
-      // Sync pending fees with new structure
-      const feesQuery = query(collection(db, 'fees'), where('status', '==', 'pending'));
-      const feesSnap = await getDocs(feesQuery);
-      
-      const updatePromises = feesSnap.docs.map(async (feeDoc) => {
-        const feeData = feeDoc.data();
-        const dept = feeData.courseId?.toUpperCase();
-        const sem = feeData.semester;
-        
-        if (dept && sem && feeStructure[dept] && feeStructure[dept][sem] !== undefined) {
-          const newAmount = feeStructure[dept][sem];
-          if (newAmount !== feeData.amount) {
-            await updateDoc(doc(db, 'fees', feeDoc.id), { amount: newAmount });
-          }
-        }
-      });
-      
-      await Promise.all(updatePromises);
-      alert('Fee structure updated and all pending student fees have been synchronized!');
+      alert('Fee structure updated successfully!');
       fetchData();
     } catch (error) {
       console.error("Error saving fee structure:", error);
@@ -113,7 +84,6 @@ export default function FeeManagement() {
 
   const fetchData = async () => {
     try {
-      // Instead of an exact where() query which might miss capitalization differences, fetch all users and filter
       const userSnap = await getDocs(collection(db, 'users'));
       const allUsers = userSnap.docs.map(doc => ({ id: doc.id, ...doc.data() as any }));
       const studentUsers = allUsers.filter(u => String(u.role).toLowerCase() === 'student' || u.studentId);
@@ -121,9 +91,6 @@ export default function FeeManagement() {
 
       const courseSnap = await getDocs(collection(db, 'courses'));
       setCourses(courseSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-
-      const feeSnap = await getDocs(collection(db, 'fees'));
-      setFees(feeSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
 
       const paymentSnap = await getDocs(collection(db, 'payments'));
       setPayments(paymentSnap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
@@ -134,55 +101,26 @@ export default function FeeManagement() {
     }
   };
 
-  const confirmPayment = async (paymentId: string, feeId: string) => {
+  const confirmPayment = async (paymentId: string) => {
     try {
       await updateDoc(doc(db, 'payments', paymentId), { status: 'confirmed' });
-      await updateDoc(doc(db, 'fees', feeId), { status: 'paid' });
       fetchData();
     } catch (error) {
       console.error("Error confirming payment:", error);
     }
   };
 
-  const handleAddFee = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const student = students.find(s => s.uid === selectedStudent);
-    try {
-      await addDoc(collection(db, 'fees'), {
-        studentId: selectedStudent,
-        courseId: student?.courseName || modalDepartment || '', // Save readable courseName or department if possible
-        amount: Number(amount),
-        dueDate,
-        semester,
-        status: 'pending',
-        createdAt: new Date().toISOString()
-      });
-      setShowAddFee(false);
-      setModalDepartment('');
-      setSemester('');
-      setSelectedStudent('');
-      setAmount('');
-      setDueDate('');
-      fetchData();
-    } catch (error) {
-      console.error("Error adding fee:", error);
-    }
-  };
-
   const handleClearData = async () => {
-    if (!window.confirm("Are you sure you want to delete ALL payment and fee history?")) return;
+    if (!window.confirm("Are you sure you want to delete ALL payment history?")) return;
     try {
       setLoading(true);
       const batch = writeBatch(db);
-      
-      const feesSnap = await getDocs(collection(db, 'fees'));
-      feesSnap.forEach(docSnap => batch.delete(docSnap.ref));
       
       const paymentsSnap = await getDocs(collection(db, 'payments'));
       paymentsSnap.forEach(docSnap => batch.delete(docSnap.ref));
       
       await batch.commit();
-      alert("All fee and payment data successfully wiped!");
+      alert("All payment data successfully wiped!");
       fetchData();
     } catch (error) {
       console.error("Error clearing data:", error);
@@ -190,18 +128,51 @@ export default function FeeManagement() {
       setLoading(false);
     }
   };
-
-  const updateFeeStatus = async (feeId: string, status: string) => {
+  
+  const handleTeacherPaymentReceipt = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!paymentStudent || !paymentSemester || !paymentAmount) return;
+    
     try {
-      await updateDoc(doc(db, 'fees', feeId), { status });
+      await addDoc(collection(db, 'payments'), {
+         studentId: paymentStudent.uid || paymentStudent.id,
+         semester: paymentSemester,
+         courseId: paymentStudent.courseId || paymentStudent.department || paymentStudent.courseName || '',
+         amount: Number(paymentAmount),
+         transactionId: 'CASH_RECEIPT_' + Math.random().toString(36).substring(2, 9).toUpperCase(),
+         status: 'confirmed',
+         teacherReceived: true,
+         timestamp: new Date().toISOString()
+      });
+      setShowPaymentModal(false);
+      setPaymentAmount('');
       fetchData();
-    } catch (error) {
-      console.error("Error updating fee status:", error);
+    } catch (err) {
+      console.error("Failed recording payment:", err);
+      alert("Failed recording payment.");
     }
   };
 
+  // Helper to extract clean dept name
+  const cleanStr = (str: any) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
+
+  const filteredStudents = students.filter(s => {
+    const sName = (s.name || '').toLowerCase();
+    const q = searchQuery.toLowerCase();
+    if (q && !sName.includes(q) && !(s.studentId || '').toLowerCase().includes(q)) return false;
+    
+    // Convert old single 'courseId' document dropdown selections
+    if (selectedCourse !== 'all' && selectedCourse) {
+       // A very rough match against courses created by admin
+       const cName = cleanStr(selectedCourse);
+       const sDept = cleanStr(s.courseId) || cleanStr(s.courseName) || cleanStr(s.department);
+       if (sDept !== cName && s.courseId !== selectedCourse) return false;
+    }
+    return true;
+  });
+
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24">
       <button 
         onClick={() => navigate('/')}
         className="mb-8 flex items-center gap-2 text-slate-600 font-semibold hover:text-blue-600 transition-colors"
@@ -216,7 +187,7 @@ export default function FeeManagement() {
               <CreditCard className="text-blue-600 w-7 h-7" />
               Fee Management
             </h1>
-            <p className="text-slate-500 dark:text-slate-400">Track and manage student tuition fees</p>
+            <p className="text-slate-500 dark:text-slate-400">Track and manage student tuition fees seamlessly</p>
           </div>
           <div className="flex items-center gap-3">
             <button 
@@ -224,12 +195,6 @@ export default function FeeManagement() {
               className="px-4 py-3 border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-2xl font-bold transition-all text-sm"
             >
               Wipe Test Data
-            </button>
-            <button 
-              onClick={() => setShowAddFee(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-100 transition-all"
-            >
-              <Plus className="w-5 h-5" /> Create Fee Entry
             </button>
           </div>
         </div>
@@ -242,7 +207,7 @@ export default function FeeManagement() {
               activeTab === 'history' ? 'text-blue-600' : 'text-slate-400 hover:text-slate-600'
             }`}
           >
-            Payment History
+            Student Dues Tracker
             {activeTab === 'history' && <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>}
           </button>
           <button 
@@ -264,22 +229,24 @@ export default function FeeManagement() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                 <input 
                   type="text" 
-                  placeholder="Search student name..."
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
+                  placeholder="Search student name or ID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
                 />
               </div>
               <div className="flex gap-2">
                 <select
-                  className="px-4 py-2 bg-slate-50 dark:bg-slate-950 text-slate-600 rounded-xl text-sm font-semibold border border-slate-200 outline-none"
+                  className="px-4 py-2 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold border border-slate-200 dark:border-slate-800 outline-none"
                   value={selectedCourse}
                   onChange={(e) => setSelectedCourse(e.target.value)}
                 >
-                  <option value="all">All Courses</option>
+                  <option value="all">All Departments/Courses</option>
                   {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  <optgroup label="Raw Departments">
+                     {departments.map(d => <option key={`RAW_${d}`} value={d}>{d}</option>)}
+                  </optgroup>
                 </select>
-                <button className="px-4 py-2 bg-slate-50 dark:bg-slate-950 text-slate-600 rounded-xl text-sm font-semibold flex items-center gap-2 border border-slate-200 hover:bg-slate-100">
-                  <Filter className="w-4 h-4" /> Filter
-                </button>
               </div>
             </div>
 
@@ -289,85 +256,151 @@ export default function FeeManagement() {
                 <thead>
                   <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
                     <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Student</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Amount</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Due Date</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
+                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status & Ledger</th>
                     <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                   {loading ? (
                     <tr>
-                      <td colSpan={5} className="p-12 text-center">
+                      <td colSpan={3} className="p-12 text-center">
                         <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
                       </td>
                     </tr>
-                  ) : fees.length === 0 ? (
+                  ) : filteredStudents.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="p-12 text-center text-slate-500 dark:text-slate-400">
-                        No fee records found.
+                      <td colSpan={3} className="p-12 text-center text-slate-500 dark:text-slate-400">
+                        No students found matching your filters.
                       </td>
                     </tr>
                   ) : (
-                    fees
-                      .filter(f => selectedCourse === 'all' || f.courseId === selectedCourse)
-                      .map((fee) => {
-                        const student = students.find(s => s.uid === fee.studentId);
-                        return (
-                          <tr key={fee.id} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="p-4">
-                              <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center">
-                                  <User className="text-blue-600 w-5 h-5" />
+                    filteredStudents.map((student) => {
+                      const studentId = student.uid || student.id;
+                      const dept = cleanStr(student.courseId) || cleanStr(student.courseName) || cleanStr(student.department);
+                      const currentSem = Number(student.semester) || 1;
+                      
+                      // For dashboard cleanliness, only show their current active semester calculation
+                      const expectedAmount = feeStructure[dept]?.[currentSem] || 0;
+                      
+                      const semPayments = payments.filter(p => p.studentId === studentId && Number(p.semester) === currentSem);
+                      const paidAmount = semPayments
+                         .filter(p => p.status === 'confirmed')
+                         .reduce((sum, p) => sum + Number(p.amount), 0);
+                      
+                      const pendingPayments = semPayments.filter(p => p.status === 'pending');
+                         
+                      const amountDue = Math.max(0, expectedAmount - paidAmount);
+                      
+                      let statusText = 'Due';
+                      let statusColor = 'bg-orange-100 text-orange-700';
+                      
+                      if (amountDue <= 0 && expectedAmount > 0) {
+                        statusText = 'Full Paid';
+                        statusColor = 'bg-green-100 text-green-700';
+                      } else if (paidAmount > 0) {
+                        statusText = 'Partly Paid';
+                        statusColor = 'bg-blue-100 text-blue-700';
+                      } else if (expectedAmount === 0) {
+                        statusText = 'No Fee Set';
+                        statusColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
+                      }
+
+                      return (
+                        <tr key={studentId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                          <td className="p-4 align-top w-1/3">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center shrink-0">
+                                <User className="text-blue-600 w-5 h-5" />
+                              </div>
+                              <div>
+                                <p className="font-bold text-slate-900 dark:text-white">{student.name}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                  {dept || 'No Dept'} • Sem {currentSem} • ID: {student.studentId || 'N/A'}
+                                </p>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-4 align-top w-1/3">
+                            <div className="space-y-3">
+                              <div className="flex items-center gap-2">
+                                <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${statusColor}`}>
+                                  {statusText}
+                                </span>
+                                {pendingPayments.length > 0 && (
+                                   <span className="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-yellow-100 text-yellow-700 shrink-0">
+                                     Verification Pending!
+                                   </span>
+                                )}
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-2 text-sm">
+                                <div>
+                                  <p className="text-[10px] uppercase text-slate-400 font-bold">Total Due</p>
+                                  <p className="font-bold text-slate-900 dark:text-white">₹{expectedAmount.toLocaleString()}</p>
                                 </div>
                                 <div>
-                                  <p className="font-bold text-slate-900 dark:text-white">{student?.name || 'Unknown Student'}</p>
-                                  <p className="text-xs text-slate-500 dark:text-slate-400">{student?.courseName || 'No Course'}</p>
+                                  <p className="text-[10px] uppercase text-slate-400 font-bold">Total Paid</p>
+                                  <p className="font-bold text-green-600">₹{paidAmount.toLocaleString()}</p>
                                 </div>
                               </div>
-                            </td>
-                          <td className="p-4 font-bold text-slate-900 dark:text-white">₹{fee.amount.toLocaleString()}</td>
-                          <td className="p-4 text-sm text-slate-600">{new Date(fee.dueDate).toLocaleDateString()}</td>
-                          <td className="p-4">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                              fee.status === 'paid' ? 'bg-green-100 text-green-700' :
-                              fee.status === 'overdue' ? 'bg-red-100 text-red-700' :
-                              'bg-orange-100 text-orange-700'
-                            }`}>
-                              {fee.status}
-                            </span>
-                          </td>
-                          <td className="p-4 text-right">
-                            <div className="flex justify-end gap-2">
-                              {fee.status === 'pending' && (
-                                <div className="flex flex-col items-end gap-2">
-                                  {payments.filter(p => p.feeId === fee.id && p.status === 'pending').map(p => (
-                                    <div key={p.id} className="bg-blue-50 p-2 rounded-lg border border-blue-100 text-left min-w-[150px]">
-                                      <p className="text-[10px] font-bold text-blue-600 uppercase tracking-wider flex items-center gap-1">
-                                        <Hash className="w-3 h-3" /> Ref: {p.transactionId}
-                                      </p>
+                              
+                              {/* Pending Approvals Queue */}
+                              {pendingPayments.length > 0 && (
+                                <div className="mt-2 space-y-2">
+                                  {pendingPayments.map(p => (
+                                    <div key={p.id} className="bg-blue-50 dark:bg-blue-900/10 p-2 rounded-lg border border-blue-100 dark:border-blue-900/30 flex justify-between items-center">
+                                      <div>
+                                        <p className="text-xs font-bold text-slate-900 dark:text-white">₹{Number(p.amount).toLocaleString()}</p>
+                                        <p className="text-[10px] font-mono text-slate-500 flex items-center gap-1">
+                                          <Hash className="w-3 h-3" /> {p.transactionId}
+                                        </p>
+                                      </div>
                                       <button 
-                                        onClick={() => confirmPayment(p.id, fee.id)}
-                                        className="mt-2 w-full bg-green-600 hover:bg-green-700 text-white text-[10px] font-bold py-1 rounded transition-all"
+                                        onClick={() => confirmPayment(p.id)}
+                                        className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-bold transition-colors shadow-sm"
                                       >
-                                        Confirm
+                                        Verify
                                       </button>
                                     </div>
                                   ))}
                                 </div>
                               )}
-                              {fee.status !== 'paid' && fee.status !== 'pending' && (
-                                <button 
-                                  onClick={() => updateFeeStatus(fee.id, 'paid')}
-                                  className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-                                  title="Mark as Paid"
-                                >
-                                  <CheckCircle className="w-5 h-5" />
-                                </button>
-                              )}
-                              <button className="p-2 text-slate-400 hover:bg-slate-100 rounded-lg transition-colors">
-                                <MoreVertical className="w-5 h-5" />
-                              </button>
+                            </div>
+                          </td>
+                          <td className="p-4 align-top text-right w-1/3">
+                            <div className="flex flex-col sm:flex-row justify-end gap-2">
+                               {amountDue > 0 ? (
+                                  <>
+                                    <button 
+                                      onClick={() => {
+                                        setPaymentStudent(student);
+                                        setPaymentSemester(currentSem);
+                                        setPaymentAmount(amountDue.toString());
+                                        setShowPaymentModal(true);
+                                      }}
+                                      className="px-4 py-2 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 rounded-xl text-xs font-bold hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors whitespace-nowrap"
+                                    >
+                                      Mark Full Paid
+                                    </button>
+                                    <button 
+                                      onClick={() => {
+                                        setPaymentStudent(student);
+                                        setPaymentSemester(currentSem);
+                                        setPaymentAmount('');
+                                        setShowPaymentModal(true);
+                                      }}
+                                      className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors whitespace-nowrap"
+                                    >
+                                      Mark Partly Paid
+                                    </button>
+                                  </>
+                               ) : expectedAmount > 0 ? (
+                                  <span className="text-green-600 font-bold text-sm flex items-center gap-1 justify-end mt-2">
+                                    <CheckCircle className="w-4 h-4" /> Cleared
+                                  </span>
+                               ) : (
+                                  <span className="text-slate-400 text-xs italic mt-2 inline-block">Set fee first</span>
+                               )}
                             </div>
                           </td>
                         </tr>
@@ -426,133 +459,42 @@ export default function FeeManagement() {
         )}
       </div>
 
-      {/* Add Fee Modal */}
-      {showAddFee && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Create Fee Entry</h3>
-            <form onSubmit={handleAddFee} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Department</label>
-                  <select
-                    required
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
-                    value={modalDepartment}
-                    onChange={(e) => {
-                      setModalDepartment(e.target.value);
-                      setSelectedStudent(''); // Reset student when dept changes
-                    }}
-                  >
-                    <option value="">Select Dept</option>
-                    {departments.map(d => <option key={d} value={d}>{d}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Semester</label>
-                  <select
-                    required
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
-                    value={semester}
-                    onChange={(e) => {
-                      setSemester(e.target.value);
-                      setSelectedStudent(''); // Reset student when sem changes
-                    }}
-                  >
-                    <option value="">Select Sem</option>
-                    {[1,2,3,4,5,6,7,8].filter(s => modalDepartment !== 'MCA' || s <= 4).map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Select Student</label>
-                <select
-                  required
-                  disabled={!modalDepartment || !semester}
-                  className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none disabled:opacity-50 text-slate-900 dark:text-white"
-                  value={selectedStudent}
-                  onChange={(e) => setSelectedStudent(e.target.value)}
-                >
-                  <option value="">
-                    {!modalDepartment || !semester ? 'Select Dept & Sem first' : 'Choose Student'}
-                  </option>
-                  
-                  {/* Matching Students */}
-                  <optgroup label={`Matches: ${modalDepartment} Sem ${semester}`}>
-                    {students
-                      .filter(s => {
-                        const cleanStr = (str) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
-                        const cleanNum = (str) => String(str || '').replace(/\D/g, '');
-                        const rawDept = cleanStr(s.courseId) || cleanStr(s.courseName) || cleanStr(s.department) || '';
-                        return rawDept === cleanStr(modalDepartment) && cleanNum(s.semester) === cleanNum(semester);
-                      })
-                      .map(s => <option key={s.id} value={s.uid || s.id}>{s.name} ({s.studentId || 'No ID'})</option>)}
-                  </optgroup>
-
-                  {/* Other Students */}
-                  <optgroup label="Other Students">
-                    {students
-                      .filter(s => {
-                        const cleanStr = (str) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
-                        const cleanNum = (str) => String(str || '').replace(/\D/g, '');
-                        const rawDept = cleanStr(s.courseId) || cleanStr(s.courseName) || cleanStr(s.department) || '';
-                        return !(rawDept === cleanStr(modalDepartment) && cleanNum(s.semester) === cleanNum(semester));
-                      })
-                      .map(s => <option key={s.id} value={s.uid || s.id}>{s.name} ({s.courseName || s.courseId || s.department || 'No Dept'} Sem {s.semester || '?'})</option>)}
-                  </optgroup>
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Amount (₹)</label>
-                  <input
-                    type="number"
-                    required
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
-                    placeholder="Auto-filled"
-                    value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Due Date</label>
-                  <input
-                    type="date"
-                    required
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                  />
-                </div>
-              </div>
-              
-              <div className="flex gap-3 pt-4">
-                <button 
-                  type="button"
-                  onClick={() => {
-                    setShowAddFee(false);
-                    setModalDepartment('');
-                    setSemester('');
-                    setSelectedStudent('');
-                    setAmount('');
-                    setDueDate('');
-                  }}
-                  className="flex-1 py-3 text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
-                >
-                  Create
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+      {showPaymentModal && paymentStudent && (
+         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+           <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+             <div className="flex justify-between items-center mb-6">
+               <h3 className="text-xl font-bold text-slate-900 dark:text-white">Record Cash Receipt</h3>
+               <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-600"><X className="w-6 h-6"/></button>
+             </div>
+             <form onSubmit={handleTeacherPaymentReceipt} className="space-y-4 text-left">
+               <div>
+                  <p className="text-sm font-bold text-slate-700 dark:text-slate-300">Student: <span className="text-blue-600">{paymentStudent.name}</span></p>
+                  <p className="text-xs text-slate-500">Sem {paymentSemester}</p>
+               </div>
+               <div>
+                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                   Amount Received (₹)
+                 </label>
+                 <input
+                   type="number"
+                   required
+                   autoFocus
+                   placeholder="e.g. 5000"
+                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-lg"
+                   value={paymentAmount}
+                   onChange={(e) => setPaymentAmount(e.target.value)}
+                 />
+               </div>
+               <button 
+                 type="submit"
+                 disabled={!paymentAmount}
+                 className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none disabled:bg-slate-300 disabled:shadow-none mt-4"
+               >
+                 Confirm Receipt
+               </button>
+             </form>
+           </div>
+         </div>
       )}
     </div>
   );
