@@ -165,9 +165,8 @@ export default function PaymentHistory() {
                 <CreditCard className="w-6 h-6 text-slate-400" /> Pay Now Dashboard
               </h2>
               {(() => {
-                let hasAnyDues = false;
-                
-                const cards = semestersDue.map(sem => {
+                let totalDue = 0;
+                const overdueCards = semestersDue.map(sem => {
                     const expectedAmount = feeStructure[dept]?.[sem] || 0;
                     const semPayments = payments.filter(p => Number(p.semester) === sem);
                     const paidAmount = semPayments
@@ -180,7 +179,7 @@ export default function PaymentHistory() {
                     
                     if (expectedAmount === 0 || dueAmount === 0) return null;
 
-                    hasAnyDues = true;
+                    totalDue += dueAmount;
 
                     return (
                         <div key={sem} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 space-y-6 mb-4">
@@ -189,7 +188,7 @@ export default function PaymentHistory() {
                                     <h3 className="font-bold text-slate-900 dark:text-white text-lg">Semester {sem} Tuition Fee</h3>
                                     <p className="text-sm text-slate-500 dark:text-slate-400">Department: {dept}</p>
                                 </div>
-                                <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-orange-100 text-orange-700">
+                                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${paidAmount > 0 ? 'bg-orange-100 text-orange-700' : 'bg-red-100 text-red-700'}`}>
                                     {paidAmount > 0 ? 'Partly Paid' : 'Due'}
                                 </span>
                             </div>
@@ -227,7 +226,7 @@ export default function PaymentHistory() {
                     );
                 }).filter(Boolean);
 
-                if (cards.length === 0) {
+                if (overdueCards.length === 0) {
                     return (
                        <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 rounded-3xl shadow-lg text-center text-white">
                           <CheckCircle className="w-16 h-16 text-white/80 mx-auto mb-4" />
@@ -237,7 +236,19 @@ export default function PaymentHistory() {
                     );
                 }
 
-                return cards;
+                return (
+                    <div className="space-y-6">
+                        {totalDue > 0 && (
+                            <div className="bg-red-50 dark:bg-red-900/20 p-6 rounded-3xl border border-red-100 dark:border-red-900/30 flex justify-between items-center">
+                                <div>
+                                    <p className="text-sm text-red-800 dark:text-red-200 font-bold uppercase tracking-wider mb-1">Total Outstanding Due</p>
+                                    <p className="text-4xl font-bold text-red-600 dark:text-red-400">₹{totalDue.toLocaleString()}</p>
+                                </div>
+                            </div>
+                        )}
+                        {overdueCards}
+                    </div>
+                );
               })()}
             </div>
           </div>
