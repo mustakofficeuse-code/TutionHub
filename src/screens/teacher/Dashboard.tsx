@@ -63,6 +63,10 @@ export default function TeacherDashboard() {
   const [studentToBlock, setStudentToBlock] = useState<any | null>(null);
   const [isBlocking, setIsBlocking] = useState(false);
   
+  // Permanent Delete State
+  const [studentToPermanentDelete, setStudentToPermanentDelete] = useState<any | null>(null);
+  const [isPermanentDeleting, setIsPermanentDeleting] = useState(false);
+  
   // Real-time stats
   const [totalStudents, setTotalStudents] = useState(0);
   const [todayAttendanceCount, setTodayAttendanceCount] = useState(0);
@@ -238,6 +242,33 @@ export default function TeacherDashboard() {
     setEditName(student.name || '');
     setEditSemester(student.semester || '1');
     setEditDepartment(student.courseName || 'BCA');
+  };
+
+  const handlePermanentDelete = async (student: any) => {
+    const emailToUse = student.email || student.id;
+    if (!emailToUse) return;
+    setIsPermanentDeleting(true);
+
+    try {
+      const q = query(collection(db, 'users'), where('email', '==', emailToUse));
+      const snap = await getDocs(q);
+      const deletePromises = snap.docs.map(d => deleteDoc(doc(db, 'users', d.id)));
+      await Promise.all(deletePromises);
+
+      await setDoc(doc(db, 'blacklist', emailToUse), {
+        email: emailToUse,
+        name: student.name || 'Unknown Student',
+        permanentlyDeleted: true,
+        blockedAt: new Date().toISOString()
+      }, { merge: true });
+
+      setStudentToPermanentDelete(null);
+    } catch (error) {
+      console.error("Error permanently deleting student:", error);
+      alert("Failed to permanently delete student");
+    } finally {
+      setIsPermanentDeleting(false);
+    }
   };
 
   const handleUpdateStudent = async (e: React.FormEvent) => {
@@ -573,20 +604,37 @@ export default function TeacherDashboard() {
                             <div>
                               <div className="flex items-center gap-2">
                                 <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name || 'Unknown Student'}</p>
-                                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 uppercase tracking-widest">
-                                  Suspended
+                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest ${student.permanentlyDeleted ? 'bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-100' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'}`}>
+                                  {student.permanentlyDeleted ? 'Deleted' : 'Suspended'}
                                 </span>
                               </div>
                               <p className="text-xs text-slate-500 dark:text-slate-400">{student.email || student.id}</p>
                             </div>
                           </div>
-                          <button 
-                            onClick={() => setStudentToBlock(student)}
-                            className="px-4 py-2 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 rounded-xl text-sm font-bold shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
-                            title="Unblock Student"
-                          >
-                            Unblock
-                          </button>
+                          <div className="flex items-center gap-2">
+                            {student.permanentlyDeleted ? (
+                               <span className="px-3 py-1 bg-red-100 text-red-700 font-bold text-xs rounded-lg uppercase tracking-wider">
+                                 Permanently Deleted
+                               </span>
+                            ) : (
+                              <>
+                                <button 
+                                  onClick={() => setStudentToBlock(student)}
+                                  className="px-4 py-2 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 rounded-xl text-sm font-bold shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                                  title="Unblock Student"
+                                >
+                                  Unblock
+                                </button>
+                                <button 
+                                  onClick={() => setStudentToPermanentDelete(student)}
+                                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold shadow-sm transition-all"
+                                  title="Permanently Delete Student"
+                                >
+                                  Delete
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -752,6 +800,39 @@ export default function TeacherDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Permanent Delete Confirmation Modal */}
+      {studentToPermanentDelete && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800">
+            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 mx-auto bg-red-50 dark:bg-red-900/20">
+              <Trash2 className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white text-center mb-2">
+              Permanently Delete Student?
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400 text-center mb-8">
+              Are you sure you want to permanently delete <span className="font-bold text-slate-900 dark:text-white">{studentToPermanentDelete.name || 'this student'}</span>? 
+              This will completely remove them and prevent them from ever enrolling in TuitionHub again. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setStudentToPermanentDelete(null)}
+                className="flex-1 py-3 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => handlePermanentDelete(studentToPermanentDelete)}
+                disabled={isPermanentDeleting}
+                className="flex-1 py-3 text-white font-bold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 shadow-red-100 dark:shadow-none"
+              >
+                {isPermanentDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Delete Permanently'}
+              </button>
+            </div>
           </div>
         </div>
       )}

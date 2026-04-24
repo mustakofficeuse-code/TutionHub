@@ -37,8 +37,15 @@ export default function AuthGateway() {
     
     // Auto-recover deleted profile if user is already authenticated
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
+      if (user && user.email) {
         try {
+          const blacklistRef = doc(db, 'blacklist', user.email);
+          const blacklistSnap = await getDoc(blacklistRef);
+          if (blacklistSnap.exists()) {
+             await auth.signOut();
+             return;
+          }
+
           const userDocRef = doc(db, 'users', user.uid);
           const userDocSnap = await getDoc(userDocRef);
           if (!userDocSnap.exists()) {
