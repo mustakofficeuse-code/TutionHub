@@ -56,8 +56,8 @@ export default function AttendanceScanner() {
       const session = sessionSnap.data();
 
       // 2. Validate Department and Semester
-      const normalizeSem = (s: string) => s?.toLowerCase().replace(/(st|nd|rd|th|sem|semester)/g, '').trim();
-      const normalizeDept = (d: string) => d?.toLowerCase().trim();
+      const normalizeSem = (s: any) => s?.toString().toLowerCase().replace(/[^0-9]/g, '').trim();
+      const normalizeDept = (d: any) => d?.toString().toLowerCase().replace(/[^a-z0-9]/g, '').trim();
 
       const studentSem = normalizeSem(profile?.semester || '');
       const sessionSem = normalizeSem(session.semester || '');
@@ -65,7 +65,7 @@ export default function AttendanceScanner() {
       const sessionDept = normalizeDept(session.department || '');
 
       if (studentDept !== sessionDept || studentSem !== sessionSem) {
-        throw new Error(`This attendance is for ${session.department} Sem ${session.semester}. You are in ${profile?.courseName} Sem ${profile?.semester}.`);
+        throw new Error(`Verification failed. This attendance is for ${session.department} Sem ${session.semester}, but your profile says ${profile?.courseName} Sem ${profile?.semester}.`);
       }
 
       // 3. Validate Time window
