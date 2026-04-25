@@ -162,7 +162,11 @@ export default function AuthGateway() {
       navigate('/');
     } catch (err: any) {
       console.error(err);
-      setError('Invalid password or teacher account not found.');
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+        setError('Invalid password. Please check your credentials and try again.');
+      } else {
+        setError(err.message || 'Teacher account not found.');
+      }
     } finally {
       setLoading(false);
     }
@@ -238,6 +242,9 @@ export default function AuthGateway() {
       }
 
       if (!loginSuccess) {
+        if (lastError?.code === 'auth/invalid-credential' || lastError?.code === 'auth/user-not-found' || lastError?.code === 'auth/wrong-password') {
+          throw new Error('Invalid credentials. Please check your Student ID and password.');
+        }
         throw lastError || new Error('Invalid Student ID or Password.');
       }
 
@@ -246,7 +253,11 @@ export default function AuthGateway() {
       navigate('/');
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Invalid Student ID or Password.');
+      let userMsg = err.message || 'Invalid Student ID or Password.';
+      if (userMsg.includes('auth/invalid-credential') || userMsg.includes('auth/user-not-found')) {
+        userMsg = 'Invalid credentials. Please check your Student ID and password.';
+      }
+      setError(userMsg);
     } finally {
       setLoading(false);
     }
