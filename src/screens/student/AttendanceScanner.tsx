@@ -56,8 +56,15 @@ export default function AttendanceScanner() {
       const session = sessionSnap.data();
 
       // 2. Validate Department and Semester
-      // Note: profile.courseName is the department, profile.semester is the semester
-      if (profile?.courseName !== session.department || profile?.semester !== session.semester) {
+      const normalizeSem = (s: string) => s?.toLowerCase().replace(/(st|nd|rd|th|sem|semester)/g, '').trim();
+      const normalizeDept = (d: string) => d?.toLowerCase().trim();
+
+      const studentSem = normalizeSem(profile?.semester || '');
+      const sessionSem = normalizeSem(session.semester || '');
+      const studentDept = normalizeDept(profile?.courseName || '');
+      const sessionDept = normalizeDept(session.department || '');
+
+      if (studentDept !== sessionDept || studentSem !== sessionSem) {
         throw new Error(`This attendance is for ${session.department} Sem ${session.semester}. You are in ${profile?.courseName} Sem ${profile?.semester}.`);
       }
 
