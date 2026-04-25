@@ -177,25 +177,52 @@ export default function AuthGateway() {
     setLoading(true);
     setError('');
     try {
-      let cleanId = studentId.replace(/\s+/g, '').toLowerCase();
-      let emailsToTry = [];
+      const cleanId = studentId.trim().toLowerCase();
+      let emailsToTry: string[] = [];
 
-      // If it's just numbers (e.g., 84921) -> th84921
-      if (/^\d+$/.test(cleanId)) {
-        emailsToTry.push(`th${cleanId}@student.tutionhub.com`);
-      } 
-      // If it's TH + numbers (e.g., th84921) -> th84921
-      else if (cleanId.startsWith('th') && /^\d+$/.test(cleanId.substring(2))) {
-        emailsToTry.push(`${cleanId}@student.tutionhub.com`);
-      } 
-      // Otherwise, it's likely a legacy student logging in with their name
-      else {
-        emailsToTry.push(`${cleanId}@student.tutionhub.com`); // Legacy format (e.g., subhadipmondal)
-        // Also try with 'th' just in case
-        if (!cleanId.startsWith('th')) {
+      // 1. If it's already an email, try it first
+      if (cleanId.includes('@')) {
+        emailsToTry.push(cleanId);
+      }
+
+      // 2. Try to find the student in the database to get their registered email
+      try {
+        const studentsSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'student')));
+        const matchedUser = studentsSnap.docs.find(doc => {
+          const data = doc.data();
+          const sId = (data.studentId || '').toLowerCase();
+          const sName = (data.name || '').toLowerCase();
+          const sEmail = (data.email || '').toLowerCase();
+          return sId === cleanId || sName === cleanId || sEmail === cleanId;
+        });
+        
+        if (matchedUser && matchedUser.data().email && !emailsToTry.includes(matchedUser.data().email)) {
+          emailsToTry.push(matchedUser.data().email);
+        }
+      } catch (dbErr) {
+        console.warn("DB search failed, falling back to pattern matching", dbErr);
+      }
+
+      // 3. Fallback patterns
+      if (!emailsToTry.length || !cleanId.includes('@')) {
+        // If it's just numbers (e.g., 84921) -> th84921
+        if (/^\d+$/.test(cleanId)) {
           emailsToTry.push(`th${cleanId}@student.tutionhub.com`);
+        } 
+        // If it's TH + numbers (e.g., th84921) -> th84921
+        else if (cleanId.startsWith('th') && /^\d+$/.test(cleanId.substring(2))) {
+          emailsToTry.push(`${cleanId}@student.tutionhub.com`);
+        } 
+        else {
+          emailsToTry.push(`${cleanId}@student.tutionhub.com`);
+          if (!cleanId.startsWith('th')) {
+            emailsToTry.push(`th${cleanId}@student.tutionhub.com`);
+          }
         }
       }
+
+      // Remove duplicates
+      emailsToTry = Array.from(new Set(emailsToTry));
 
       let loginSuccess = false;
       let lastError = null;
@@ -500,8 +527,8 @@ export default function AuthGateway() {
               >
                 {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Login'}
               </button>
-              {!isExistingStudent && (
-                <div className="flex justify-between mt-4">
+              <div className="flex justify-between mt-4">
+                {!isExistingStudent && (
                   <button
                     type="button"
                     onClick={() => setView('student-enroll')}
@@ -509,15 +536,15 @@ export default function AuthGateway() {
                   >
                     New Student? Enroll Here
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setView('teacher-login')}
-                    className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
-                  >
-                    Teacher Login
-                  </button>
-                </div>
-              )}
+                )}
+                <button
+                  type="button"
+                  onClick={() => setView('teacher-login')}
+                  className={`text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors ${isExistingStudent ? 'w-full text-center' : ''}`}
+                >
+                  Teacher Login
+                </button>
+              </div>
             </form>
           </>
         )}

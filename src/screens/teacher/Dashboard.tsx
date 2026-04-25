@@ -271,6 +271,26 @@ export default function TeacherDashboard() {
     }
   };
 
+  const handleRemoveFromBlacklist = async (id: string) => {
+    if (!window.confirm("Remove this record from the blocklist history?")) return;
+    try {
+      await deleteDoc(doc(db, 'blacklist', id));
+    } catch (error) {
+      console.error("Error removing from blacklist:", error);
+    }
+  };
+
+  const clearDeletedRecords = async () => {
+    if (!window.confirm("Clear all permanently deleted student records from the blocklist history?")) return;
+    const deletedOnes = blacklistDocs.filter(s => s.permanentlyDeleted);
+    try {
+      const promises = deletedOnes.map(s => deleteDoc(doc(db, 'blacklist', s.id)));
+      await Promise.all(promises);
+    } catch (error) {
+      console.error("Error clearing deleted records:", error);
+    }
+  };
+
   const handleUpdateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingStudent) return;
@@ -579,14 +599,24 @@ export default function TeacherDashboard() {
                 
                 {/* Blocks List */}
                 <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 mt-8">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center">
-                      <UserX className="w-6 h-6 text-red-600" />
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center">
+                        <UserX className="w-6 h-6 text-red-600" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">Blocks List</h3>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">Suspended students by teacher</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-xl font-bold text-slate-900 dark:text-white">Blocks List</h3>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">Suspended students by teacher</p>
-                    </div>
+                    {blacklistDocs.some(s => s.permanentlyDeleted) && (
+                      <button 
+                        onClick={clearDeletedRecords}
+                        className="text-xs text-red-600 hover:underline font-bold px-3 py-1.5 bg-red-50 dark:bg-red-900/20 rounded-lg"
+                      >
+                        Clear Deleted History
+                      </button>
+                    )}
                   </div>
                   
                   {blacklistDocs.length === 0 ? (
@@ -613,9 +643,18 @@ export default function TeacherDashboard() {
                           </div>
                           <div className="flex items-center gap-2">
                             {student.permanentlyDeleted ? (
-                               <span className="px-3 py-1 bg-red-100 text-red-700 font-bold text-xs rounded-lg uppercase tracking-wider">
-                                 Permanently Deleted
-                               </span>
+                               <div className="flex items-center gap-2">
+                                 <span className="px-3 py-1 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 font-bold text-xs rounded-lg uppercase tracking-wider">
+                                   Permanently Deleted
+                                 </span>
+                                 <button 
+                                   onClick={() => handleRemoveFromBlacklist(student.id)}
+                                   className="p-2 text-slate-400 hover:text-red-600 transition-colors"
+                                   title="Remove from history"
+                                 >
+                                   <X className="w-4 h-4" />
+                                 </button>
+                               </div>
                             ) : (
                               <>
                                 <button 
