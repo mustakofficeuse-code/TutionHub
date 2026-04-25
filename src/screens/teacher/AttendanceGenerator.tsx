@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc, collection, query, orderBy, onSnapshot, limit } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, query, orderBy, onSnapshot, limit, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { QRCodeSVG } from 'qrcode.react';
 import { 
@@ -26,11 +26,21 @@ export default function AttendanceGenerator() {
   const [saving, setSaving] = useState(false);
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
 
+  // Session Config
+  const [sessionData, setSessionData] = useState({
+    department: 'BCA',
+    semester: '1st',
+    startTime: '09:00',
+    endTime: '11:00',
+    validDuration: '60', // minutes
+  });
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+
   useEffect(() => {
     fetchTuitionLocation();
     const unsubscribe = listenToRecentAttendance();
     return () => unsubscribe();
-  }, []);
+  }, [activeSessionId]);
 
   const fetchTuitionLocation = async () => {
     try {
@@ -47,16 +57,72 @@ export default function AttendanceGenerator() {
   };
 
   const listenToRecentAttendance = () => {
-    const q = query(
-      collection(db, 'attendance'),
-      orderBy('timestamp', 'desc'),
-      limit(20)
-    );
+    // If we have an active session, only show attendance for that session
+    const q = activeSessionId 
+      ? query(collection(db, 'attendance'), where('sessionId', '==', activeSessionId), orderBy('timestamp', 'desc'), limit(50))
+      : query(collection(db, 'attendance'), orderBy('timestamp', 'desc'), limit(20));
 
     return onSnapshot(q, (snapshot) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setRecentAttendance(list);
     });
+  };
+
+  const generateSession = async () => {
+    setSaving(true);
+    
+    const createSession = async (loc: {lat: number, lng: number}) => {
+      try {
+        const sessionId = `SESS_${Date.now()}`;
+        const sessionRef = doc(db, 'attendance_sessions', sessionId);
+        
+        const payload = {
+          id: sessionId,
+          ...sessionData,
+          location: loc,
+          createdAt: new Date().toISOString(),
+          status: 'active'
+        };
+
+        await setDoc(sessionRef, payload);
+        setActiveSessionId(sessionId);
+      } catch (error) {
+        console.error("Error creating session:", error);
+        alert("Failed to create attendance session.");
+      } finally {
+        setSaving(false);
+      }
+    };
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const currentLoc = {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          };
+          createSession(currentLoc);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          if (tuitionLocation) {
+            console.log("Falling back to fixed tuition location");
+            createSession(tuitionLocation);
+          } else {
+            alert("Could not get your current location and no fallback location is set. Please enable GPS.");
+            setSaving(false);
+          }
+        },
+        { enableHighAccuracy: true }
+      );
+    } else {
+      if (tuitionLocation) {
+        createSession(tuitionLocation);
+      } else {
+        alert("Geolocation not supported and no fallback location set.");
+        setSaving(false);
+      }
+    }
   };
 
   const updateLocation = async () => {
@@ -86,7 +152,7 @@ export default function AttendanceGenerator() {
     }
   };
 
-  const qrValue = STATIC_QR_ID;
+  const qrValue = activeSessionId ? `TUITIONHUB_SESS_${activeSessionId}` : STATIC_QR_ID;
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors">
@@ -98,35 +164,123 @@ export default function AttendanceGenerator() {
       </button>
 
       <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Static QR Panel */}
         <div className="lg:col-span-1 space-y-6">
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center">
-            <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-100 dark:shadow-none">
-              <QrCode className="text-white w-8 h-8" />
-            </div>
-            <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-              Permanent Attendance QR
-            </h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm mb-8">
-              Print this QR and stick it at the entry gate. Students scan this to mark attendance.
-            </p>
+          {/* Session Configuration Panel */}
+          <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+              <Calendar className="text-blue-600 w-6 h-6" />
+              Session Info
+            </h3>
             
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 mb-6">
-              <QRCodeSVG value={qrValue} size={200} level="H" includeMargin={true} />
-            </div>
-            
-            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl w-full">
-              <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">QR VALUE</p>
-              <p className="text-sm font-mono font-bold text-slate-700 dark:text-slate-300">{qrValue}</p>
-            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Department</label>
+                <select 
+                  value={sessionData.department}
+                  onChange={(e) => setSessionData({...sessionData, department: e.target.value})}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                >
+                  <option value="BCA">BCA</option>
+                  <option value="BBA">BBA</option>
+                  <option value="MCA">MCA</option>
+                  <option value="B.Tech">B.Tech</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
 
-            <button 
-              onClick={() => window.print()}
-              className="mt-6 w-full py-3 bg-slate-900 dark:bg-slate-800 text-white rounded-xl font-bold hover:bg-slate-800 transition-all"
-            >
-              Print QR Code
-            </button>
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Semester</label>
+                <select 
+                  value={sessionData.semester}
+                  onChange={(e) => setSessionData({...sessionData, semester: e.target.value})}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                >
+                  <option value="1st">1st Sem</option>
+                  <option value="2nd">2nd Sem</option>
+                  <option value="3rd">3rd Sem</option>
+                  <option value="4th">4th Sem</option>
+                  <option value="5th">5th Sem</option>
+                  <option value="6th">6th Sem</option>
+                  <option value="7th">7th Sem</option>
+                  <option value="8th">8th Sem</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Class Start</label>
+                  <input 
+                    type="time"
+                    value={sessionData.startTime}
+                    onChange={(e) => setSessionData({...sessionData, startTime: e.target.value})}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5 ml-1">Class End</label>
+                  <input 
+                    type="time"
+                    value={sessionData.endTime}
+                    onChange={(e) => setSessionData({...sessionData, endTime: e.target.value})}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1.5 ml-1 flex justify-between">
+                  Valid For
+                  <span className="text-blue-600">{sessionData.validDuration} Minutes</span>
+                </label>
+                <input 
+                  type="range"
+                  min="5"
+                  max="120"
+                  step="5"
+                  value={sessionData.validDuration}
+                  onChange={(e) => setSessionData({...sessionData, validDuration: e.target.value})}
+                  className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                />
+              </div>
+
+              <button 
+                onClick={generateSession}
+                disabled={saving || !tuitionLocation}
+                className="w-full mt-4 py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white rounded-2xl font-bold shadow-lg shadow-blue-100 dark:shadow-none transition-all flex items-center justify-center gap-2"
+              >
+                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <QrCode className="w-5 h-5" />}
+                {activeSessionId ? "Update QR Session" : "Generate Attendance QR"}
+              </button>
+            </div>
           </div>
+
+          {/* Static QR Panel Replacement */}
+          {activeSessionId && (
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center animate-in zoom-in-95 duration-300">
+              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-blue-100 dark:shadow-none">
+                <QrCode className="text-white w-8 h-8" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                Active Session QR
+              </h2>
+              <div className="flex flex-wrap items-center justify-center gap-2 mb-6">
+                <span className="px-2 py-1 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-[10px] font-bold rounded-lg uppercase">{sessionData.department}</span>
+                <span className="px-2 py-1 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-[10px] font-bold rounded-lg uppercase">{sessionData.semester} Sem</span>
+              </div>
+              
+              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-xl border border-slate-100 dark:border-slate-800 mb-6 group relative cursor-pointer" onClick={() => window.print()}>
+                <QRCodeSVG value={qrValue} size={200} level="H" includeMargin={true} />
+                <div className="absolute inset-0 bg-white/80 dark:bg-slate-900/80 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-3xl">
+                  <p className="font-bold text-blue-600 flex items-center gap-2"><RefreshCw className="w-4 h-4" /> Click to Print</p>
+                </div>
+              </div>
+              
+              <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-2xl w-full">
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">SESSION ID</p>
+                <p className="text-sm font-mono font-bold text-slate-700 dark:text-slate-300">{activeSessionId}</p>
+              </div>
+            </div>
+          )}
 
           {/* Location Config */}
           <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
@@ -203,7 +357,7 @@ export default function AttendanceGenerator() {
                       <div>
                         <h4 className="font-bold text-slate-900 dark:text-white">{record.studentName}</h4>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                          {new Date(record.timestamp).toLocaleDateString()} • {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {record.department} • Sem {record.semester} • {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                     </div>

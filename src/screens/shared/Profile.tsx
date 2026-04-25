@@ -21,7 +21,8 @@ import {
   Check,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  QrCode
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
@@ -243,19 +244,29 @@ export default function Profile() {
             <div className="mb-8 flex justify-between items-start">
               <div>
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{profile?.name}</h1>
-                <p className="text-slate-500 dark:text-slate-400 capitalize">{profile?.role} Account</p>
+                <p className="text-slate-500 dark:text-slate-400 capitalize">{profile?.role} Account {profile?.role === 'student' && `• ${profile?.courseName} Sem ${profile?.semester}`}</p>
               </div>
-              {profile?.role === 'student' && profile?.studentId && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-xl border border-blue-100 dark:border-blue-800 flex items-center gap-3">
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400">Student ID</p>
-                    <p className="font-mono font-bold text-slate-900 dark:text-white">{profile.studentId}</p>
-                  </div>
-                  <button onClick={copyStudentId} className="text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 p-1.5 rounded-lg transition-colors">
-                    {idCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              <div className="flex flex-col gap-2 items-end">
+                {profile?.role === 'student' && (
+                  <button 
+                    onClick={() => navigate('/attendance/scan')}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-100 dark:shadow-none hover:bg-blue-700 transition-all"
+                  >
+                    <QrCode className="w-4 h-4" /> Scan Attendance
                   </button>
-                </div>
-              )}
+                )}
+                {profile?.role === 'student' && profile?.studentId && (
+                  <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-xl border border-blue-100 dark:border-blue-800 flex items-center gap-3">
+                    <div>
+                      <p className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400">Student ID</p>
+                      <p className="font-mono font-bold text-slate-900 dark:text-white">{profile.studentId}</p>
+                    </div>
+                    <button onClick={copyStudentId} className="text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 p-1.5 rounded-lg transition-colors">
+                      {idCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {message.text && (

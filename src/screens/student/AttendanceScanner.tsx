@@ -32,58 +32,84 @@ export default function AttendanceScanner() {
   }, [scanning, status]);
 
   async function onScanSuccess(decodedText: string) {
-    if (decodedText !== STATIC_QR_ID) {
+    if (!decodedText.startsWith('TUITIONHUB_SESS_')) {
       setScanning(false);
       setStatus('error');
-      setMessage('Invalid QR Code. Please scan the official TuitionHub Attendance QR at the entry gate.');
+      setMessage('Invalid QR Code. Please scan the session QR displayed by your teacher.');
       return;
     }
 
+    const sessionId = decodedText.replace('TUITIONHUB_SESS_', '');
     setScanning(false);
     setStatus('verifying');
-    setMessage('Checking your location...');
+    setMessage('Verifying session details...');
 
     try {
-      // 1. Get Tuition Location from Config
-      const configRef = doc(db, 'config', 'attendance');
-      const configSnap = await getDoc(configRef);
-      
-      if (!configSnap.exists()) {
-        throw new Error('Tuition location is not configured. Please ask the teacher to set it.');
+      // 1. Fetch Session Details
+      const sessionRef = doc(db, 'attendance_sessions', sessionId);
+      const sessionSnap = await getDoc(sessionRef);
+
+      if (!sessionSnap.exists()) {
+        throw new Error('This attendance session is no longer valid or does not exist.');
       }
 
-      const tuitionLoc = configSnap.data() as {lat: number, lng: number};
+      const session = sessionSnap.data();
 
-      // 2. Check Location (GPS Radius 200m)
+      // 2. Validate Department and Semester
+      // Note: profile.courseName is the department, profile.semester is the semester
+      if (profile?.courseName !== session.department || profile?.semester !== session.semester) {
+        throw new Error(`This attendance is for ${session.department} Sem ${session.semester}. You are in ${profile?.courseName} Sem ${profile?.semester}.`);
+      }
+
+      // 3. Validate Time window
+      const now = new Date();
+      const startTimeParts = session.startTime.split(':');
+      const sessionStart = new Date();
+      sessionStart.setHours(parseInt(startTimeParts[0]), parseInt(startTimeParts[1]), 0, 0);
+
+      const validityPeriod = parseInt(session.validDuration) * 60 * 1000; // in ms
+      const sessionExpiry = new Date(sessionStart.getTime() + validityPeriod);
+
+      if (now < sessionStart) {
+        throw new Error(`Attendance window hasn't started yet. Starts at ${session.startTime}.`);
+      }
+
+      if (now > sessionExpiry) {
+        throw new Error(`Attendance window has expired. It was valid for ${session.validDuration} minutes from ${session.startTime}.`);
+      }
+
+      setMessage('Checking your location...');
+
+      // 4. Check Location (GPS Radius 200m)
       const position = await getCurrentPosition();
       const distance = calculateDistance(
         position.coords.latitude,
         position.coords.longitude,
-        tuitionLoc.lat,
-        tuitionLoc.lng
+        session.location.lat,
+        session.location.lng
       );
 
       if (distance > 0.2) { // 0.2 km = 200m
-        throw new Error(`You must be at the tuition location to mark attendance. You are currently ${Math.round(distance * 1000)}m away.`);
+        throw new Error(`You must be within 200m of the tuition center to mark attendance. You are currently ${Math.round(distance * 1000)}m away.`);
       }
 
-      // 3. Check Duplicate Attendance (One per day per student)
-      const today = new Date().toISOString().split('T')[0];
-      const attendanceId = `${user?.uid}_${today}`;
+      // 5. Check Duplicate Attendance for this specific session
+      const attendanceId = `${user?.uid}_${sessionId}`;
       const attRef = doc(db, 'attendance', attendanceId);
       const attSnap = await getDoc(attRef);
 
       if (attSnap.exists()) {
-        throw new Error('You have already marked your attendance for today.');
+        throw new Error('You have already marked your attendance for this session.');
       }
 
-      // 4. Mark Attendance
+      // 6. Mark Attendance
       await setDoc(attRef, {
+        sessionId: sessionId,
         studentId: user?.uid,
         studentName: profile?.name,
-        courseId: profile?.courseId || 'unknown',
-        courseName: profile?.courseName || 'unknown',
-        date: today,
+        studentIdNum: profile?.studentId || 'N/A',
+        department: profile?.courseName || 'unknown',
+        semester: profile?.semester || 'unknown',
         timestamp: new Date().toISOString(),
         status: 'present',
         location: { lat: position.coords.latitude, lng: position.coords.longitude }
