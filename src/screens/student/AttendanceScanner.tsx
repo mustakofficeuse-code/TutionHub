@@ -56,16 +56,22 @@ export default function AttendanceScanner() {
       const session = sessionSnap.data();
 
       // 2. Validate Department and Semester
-      const normalizeSem = (s: any) => s?.toString().toLowerCase().replace(/[^0-9]/g, '').trim();
-      const normalizeDept = (d: any) => d?.toString().toLowerCase().replace(/[^a-z0-9]/g, '').trim();
+      const normalize = (val: any) => val?.toString().toLowerCase().replace(/[^a-z0-9]/g, '').trim() || '';
+      const getNumber = (val: any) => val?.toString().replace(/[^0-9]/g, '') || '';
 
-      const studentSem = normalizeSem(profile?.semester || '');
-      const sessionSem = normalizeSem(session.semester || '');
-      const studentDept = normalizeDept(profile?.courseName || '');
-      const sessionDept = normalizeDept(session.department || '');
+      const studentDept = normalize(profile?.courseName);
+      const sessionDept = normalize(session.department);
+      const studentSem = getNumber(profile?.semester);
+      const sessionSem = getNumber(session.semester);
 
-      if (studentDept !== sessionDept || studentSem !== sessionSem) {
-        throw new Error(`Verification failed. This attendance is for ${session.department} Sem ${session.semester}, but your profile says ${profile?.courseName} Sem ${profile?.semester}.`);
+      const deptMatch = studentDept === sessionDept || studentDept.includes(sessionDept) || sessionDept.includes(studentDept);
+      const semMatch = studentSem === sessionSem && studentSem !== '';
+
+      if (!deptMatch) {
+        throw new Error(`Verification failed. This attendance is for ${session.department}, but your profile says ${profile?.courseName}.`);
+      }
+      if (!semMatch) {
+        throw new Error(`Verification failed. This attendance is for Sem ${session.semester}, but your profile says Sem ${profile?.semester}.`);
       }
 
       // 3. Validate Time window

@@ -12,7 +12,8 @@ import {
   Clock,
   User,
   Users,
-  Calendar
+  Calendar,
+  AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,6 +26,7 @@ export default function AttendanceGenerator() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
+  const [indexError, setIndexError] = useState(false);
 
   // Session Config
   const [sessionData, setSessionData] = useState({
@@ -65,6 +67,12 @@ export default function AttendanceGenerator() {
     return onSnapshot(q, (snapshot) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setRecentAttendance(list);
+      setIndexError(false);
+    }, (error: any) => {
+      console.error("Attendance feed error:", error);
+      if (error.code === 'failed-precondition' || error.message?.includes('index')) {
+        setIndexError(true);
+      }
     });
   };
 
@@ -342,7 +350,15 @@ export default function AttendanceGenerator() {
             </div>
 
             <div className="space-y-4">
-              {recentAttendance.length === 0 ? (
+              {indexError ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <AlertCircle className="w-12 h-12 text-amber-500 mb-4" />
+                  <p className="font-bold text-slate-900 dark:text-white mb-2">Indexing in Progress</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
+                    Firestore is currently optimizing the database for this view. This usually takes 5-10 minutes. Please refresh later.
+                  </p>
+                </div>
+              ) : recentAttendance.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-400">
                   <Clock className="w-12 h-12 mb-4 opacity-20" />
                   <p>Waiting for students to scan...</p>
