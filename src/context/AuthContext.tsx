@@ -98,8 +98,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setRole(null);
           }
           setLoading(false);
-        }, (error) => {
-          console.error("Error listening to profile:", error);
+        }, (error: any) => {
+          if (error.code !== 'auth/invalid-credential' && !error.message?.includes('auth/invalid-credential')) {
+            console.error("Error listening to profile:", error);
+          }
           setLoading(false);
         });
       } else {

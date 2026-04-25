@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, limit, onSnapshot, doc, getDoc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db, auth, logError } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { 
@@ -131,7 +131,7 @@ export default function TeacherDashboard() {
       setStatsLoading(prev => ({ ...prev, students: false }));
       setLoading(false);
     }, (error) => {
-      console.error("Error fetching students:", error);
+      logError("Error fetching students:", error);
       setStatsLoading(prev => ({ ...prev, students: false }));
       setLoading(false);
     });
@@ -144,7 +144,7 @@ export default function TeacherDashboard() {
       setTodayAttendanceCount(snapshot.size);
       setStatsLoading(prev => ({ ...prev, attendance: false }));
     }, (error) => {
-      console.error("Error fetching attendance:", error);
+      logError("Error fetching attendance:", error);
       setStatsLoading(prev => ({ ...prev, attendance: false }));
     });
   };
@@ -156,7 +156,7 @@ export default function TeacherDashboard() {
       setPendingFeesSum(sum);
       setStatsLoading(prev => ({ ...prev, fees: false }));
     }, (error) => {
-      console.error("Error fetching fees:", error);
+      logError("Error fetching fees:", error);
       setStatsLoading(prev => ({ ...prev, fees: false }));
     });
   };
@@ -181,7 +181,7 @@ export default function TeacherDashboard() {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setRecentAttendance(list);
     }, (error) => {
-      console.error("Error fetching recent attendance:", error);
+      logError("Error fetching recent attendance:", error);
     });
   };
 

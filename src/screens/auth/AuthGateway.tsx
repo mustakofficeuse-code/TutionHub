@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { doc, getDoc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth, db } from '../../firebase';
+import { auth, db, logError } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { Loader2, User, Lock, BookOpen, Layers, Key, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
@@ -68,8 +68,8 @@ export default function AuthGateway() {
              refreshProfile();
              navigate('/');
           }
-        } catch (e) {
-          console.error("Auto recovery failed", e);
+        } catch (e: any) {
+          logError("Auto recovery failed", e);
         }
       }
     });
@@ -145,7 +145,7 @@ export default function AuthGateway() {
       await refreshProfile();
       navigate('/');
     } catch (err: any) {
-      console.error(err);
+      logError("Teacher setup error:", err);
       setError(err.message || 'Failed to setup teacher account');
     } finally {
       setLoading(false);
@@ -161,8 +161,8 @@ export default function AuthGateway() {
       await refreshProfile();
       navigate('/');
     } catch (err: any) {
-      console.error(err);
-      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password') {
+      logError("Teacher login error:", err);
+      if (err.code === 'auth/invalid-credential' || err.code === 'auth/wrong-password' || err.message?.includes('auth/invalid-credential')) {
         setError('Invalid password. Please check your credentials and try again.');
       } else {
         setError(err.message || 'Teacher account not found.');
@@ -279,7 +279,8 @@ export default function AuthGateway() {
       await refreshProfile();
       navigate('/');
     } catch (err: any) {
-      console.error(err);
+      // Only log if it's not a common auth error which we handle with UI messages
+      logError("Student login error:", err);
       let userMsg = err.message || 'Invalid Student ID or Password.';
       if (userMsg.includes('auth/invalid-credential') || userMsg.includes('auth/user-not-found')) {
         userMsg = 'Invalid credentials. Please check your Student ID and password.';
@@ -359,7 +360,7 @@ export default function AuthGateway() {
       setGeneratedId(uniqueId);
       // We don't navigate immediately, we let them see their ID first.
     } catch (err: any) {
-      console.error(err);
+      logError("Student enroll error:", err);
       setError(err.message || 'Failed to enroll');
     } finally {
       setLoading(false);

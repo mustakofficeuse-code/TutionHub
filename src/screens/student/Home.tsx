@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, where, onSnapshot, orderBy, limit, doc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { db, auth, logError } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { 
@@ -52,14 +52,14 @@ export default function StudentHome() {
     const unsubAtt = onSnapshot(
       query(collection(db, 'attendance'), where('studentId', '==', user.uid)),
       (snapshot) => setAttendanceCount(snapshot.size),
-      (error) => console.error("Error fetching attendance:", error)
+      (error) => logError("Error fetching attendance:", error)
     );
 
     // 2. Sessions Count
     const unsubSess = onSnapshot(
       query(collection(db, 'sessions'), where('courseId', '==', profile.courseId)),
       (snapshot) => setSessionCount(snapshot.size),
-      (error) => console.error("Error fetching sessions:", error)
+      (error) => logError("Error fetching sessions:", error)
     );
 
     // 3. Fee Structure Listener
@@ -68,7 +68,7 @@ export default function StudentHome() {
       (snapshot) => {
         if (snapshot.exists()) setFeeStructure(snapshot.data());
       },
-      (error) => console.error("Error fetching fee structure:", error)
+      (error) => logError("Error fetching fee structure:", error)
     );
 
     // 4. Student Payments Listener
@@ -78,7 +78,7 @@ export default function StudentHome() {
       (snapshot) => {
         setStudentFees(snapshot.docs.map(d => d.data()));
       },
-      (error) => console.error("Error fetching payments:", error)
+      (error) => logError("Error fetching payments:", error)
     );
 
     // 5. Upcoming Classes
@@ -94,7 +94,7 @@ export default function StudentHome() {
         setLoading(false);
       },
       (error) => {
-        console.error("Error fetching schedules:", error);
+        logError("Error fetching schedules:", error);
         setLoading(false);
       }
     );

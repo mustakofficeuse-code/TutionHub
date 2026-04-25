@@ -152,8 +152,12 @@ export default function Profile() {
         try {
           await reauthenticateWithCredential(auth.currentUser, credential);
         } catch (reauthErr: any) {
-          console.error("Re-authentication failed:", reauthErr);
-          if (reauthErr.code === 'auth/wrong-password' || reauthErr.code === 'auth/invalid-credential') {
+          if (reauthErr.code !== 'auth/wrong-password' && 
+              reauthErr.code !== 'auth/invalid-credential' &&
+              !reauthErr.message?.includes('auth/invalid-credential')) {
+            console.error("Re-authentication failed:", reauthErr);
+          }
+          if (reauthErr.code === 'auth/wrong-password' || reauthErr.code === 'auth/invalid-credential' || reauthErr.message?.includes('auth/invalid-credential')) {
              setPasswordMessage({ type: 'error', text: 'Incorrect current password.' });
              setPasswordLoading(false);
              return;
@@ -168,8 +172,13 @@ export default function Profile() {
       setNewPassword('');
       setConfirmPassword('');
     } catch (error: any) {
-      console.error("Error updating password:", error);
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      if (error.code !== 'auth/wrong-password' && 
+          error.code !== 'auth/invalid-credential' && 
+          error.code !== 'auth/requires-recent-login' &&
+          !error.message?.includes('auth/invalid-credential')) {
+        console.error("Error updating password:", error);
+      }
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential' || error.message?.includes('auth/invalid-credential')) {
         setPasswordMessage({ type: 'error', text: 'Incorrect current password.' });
       } else if (error.code === 'auth/requires-recent-login') {
         setPasswordMessage({ type: 'error', text: 'Session expired. Please logout and login again to change your password.' });

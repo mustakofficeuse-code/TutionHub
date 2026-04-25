@@ -7,6 +7,8 @@ import {
   Search, 
   Filter, 
   CheckCircle, 
+  Save,
+  Edit,
   X,
   ArrowLeft,
   Loader2,
@@ -44,6 +46,7 @@ export default function FeeManagement() {
 
   const departments = ['BCA', 'BSC', 'BTECH', 'MCA'];
   const [savingStructure, setSavingStructure] = useState(false);
+  const [isEditingStructure, setIsEditingStructure] = useState(false);
   const [activeTab, setActiveTab] = useState<'history' | 'structure'>('history');
 
   useEffect(() => {
@@ -68,6 +71,7 @@ export default function FeeManagement() {
     try {
       await setDoc(doc(db, 'config', 'feeStructure'), feeStructure);
       alert('Fee structure updated successfully!');
+      setIsEditingStructure(false);
       fetchData();
     } catch (error) {
       console.error("Error saving fee structure:", error);
@@ -389,12 +393,27 @@ export default function FeeManagement() {
                 <p className="text-sm text-slate-500 dark:text-slate-400">Set the default payable fee for each semester and department.</p>
               </div>
               <button 
-                onClick={handleSaveStructure}
+                onClick={isEditingStructure ? handleSaveStructure : () => setIsEditingStructure(true)}
                 disabled={savingStructure}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-50"
+                className={`px-6 py-2 rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-50 ${
+                  isEditingStructure 
+                    ? 'bg-green-600 hover:bg-green-700 text-white' 
+                    : 'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
               >
-                {savingStructure ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                Save Structure
+                {savingStructure ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : isEditingStructure ? (
+                  <>
+                    <Save className="w-4 h-4" />
+                    Save Structure
+                  </>
+                ) : (
+                  <>
+                    <Edit className="w-4 h-4" />
+                    Change Structure
+                  </>
+                )}
               </button>
             </div>
 
@@ -413,7 +432,10 @@ export default function FeeManagement() {
                           <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">₹</span>
                           <input 
                             type="number"
-                            className="w-full pl-7 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                            disabled={!isEditingStructure}
+                            className={`w-full pl-7 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${
+                              !isEditingStructure ? 'opacity-60 cursor-not-allowed bg-slate-50 dark:bg-slate-900/50' : 'hover:border-blue-300'
+                            }`}
                             value={feeStructure[dept]?.[sem] || ''}
                             onChange={(e) => updateStructureValue(dept, sem, e.target.value)}
                             placeholder="0"

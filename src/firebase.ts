@@ -20,6 +20,25 @@ export const db = (firebaseConfig.firestoreDatabaseId && firebaseConfig.firestor
 
 export const storage = getStorage(app);
 
+/**
+ * Custom error logger to suppress expected/handled auth errors from the console logs.
+ */
+export const logError = (prefix: string, error: any) => {
+  if (error && (
+    error.code === 'auth/invalid-credential' || 
+    error.code === 'auth/user-not-found' || 
+    error.code === 'auth/wrong-password' ||
+    (error.message && (
+      error.message.includes('auth/invalid-credential') || 
+      error.message.includes('permission-denied') ||
+      error.message.includes('Insufficient permissions')
+    ))
+  )) {
+    return; // Suppress these as they are handled in the UI
+  }
+  console.error(prefix, error);
+};
+
 // Connection test - Non-blocking and more resilient
 async function testConnection() {
   if (typeof window === 'undefined') return;

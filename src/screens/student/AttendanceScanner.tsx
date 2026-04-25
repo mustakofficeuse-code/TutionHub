@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { db, auth } from '../../firebase';
+import { db, auth, logError } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { Camera, MapPin, CheckCircle, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -26,7 +26,7 @@ export default function AttendanceScanner() {
       scanner.render(onScanSuccess, onScanFailure);
 
       return () => {
-        scanner.clear().catch(error => console.error("Failed to clear scanner", error));
+        scanner.clear().catch(error => logError("Failed to clear scanner", error));
       };
     }
   }, [scanning, status]);
@@ -92,7 +92,7 @@ export default function AttendanceScanner() {
       setStatus('success');
       setMessage('Attendance marked successfully!');
     } catch (error: any) {
-      console.error(error);
+      logError("Attendance scanner error:", error);
       setStatus('error');
       setMessage(error.message || 'Verification failed. Please try again.');
     }
