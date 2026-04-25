@@ -441,6 +441,12 @@ export default function TeacherDashboard() {
           >
             <TrendingUp className="w-5 h-5" /> Analytics
           </button>
+          <button 
+            onClick={() => navigate('/attendance/generate')}
+            className="hidden sm:flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-4"
+          >
+            <QrCode className="w-5 h-5" /> Attendance
+          </button>
 
           {(profile?.role === 'admin' || profile?.role === 'teacher') && (
             <button 
@@ -750,6 +756,16 @@ export default function TeacherDashboard() {
                   </div>
                   <p className="font-bold text-slate-900 dark:text-white">Fee Structure</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Set semester fees</p>
+                </button>
+                <button 
+                  onClick={() => navigate('/attendance/generate')}
+                  className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500 transition-all text-left group"
+                >
+                  <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <QrCode className="w-6 h-6 text-emerald-600" />
+                  </div>
+                  <p className="font-bold text-slate-900 dark:text-white">QR Attendance</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Generate session QR</p>
                 </button>
                 <button 
                   onClick={() => navigate('/admin/students/add')}
