@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -39,9 +39,13 @@ export default function AuthGateway() {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user && user.email) {
         try {
-          const blacklistRef = doc(db, 'blacklist', user.email);
-          const blacklistSnap = await getDoc(blacklistRef);
-          if (blacklistSnap.exists()) {
+          const blacklistByEmail = user.email ? doc(db, 'blacklist', user.email) : null;
+          const blacklistByUid = doc(db, 'blacklist', user.uid);
+          
+          const emailSnap = blacklistByEmail ? await getDoc(blacklistByEmail) : null;
+          const uidSnap = await getDoc(blacklistByUid);
+          
+          if ((emailSnap && emailSnap.exists()) || uidSnap.exists()) {
              await auth.signOut();
              return;
           }
@@ -230,32 +234,6 @@ export default function AuthGateway() {
           if (err.message && err.message.includes('revoked')) {
             throw err;
           }
-          
-          // Legacy Auto-Migration: If it's auth/invalid-credential or user-not-found, 
-          // and they are using the old Name-based login format AND we are connected to the new Firebase project,
-          // instantly create their account behind the scenes so old students aren't locked out of the new project.
-          if ((err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found') && !cleanId.startsWith('th')) {
-             try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, studentPassword);
-                const user = userCredential.user;
-                await setDoc(doc(db, 'users', user.uid), {
-                  uid: user.uid,
-                  studentId: cleanId,
-                  name: studentId, // original typed text
-                  email: email,
-                  role: 'student',
-                  semester: '1', // default fallback
-                  courseName: 'Legacy Student',
-                  courseId: 'legacy',
-                  createdAt: new Date().toISOString(),
-                  profileComplete: true
-                });
-                loginSuccess = true;
-                break;
-             } catch (createErr) {
-               // ignore and let it loop
-             }
-          }
         }
       }
 
@@ -281,6 +259,30 @@ export default function AuthGateway() {
     try {
       if (studentInviteCode !== inviteCode) {
         throw new Error('Invalid Invite Code');
+      }
+
+      // 1. Check if name is blacklisted
+      const blacklistSnap = await getDocs(collection(db, 'blacklist'));
+      const isBlacklisted = blacklistSnap.docs.some(doc => {
+        const data = doc.data();
+        return (data.name || '').toLowerCase() === studentName.toLowerCase();
+      });
+
+      if (isBlacklisted) {
+        throw new Error('Your enrollment has been blocked by the teacher. Please contact your teacher for permission.');
+      }
+
+      // 2. Check for duplicate student (already enrolled)
+      const studentsSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'student')));
+      const isDuplicate = studentsSnap.docs.some(doc => {
+        const data = doc.data();
+        return (data.name || '').toLowerCase() === studentName.toLowerCase() && 
+               data.courseName === department && 
+               data.semester === semester;
+      });
+
+      if (isDuplicate) {
+        throw new Error('A student with this name is already enrolled in this department and semester. If you forgot your ID, contact the teacher.');
       }
 
       // Generate a unique Student ID (e.g., TH84921)
