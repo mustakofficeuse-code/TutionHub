@@ -31,10 +31,16 @@ export const logError = (prefix: string, error: any) => {
     (error.message && (
       error.message.includes('auth/invalid-credential') || 
       error.message.includes('permission-denied') ||
-      error.message.includes('Insufficient permissions')
+      error.message.includes('Insufficient permissions') ||
+      error.message.includes('client is offline') ||
+      error.message.includes('failed-precondition')
     ))
   )) {
-    return; // Suppress these as they are handled in the UI
+    // Only log as warning if it's an offline error, otherwise ignore
+    if (error.message && error.message.includes('offline')) {
+      console.warn(prefix, error.message);
+    }
+    return;
   }
   console.error(prefix, error);
 };

@@ -21,7 +21,6 @@ import {
   Moon,
   Sun
 } from 'lucide-react';
-import { auth } from '../../firebase';
 import { signOut } from 'firebase/auth';
 
 export default function StudentHome() {

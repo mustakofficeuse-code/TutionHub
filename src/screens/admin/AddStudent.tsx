@@ -3,6 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import {ArrowLeft, UserPlus, Loader2, CheckCircle, Shield, User, Lock, BookOpen, GraduationCap, Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
+import { initializeApp, deleteApp } from 'firebase/app';
+import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../../firebase';
+import firebaseConfig from '../../../firebase-applet-config.json';
 
 export default function AddStudent() {
   const { profile } = useAuth();
@@ -24,31 +29,61 @@ export default function AddStudent() {
     setLoading(true);
     setError('');
 
+    let secondaryApp = null;
     try {
-      const response = await fetch('/api/admin/create-student', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name,
-          password,
-          semester,
-          department,
-        }),
+      const uniqueId = 'TH' + Math.floor(10000 + Math.random() * 90000);
+      const generatedEmail = `${uniqueId.toLowerCase()}@student.tutionhub.com`;
+
+      // Create a secondary app to avoid signing out the teacher
+      secondaryApp = initializeApp(firebaseConfig, `Secondary-${Date.now()}`);
+      const secondaryAuth = getAuth(secondaryApp);
+
+      // Create student account
+      const userCredential = await createUserWithEmailAndPassword(secondaryAuth, generatedEmail, password);
+      const user = userCredential.user;
+
+      // Save student profile
+      await setDoc(doc(db, 'users', user.uid), {
+        uid: user.uid,
+        studentId: uniqueId,
+        name,
+        email: generatedEmail,
+        role: 'student',
+        semester,
+        courseName: department,
+        courseId: department.toLowerCase(),
+        createdAt: new Date().toISOString(),
+        profileComplete: true
       });
 
-      const data = await response.json();
+      // Create notification for dashboard
+      const notifId = `enroll_admin_${user.uid}`;
+      await setDoc(doc(db, 'notifications', notifId), {
+        title: 'New Student Added',
+        message: `${name} has been enrolled by teacher.`,
+        timestamp: new Date().toISOString(),
+        read: false,
+        type: 'enrollment'
+      });
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to create student');
-      }
-
-      setSuccess(data);
+      // Clean up secondary session
+      await signOut(secondaryAuth);
+      
+      setSuccess({ success: true, studentId: uniqueId, email: generatedEmail });
     } catch (err: any) {
-      console.error(err);
-      setError(err.message || 'An error occurred while creating the student.');
+      console.error("Student creation error:", err);
+      // Handle the case where the API might still be disabled in THEIR project
+      if (err.message && err.message.includes('identitytoolkit.googleapis.com')) {
+        setError('Google Identity API is not enabled for this project. Please contact the administrator to enable it in the Google Cloud Console.');
+      } else if (err.code === 'auth/email-already-in-use') {
+        setError('This student ID might already be registered. Try again.');
+      } else {
+        setError(err.message || 'An error occurred while creating the student.');
+      }
     } finally {
+      if (secondaryApp) {
+        await deleteApp(secondaryApp);
+      }
       setLoading(false);
     }
   };
@@ -224,8 +259,14 @@ export default function AddStudent() {
                     </button>
                   </div>
                 </div>
+                
                 <div className="pt-4 border-t border-indigo-100 dark:border-indigo-800/50">
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Share this ID and the password you set with the student.</p>
+                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Login Password</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{password}</p>
+                </div>
+
+                <div className="pt-2">
+                  <p className="text-xs text-slate-500 dark:text-slate-400 italic">Share these credentials with the student.</p>
                 </div>
               </div>
 

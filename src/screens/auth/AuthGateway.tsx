@@ -69,7 +69,14 @@ export default function AuthGateway() {
              navigate('/');
           }
         } catch (e: any) {
-          logError("Auto recovery failed", e);
+          // Be very silent about auto-recovery errors unless they aren't auth/network related
+          const isExpected = e.code?.startsWith('auth/') || 
+                             e.message?.includes('offline') || 
+                             e.message?.includes('failed-precondition');
+          
+          if (!isExpected) {
+            logError("Auto recovery system note:", e);
+          }
         }
       }
     });

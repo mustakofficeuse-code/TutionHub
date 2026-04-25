@@ -32,7 +32,6 @@ import {
   X,
   UserX
 } from 'lucide-react';
-import { auth } from '../../firebase';
 import { signOut } from 'firebase/auth';
 
 export default function TeacherDashboard() {
@@ -366,13 +365,15 @@ export default function TeacherDashboard() {
                         <div>
                           <div className="flex items-center gap-2">
                             <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name}</p>
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 uppercase tracking-widest">
+                              ID: {student.studentId}
+                            </span>
                             {isBlocked && (
                               <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 uppercase tracking-widest">
                                 Suspended
                               </span>
                             )}
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{student.email}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1 transition-opacity">
@@ -634,11 +635,13 @@ export default function TeacherDashboard() {
                             <div>
                               <div className="flex items-center gap-2">
                                 <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name || 'Unknown Student'}</p>
+                                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 uppercase tracking-widest">
+                                  ID: {student.studentId || student.id?.substring(0, 8)}
+                                </span>
                                 <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest ${student.permanentlyDeleted ? 'bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-100' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'}`}>
                                   {student.permanentlyDeleted ? 'Deleted' : 'Suspended'}
                                 </span>
                               </div>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">{student.email || student.id}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">

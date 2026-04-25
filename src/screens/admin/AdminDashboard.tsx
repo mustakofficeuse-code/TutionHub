@@ -268,7 +268,9 @@ export default function AdminDashboard() {
                           </div>
                           <div>
                             <p className="font-bold text-slate-900 dark:text-white">{user.name}</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              {user.role === 'student' ? `ID: ${user.studentId || (user.email?.includes('@student') ? user.email.split('@')[0].toUpperCase() : user.id)}` : user.email}
+                            </p>
                           </div>
                         </div>
                       </td>
@@ -356,7 +358,9 @@ export default function AdminDashboard() {
                           </div>
                           <div>
                             <p className="font-bold text-slate-900 dark:text-white">{user.name}</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">{user.email}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              ID: {user.studentId || user.email?.split('@')[0]?.toUpperCase()}
+                            </p>
                           </div>
                         </div>
                       </td>
