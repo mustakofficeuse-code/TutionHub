@@ -47,17 +47,46 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let unsubscribeProfile: (() => void) | null = null;
+    let unsubscribeBlacklist: (() => void) | null = null;
 
     const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       
+      // Cleanup previous listeners
       if (unsubscribeProfile) {
         unsubscribeProfile();
         unsubscribeProfile = null;
       }
+      if (unsubscribeBlacklist) {
+        unsubscribeBlacklist();
+        unsubscribeBlacklist = null;
+      }
 
       if (currentUser) {
         const docRef = doc(db, 'users', currentUser.uid);
+        
+        // Listen to blacklist for this specific user
+        const blacklistByEmail = currentUser.email ? doc(db, 'blacklist', currentUser.email) : null;
+        const blacklistByUid = doc(db, 'blacklist', currentUser.uid);
+
+        const checkBlock = (snap: any) => {
+          if (snap.exists()) {
+            console.log("User is blocked, signing out...");
+            auth.signOut();
+          }
+        };
+
+        if (blacklistByEmail) {
+          const unsubEmail = onSnapshot(blacklistByEmail, checkBlock);
+          const unsubUid = onSnapshot(blacklistByUid, checkBlock);
+          unsubscribeBlacklist = () => {
+            unsubEmail();
+            unsubUid();
+          };
+        } else {
+          unsubscribeBlacklist = onSnapshot(blacklistByUid, checkBlock);
+        }
+
         unsubscribeProfile = onSnapshot(docRef, (docSnap) => {
           if (docSnap.exists()) {
             const data = docSnap.data();
@@ -83,6 +112,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => {
       unsubscribeAuth();
       if (unsubscribeProfile) unsubscribeProfile();
+      if (unsubscribeBlacklist) unsubscribeBlacklist();
     };
   }, []);
 

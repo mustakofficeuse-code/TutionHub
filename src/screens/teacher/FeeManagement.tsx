@@ -32,6 +32,8 @@ export default function FeeManagement() {
   const [modalDepartment, setModalDepartment] = useState<string>('');
   const [isManualPayment, setIsManualPayment] = useState(false);
   const [viewDetailsStudent, setViewDetailsStudent] = useState<any>(null);
+  const [studentSearch, setStudentSearch] = useState('');
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   const [feeStructure, setFeeStructure] = useState<any>({
     BCA: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 },
@@ -432,7 +434,11 @@ export default function FeeManagement() {
            <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
              <div className="flex justify-between items-center mb-6">
                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Record Cash Receipt</h3>
-               <button onClick={() => setShowPaymentModal(false)} className="text-slate-400 hover:text-slate-600"><X className="w-6 h-6"/></button>
+               <button onClick={() => {
+                 setShowPaymentModal(false);
+                 setStudentSearch('');
+                 setPaymentStudent(null);
+               }} className="text-slate-400 hover:text-slate-600"><X className="w-6 h-6"/></button>
              </div>
              <form onSubmit={handleTeacherPaymentReceipt} className="space-y-4 text-left">
                {isManualPayment ? (
@@ -448,6 +454,7 @@ export default function FeeManagement() {
                        onChange={(e) => {
                          setModalDepartment(e.target.value);
                          setPaymentStudent(null);
+                         setStudentSearch('');
                        }}
                      >
                        <option value="" disabled>Select Department</option>
@@ -467,6 +474,7 @@ export default function FeeManagement() {
                        onChange={(e) => {
                          setPaymentSemester(Number(e.target.value));
                          setPaymentStudent(null);
+                         setStudentSearch('');
                        }}
                      >
                        {[1, 2, 3, 4, 5, 6, 7, 8].map(sem => (
@@ -475,35 +483,83 @@ export default function FeeManagement() {
                      </select>
                    </div>
                    <div>
-                     <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                       Select Student
-                     </label>
-                     <select
-                       required
-                       className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-sm"
-                       value={paymentStudent?.id || paymentStudent?.uid || ''}
-                       onChange={(e) => {
-                         const student = students.find(s => s.id === e.target.value || s.uid === e.target.value);
-                         setPaymentStudent(student || null);
-                       }}
-                       disabled={!modalDepartment || !paymentSemester}
-                     >
-                       <option value="" disabled>
-                         {!modalDepartment ? 'Select Department First' : 'Select Student'}
-                       </option>
-                       {students
-                         .filter(s => {
-                           const cName = cleanStr(s.courseId) || cleanStr(s.courseName) || cleanStr(s.department) || '';
-                           const sSem = Number(String(s.semester || '').replace(/\D/g, '')) || 0;
-                           return cName === modalDepartment && (sSem === paymentSemester || !s.semester);
-                         })
-                         .map(s => (
-                           <option key={s.id || s.uid} value={s.id || s.uid}>
-                             {s.name} ({s.studentId || 'No ID'})
-                           </option>
-                       ))}
-                     </select>
-                   </div>
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
+                        Search Student
+                      </label>
+                      <div className="relative">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                          <input
+                            type="text"
+                            placeholder={!modalDepartment || !paymentSemester ? "Select Dept & Sem first" : "Search name or ID..."}
+                            className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-sm ${(!modalDepartment || !paymentSemester) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            value={studentSearch}
+                            onChange={(e) => {
+                              setStudentSearch(e.target.value);
+                              setShowSuggestions(true);
+                            }}
+                            onFocus={() => setShowSuggestions(true)}
+                            disabled={!modalDepartment || !paymentSemester}
+                          />
+                        </div>
+
+                        {showSuggestions && modalDepartment && paymentSemester && (
+                          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto">
+                            {(() => {
+                              const filtered = students.filter(s => {
+                                const cIdName = cleanStr(s.courseId) || cleanStr(s.courseName) || cleanStr(s.department) || '';
+                                const sSem = Number(String(s.semester || '').replace(/\D/g, '')) || 0;
+                                const matchesDept = cIdName === modalDepartment;
+                                const matchesSem = sSem === paymentSemester || !s.semester;
+                                if (!matchesDept || !matchesSem) return false;
+
+                                const q = studentSearch.toLowerCase();
+                                return (s.name || '').toLowerCase().includes(q) || (s.studentId || '').toLowerCase().includes(q);
+                              });
+
+                              if (filtered.length === 0) {
+                                return <div className="p-4 text-xs text-slate-500 text-center">No matching students found</div>;
+                              }
+
+                              return filtered.map(s => (
+                                <button
+                                  key={s.id || s.uid}
+                                  type="button"
+                                  className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors"
+                                  onClick={() => {
+                                    setPaymentStudent(s);
+                                    setStudentSearch(s.name);
+                                    setShowSuggestions(false);
+                                  }}
+                                >
+                                  <p className="font-bold text-sm text-slate-900 dark:text-white">{s.name}</p>
+                                  <p className="text-[10px] text-slate-500">{s.studentId || 'No ID'}</p>
+                                </button>
+                              ));
+                            })()}
+                          </div>
+                        )}
+                      </div>
+                      {paymentStudent && (
+                        <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/30 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
+                          <CheckCircle className="w-4 h-4 text-blue-600" />
+                          <div>
+                            <p className="text-xs font-bold text-blue-700 dark:text-blue-400">Selected: {paymentStudent.name}</p>
+                            <p className="text-[10px] text-blue-600/70">{paymentStudent.studentId || 'No ID'}</p>
+                          </div>
+                          <button 
+                            type="button"
+                            onClick={() => {
+                              setPaymentStudent(null);
+                              setStudentSearch('');
+                            }}
+                            className="ml-auto p-1 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-full transition-colors"
+                          >
+                            <X className="w-3 h-3 text-blue-600" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                  </>
                ) : (
                  paymentStudent && (
@@ -530,7 +586,7 @@ export default function FeeManagement() {
                          Amount Received (₹)
                        </label>
                        {targetSemFee > 0 && (
-                         <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full">
+                         <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full animate-in zoom-in-50 duration-300">
                            Max ₹{maxAllowed} Allowed
                          </span>
                        )}
@@ -559,9 +615,10 @@ export default function FeeManagement() {
                <button 
                  type="submit"
                  disabled={!paymentAmount || !paymentStudent || (feeStructure[isManualPayment ? modalDepartment : cleanStr(paymentStudent?.courseId || paymentStudent?.courseName || paymentStudent?.department)]?.[paymentSemester] > 0 && Number(paymentAmount) > Math.max(0, (feeStructure[isManualPayment ? modalDepartment : cleanStr(paymentStudent?.courseId || paymentStudent?.courseName || paymentStudent?.department)]?.[paymentSemester] || 0) - payments.filter(p => (p.studentId === paymentStudent?.id || p.studentId === paymentStudent?.uid) && Number(p.semester) === paymentSemester && p.status === 'confirmed').reduce((sum, p) => sum + Number(p.amount), 0)))}
-                 className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none disabled:bg-slate-300 disabled:shadow-none mt-4"
+                 className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none disabled:bg-slate-300 disabled:shadow-none mt-4 flex items-center justify-center gap-2"
                >
                  Confirm Receipt
+                 <CheckCircle className="w-4 h-4" />
                </button>
              </form>
            </div>

@@ -76,6 +76,7 @@ export default function AuthGateway() {
   const checkSetup = async () => {
     try {
       const docRef = doc(db, 'config', 'appSettings');
+      // Using a standard getDoc which will try to use cache if server is temporarily unreachable
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -85,9 +86,15 @@ export default function AuthGateway() {
       } else {
         setView('teacher-setup');
       }
-    } catch (err) {
-      console.error("Error checking setup:", err);
-      setView('teacher-setup'); // Fallback
+    } catch (err: any) {
+      console.warn("Setup check deferred or failed:", err.message);
+      // If it's a connection issue, we might want to wait or just fall back to login
+      // instead of forcing setup view if it might actually exist
+      if (err.message && err.message.includes('offline')) {
+         setView('student-login'); // Assume it exists and let login handle the connectivity error
+      } else {
+         setView('teacher-setup'); // Fallback for new projects
+      }
     }
   };
 
