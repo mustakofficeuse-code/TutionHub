@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { doc, getDoc, setDoc, collection, query, orderBy, onSnapshot, limit, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { QRCodeSVG } from 'qrcode.react';
+import { useAuth } from '../../context/AuthContext';
 import { 
   QrCode, 
   MapPin, 
@@ -21,12 +22,15 @@ const STATIC_QR_ID = "TUITIONHUB_ATTENDANCE_001";
 
 export default function AttendanceGenerator() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const [tuitionLocation, setTuitionLocation] = useState<{lat: number, lng: number} | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
   const [indexError, setIndexError] = useState(false);
+  const [viewMode, setViewMode] = useState<'live' | 'history'>('live');
+  const [sessionInfo, setSessionInfo] = useState<any>(null);
 
   // Session Config
   const [sessionData, setSessionData] = useState({
@@ -43,7 +47,31 @@ export default function AttendanceGenerator() {
     fetchTuitionLocation();
     const unsubscribe = listenToRecentAttendance();
     return () => unsubscribe();
+  }, [activeSessionId, viewMode]);
+
+  useEffect(() => {
+    if (activeSessionId) {
+      const fetchSession = async () => {
+        const snap = await getDoc(doc(db, 'attendance_sessions', activeSessionId));
+        if (snap.exists()) setSessionInfo(snap.data());
+      };
+      fetchSession();
+    }
   }, [activeSessionId]);
+
+  const isSessionValid = () => {
+    if (!sessionInfo) return true; // Default to showing if no session info yet
+    
+    const now = new Date();
+    const startTimeParts = sessionInfo.startTime.split(':');
+    const sessionStart = new Date();
+    sessionStart.setHours(parseInt(startTimeParts[0]), parseInt(startTimeParts[1]), 0, 0);
+
+    const validityPeriod = parseInt(sessionInfo.validDuration) * 60 * 1000;
+    const sessionExpiry = new Date(sessionStart.getTime() + validityPeriod);
+    
+    return now <= sessionExpiry;
+  };
 
   const fetchTuitionLocation = async () => {
     try {
@@ -60,13 +88,21 @@ export default function AttendanceGenerator() {
   };
 
   const listenToRecentAttendance = () => {
-    // If we have an active session, only show attendance for that session
-    const q = activeSessionId 
-      ? query(collection(db, 'attendance'), where('sessionId', '==', activeSessionId), orderBy('timestamp', 'desc'), limit(50))
-      : query(collection(db, 'attendance'), orderBy('timestamp', 'desc'), limit(20));
+    // If we have an active session and in live mode, only show attendance for that session
+    let q;
+    if (viewMode === 'live') {
+      if (!activeSessionId) {
+        setRecentAttendance([]);
+        return () => {};
+      }
+      q = query(collection(db, 'attendance'), where('sessionId', '==', activeSessionId), orderBy('timestamp', 'desc'), limit(50));
+    } else {
+      // History mode: show more records regardless of session, but filtered by current teacher
+      q = query(collection(db, 'attendance'), where('teacherId', '==', user?.uid), orderBy('timestamp', 'desc'), limit(100));
+    }
 
-    return onSnapshot(q, (snapshot) => {
-      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return onSnapshot(q as any, (snapshot: any) => {
+      const list = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
       setRecentAttendance(list);
       setIndexError(false);
     }, (error: any) => {
@@ -85,9 +121,14 @@ export default function AttendanceGenerator() {
         const sessionId = `SESS_${Date.now()}`;
         const sessionRef = doc(db, 'attendance_sessions', sessionId);
         
+        // Auto-set start time to now if the teacher didn't change it or just for better UX
+        const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+        
         const payload = {
           id: sessionId,
+          teacherId: user?.uid,
           ...sessionData,
+          startTime: nowStr, // Override with actual creation time
           location: loc,
           createdAt: new Date().toISOString(),
           status: 'active'
@@ -95,6 +136,7 @@ export default function AttendanceGenerator() {
 
         await setDoc(sessionRef, payload);
         setActiveSessionId(sessionId);
+        setSessionInfo(payload); // Update local session info
       } catch (error) {
         console.error("Error creating session:", error);
         alert("Failed to create attendance session.");
@@ -275,6 +317,16 @@ export default function AttendanceGenerator() {
               </button>
             </div>
           </div>
+          
+          <button 
+            onClick={() => {
+              setActiveSessionId(null);
+              setSessionInfo(null);
+            }}
+            className="w-full py-3 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-xl font-bold text-sm border border-red-200 dark:border-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/20 transition-all"
+          >
+            Clear Active Session
+          </button>
 
           {/* Static QR Panel Replacement */}
           {activeSessionId && (
@@ -353,18 +405,47 @@ export default function AttendanceGenerator() {
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 min-h-[600px]">
             <div className="flex justify-between items-center mb-8">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <Users className="text-blue-600 w-6 h-6" />
-                Live Attendance Feed
-              </h2>
-              <div className="flex items-center gap-2 text-xs font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
-                <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
-                LIVE
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setViewMode('live')}
+                  className={`text-xl font-bold flex items-center gap-2 transition-colors ${viewMode === 'live' ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}
+                >
+                  <Users className={`w-6 h-6 ${viewMode === 'live' ? 'text-blue-600' : 'text-slate-400'}`} />
+                  Live Feed
+                </button>
+                <button 
+                  onClick={() => setViewMode('history')}
+                  className={`text-xl font-bold flex items-center gap-2 transition-colors ${viewMode === 'history' ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}
+                >
+                  <Calendar className={`w-6 h-6 ${viewMode === 'history' ? 'text-blue-600' : 'text-slate-400'}`} />
+                  History
+                </button>
               </div>
+              
+              {viewMode === 'live' && (
+                <div className="flex items-center gap-2 text-xs font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-3 py-1 rounded-full">
+                  <span className="w-2 h-2 bg-green-600 rounded-full animate-pulse"></span>
+                  LIVE
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">
-              {indexError ? (
+              {viewMode === 'live' && !isSessionValid() ? (
+                <div className="flex flex-col items-center justify-center py-20 text-center">
+                  <Clock className="w-12 h-12 text-slate-400 mb-4 opacity-50" />
+                  <p className="font-bold text-slate-900 dark:text-white mb-2">Session Expired</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
+                    The valid duration for this attendance session has ended. Live feed is hidden. Check history for results.
+                  </p>
+                  <button 
+                    onClick={() => setViewMode('history')}
+                    className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-xl text-sm font-bold"
+                  >
+                    View History
+                  </button>
+                </div>
+              ) : indexError ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                   <AlertCircle className="w-12 h-12 text-amber-500 mb-4" />
                   <p className="font-bold text-slate-900 dark:text-white mb-2">Indexing in Progress</p>
@@ -406,7 +487,10 @@ export default function AttendanceGenerator() {
             </div>
 
             {recentAttendance.length > 0 && (
-              <button className="w-full mt-8 py-3 text-blue-600 dark:text-blue-400 font-bold text-sm hover:underline">
+              <button 
+                onClick={() => setViewMode('history')}
+                className="w-full mt-8 py-3 text-blue-600 dark:text-blue-400 font-bold text-sm hover:underline"
+              >
                 View All History
               </button>
             )}

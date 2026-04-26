@@ -127,6 +127,7 @@ export default function AttendanceScanner() {
       // 6. Mark Attendance
       await setDoc(attRef, {
         sessionId: sessionId,
+        teacherId: session.teacherId || 'unknown',
         studentId: user?.uid,
         studentName: profile?.name,
         studentIdNum: profile?.studentId || 'N/A',
