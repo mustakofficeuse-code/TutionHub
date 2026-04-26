@@ -318,7 +318,12 @@ export default function TeacherDashboard() {
 
   const renderStudentTable = (department: string) => {
     const deptUpper = department.toUpperCase();
-    const deptStudents = allStudents.filter(s => String(s.courseName || s.courseId || '').toUpperCase() === deptUpper);
+    const deptStudents = allStudents.filter(s => {
+      const d = String(s.courseId || s.courseName || '').toUpperCase();
+      // If it's GENERAL and we are viewing BCA, include it (or vice versa depending on intent, but let's assume BCA is the default now)
+      if (deptUpper === 'BCA' && (d === 'GENERAL' || d === '')) return true;
+      return d === deptUpper;
+    });
     
     // Group by semester
     const bySemester = deptStudents.reduce((acc: any, student) => {
@@ -340,74 +345,99 @@ export default function TeacherDashboard() {
     }
 
     return (
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-8">
         {semesters.map(sem => (
-          <div key={sem} className="bg-white dark:bg-slate-900 overflow-hidden border border-slate-100 dark:border-slate-800 rounded-2xl">
-            <div className="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
-              <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
-                Semester {sem} — {bySemester[sem].length} Students
-              </span>
+          <div key={sem} className="group animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex flex-col items-center justify-center text-white shadow-lg shadow-blue-200 dark:shadow-none -rotate-2 group-hover:rotate-0 transition-transform">
+                <span className="text-[10px] font-black leading-none uppercase opacity-80">Sem</span>
+                <span className="text-xl font-black leading-none">{sem}</span>
+              </div>
+              <div>
+                <h4 className="text-lg font-black text-slate-900 dark:text-white tracking-tight">Semester {sem} Batch</h4>
+                <div className="flex gap-2">
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                    {bySemester[sem].length} Total Students
+                  </p>
+                  <span className="text-slate-300">•</span>
+                  <p className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                    {bySemester[sem].filter((s: any) => !blacklist.includes(s.email)).length} Active
+                  </p>
+                </div>
+              </div>
+              <div className="h-px flex-1 bg-slate-100 dark:bg-slate-800 ml-4 hidden sm:block"></div>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b border-slate-50 dark:border-slate-800/50">
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Student</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:table-cell">ID / Email</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
+
+            <div className="bg-white dark:bg-slate-900 overflow-hidden border border-slate-100 dark:border-slate-800 rounded-[2rem] shadow-sm hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none transition-all">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-separate border-spacing-0">
+                  <thead>
+                    <tr className="bg-slate-50/50 dark:bg-slate-800/30">
+                      <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Student Profile</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800 hidden md:table-cell">Reg Details</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Account Status</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800 text-right">Management</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                   {bySemester[sem].map((student: any) => {
                     const isBlocked = blacklist.includes(student.email);
                     return (
-                      <tr key={student.id} className={`${isBlocked ? 'bg-red-50/30 dark:bg-red-900/5' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/50'} transition-colors`}>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isBlocked ? 'bg-red-100 dark:bg-red-900/20' : 'bg-blue-50 dark:bg-blue-900/20'}`}>
-                              <User className={`w-4 h-4 ${isBlocked ? 'text-red-500' : 'text-blue-500'}`} />
+                      <tr key={student.id} className={`group/row ${isBlocked ? 'bg-red-50/10' : 'hover:bg-blue-50/30 dark:hover:bg-blue-900/10'} transition-colors`}>
+                        <td className="px-8 py-5 whitespace-nowrap">
+                          <div className="flex items-center gap-4">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${isBlocked ? 'bg-red-100 dark:bg-red-900/20' : 'bg-slate-100 dark:bg-slate-800 group-hover/row:bg-white dark:group-hover/row:bg-slate-900 group-hover/row:shadow-md'}`}>
+                              <User className={`w-6 h-6 ${isBlocked ? 'text-red-500' : 'text-slate-400 group-hover/row:text-blue-600 transition-colors'}`} />
                             </div>
                             <div>
-                              <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name}</p>
-                              <p className="text-[10px] text-slate-500 mt-0.5 sm:hidden">{student.studentId}</p>
+                              <p className={`font-black text-base tracking-tight ${isBlocked ? 'text-red-900 dark:text-red-100' : 'text-slate-900 dark:text-white'}`}>{student.name}</p>
+                              <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider hidden sm:block">{student.email}</p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                          <p className="text-xs font-mono text-slate-600 dark:text-slate-400">{student.studentId}</p>
-                          <p className="text-[10px] text-slate-400">{student.email}</p>
+                        <td className="px-8 py-5 whitespace-nowrap hidden md:table-cell">
+                          <div className="flex flex-col">
+                            <span className="text-xs font-black text-slate-700 dark:text-slate-300 font-mono tracking-tighter">ID: {student.studentId || 'N/A'}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">Registered {student.createdAt ? new Date(student.createdAt).toLocaleDateString() : 'Long ago'}</span>
+                          </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-8 py-5 whitespace-nowrap">
                           {isBlocked ? (
-                            <span className="px-2 py-0.5 rounded text-[8px] font-black bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 uppercase tracking-widest">Suspended</span>
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-xl w-fit">
+                              <UserX className="w-3 h-3" />
+                              <span className="text-[9px] font-black uppercase tracking-widest">Suspended</span>
+                            </div>
                           ) : (
-                            <span className="px-2 py-0.5 rounded text-[8px] font-black bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 uppercase tracking-widest">Active</span>
+                            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-xl w-fit">
+                              <CheckCircle className="w-3 h-3" />
+                              <span className="text-[9px] font-black uppercase tracking-widest">Active</span>
+                            </div>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end gap-1">
+                        <td className="px-8 py-5 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-2">
                             <button 
                               onClick={() => openEditModal(student)}
-                              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
-                              title="Edit"
+                              className="p-3 text-slate-400 hover:text-blue-600 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100 dark:hover:border-slate-700"
+                              title="Edit Details"
                             >
-                              <Edit className="w-4 h-4" />
+                              <Edit className="w-4.5 h-4.5" />
                             </button>
                             <button 
                               onClick={() => setStudentToBlock(student)}
-                              className={`p-1.5 rounded-lg transition-all ${isBlocked ? 'text-red-500 bg-red-50 dark:bg-red-900/20 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/40' : 'text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
-                              title={isBlocked ? "Unblock" : "Suspend"}
+                              className={`p-3 rounded-xl transition-all shadow-sm border border-transparent ${isBlocked ? 'text-red-500 bg-red-50 dark:bg-red-900/20 hover:text-red-700 border-red-100 dark:border-red-900/30' : 'text-slate-400 hover:text-red-600 hover:bg-white dark:hover:bg-slate-800 hover:border-slate-100 dark:hover:border-slate-700'}`}
+                              title={isBlocked ? "Reactivate Access" : "Suspend Access"}
                             >
-                              <Trash2 className="w-4 h-4" />
+                              <UserX className="w-4.5 h-4.5" />
                             </button>
                           </div>
                         </td>
                       </tr>
                     );
                   })}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         ))}
@@ -613,11 +643,18 @@ export default function TeacherDashboard() {
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {(Array.from(new Set(allStudents.map(s => String(s.courseName || s.courseId || '').toUpperCase()))) as string[])
-                    .filter(dept => dept && dept !== 'GENERAL' && dept !== 'OTHER')
+                  {(Array.from(new Set(allStudents.map(s => {
+                    const d = String(s.courseId || s.courseName || '').toUpperCase();
+                    // Map generic/empty to BCA as per app primary focus
+                    return (d === 'GENERAL' || d === '' || d === 'OTHER') ? 'BCA' : d;
+                  }))) as string[])
                     .map((dept, index) => {
                       const isActive = expandedDept === dept;
-                      const deptCount = allStudents.filter(s => String(s.courseName || s.courseId || '').toUpperCase() === dept).length;
+                      const deptCount = allStudents.filter(s => {
+                        const d = String(s.courseId || s.courseName || '').toUpperCase();
+                        const targetDept = (d === 'GENERAL' || d === '' || d === 'OTHER') ? 'BCA' : d;
+                        return targetDept === dept;
+                      }).length;
                       return (
                       <button
                         key={dept}

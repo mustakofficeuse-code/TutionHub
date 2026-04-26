@@ -256,10 +256,9 @@ export default function AttendanceGenerator() {
                   className="w-full bg-slate-50 dark:bg-slate-800 border-none rounded-xl py-3 px-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 transition-all font-medium"
                 >
                   <option value="BCA">BCA</option>
-                  <option value="BBA">BBA</option>
+                  <option value="BSC">BSC</option>
+                  <option value="BTECH">BTECH</option>
                   <option value="MCA">MCA</option>
-                  <option value="B.Tech">B.Tech</option>
-                  <option value="Other">Other</option>
                 </select>
               </div>
 
@@ -470,20 +469,37 @@ export default function AttendanceGenerator() {
                   </button>
                 </div>
               ) : indexError ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center bg-amber-50/50 dark:bg-amber-900/10 rounded-3xl border border-amber-100 dark:border-amber-900/30 px-6">
-                  <AlertCircle className="w-12 h-12 text-amber-500 mb-4" />
-                  <p className="font-bold text-slate-900 dark:text-white mb-2 text-lg">Index Required for History</p>
-                  <p className="text-sm text-slate-600 dark:text-slate-400 max-w-sm mb-6">
-                    To view cross-session history, Firestore requires a composite index. It's usually built automatically if you clicked the link in previous error popups.
-                  </p>
-                  <div className="text-left bg-white dark:bg-slate-900 p-4 rounded-2xl border border-amber-100 dark:border-amber-900/40 w-full max-w-xs mx-auto">
-                    <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">Manual Setup Help</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
-                      1. Go to Firebase Console -&gt; Firestore Indexes<br/>
-                      2. Add Index: <b>attendance</b> collection<br/>
-                      3. Fields: <b>teacherId</b> (Asc) &amp; <b>timestamp</b> (Desc)
-                    </p>
+                <div className="flex flex-col items-center justify-center py-20 text-center bg-blue-50/30 dark:bg-blue-900/5 rounded-[3rem] border border-blue-100/50 dark:border-blue-900/20 px-8">
+                  <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mb-6 shadow-xl shadow-blue-200 dark:shadow-none">
+                    <AlertCircle className="w-8 h-8 text-white" />
                   </div>
+                  <h3 className="font-black text-slate-900 dark:text-white mb-2 text-xl tracking-tight">Index Required for History</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 max-w-sm mb-8 leading-relaxed">
+                    To view cross-session history, Firestore requires a composite index. Your proposed setup <b>(teacherId: Asc, timestamp: Desc)</b> is 100% correct.
+                  </p>
+                  
+                  <div className="text-left bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-800 w-full max-w-md shadow-sm">
+                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mb-4">Manual Setup Strategy</p>
+                    <div className="space-y-4">
+                      <div className="flex gap-3">
+                        <div className="w-6 h-6 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-[10px] font-black text-blue-600 shrink-0">1</div>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">Open <b>Firebase Console</b> &gt; <b>Cloud Firestore</b> &gt; <b>Indexes</b></p>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="w-6 h-6 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-[10px] font-black text-blue-600 shrink-0">2</div>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">Click <b>Add Index</b> for the <code className="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded text-blue-600">attendance</code> collection</p>
+                      </div>
+                      <div className="flex gap-3">
+                        <div className="w-6 h-6 bg-blue-50 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-[10px] font-black text-blue-600 shrink-0">3</div>
+                        <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">Add Fields: <b>teacherId</b> (Asc) and <b>timestamp</b> (Desc)</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <p className="mt-8 text-[11px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    Waiting for Firestore to finish building...
+                  </p>
                 </div>
               ) : recentAttendance.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-400">
