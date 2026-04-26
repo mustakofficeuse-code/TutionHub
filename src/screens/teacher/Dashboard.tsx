@@ -30,9 +30,12 @@ import {
   Edit,
   Trash2,
   X,
-  UserX
+  UserX,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function TeacherDashboard() {
   const { profile } = useAuth();
@@ -66,6 +69,8 @@ export default function TeacherDashboard() {
   const [studentToPermanentDelete, setStudentToPermanentDelete] = useState<any | null>(null);
   const [isPermanentDeleting, setIsPermanentDeleting] = useState(false);
   
+  const [expandedDept, setExpandedDept] = useState<string | null>(null);
+
   // Real-time stats
   const [totalStudents, setTotalStudents] = useState(0);
   const [todayAttendanceCount, setTodayAttendanceCount] = useState(0);
@@ -311,13 +316,13 @@ export default function TeacherDashboard() {
     }
   };
 
-  const renderStudentGroup = (department: string) => {
+  const renderStudentTable = (department: string) => {
     const deptUpper = department.toUpperCase();
-    const deptStudents = allStudents.filter(s => String(s.courseId || s.courseName || 'General').toUpperCase() === deptUpper);
+    const deptStudents = allStudents.filter(s => String(s.courseName || s.courseId || '').toUpperCase() === deptUpper);
     
     // Group by semester
     const bySemester = deptStudents.reduce((acc: any, student) => {
-      const sem = student.semester || 'Unknown';
+      const sem = student.semester || '1';
       if (!acc[sem]) acc[sem] = [];
       acc[sem].push(student);
       return acc;
@@ -325,80 +330,87 @@ export default function TeacherDashboard() {
 
     const semesters = Object.keys(bySemester).sort();
 
-    return (
-      <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
-            <BookOpen className="w-6 h-6 text-blue-600" />
-          </div>
-          <div>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white">{department} Students</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{deptStudents.length} total students</p>
-          </div>
+    if (deptStudents.length === 0) {
+      return (
+        <div className="text-center py-12 bg-slate-50 dark:bg-slate-800/30 rounded-3xl border border-dashed border-slate-200 dark:border-slate-700">
+          <Users className="w-10 h-10 text-slate-300 dark:text-slate-600 mx-auto mb-3" />
+          <p className="text-slate-500 dark:text-slate-400">No students enrolled in {department} yet.</p>
         </div>
+      );
+    }
 
-        {semesters.length === 0 ? (
-          <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-            No students enrolled in {department} yet.
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {semesters.map(sem => (
-              <div key={sem} className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <div className="bg-slate-100 dark:bg-slate-800 px-4 py-1.5 rounded-full border border-slate-200 dark:border-slate-700">
-                    <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
-                      Semester {sem}
-                    </span>
-                  </div>
-                  <div className="h-px bg-slate-100 dark:bg-slate-800 flex-1"></div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-4 border-l-2 border-slate-50 dark:border-slate-900">
+    return (
+      <div className="space-y-6">
+        {semesters.map(sem => (
+          <div key={sem} className="bg-white dark:bg-slate-900 overflow-hidden border border-slate-100 dark:border-slate-800 rounded-2xl">
+            <div className="px-6 py-3 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+              <span className="text-xs font-black text-slate-700 dark:text-slate-300 uppercase tracking-widest">
+                Semester {sem} — {bySemester[sem].length} Students
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-slate-50 dark:border-slate-800/50">
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Student</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:table-cell">ID / Email</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
+                    <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
                   {bySemester[sem].map((student: any) => {
                     const isBlocked = blacklist.includes(student.email);
                     return (
-                    <div key={student.id} className={`flex items-center justify-between p-3 rounded-xl border transition-all ${isBlocked ? 'bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30' : 'bg-slate-50 dark:bg-slate-800/50 border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-900'}`}>
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${isBlocked ? 'bg-red-100 dark:bg-red-900/20' : 'bg-white dark:bg-slate-900'}`}>
-                          <User className={`w-5 h-5 ${isBlocked ? 'text-red-500' : 'text-slate-400'}`} />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name}</p>
-                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 uppercase tracking-widest">
-                              ID: {student.studentId}
-                            </span>
-                            {isBlocked && (
-                              <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 uppercase tracking-widest">
-                                Suspended
-                              </span>
-                            )}
+                      <tr key={student.id} className={`${isBlocked ? 'bg-red-50/30 dark:bg-red-900/5' : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/50'} transition-colors`}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${isBlocked ? 'bg-red-100 dark:bg-red-900/20' : 'bg-blue-50 dark:bg-blue-900/20'}`}>
+                              <User className={`w-4 h-4 ${isBlocked ? 'text-red-500' : 'text-blue-500'}`} />
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name}</p>
+                              <p className="text-[10px] text-slate-500 mt-0.5 sm:hidden">{student.studentId}</p>
+                            </div>
                           </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 transition-opacity">
-                        <button 
-                          onClick={() => openEditModal(student)}
-                          className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
-                          title="Edit Student"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button 
-                          onClick={() => setStudentToBlock(student)}
-                          className={`p-2 rounded-lg transition-all ${isBlocked ? 'text-red-500 bg-red-50 dark:bg-red-900/20 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/40' : 'text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
-                          title={isBlocked ? "Unblock Student" : "Block Student"}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  )})}
-                </div>
-              </div>
-            ))}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                          <p className="text-xs font-mono text-slate-600 dark:text-slate-400">{student.studentId}</p>
+                          <p className="text-[10px] text-slate-400">{student.email}</p>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {isBlocked ? (
+                            <span className="px-2 py-0.5 rounded text-[8px] font-black bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 uppercase tracking-widest">Suspended</span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[8px] font-black bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 uppercase tracking-widest">Active</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button 
+                              onClick={() => openEditModal(student)}
+                              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-all"
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => setStudentToBlock(student)}
+                              className={`p-1.5 rounded-lg transition-all ${isBlocked ? 'text-red-500 bg-red-50 dark:bg-red-900/20 hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/40' : 'text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'}`}
+                              title={isBlocked ? "Unblock" : "Suspend"}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           </div>
-        )}
+        ))}
       </div>
     );
   };
@@ -580,29 +592,85 @@ export default function TeacherDashboard() {
 
             {/* Middle Section — Course Management (Students) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="lg:col-span-2 space-y-8">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <ClipboardList className="w-7 h-7 text-blue-600" />
-                    Course Management
-                  </h2>
-                  <div className="flex gap-2">
-                    {(Array.from(new Set(allStudents.map(s => String(s.courseId || s.courseName || 'General').toUpperCase()))) as string[]).map(dept => (
-                      <span key={dept} className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-xs font-bold uppercase">{dept}</span>
-                    ))}
-                  </div>
-                </div>
-                {(Array.from(new Set(allStudents.map(s => String(s.courseId || s.courseName || 'General').toUpperCase()))) as string[]).length > 0 ? (
-                  (Array.from(new Set(allStudents.map(s => String(s.courseId || s.courseName || 'General').toUpperCase()))) as string[]).map(dept => (
-                    <div key={dept}>
-                      {renderStudentGroup(dept || 'BCA')}
+              <div className="lg:col-span-2 space-y-6">
+                <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3">
+                    <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center">
+                      <ClipboardList className="w-7 h-7 text-blue-600" />
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                    No students enrolled yet.
+                    <div>
+                      <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Course Management</h2>
+                      <p className="text-sm text-slate-500 dark:text-slate-400">Total {totalStudents} enrolled students</p>
+                    </div>
                   </div>
-                )}
+                  <button 
+                    onClick={() => navigate('/admin/students/add')}
+                    className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
+                    title="Add New Student"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                  {(Array.from(new Set(allStudents.map(s => String(s.courseName || s.courseId || '').toUpperCase()))) as string[])
+                    .filter(dept => dept && dept !== 'GENERAL' && dept !== 'OTHER')
+                    .map((dept, index) => {
+                      const isActive = expandedDept === dept;
+                      const deptCount = allStudents.filter(s => String(s.courseName || s.courseId || '').toUpperCase() === dept).length;
+                      return (
+                      <button
+                        key={dept}
+                        onClick={() => setExpandedDept(isActive ? null : dept)}
+                        className={`p-4 rounded-2xl border transition-all text-left flex flex-col justify-between h-32 relative group ${
+                          isActive 
+                            ? 'bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-100 dark:shadow-none' 
+                            : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-500'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className={`p-2 rounded-lg ${isActive ? 'bg-white/20' : 'bg-slate-50 dark:bg-slate-800'}`}>
+                            <BookOpen className={`w-4 h-4 ${isActive ? 'text-white' : 'text-blue-600'}`} />
+                          </div>
+                          {isActive ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                        </div>
+                        <div>
+                          <p className={`text-xs font-black uppercase tracking-widest ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>Department</p>
+                          <p className="text-lg font-bold truncate">{dept}</p>
+                          <p className={`text-[10px] ${isActive ? 'text-white/80' : 'text-slate-500'}`}>{deptCount} Students</p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <AnimatePresence mode="wait">
+                  {expandedDept && (
+                    <motion.div
+                      key={expandedDept}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: 20 }}
+                      className="animate-in fade-in duration-300"
+                    >
+                      <div className="flex items-center justify-between mb-4 mt-2 px-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-6 bg-blue-600 rounded-full"></div>
+                          <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+                            {expandedDept} Student Records
+                          </h3>
+                        </div>
+                        <button 
+                          onClick={() => setExpandedDept(null)}
+                          className="text-xs font-bold text-blue-600 hover:underline"
+                        >
+                          Minimize
+                        </button>
+                      </div>
+                      {renderStudentTable(expandedDept)}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 
                 {/* Blocks List */}
                 <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 mt-8">
@@ -838,6 +906,8 @@ export default function TeacherDashboard() {
                   >
                     <option value="BCA">BCA</option>
                     <option value="BSC">BSC</option>
+                    <option value="BTECH">BTECH</option>
+                    <option value="MCA">MCA</option>
                   </select>
                 </div>
               </div>

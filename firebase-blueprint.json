@@ -37,10 +37,14 @@
       "description": "Attendance records for students",
       "type": "object",
       "properties": {
+        "sessionId": { "type": "string" },
+        "teacherId": { "type": "string" },
         "studentId": { "type": "string" },
-        "courseId": { "type": "string" },
-        "date": { "type": "string", "format": "date" },
-        "time": { "type": "string" },
+        "studentName": { "type": "string" },
+        "studentIdNum": { "type": "string" },
+        "department": { "type": "string" },
+        "semester": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" },
         "status": { "type": "string", "enum": ["present", "absent"] },
         "location": {
           "type": "object",
@@ -50,7 +54,31 @@
           }
         }
       },
-      "required": ["studentId", "courseId", "date", "status"]
+      "required": ["sessionId", "studentId", "timestamp", "status"]
+    },
+    "attendance_sessions": {
+      "title": "Attendance Session",
+      "description": "Active QR code sessions for marking attendance",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "department": { "type": "string" },
+        "semester": { "type": "string" },
+        "startTime": { "type": "string" },
+        "endTime": { "type": "string" },
+        "validDuration": { "type": "string" },
+        "requireLocation": { "type": "boolean" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "status": { "type": "string" }
+      }
     },
     "fees": {
       "title": "Fee",
@@ -258,6 +286,10 @@
     "/attendance/{attendanceId}": {
       "schema": "attendance",
       "description": "Attendance records"
+    },
+    "/attendance_sessions/{sessionId}": {
+      "schema": "attendance_sessions",
+      "description": "Attendance generation sessions"
     },
     "/fees/{feeId}": {
       "schema": "fees",

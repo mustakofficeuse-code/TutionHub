@@ -60,8 +60,8 @@ export default function AuthGateway() {
                email: user.email,
                role: user.email === 'teacher@tutionhub.com' || user.email === 'admin@tutionhub.com' ? 'teacher' : 'student',
                semester: '1',
-               courseName: 'General',
-               courseId: 'general',
+               courseName: 'BCA',
+               courseId: 'bca',
                createdAt: new Date().toISOString(),
                profileComplete: true
              });
@@ -257,8 +257,8 @@ export default function AuthGateway() {
               email: email,
               role: 'student',
               semester: '1',
-              courseName: 'General',
-              courseId: 'general',
+              courseName: 'BCA',
+              courseId: 'bca',
               createdAt: new Date().toISOString(),
               profileComplete: true
             });
@@ -606,9 +606,9 @@ export default function AuthGateway() {
                       onChange={(e) => setDepartment(e.target.value)}
                     >
                       <option value="BCA">BCA</option>
+                      <option value="BSC">BSC</option>
+                      <option value="BTECH">BTECH</option>
                       <option value="MCA">MCA</option>
-                      <option value="B.Tech">B.Tech</option>
-                      <option value="B.Sc">B.Sc</option>
                     </select>
                   </div>
                 </div>

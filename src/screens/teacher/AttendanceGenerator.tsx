@@ -29,19 +29,43 @@ export default function AttendanceGenerator() {
   const [saving, setSaving] = useState(false);
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
   const [indexError, setIndexError] = useState(false);
-  const [viewMode, setViewMode] = useState<'live' | 'history'>('live');
+  const [viewMode, setViewMode] = useState<'live' | 'history'>(() => 
+    (localStorage.getItem('attendance_view_mode') as 'live' | 'history') || 'live'
+  );
+
+  useEffect(() => {
+    localStorage.setItem('attendance_view_mode', viewMode);
+  }, [viewMode]);
   const [sessionInfo, setSessionInfo] = useState<any>(null);
 
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(() => 
+    localStorage.getItem('active_attendance_session')
+  );
+
+  useEffect(() => {
+    if (activeSessionId) {
+      localStorage.setItem('active_attendance_session', activeSessionId);
+    } else {
+      localStorage.removeItem('active_attendance_session');
+    }
+  }, [activeSessionId]);
+
   // Session Config
-  const [sessionData, setSessionData] = useState({
-    department: 'BCA',
-    semester: '1st',
-    startTime: '09:00',
-    endTime: '11:00',
-    validDuration: '60', // minutes
-    requireLocation: true,
+  const [sessionData, setSessionData] = useState(() => {
+    const saved = localStorage.getItem('attendance_session_config');
+    return saved ? JSON.parse(saved) : {
+      department: 'BCA',
+      semester: '1st',
+      startTime: '09:00',
+      endTime: '11:00',
+      validDuration: '60', // minutes
+      requireLocation: true,
+    };
   });
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('attendance_session_config', JSON.stringify(sessionData));
+  }, [sessionData]);
 
   useEffect(() => {
     fetchTuitionLocation();
@@ -446,12 +470,20 @@ export default function AttendanceGenerator() {
                   </button>
                 </div>
               ) : indexError ? (
-                <div className="flex flex-col items-center justify-center py-20 text-center">
+                <div className="flex flex-col items-center justify-center py-20 text-center bg-amber-50/50 dark:bg-amber-900/10 rounded-3xl border border-amber-100 dark:border-amber-900/30 px-6">
                   <AlertCircle className="w-12 h-12 text-amber-500 mb-4" />
-                  <p className="font-bold text-slate-900 dark:text-white mb-2">Indexing in Progress</p>
-                  <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
-                    Firestore is currently optimizing the database for this view. This usually takes 5-10 minutes. Please refresh later.
+                  <p className="font-bold text-slate-900 dark:text-white mb-2 text-lg">Index Required for History</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 max-w-sm mb-6">
+                    To view cross-session history, Firestore requires a composite index. It's usually built automatically if you clicked the link in previous error popups.
                   </p>
+                  <div className="text-left bg-white dark:bg-slate-900 p-4 rounded-2xl border border-amber-100 dark:border-amber-900/40 w-full max-w-xs mx-auto">
+                    <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mb-2">Manual Setup Help</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                      1. Go to Firebase Console -&gt; Firestore Indexes<br/>
+                      2. Add Index: <b>attendance</b> collection<br/>
+                      3. Fields: <b>teacherId</b> (Asc) &amp; <b>timestamp</b> (Desc)
+                    </p>
+                  </div>
                 </div>
               ) : recentAttendance.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-slate-400">

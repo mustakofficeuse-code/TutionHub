@@ -26,6 +26,7 @@ export default function FeeManagement() {
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedDepts, setExpandedDepts] = useState<string[]>([]);
   
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentAmount, setPaymentAmount] = useState('');
@@ -170,9 +171,7 @@ export default function FeeManagement() {
     const q = searchQuery.toLowerCase();
     if (q && !sName.includes(q) && !(s.studentId || '').toLowerCase().includes(q)) return false;
     
-    // Convert old single 'courseId' document dropdown selections
     if (selectedCourse !== 'all' && selectedCourse) {
-       // A very rough match against courses created by admin
        const cName = cleanStr(selectedCourse);
        const sDept = cleanStr(s.courseId) || cleanStr(s.courseName) || cleanStr(s.department);
        if (sDept !== cName && s.courseId !== selectedCourse) return false;
@@ -244,147 +243,224 @@ export default function FeeManagement() {
         </div>
 
         {activeTab === 'history' ? (
-          <>
+          <div className="space-y-8 animate-in fade-in duration-500">
             {/* Filters & Search */}
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-wrap gap-4 items-center">
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row gap-6 items-center justify-between">
+              <div className="relative w-full md:w-96">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                 <input 
                   type="text" 
-                  placeholder="Search student name or ID..."
+                  placeholder="Quick search student name or ID..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
+                  className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none text-slate-900 dark:text-white transition-all shadow-inner font-medium"
                 />
               </div>
-              <div className="flex gap-2">
-                <select
-                  className="px-4 py-2 bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-xl text-sm font-semibold border border-slate-200 dark:border-slate-800 outline-none"
-                  value={selectedCourse}
-                  onChange={(e) => setSelectedCourse(e.target.value)}
+              
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => setExpandedDepts(expandedDepts.length === departments.length ? [] : departments)}
+                  className="px-6 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-600 text-slate-600 dark:text-slate-300 rounded-2xl font-bold transition-all text-sm flex items-center gap-2 shadow-sm"
                 >
-                  <option value="all">All Departments/Courses</option>
-                  {courses.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  <optgroup label="Raw Departments">
-                     {departments.map(d => <option key={`RAW_${d}`} value={d}>{d}</option>)}
-                  </optgroup>
-                </select>
+                  {expandedDepts.length === departments.length ? <Edit className="w-4 h-4" /> : <Filter className="w-4 h-4" />}
+                  {expandedDepts.length === departments.length ? 'Minimize All' : 'Expand All'}
+                </button>
               </div>
             </div>
 
-            {/* Fee Table */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800">
-                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Student</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Status</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Current Sem Due</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Current Sem Paid</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Date</th>
-                    <th className="p-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">Details</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={6} className="p-12 text-center">
-                        <Loader2 className="w-8 h-8 text-blue-600 animate-spin mx-auto" />
-                      </td>
-                    </tr>
-                  ) : filteredStudents.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="p-12 text-center text-slate-500 dark:text-slate-400">
-                        No students found matching your filters.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredStudents.map((student) => {
-                      const studentId = student.uid || student.id;
-                      const dept = cleanStr(student.courseId) || cleanStr(student.courseName) || cleanStr(student.department);
-                      const currentSem = Number(student.semester) || 1;
-                      
-                      // Show totals ONLY for the student's current active semester
-                      const totalExpected = feeStructure[dept]?.[currentSem] || 0;
-                      
-                      const allStudentPayments = payments.filter(p => p.studentId === studentId && Number(p.semester) === currentSem);
-                      const totalPaid = allStudentPayments
-                         .filter(p => p.status === 'confirmed')
-                         .reduce((sum, p) => sum + Number(p.amount), 0);
-                      
-                      const pendingPayments = allStudentPayments.filter(p => p.status === 'pending');
-                         
-                      const amountDue = Math.max(0, totalExpected - totalPaid);
-                      
-                      let statusText = 'Due';
-                      let statusColor = 'bg-orange-100 text-orange-700';
-                      
-                      if (totalExpected > 0 && amountDue <= 0) {
-                        statusText = 'Full Paid';
-                        statusColor = 'bg-green-100 text-green-700';
-                      } else if (totalPaid > 0) {
-                        statusText = 'Partly Paid';
-                        statusColor = 'bg-blue-100 text-blue-700';
-                      } else if (totalExpected === 0) {
-                        statusText = 'No Fee Set';
-                        statusColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
-                      }
+            {/* Department Action Buttons */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+              {departments.map((dept) => {
+                const deptCount = students.filter(s => {
+                  const sDept = cleanStr(s.courseId) || cleanStr(s.courseName) || cleanStr(s.department);
+                  return sDept === dept;
+                }).length;
+                
+                const isExpanded = expandedDepts.includes(dept);
 
-                      const lastPayment = allStudentPayments.filter(p => p.status === 'confirmed').sort((a,b) => new Date(b.date || b.timestamp).getTime() - new Date(a.date || a.timestamp).getTime())[0];
-                      const lastPaymentDate = lastPayment ? new Date(lastPayment.date || lastPayment.timestamp).toLocaleDateString() : 'N/A';
-
-                      return (
-                        <tr key={studentId} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                          <td className="p-4 align-middle">
-                            <div className="flex items-center gap-3">
-                              <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center shrink-0">
-                                <User className="text-blue-600 w-5 h-5" />
-                              </div>
-                              <div>
-                                <p className="font-bold text-slate-900 dark:text-white">{student.name}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">
-                                  {dept || 'No Dept'} • Sem {currentSem} • ID: {student.studentId || 'N/A'}
-                                </p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-4 align-middle">
-                            <div className="flex flex-col gap-2 items-start">
-                              <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider ${statusColor}`}>
-                                {statusText}
-                              </span>
-                              {pendingPayments.length > 0 && (
-                                 <span className="px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider bg-yellow-100 text-yellow-700 shrink-0">
-                                   Verification Pending!
-                                 </span>
-                              )}
-                            </div>
-                          </td>
-                          <td className="p-4 align-middle">
-                            <span className="font-bold text-slate-900 dark:text-white">₹{totalExpected.toLocaleString()}</span>
-                          </td>
-                          <td className="p-4 align-middle">
-                            <span className="font-bold text-green-600">₹{totalPaid.toLocaleString()}</span>
-                          </td>
-                          <td className="p-4 align-middle">
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{lastPaymentDate}</span>
-                          </td>
-                          <td className="p-4 align-middle text-right">
-                             <button 
-                               onClick={() => setViewDetailsStudent({ ...student, expectedAmount: totalExpected, paidAmount: totalPaid, amountDue, semPayments: allStudentPayments })}
-                               className="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl text-xs font-bold transition-colors shadow-sm"
-                             >
-                               View Details
-                             </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
+                return (
+                  <button
+                    key={dept}
+                    disabled={deptCount === 0}
+                    onClick={() => setExpandedDepts(prev => 
+                      prev.includes(dept) ? prev.filter(d => d !== dept) : [...prev, dept]
+                    )}
+                    className={`group relative p-8 rounded-[2.5rem] border-2 transition-all text-left flex flex-col gap-4 overflow-hidden h-44 ${
+                      isExpanded 
+                        ? 'bg-blue-600 border-blue-600 text-white shadow-2xl shadow-blue-200 dark:shadow-none translate-y-[-4px]' 
+                        : deptCount === 0 
+                          ? 'bg-slate-50/50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800/50 opacity-40 cursor-not-allowed'
+                          : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 hover:translate-y-[-4px] hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none'
+                    }`}
+                  >
+                    <div className="flex justify-between items-center relative z-10 w-full">
+                      <span className={`text-2xl font-black tracking-tight ${isExpanded ? 'text-white' : 'text-slate-900 dark:text-white'}`}>{dept}</span>
+                      <div className={`p-2.5 rounded-2xl transition-all duration-300 ${
+                        isExpanded ? 'bg-blue-500 text-white rotate-12' : 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 group-hover:rotate-12'
+                      }`}>
+                        <BookOpen className="w-6 h-6" />
+                      </div>
+                    </div>
+                    <div className="relative z-10 mt-auto">
+                      <div className="flex items-baseline gap-1">
+                        <p className={`text-5xl font-black ${isExpanded ? 'text-white' : 'text-slate-900 dark:text-white'}`}>{deptCount}</p>
+                        <span className={`text-xs font-bold uppercase tracking-widest ${isExpanded ? 'text-blue-100/70' : 'text-slate-400'}`}>Students</span>
+                      </div>
+                    </div>
+                    
+                    {/* Background Pattern */}
+                    <Hash className={`absolute -right-8 -bottom-8 w-40 h-40 transition-all duration-700 pointer-events-none ${
+                      isExpanded ? 'text-white/10 rotate-12 scale-125' : 'text-slate-50 dark:text-slate-800/30 group-hover:rotate-45'
+                    }`} />
+                  </button>
+                );
+              })}
             </div>
-          </>
+
+            {/* Department-wise Tables */}
+            <div className="space-y-12">
+              {departments.map((dept) => {
+                const isExpanded = expandedDepts.includes(dept);
+                const deptFilteredStudents = filteredStudents.filter(s => {
+                  const sDept = cleanStr(s.courseId) || cleanStr(s.courseName) || cleanStr(s.department);
+                  return sDept === dept;
+                });
+
+                // Auto-expand if search produces results in this dept
+                const shouldShow = isExpanded || (searchQuery && deptFilteredStudents.length > 0);
+                if (!shouldShow || deptFilteredStudents.length === 0) return null;
+
+                return (
+                  <div 
+                    key={`registry-${dept}`} 
+                    className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-xl shadow-slate-100 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden animate-in slide-in-from-bottom-8 duration-700"
+                  >
+                    <div className="px-10 py-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/40 dark:bg-slate-800/20 backdrop-blur-sm">
+                      <div className="flex items-center gap-6">
+                         <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-[1.25rem] shadow-sm flex items-center justify-center text-blue-600 border border-slate-100 dark:border-slate-800 rotate-[-4deg]">
+                           <User className="w-8 h-8" />
+                         </div>
+                         <div>
+                           <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">{dept} Department Table</h3>
+                           <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">{deptFilteredStudents.length} Students found</p>
+                         </div>
+                      </div>
+                      <button 
+                        onClick={() => setExpandedDepts(prev => prev.filter(d => d !== dept))}
+                        className="p-4 hover:bg-white dark:hover:bg-slate-800 rounded-2xl transition-all text-slate-400 hover:text-red-500 shadow-sm border border-transparent hover:border-slate-200"
+                      >
+                        <X className="w-7 h-7" />
+                      </button>
+                    </div>
+                    
+                    <div className="overflow-x-auto p-2">
+                      <table className="w-full text-left border-separate border-spacing-y-3 px-8">
+                        <thead>
+                          <tr className="text-slate-400">
+                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] opacity-60">Full Profile</th>
+                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] opacity-60">Status</th>
+                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] opacity-60">Fee (Sem)</th>
+                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] opacity-60">Amount Paid</th>
+                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] opacity-60">Latest Txn</th>
+                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] opacity-60 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {deptFilteredStudents.map((student) => {
+                            const studentId = student.uid || student.id;
+                            const currentSem = Number(student.semester) || 1;
+                            const totalExpected = feeStructure[dept]?.[currentSem] || 0;
+                            const allStudentPayments = payments.filter(p => p.studentId === studentId && Number(p.semester) === currentSem);
+                            const totalPaid = allStudentPayments.filter(p => p.status === 'confirmed').reduce((sum, p) => sum + Number(p.amount), 0);
+                            const amountDue = Math.max(0, totalExpected - totalPaid);
+                            const pendingPayments = allStudentPayments.filter(p => p.status === 'pending');
+
+                            let statusText = 'Pending Dues';
+                            let statusColor = 'bg-amber-100 text-amber-700 border-amber-200';
+                            
+                            if (totalExpected > 0 && amountDue <= 0) {
+                              statusText = 'Fully Cleared';
+                              statusColor = 'bg-emerald-100 text-emerald-700 border-emerald-200';
+                            } else if (totalPaid > 0) {
+                              statusText = 'Partially Paid';
+                              statusColor = 'bg-blue-100 text-blue-700 border-blue-200';
+                            } else if (totalExpected === 0) {
+                              statusText = 'No Fee Plan';
+                              statusColor = 'bg-slate-100 text-slate-500 border-slate-200';
+                            }
+
+                            const lastPayment = allStudentPayments.filter(p => p.status === 'confirmed').sort((a,b) => new Date(b.date || b.timestamp).getTime() - new Date(a.date || a.timestamp).getTime())[0];
+                            const lastPaymentDate = lastPayment ? new Date(lastPayment.date || lastPayment.timestamp).toLocaleDateString() : 'Never';
+
+                            return (
+                              <tr key={studentId} className="group hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all rounded-2xl overflow-hidden shadow-sm hover:shadow-md">
+                                <td className="px-6 py-6 align-middle rounded-l-2xl border-y border-l border-slate-100/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/10">
+                                  <div className="flex items-center gap-5">
+                                    <div className="w-14 h-14 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-blue-600 group-hover:border-blue-200 group-hover:bg-white transition-all shadow-inner">
+                                      <User className="w-7 h-7" />
+                                    </div>
+                                    <div>
+                                      <p className="font-black text-slate-900 dark:text-white text-lg group-hover:text-blue-600 transition-colors">{student.name}</p>
+                                      <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+                                        ID: {student.studentId || 'NOT_SET'} • SEM {currentSem}
+                                      </p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-6 align-middle border-y border-slate-100/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/10">
+                                  <div className="flex flex-col gap-2 items-start">
+                                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusColor}`}>
+                                      {statusText}
+                                    </span>
+                                    {pendingPayments.length > 0 && (
+                                       <span className="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.15em] bg-rose-600 text-white animate-pulse">
+                                         Action Required
+                                       </span>
+                                    )}
+                                  </div>
+                                </td>
+                                <td className="px-6 py-6 align-middle border-y border-slate-100/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/10 font-black text-slate-900 dark:text-white text-lg tracking-tight">₹{totalExpected.toLocaleString()}</td>
+                                <td className="px-6 py-6 align-middle border-y border-slate-100/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/10 font-black text-emerald-600 text-lg tracking-tight">₹{totalPaid.toLocaleString()}</td>
+                                <td className="px-6 py-6 align-middle border-y border-slate-100/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/10 text-xs font-black text-slate-500 uppercase tracking-widest">{lastPaymentDate}</td>
+                                <td className="px-6 py-6 align-middle text-right rounded-r-2xl border-y border-r border-slate-100/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/10">
+                                   <button 
+                                     onClick={() => setViewDetailsStudent({ ...student, expectedAmount: totalExpected, paidAmount: totalPaid, amountDue, semPayments: allStudentPayments })}
+                                     className="px-6 py-3 bg-slate-950 hover:bg-blue-600 text-white rounded-2xl text-xs font-black transition-all shadow-lg hover:shadow-blue-500/20 active:scale-95"
+                                   >
+                                     Manage Dues
+                                   </button>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {!loading && filteredStudents.length === 0 && (
+                <div className="py-40 text-center bg-white dark:bg-slate-900 rounded-[4rem] border border-dashed border-slate-200 dark:border-slate-800 shadow-inner">
+                  <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
+                    <Search className="w-12 h-12 text-slate-300" />
+                  </div>
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-3">No Student Records Found</h3>
+                  <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto font-medium">We couldn't locate any matching records for your query. Try broadening your terms.</p>
+                </div>
+              )}
+
+              {loading && (
+                <div className="py-24 text-center">
+                  <div className="relative w-16 h-16 mx-auto mb-6">
+                    <Loader2 className="w-16 h-16 text-blue-600 animate-spin absolute inset-0" />
+                    <div className="absolute inset-4 bg-blue-600 rounded-full opacity-20 animate-ping" />
+                  </div>
+                  <p className="text-slate-400 font-black uppercase tracking-[0.3em] text-[10px]">Processing Database...</p>
+                </div>
+              )}
+            </div>
+          </div>
         ) : (
           <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8 space-y-8">
             <div className="flex justify-between items-center">
@@ -703,7 +779,7 @@ export default function FeeManagement() {
                 <p className="text-slate-500 dark:text-slate-400 text-sm italic">No records found for this semester.</p>
               ) : (
                 <div className="space-y-3">
-                  {viewDetailsStudent.semPayments.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((p: any) => (
+                  {viewDetailsStudent.semPayments.sort((a: any, b: any) => new Date(b.date || b.timestamp).getTime() - new Date(a.date || a.timestamp).getTime()).map((p: any) => (
                     <div key={p.id} className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl gap-4">
                       <div>
                         <div className="flex items-center gap-2 mb-1">
@@ -713,7 +789,7 @@ export default function FeeManagement() {
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 font-mono">Txn ID: {p.transactionId}</p>
-                        <p className="text-xs text-slate-400 mt-1">{new Date(p.date).toLocaleString()}</p>
+                        <p className="text-xs text-slate-400 mt-1">{new Date(p.date || p.timestamp).toLocaleString()}</p>
                       </div>
                       {p.status === 'pending' && (
                         <button 

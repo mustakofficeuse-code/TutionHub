@@ -176,7 +176,7 @@ export default function AddStudent() {
                       >
                         <option value="BCA">BCA</option>
                         <option value="BSC">BSC</option>
-                        <option value="BTECH">B.Tech</option>
+                        <option value="BTECH">BTECH</option>
                         <option value="MCA">MCA</option>
                       </select>
                     </div>

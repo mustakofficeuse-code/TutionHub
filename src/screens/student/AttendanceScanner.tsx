@@ -94,7 +94,7 @@ export default function AttendanceScanner() {
       // 4. Check Location (GPS Radius 200m)
       let studentPos: { lat: number, lng: number } | null = null;
 
-      if (session.requireLocation !== false) {
+      if (session.requireLocation !== false && session.location) {
         setMessage('Checking your location...');
         const position = await getCurrentPosition().catch(err => {
           console.error("GPS error:", err);
