@@ -13,7 +13,8 @@ import {
   User,
   Users,
   Calendar,
-  AlertCircle
+  AlertCircle,
+  MapPin
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
