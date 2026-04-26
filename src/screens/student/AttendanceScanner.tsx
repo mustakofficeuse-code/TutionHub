@@ -91,22 +91,31 @@ export default function AttendanceScanner() {
         throw new Error(`Attendance window has expired. It was valid for ${session.validDuration} minutes from ${session.startTime}.`);
       }
 
-      setMessage('Checking your location...');
-
       // 4. Check Location (GPS Radius 200m)
-      const position = await getCurrentPosition();
-      const distance = calculateDistance(
-        position.coords.latitude,
-        position.coords.longitude,
-        session.location.lat,
-        session.location.lng
-      );
+      let studentPos: { lat: number, lng: number } | null = null;
 
-      if (distance > 0.2) { // 0.2 km = 200m
-        throw new Error(`You must be within 200m of the tuition center to mark attendance. You are currently ${Math.round(distance * 1000)}m away.`);
+      if (session.requireLocation !== false) {
+        setMessage('Checking your location...');
+        const position = await getCurrentPosition().catch(err => {
+          console.error("GPS error:", err);
+          throw new Error("Could not access your location. Please ensure GPS is enabled and permissions are granted.");
+        });
+        
+        const distance = calculateDistance(
+          position.coords.latitude,
+          position.coords.longitude,
+          session.location.lat,
+          session.location.lng
+        );
+  
+        if (distance > 0.5) { // 0.5 km = 500m
+          throw new Error(`You must be within 500m of the tuition center to mark attendance. You are currently ${Math.round(distance * 1000)}m away.`);
+        }
+
+        studentPos = { lat: position.coords.latitude, lng: position.coords.longitude };
       }
 
-      // 5. Check Duplicate Attendance for this specific session
+      // 5. Check Duplicate Attendance
       const attendanceId = `${user?.uid}_${sessionId}`;
       const attRef = doc(db, 'attendance', attendanceId);
       const attSnap = await getDoc(attRef);
@@ -125,7 +134,7 @@ export default function AttendanceScanner() {
         semester: profile?.semester || 'unknown',
         timestamp: new Date().toISOString(),
         status: 'present',
-        location: { lat: position.coords.latitude, lng: position.coords.longitude }
+        location: studentPos
       });
 
       setStatus('success');

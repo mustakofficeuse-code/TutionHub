@@ -35,6 +35,7 @@ export default function AttendanceGenerator() {
     startTime: '09:00',
     endTime: '11:00',
     validDuration: '60', // minutes
+    requireLocation: true,
   });
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
@@ -249,6 +250,19 @@ export default function AttendanceGenerator() {
                   onChange={(e) => setSessionData({...sessionData, validDuration: e.target.value})}
                   className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
                 />
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-blue-600" />
+                  <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Require GPS Location</span>
+                </div>
+                <button 
+                  onClick={() => setSessionData({...sessionData, requireLocation: !sessionData.requireLocation})}
+                  className={`w-10 h-5 rounded-full relative transition-colors ${sessionData.requireLocation ? 'bg-blue-600' : 'bg-slate-300 dark:bg-slate-700'}`}
+                >
+                  <div className={`absolute top-1 w-3 h-3 bg-white rounded-full transition-all ${sessionData.requireLocation ? 'left-6' : 'left-1'}`}></div>
+                </button>
               </div>
 
               <button 
