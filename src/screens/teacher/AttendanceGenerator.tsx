@@ -13,8 +13,7 @@ import {
   User,
   Users,
   Calendar,
-  AlertCircle,
-  MapPin
+  AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -398,7 +397,7 @@ export default function AttendanceGenerator() {
                         Verified
                       </div>
                       <p className="text-[10px] font-mono text-slate-400">
-                        {record.location.lat.toFixed(4)}, {record.location.lng.toFixed(4)}
+                        {record.location ? `${record.location.lat.toFixed(4)}, ${record.location.lng.toFixed(4)}` : 'No Location'}
                       </p>
                     </div>
                   </div>
