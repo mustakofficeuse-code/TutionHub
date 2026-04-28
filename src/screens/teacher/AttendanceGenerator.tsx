@@ -43,7 +43,7 @@ export default function AttendanceGenerator() {
     endTime: '',
     requireGPS: true,
     gracePeriod: '15', // Default 15 minutes grace period
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toLocaleDateString('en-CA')
   });
 
   const [searchQuery, setSearchQuery] = useState({
@@ -56,16 +56,34 @@ export default function AttendanceGenerator() {
   const [activeTab, setActiveTab] = useState<'monitor' | 'history'>('monitor');
 
   useEffect(() => {
+    if (!user) return;
+    
     fetchTuitionLocation();
     const unsubSchedules = listenToSchedules();
     const unsubAttendance = listenToRecentAttendance();
+    
+    // History listener - all time records for this teacher
+    const qHistory = query(
+      collection(db, 'attendance'), 
+      where('teacherId', '==', user.uid),
+      orderBy('timestamp', 'desc')
+    );
+    const unsubHistory = onSnapshot(qHistory, (snap) => {
+      const records = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setHistoryRecords(records);
+    }, (error) => {
+      console.error("History listener error:", error);
+    });
+
     return () => {
       unsubSchedules();
       unsubAttendance();
+      unsubHistory();
     };
-  }, []);
+  }, [user]);
 
   const fetchTuitionLocation = async () => {
+    if (!user) return;
     try {
       const docRef = doc(db, 'config', 'attendance');
       const docSnap = await getDoc(docRef);
@@ -80,10 +98,13 @@ export default function AttendanceGenerator() {
   };
 
   const listenToSchedules = () => {
+    if (!user?.uid) return () => {};
+    
+    const today = new Date().toLocaleDateString('en-CA');
     const q = query(
       collection(db, 'attendance_schedules'), 
-      where('teacherId', '==', user?.uid),
-      where('date', '==', new Date().toISOString().split('T')[0])
+      where('teacherId', '==', user.uid),
+      where('date', '==', today)
     );
     return onSnapshot(q, (snapshot) => {
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -92,9 +113,11 @@ export default function AttendanceGenerator() {
   };
 
   const listenToRecentAttendance = () => {
+    if (!user?.uid) return () => {};
+
     const q = query(
       collection(db, 'attendance'), 
-      where('teacherId', '==', user?.uid), 
+      where('teacherId', '==', user.uid), 
       orderBy('timestamp', 'desc'), 
       limit(50)
     );
@@ -112,6 +135,10 @@ export default function AttendanceGenerator() {
   };
 
   const createSchedule = async () => {
+    if (!user) {
+      alert("Please log in to set schedules.");
+      return;
+    }
     if (!newSchedule.startTime || !newSchedule.endTime) {
       alert("Please set start and end times");
       return;
@@ -197,7 +224,7 @@ export default function AttendanceGenerator() {
       return nameMatch && deptMatch && semMatch;
     });
 
-    const studentCounts: Record<string, { name: string, dept: string, sem: string, count: number, records: any[] }> = {};
+    const studentCounts: Record<string, { name: string, dept: string, sem: string, count: number, lastTime: string, records: any[] }> = {};
     
     filtered.forEach(rec => {
       if (!studentCounts[rec.studentId]) {
@@ -206,25 +233,20 @@ export default function AttendanceGenerator() {
           dept: rec.department || 'N/A',
           sem: rec.semester || 'N/A',
           count: 0,
+          lastTime: rec.timestamp,
           records: [] 
         };
       }
       studentCounts[rec.studentId].count += 1;
+      // Since it's ordered by desc timestamp, the first one encountered for each student is the most recent
+      if (new Date(rec.timestamp) > new Date(studentCounts[rec.studentId].lastTime)) {
+        studentCounts[rec.studentId].lastTime = rec.timestamp;
+      }
       studentCounts[rec.studentId].records.push(rec);
     });
 
     return Object.values(studentCounts).sort((a, b) => b.count - a.count);
   };
-
-  useEffect(() => {
-    if (!user) return;
-    const q = query(collection(db, 'attendance'), orderBy('timestamp', 'desc'));
-    const unsubscribe = onSnapshot(q, (snap) => {
-      const records = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setHistoryRecords(records);
-    });
-    return () => unsubscribe();
-  }, [user]);
 
   const updateLocation = async () => {
     if (navigator.geolocation) {
@@ -590,6 +612,7 @@ export default function AttendanceGenerator() {
                         <tr className="bg-slate-50 dark:bg-slate-800/50">
                           <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
                           <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Batch</th>
+                          <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Seen</th>
                           <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Total Presence</th>
                         </tr>
                       </thead>
@@ -609,6 +632,11 @@ export default function AttendanceGenerator() {
                             </td>
                             <td className="px-8 py-6">
                               <span className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider uppercase">{student.dept} · SEM {student.sem}</span>
+                            </td>
+                            <td className="px-8 py-6">
+                              <span className="text-xs font-bold text-slate-400 uppercase">
+                                {new Date(student.lastTime).toLocaleDateString([], { month: 'short', day: 'numeric' })} at {new Date(student.lastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </span>
                             </td>
                             <td className="px-8 py-6 text-center">
                               <div className="flex items-center justify-center gap-3">

@@ -57,7 +57,7 @@ export default function AttendanceScanner() {
 
       // 2. Fetch Today's Schedules
       setMessage('Matching your profile with active schedules...');
-      const todayString = new Date().toISOString().split('T')[0];
+      const todayString = new Date().toLocaleDateString('en-CA');
       const schedulesRef = collection(db, 'attendance_schedules');
       const q = query(schedulesRef, where('date', '==', todayString));
       const schedulesSnap = await getDocs(q);
