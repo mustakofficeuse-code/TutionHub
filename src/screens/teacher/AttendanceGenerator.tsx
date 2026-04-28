@@ -62,6 +62,7 @@ export default function AttendanceGenerator() {
 
   const [historyRecords, setHistoryRecords] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'monitor' | 'history'>('monitor');
+  const [departments, setDepartments] = useState<string[]>([]);
 
   useEffect(() => {
     if (!user) return;
@@ -70,6 +71,11 @@ export default function AttendanceGenerator() {
     const unsubSchedules = listenToSchedules();
     const unsubAttendance = listenToRecentAttendance();
     
+    // Departments listener
+    const unsubDepts = onSnapshot(collection(db, 'departments'), (snap) => {
+      setDepartments(snap.docs.map(doc => doc.data().name));
+    });
+
     // History listener - all time records for this teacher
     const qHistory = query(
       collection(db, 'attendance'), 
@@ -87,6 +93,7 @@ export default function AttendanceGenerator() {
       unsubSchedules();
       unsubAttendance();
       unsubHistory();
+      unsubDepts();
     };
   }, [user]);
 
@@ -147,7 +154,32 @@ export default function AttendanceGenerator() {
     });
   };
 
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' });
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 10000); // Update every 10s
+    return () => clearInterval(timer);
+  }, []);
+
+  const isScheduleActive = (sched: any) => {
+    const now = currentTime;
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const timeStr = `${hours}:${minutes}`;
+    
+    // Schedule is active if current time is between start and end
+    return timeStr >= sched.startTime && timeStr <= sched.endTime;
+  };
+
+  const getLiveAttendance = () => {
+    // Only show attendance records that belong to a CURRENTLY active schedule
+    return recentAttendance.filter(record => {
+      const schedule = activeSchedules.find(s => s.id === record.scheduleId);
+      if (!schedule) return false;
+      return isScheduleActive(schedule);
+    });
+  };
 
   const createSchedule = async () => {
     console.log("[Teacher] createSchedule triggered");
@@ -402,10 +434,18 @@ export default function AttendanceGenerator() {
                       onChange={(e) => setNewSchedule({...newSchedule, department: e.target.value})}
                       className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none"
                     >
-                      <option value="BCA">BCA</option>
-                      <option value="BSC">BSC</option>
-                      <option value="BTECH">BTECH</option>
-                      <option value="MCA">MCA</option>
+                      {departments.length > 0 ? (
+                        departments.map(dept => (
+                          <option key={dept} value={dept}>{dept}</option>
+                        ))
+                      ) : (
+                        <>
+                          <option value="BCA">BCA</option>
+                          <option value="BSC">BSC</option>
+                          <option value="BTECH">BTECH</option>
+                          <option value="MCA">MCA</option>
+                        </>
+                      )}
                       <option value="ALL">ALL DEPTS</option>
                     </select>
                   </div>
@@ -419,6 +459,48 @@ export default function AttendanceGenerator() {
                       {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={String(s)}>Sem {s}</option>)}
                       <option value="ALL">ALL SEM</option>
                     </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Session Duration</label>
+                    <select 
+                      onChange={(e) => {
+                        if (!e.target.value) return;
+                        if (!newSchedule.startTime) {
+                          const now = new Date();
+                          const h = String(now.getHours()).padStart(2, '0');
+                          const m = String(now.getMinutes()).padStart(2, '0');
+                          const start = `${h}:${m}`;
+                          const duration = parseInt(e.target.value);
+                          const end = new Date(now.getTime() + duration * 60000);
+                          const eh = String(end.getHours()).padStart(2, '0');
+                          const em = String(end.getMinutes()).padStart(2, '0');
+                          setNewSchedule({...newSchedule, startTime: start, endTime: `${eh}:${em}`});
+                        } else {
+                          const [h, m] = newSchedule.startTime.split(':').map(Number);
+                          const start = new Date(2000, 0, 1, h, m);
+                          const duration = parseInt(e.target.value);
+                          const end = new Date(start.getTime() + duration * 60000);
+                          const eh = String(end.getHours()).padStart(2, '0');
+                          const em = String(end.getMinutes()).padStart(2, '0');
+                          setNewSchedule({...newSchedule, endTime: `${eh}:${em}`});
+                        }
+                      }}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none cursor-pointer"
+                    >
+                      <option value="">Manual / Custom</option>
+                      <option value="5">5 Mins</option>
+                      <option value="10">10 Mins</option>
+                      <option value="15">15 Mins</option>
+                      <option value="30">30 Mins</option>
+                      <option value="45">45 Mins</option>
+                      <option value="60">1 Hour</option>
+                    </select>
+                  </div>
+                  <div className="flex items-end pb-3 text-[10px] font-bold text-slate-400 italic">
+                    * Auto-sets end time
                   </div>
                 </div>
 
@@ -598,19 +680,19 @@ export default function AttendanceGenerator() {
             {/* Attendance reality feed */}
             <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2.5rem] sm:rounded-[3rem] shadow-sm border border-slate-100 dark:border-slate-800 min-h-[500px]">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                <div>
+                <div className="flex items-center gap-4">
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Presence Feed</h3>
                   <button 
                     onClick={deleteAllAttendance}
                     disabled={recentAttendance.length === 0 || saving || isClearingFeed}
-                    className={`mt-2 flex items-center gap-1.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all px-3 py-1 rounded-lg ${
+                    className={`flex items-center gap-1.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all px-3 py-2 rounded-xl h-fit ${
                       clearConfirmFeed 
                         ? 'bg-red-500 text-white shadow-lg ring-4 ring-red-100 animate-pulse' 
                         : 'text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-900/20'
                     } disabled:opacity-30`}
                   >
                     <Trash2 className="w-3 h-3" /> 
-                    {isClearingFeed ? 'Clearing...' : clearConfirmFeed ? 'Confirm Clear?' : 'Clear Records'}
+                    {isClearingFeed ? 'Clearing...' : clearConfirmFeed ? 'Confirm Clear?' : 'Clear Feed'}
                   </button>
                 </div>
                 <div className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest flex items-center gap-2 self-start sm:self-center">
@@ -620,13 +702,14 @@ export default function AttendanceGenerator() {
               </div>
 
               <div className="space-y-3 sm:space-y-4">
-                {recentAttendance.length === 0 ? (
+                {getLiveAttendance().length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 text-slate-400 opacity-50">
-                    <Clock className="w-12 h-12 sm:w-16 sm:h-16 mb-4 stroke-1" />
-                    <p className="font-bold uppercase tracking-widest text-[9px] sm:text-[10px]">Awaiting First Scan...</p>
+                    <Activity className="w-12 h-12 sm:w-16 sm:h-16 mb-4 stroke-1 animate-pulse" />
+                    <p className="font-bold uppercase tracking-widest text-[9px] sm:text-[10px]">Monitor Idle</p>
+                    <p className="text-[8px] mt-1 italic">Feed clears automatically when windows expire</p>
                   </div>
                 ) : (
-                  recentAttendance.map((record) => (
+                  getLiveAttendance().map((record) => (
                     <div key={record.id} className="group flex items-center justify-between p-4 sm:p-6 bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-900 hover:shadow-lg rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 dark:border-slate-800 transition-all duration-300">
                       <div className="flex items-center gap-3 sm:gap-5 min-w-0">
                         <div className="w-10 h-10 sm:w-14 sm:h-14 bg-white dark:bg-slate-950 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
@@ -681,11 +764,9 @@ export default function AttendanceGenerator() {
                       className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-xl py-3 px-4 text-[13px] font-bold transition-all outline-none cursor-pointer"
                     >
                       <option value="ALL">All Departments</option>
-                      <option value="BCA">BCA</option>
-                      <option value="BSC">BSC</option>
-                      <option value="BTECH">BTECH</option>
-                      <option value="MCA">MCA</option>
-                      <option value="BBA">BBA</option>
+                      {departments.map(dept => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
                     </select>
                     <select 
                       value={searchQuery.semester}

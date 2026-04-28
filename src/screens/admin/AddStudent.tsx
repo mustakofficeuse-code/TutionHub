@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {ArrowLeft, UserPlus, Loader2, CheckCircle, Shield, User, Lock, BookOpen, GraduationCap, Copy, Check, Eye, EyeOff } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import firebaseConfig from '../../../firebase-applet-config.json';
 
@@ -22,7 +22,20 @@ export default function AddStudent() {
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [semester, setSemester] = useState('1');
-  const [department, setDepartment] = useState('BCA');
+  const [department, setDepartment] = useState('');
+  const [departments, setDepartments] = useState<string[]>([]);
+
+  useEffect(() => {
+    const unsubDepts = onSnapshot(collection(db, 'departments'), (snap) => {
+      const depts = snap.docs.map(doc => doc.data().name);
+      setDepartments(depts);
+      if (depts.length > 0 && !department) {
+        setDepartment(depts[0]);
+      }
+    });
+
+    return () => unsubDepts();
+  }, [department]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,10 +187,9 @@ export default function AddStudent() {
                         value={department}
                         onChange={(e) => setDepartment(e.target.value)}
                       >
-                        <option value="BCA">BCA</option>
-                        <option value="BSC">BSC</option>
-                        <option value="BTECH">BTECH</option>
-                        <option value="MCA">MCA</option>
+                        {departments.map(dept => (
+                          <option key={dept} value={dept}>{dept}</option>
+                        ))}
                       </select>
                     </div>
                   </div>

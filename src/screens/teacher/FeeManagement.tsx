@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, getDocs, updateDoc, doc, getDoc, setDoc, writeBatch, addDoc } from 'firebase/firestore';
+import { collection, query, getDocs, updateDoc, doc, getDoc, setDoc, writeBatch, addDoc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { 
   CreditCard, 
@@ -38,14 +38,9 @@ export default function FeeManagement() {
   const [studentSearch, setStudentSearch] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  const [feeStructure, setFeeStructure] = useState<any>({
-    BCA: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 },
-    BSC: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 },
-    BTECH: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0, 7: 0, 8: 0 },
-    MCA: { 1: 0, 2: 0, 3: 0, 4: 0 }
-  });
+  const [feeStructure, setFeeStructure] = useState<any>({});
 
-  const departments = ['BCA', 'BSC', 'BTECH', 'MCA'];
+  const [departments, setDepartments] = useState<string[]>([]);
   const [savingStructure, setSavingStructure] = useState(false);
   const [isEditingStructure, setIsEditingStructure] = useState(false);
   const [activeTab, setActiveTab] = useState<'history' | 'structure'>('history');
@@ -53,7 +48,22 @@ export default function FeeManagement() {
   useEffect(() => {
     fetchData();
     fetchFeeStructure();
-  }, []);
+
+    const unsubDepts = onSnapshot(collection(db, 'departments'), (snap) => {
+      const managedDepts = snap.docs.map(doc => doc.data().name);
+      
+      // Discovery from students for reliability
+      const discoveredDepts = students.map(s => {
+        const d = cleanStr(s.courseId) || cleanStr(s.courseName) || cleanStr(s.department) || '';
+        return d.toUpperCase() || 'BCA';
+      });
+      
+      const combined = Array.from(new Set([...managedDepts, ...discoveredDepts])).filter(d => !!d).sort();
+      setDepartments(combined);
+    });
+
+    return () => unsubDepts();
+  }, [students]);
 
   const fetchFeeStructure = async () => {
     try {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { doc, getDoc, setDoc, collection, getDocs, query, where } from 'firebase/firestore';
+import { doc, getDoc, setDoc, collection, getDocs, query, where, onSnapshot } from 'firebase/firestore';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db, logError } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -16,7 +16,8 @@ export default function AuthGateway() {
   // Student fields
   const [studentName, setStudentName] = useState('');
   const [semester, setSemester] = useState('1');
-  const [department, setDepartment] = useState('BCA');
+  const [department, setDepartment] = useState('');
+  const [departments, setDepartments] = useState<string[]>([]);
   const [studentInviteCode, setStudentInviteCode] = useState('');
   const [studentId, setStudentId] = useState('');
   const [studentPassword, setStudentPassword] = useState('');
@@ -34,6 +35,15 @@ export default function AuthGateway() {
       setIsExistingStudent(true);
     }
     checkSetup();
+
+    // Departments listener
+    const unsubDepts = onSnapshot(collection(db, 'departments'), (snap) => {
+      const depts = snap.docs.map(doc => doc.data().name);
+      setDepartments(depts);
+      if (depts.length > 0 && !department) {
+        setDepartment(depts[0]);
+      }
+    });
     
     // Auto-recover deleted profile if user is already authenticated
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -605,10 +615,9 @@ export default function AuthGateway() {
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
                     >
-                      <option value="BCA">BCA</option>
-                      <option value="BSC">BSC</option>
-                      <option value="BTECH">BTECH</option>
-                      <option value="MCA">MCA</option>
+                      {departments.map(dept => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
                     </select>
                   </div>
                 </div>

@@ -54,6 +54,12 @@ export default function TeacherDashboard() {
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
   const [locationConfigured, setLocationConfigured] = useState<boolean>(true);
   
+  // Department Management
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [showAddDeptModal, setShowAddDeptModal] = useState(false);
+  const [newDeptName, setNewDeptName] = useState('');
+  const [isAddingDept, setIsAddingDept] = useState(false);
+
   // Edit Student State
   const [editingStudent, setEditingStudent] = useState<any | null>(null);
   const [editName, setEditName] = useState('');
@@ -92,6 +98,7 @@ export default function TeacherDashboard() {
     const unsubRecent = listenToRecentAttendance();
     const unsubNotifs = listenToNotifications();
     const unsubBlacklist = listenToBlacklist();
+    const unsubDepts = listenToDepartments();
 
     return () => {
       unsubStudents();
@@ -100,6 +107,7 @@ export default function TeacherDashboard() {
       unsubRecent();
       unsubNotifs();
       unsubBlacklist();
+      unsubDepts();
     };
   }, []);
 
@@ -108,6 +116,61 @@ export default function TeacherDashboard() {
       setBlacklistDocs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setBlacklist(snapshot.docs.map(doc => doc.id));
     });
+  };
+
+  const listenToDepartments = () => {
+    return onSnapshot(collection(db, 'departments'), (snapshot) => {
+      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setDepartments(list);
+      
+      // Auto-seed defaults if collection is empty
+      if (snapshot.empty && list.length === 0) {
+        console.log("[Admin] Seeding default departments...");
+        const defaults = ['BCA', 'BSC', 'BTECH', 'MCA'];
+        defaults.forEach(async (name) => {
+          await setDoc(doc(db, 'departments', name), {
+            name,
+            createdAt: new Date().toISOString(),
+            isDefault: true
+          });
+        });
+      }
+    });
+  };
+
+  const handleAddDepartment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDeptName.trim()) return;
+    setIsAddingDept(true);
+    try {
+      const deptId = newDeptName.trim().toUpperCase();
+      await setDoc(doc(db, 'departments', deptId), {
+        name: deptId,
+        createdAt: new Date().toISOString(),
+        teacherId: auth.currentUser?.uid,
+        isCustom: true
+      });
+      setNewDeptName('');
+      setShowAddDeptModal(false);
+    } catch (err) {
+      console.error("Error adding department:", err);
+      alert("Failed to add department");
+    } finally {
+      setIsAddingDept(false);
+    }
+  };
+
+  const handleDeleteDepartment = async (id: string, isDefault?: boolean) => {
+    const msg = isDefault 
+      ? `Are you sure you want to delete the default department ${id}?` 
+      : `Are you sure you want to delete the department ${id}?`;
+    
+    if (!confirm(msg + " This may leave students without a category.")) return;
+    try {
+      await deleteDoc(doc(db, 'departments', id));
+    } catch (err) {
+      console.error("Error deleting department:", err);
+    }
   };
 
   const listenToNotifications = () => {
@@ -662,51 +725,76 @@ export default function TeacherDashboard() {
                     </div>
                   </div>
                   <button 
-                    onClick={() => navigate('/admin/students/add')}
+                    onClick={() => setShowAddDeptModal(true)}
                     className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
-                    title="Add New Student"
+                    title="Add New Department"
                   >
                     <Plus className="w-5 h-5" />
                   </button>
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {(Array.from(new Set(allStudents.map(s => {
-                    const d = String(s.courseId || s.courseName || '').toUpperCase();
-                    // Map generic/empty to BCA as per app primary focus
-                    return (d === 'GENERAL' || d === '' || d === 'OTHER') ? 'BCA' : d;
-                  }))) as string[])
-                    .map((dept, index) => {
-                      const isActive = expandedDept === dept;
-                      const deptCount = allStudents.filter(s => {
-                        const d = String(s.courseId || s.courseName || '').toUpperCase();
-                        const targetDept = (d === 'GENERAL' || d === '' || d === 'OTHER') ? 'BCA' : d;
-                        return targetDept === dept;
-                      }).length;
+                  {(() => {
+                    const discoveredDepts = Array.from(new Set(allStudents.map(s => {
+                      const d = String(s.courseId || s.courseName || s.department || '').toUpperCase();
+                      return (d === 'GENERAL' || d === '' || d === 'OTHER') ? 'BCA' : d;
+                    })));
+                    const managedDeptNames = departments.map(d => d.name.toUpperCase());
+                    const combinedDepts = Array.from(new Set([...managedDeptNames, ...discoveredDepts])).sort();
+
+                    if (combinedDepts.length === 0) {
                       return (
-                      <button
-                        key={dept}
-                        onClick={() => setExpandedDept(isActive ? null : dept)}
-                        className={`p-4 rounded-2xl border transition-all text-left flex flex-col justify-between h-32 relative group ${
-                          isActive 
-                            ? 'bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-100 dark:shadow-none' 
-                            : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-500'
-                        }`}
-                      >
-                        <div className="flex justify-between items-start">
-                          <div className={`p-2 rounded-lg ${isActive ? 'bg-white/20' : 'bg-slate-50 dark:bg-slate-800'}`}>
-                            <BookOpen className={`w-4 h-4 ${isActive ? 'text-white' : 'text-blue-600'}`} />
+                        <div className="col-span-full py-8 text-center bg-slate-50 dark:bg-slate-800/30 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                          <p className="text-sm font-bold text-slate-400">No departments found. Click + to create one.</p>
+                        </div>
+                      );
+                    }
+
+                    return combinedDepts.map((dept) => {
+                      const isActive = expandedDept === dept;
+                      const deptObj = departments.find(d => d.name.toUpperCase() === dept);
+                      const isManaged = !!deptObj;
+                      const deptCount = allStudents.filter(s => {
+                        const d = String(s.courseId || s.courseName || s.department || '').toUpperCase();
+                        const normalized = (d === 'GENERAL' || d === '' || d === 'OTHER') ? 'BCA' : d;
+                        return normalized === dept;
+                      }).length;
+
+                      return (
+                        <button
+                          key={dept}
+                          onClick={() => setExpandedDept(isActive ? null : dept)}
+                          className={`p-4 rounded-2xl border transition-all text-left flex flex-col justify-between h-32 relative group ${
+                            isActive 
+                              ? 'bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-100 dark:shadow-none' 
+                              : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-500'
+                          }`}
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className={`p-2 rounded-lg ${isActive ? 'bg-white/20' : 'bg-slate-50 dark:bg-slate-800'}`}>
+                              <BookOpen className={`w-4 h-4 ${isActive ? 'text-white' : 'text-blue-600'}`} />
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {isManaged && !isActive && (
+                                <div 
+                                  onClick={(e) => { e.stopPropagation(); handleDeleteDepartment(dept, deptObj?.isDefault); }}
+                                  className="p-1 px-1.5 hover:text-red-500 transition-colors"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </div>
+                              )}
+                              {isActive ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                            </div>
                           </div>
-                          {isActive ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
-                        </div>
-                        <div>
-                          <p className={`text-xs font-black uppercase tracking-widest ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>Department</p>
-                          <p className="text-lg font-bold truncate">{dept}</p>
-                          <p className={`text-[10px] ${isActive ? 'text-white/80' : 'text-slate-500'}`}>{deptCount} Students</p>
-                        </div>
-                      </button>
-                    );
-                  })}
+                          <div>
+                            <p className={`text-xs font-black uppercase tracking-widest ${isActive ? 'text-blue-100' : 'text-slate-400'}`}>Department</p>
+                            <p className="text-lg font-bold truncate">{dept}</p>
+                            <p className={`text-[10px] ${isActive ? 'text-white/80' : 'text-slate-500'}`}>{deptCount} Students</p>
+                          </div>
+                        </button>
+                      );
+                    });
+                  })()}
                 </div>
 
                 <AnimatePresence mode="wait">
@@ -984,10 +1072,10 @@ export default function TeacherDashboard() {
                     value={editDepartment}
                     onChange={(e) => setEditDepartment(e.target.value)}
                   >
-                    <option value="BCA">BCA</option>
-                    <option value="BSC">BSC</option>
-                    <option value="BTECH">BTECH</option>
-                    <option value="MCA">MCA</option>
+                    {departments.map(d => (
+                      <option key={d.id} value={d.name}>{d.name}</option>
+                    ))}
+                    {departments.length === 0 && <option value="BCA">BCA (Default)</option>}
                   </select>
                 </div>
               </div>
@@ -1005,6 +1093,49 @@ export default function TeacherDashboard() {
                   className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none flex items-center justify-center gap-2"
                 >
                   {isUpdating ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Department Modal */}
+      {showAddDeptModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Add Department</h3>
+              <button onClick={() => setShowAddDeptModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            <form onSubmit={handleAddDepartment} className="space-y-5">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Department Name</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. BTECH, BCA, MSC"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  value={newDeptName}
+                  onChange={(e) => setNewDeptName(e.target.value)}
+                />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button 
+                  type="button"
+                  onClick={() => setShowAddDeptModal(false)}
+                  className="flex-1 py-3 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isAddingDept}
+                  className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none flex items-center justify-center gap-2"
+                >
+                  {isAddingDept ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create'}
                 </button>
               </div>
             </form>
