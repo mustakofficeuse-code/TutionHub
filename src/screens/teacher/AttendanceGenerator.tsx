@@ -25,6 +25,14 @@ import { useNavigate } from 'react-router-dom';
 
 const STATIC_QR_VALUE = "TUITIONHUB_WALL_QR_2026_SECURE";
 
+const getTodayString = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 export default function AttendanceGenerator() {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -43,7 +51,7 @@ export default function AttendanceGenerator() {
     endTime: '',
     requireGPS: true,
     gracePeriod: '15', // Default 15 minutes grace period
-    date: new Date().toLocaleDateString('en-CA')
+    date: getTodayString()
   });
 
   const [searchQuery, setSearchQuery] = useState({
@@ -100,7 +108,7 @@ export default function AttendanceGenerator() {
   const listenToSchedules = () => {
     if (!user?.uid) return () => {};
     
-    const today = new Date().toLocaleDateString('en-CA');
+    const today = getTodayString();
     const q = query(
       collection(db, 'attendance_schedules'), 
       where('teacherId', '==', user.uid),
@@ -165,9 +173,11 @@ export default function AttendanceGenerator() {
     setSaving(true);
     try {
       const scheduleId = `SCHED_${Date.now()}`;
+      const scheduleDate = getTodayString();
       await setDoc(doc(db, 'attendance_schedules', scheduleId), {
         ...newSchedule,
         department: newSchedule.department.toUpperCase(),
+        date: scheduleDate,
         id: scheduleId,
         teacherId: user?.uid,
         createdAt: new Date().toISOString()
@@ -458,41 +468,39 @@ export default function AttendanceGenerator() {
             {activeTab === 'monitor' ? (
               <div className="space-y-6 sm:space-y-8">
                 {/* Active Schedules Ribbon */}
-                <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
-                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3">
+                <div className="bg-white dark:bg-slate-900 p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
+                  <h3 className="text-sm sm:text-lg font-black text-slate-900 dark:text-white mb-5 sm:mb-6 flex items-center gap-3">
                     <Users className="text-blue-600 w-5 h-5 sm:w-6 sm:h-6" />
-                    Active Attendance Windows
+                    Active Windows
                   </h3>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 {activeSchedules.length === 0 ? (
-                  <p className="text-slate-400 font-bold text-sm italic py-4 px-2 col-span-full">No active windows set for today.</p>
+                  <p className="text-slate-400 font-bold text-xs sm:text-sm italic py-4 px-2 col-span-full">Awaiting session start...</p>
                 ) : (
                   activeSchedules.map(sched => (
-                    <div key={sched.id} className="bg-slate-50 dark:bg-slate-800/50 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 dark:border-slate-800 flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-500">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white dark:bg-slate-950 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center shadow-sm shrink-0">
-                        <span className="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase leading-none">Sem</span>
-                        <span className="text-base sm:text-lg font-black text-blue-600 leading-none">{sched.semester}</span>
+                    <div key={sched.id} className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-3 sm:gap-4 animate-in slide-in-from-bottom-2 duration-300">
+                      <div className="w-10 h-10 bg-white dark:bg-slate-950 rounded-xl flex flex-col items-center justify-center shadow-sm shrink-0">
+                        <span className="text-[6px] font-black text-slate-400 uppercase leading-none">Sem</span>
+                        <span className="text-sm font-black text-blue-600 leading-none">{sched.semester}</span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="font-black text-slate-900 dark:text-white text-xs sm:text-sm truncate">{sched.department} Batch</h4>
-                        <div className="flex flex-wrap items-center gap-2 mt-1">
-                          <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                        <h4 className="font-black text-slate-900 dark:text-white text-[11px] sm:text-sm truncate uppercase tracking-tight">{sched.department}</h4>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-0.5 sm:mt-1">
+                          <p className="text-[8px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
                             {sched.startTime}—{sched.endTime}
                           </p>
-                          <span className={`text-[7px] sm:text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter shrink-0 ${sched.requireGPS ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
-                            {sched.requireGPS ? 'GPS' : 'SKIP GPS'}
+                          <span className={`text-[6px] sm:text-[8px] font-black px-1 py-0.5 rounded uppercase tracking-tighter shrink-0 ${sched.requireGPS ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
+                            {sched.requireGPS ? 'GPS ON' : 'GPS OFF'}
                           </span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
+                      <div className="flex items-center shrink-0">
                         <button 
                           onClick={() => deleteSchedule(sched.id)}
-                          className="p-1.5 sm:p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          title="Remove Schedule"
+                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -560,28 +568,28 @@ export default function AttendanceGenerator() {
             ) : (
               /* HISTORY VIEW */
               <div className="space-y-6 animate-in fade-in duration-500">
-                <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 space-y-6">
-                  <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
-                    <Search className="w-5 h-5 text-blue-600" />
-                    Filters
+                <div className="bg-white dark:bg-slate-900 p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 space-y-5">
+                  <h3 className="text-base sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                    <Search className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+                    Archive Search
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="relative">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
                       <input 
                         type="text" 
                         placeholder="Search student..."
                         value={searchQuery.name}
                         onChange={(e) => setSearchQuery({...searchQuery, name: e.target.value})}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 pl-12 text-sm font-bold transition-all outline-none"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-xl py-3 px-4 pl-10 text-[13px] font-bold transition-all outline-none"
                       />
                     </div>
                     <select 
                       value={searchQuery.department}
                       onChange={(e) => setSearchQuery({...searchQuery, department: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none cursor-pointer"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-xl py-3 px-4 text-[13px] font-bold transition-all outline-none cursor-pointer"
                     >
-                      <option value="ALL">All Depts</option>
+                      <option value="ALL">All Departments</option>
                       <option value="BCA">BCA</option>
                       <option value="BSC">BSC</option>
                       <option value="BTECH">BTECH</option>
@@ -591,9 +599,9 @@ export default function AttendanceGenerator() {
                     <select 
                       value={searchQuery.semester}
                       onChange={(e) => setSearchQuery({...searchQuery, semester: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none cursor-pointer"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-xl py-3 px-4 text-[13px] font-bold transition-all outline-none cursor-pointer"
                     >
-                      <option value="ALL">All Sem</option>
+                      <option value="ALL">All Semesters</option>
                       {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={String(s)}>Sem {s}</option>)}
                     </select>
                   </div>

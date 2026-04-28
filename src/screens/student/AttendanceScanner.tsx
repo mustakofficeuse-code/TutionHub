@@ -57,7 +57,15 @@ export default function AttendanceScanner() {
 
       // 2. Fetch Today's Schedules
       setMessage('Matching your profile with active schedules...');
-      const todayString = new Date().toLocaleDateString('en-CA');
+      
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const todayString = `${y}-${m}-${d}`;
+      
+      console.log("Checking schedules for date:", todayString);
+      
       const schedulesRef = collection(db, 'attendance_schedules');
       const q = query(schedulesRef, where('date', '==', todayString));
       const schedulesSnap = await getDocs(q);
@@ -67,7 +75,6 @@ export default function AttendanceScanner() {
       }
 
       // 3. Find matching schedule
-      const now = new Date();
       // Ensure HH:mm format for comparison
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
