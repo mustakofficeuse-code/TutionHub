@@ -90,9 +90,20 @@ export default function AttendanceScanner() {
 
         if (deptMatch && semMatch) {
           // Check Time Window
-          if (currentTimeStr >= sched.startTime && currentTimeStr <= sched.endTime) {
+          const start = new Date(`2000-01-01T${sched.startTime}:00`);
+          const graceMin = parseInt(sched.gracePeriod || '15');
+          const graceEnd = new Date(start.getTime() + graceMin * 60000);
+          
+          const hoursGrace = String(graceEnd.getHours()).padStart(2, '0');
+          const minutesGrace = String(graceEnd.getMinutes()).padStart(2, '0');
+          const graceEndTimeStr = `${hoursGrace}:${minutesGrace}`;
+
+          // Student must scan BETWEEN startTime and graceEndTime
+          if (currentTimeStr >= sched.startTime && currentTimeStr <= graceEndTimeStr) {
             matchingSchedule = sched;
             break;
+          } else if (currentTimeStr > graceEndTimeStr && currentTimeStr <= sched.endTime) {
+            throw new Error(`Validation failed. You are past the ${graceMin}-minute grace period for this session.`);
           }
         }
       }

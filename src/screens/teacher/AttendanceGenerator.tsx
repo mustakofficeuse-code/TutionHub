@@ -16,7 +16,10 @@ import {
   Calendar,
   AlertCircle,
   CheckCircle,
-  Trash2
+  Trash2,
+  Activity,
+  FileText,
+  Search
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -39,8 +42,18 @@ export default function AttendanceGenerator() {
     startTime: '',
     endTime: '',
     requireGPS: true,
+    gracePeriod: '15', // Default 15 minutes grace period
     date: new Date().toISOString().split('T')[0]
   });
+
+  const [searchQuery, setSearchQuery] = useState({
+    name: '',
+    department: 'ALL',
+    semester: 'ALL'
+  });
+
+  const [historyRecords, setHistoryRecords] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'monitor' | 'history'>('monitor');
 
   useEffect(() => {
     fetchTuitionLocation();
@@ -127,6 +140,7 @@ export default function AttendanceGenerator() {
       const scheduleId = `SCHED_${Date.now()}`;
       await setDoc(doc(db, 'attendance_schedules', scheduleId), {
         ...newSchedule,
+        department: newSchedule.department.toUpperCase(),
         id: scheduleId,
         teacherId: user?.uid,
         createdAt: new Date().toISOString()
@@ -171,9 +185,46 @@ export default function AttendanceGenerator() {
   };
 
   const handlePrint = () => {
-    // Standard print call
     window.print();
   };
+
+  // Aggregation for History
+  const getAggregatedHistory = () => {
+    const filtered = historyRecords.filter(rec => {
+      const nameMatch = !searchQuery.name || rec.studentName?.toLowerCase().includes(searchQuery.name.toLowerCase());
+      const deptMatch = searchQuery.department === 'ALL' || rec.department === searchQuery.department;
+      const semMatch = searchQuery.semester === 'ALL' || String(rec.semester) === searchQuery.semester;
+      return nameMatch && deptMatch && semMatch;
+    });
+
+    const studentCounts: Record<string, { name: string, dept: string, sem: string, count: number, records: any[] }> = {};
+    
+    filtered.forEach(rec => {
+      if (!studentCounts[rec.studentId]) {
+        studentCounts[rec.studentId] = { 
+          name: rec.studentName || 'Unknown Student',
+          dept: rec.department || 'N/A',
+          sem: rec.semester || 'N/A',
+          count: 0,
+          records: [] 
+        };
+      }
+      studentCounts[rec.studentId].count += 1;
+      studentCounts[rec.studentId].records.push(rec);
+    });
+
+    return Object.values(studentCounts).sort((a, b) => b.count - a.count);
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    const q = query(collection(db, 'attendance'), orderBy('timestamp', 'desc'));
+    const unsubscribe = onSnapshot(q, (snap) => {
+      const records = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setHistoryRecords(records);
+    });
+    return () => unsubscribe();
+  }, [user]);
 
   const updateLocation = async () => {
     if (navigator.geolocation) {
@@ -300,6 +351,20 @@ export default function AttendanceGenerator() {
                       />
                     </div>
                     <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Grace Period (Min)</label>
+                      <select 
+                        value={newSchedule.gracePeriod}
+                        onChange={(e) => setNewSchedule({...newSchedule, gracePeriod: e.target.value})}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 px-4 text-sm font-bold transition-all outline-none"
+                      >
+                        <option value="5">5 Minutes</option>
+                        <option value="10">10 Minutes</option>
+                        <option value="15">15 Minutes</option>
+                        <option value="30">30 Minutes</option>
+                        <option value="60">Ends at session end</option>
+                      </select>
+                    </div>
+                    <div>
                       <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Location Check</label>
                       <button 
                         onClick={() => setNewSchedule({...newSchedule, requireGPS: !newSchedule.requireGPS})}
@@ -348,15 +413,33 @@ export default function AttendanceGenerator() {
 
           </div>
 
-          {/* RIGHT: Active Windows & Reality Feed */}
+          {/* RIGHT: Monitor / History Tabs */}
           <div className="lg:col-span-8 space-y-8 print:hidden">
             
-            {/* Active Schedules Ribbon */}
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
-              <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3">
-                <Users className="text-blue-600 w-6 h-6" />
-                Active Attendance Windows
-              </h3>
+            {/* Tab Selection */}
+            <div className="flex bg-white dark:bg-slate-900 p-2 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative z-20">
+              <button 
+                onClick={() => setActiveTab('monitor')}
+                className={`flex-1 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${activeTab === 'monitor' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+              >
+                <Activity className="w-4 h-4" /> Live Monitor
+              </button>
+              <button 
+                onClick={() => setActiveTab('history')}
+                className={`flex-1 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${activeTab === 'history' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+              >
+                <FileText className="w-4 h-4" /> History
+              </button>
+            </div>
+
+            {activeTab === 'monitor' ? (
+              <>
+                {/* Active Schedules Ribbon */}
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
+                  <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3">
+                    <Users className="text-blue-600 w-6 h-6" />
+                    Active Attendance Windows
+                  </h3>
               
               <div className="flex flex-wrap gap-4">
                 {activeSchedules.length === 0 ? (
@@ -377,6 +460,7 @@ export default function AttendanceGenerator() {
                           <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter ${sched.requireGPS ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
                             {sched.requireGPS ? 'GPS REQD' : 'GPS SKIP'}
                           </span>
+                          <span className="text-[8px] font-black px-1.5 py-0.5 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 rounded uppercase tracking-tighter">{sched.gracePeriod}m Grace</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-3 ml-auto">
@@ -450,7 +534,105 @@ export default function AttendanceGenerator() {
                 )}
               </div>
             </div>
-            
+            </>
+            ) : (
+              /* HISTORY VIEW */
+              <div className="space-y-6 animate-in fade-in duration-500">
+                <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 space-y-6">
+                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                    <Search className="w-5 h-5 text-blue-600" />
+                    History Filter
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="relative">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input 
+                        type="text" 
+                        placeholder="Search Name..."
+                        value={searchQuery.name}
+                        onChange={(e) => setSearchQuery({...searchQuery, name: e.target.value})}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-bold transition-all outline-none"
+                      />
+                    </div>
+                    <select 
+                      value={searchQuery.department}
+                      onChange={(e) => setSearchQuery({...searchQuery, department: e.target.value})}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 px-4 text-sm font-bold transition-all outline-none"
+                    >
+                      <option value="ALL">All Departments</option>
+                      <option value="BCA">BCA</option>
+                      <option value="BSC">BSC</option>
+                      <option value="BTECH">BTECH</option>
+                      <option value="MCA">MCA</option>
+                      <option value="BBA">BBA</option>
+                      <option value="GENERAL">General</option>
+                    </select>
+                    <select 
+                      value={searchQuery.semester}
+                      onChange={(e) => setSearchQuery({...searchQuery, semester: e.target.value})}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 px-4 text-sm font-bold transition-all outline-none"
+                    >
+                      <option value="ALL">All Semesters</option>
+                      {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={String(s)}>Semester {s}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm">
+                  <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
+                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Aggregated Attendance</h3>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{getAggregatedHistory().length} Students Found</span>
+                  </div>
+                  
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-slate-50 dark:bg-slate-800/50">
+                          <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
+                          <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Batch</th>
+                          <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Total Presence</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
+                        {getAggregatedHistory().map((student) => (
+                          <tr key={student.name + student.count} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                            <td className="px-8 py-6">
+                              <div className="flex items-center gap-4">
+                                <div className="relative">
+                                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs uppercase">
+                                    {student.name.substring(0, 1)}
+                                  </div>
+                                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white dark:border-slate-900"></div>
+                                </div>
+                                <span className="font-black text-slate-900 dark:text-white text-sm">{student.name}</span>
+                              </div>
+                            </td>
+                            <td className="px-8 py-6">
+                              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider uppercase">{student.dept} · SEM {student.sem}</span>
+                            </td>
+                            <td className="px-8 py-6 text-center">
+                              <div className="flex items-center justify-center gap-3">
+                                <span className="text-sm font-black text-slate-900 dark:text-white">{student.count}</span>
+                                <div className="h-1.5 w-20 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                  <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${Math.min(100, (student.count / 10) * 100)}%` }}></div>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {getAggregatedHistory().length === 0 && (
+                    <div className="p-20 text-center">
+                      <Search className="w-12 h-12 text-slate-100 mx-auto mb-4" />
+                      <p className="text-sm font-bold text-slate-400">No records found for your search</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
