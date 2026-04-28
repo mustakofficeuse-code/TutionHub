@@ -109,14 +109,19 @@ export default function AttendanceGenerator() {
     if (!user?.uid) return () => {};
     
     const today = getTodayString();
+    console.log(`[Teacher] Listening for schedules: Date=${today}, Teacher=${user.uid}`);
+    
     const q = query(
       collection(db, 'attendance_schedules'), 
       where('teacherId', '==', user.uid),
       where('date', '==', today)
     );
     return onSnapshot(q, (snapshot) => {
+      console.log(`[Teacher] Found ${snapshot.docs.length} schedules in listener`);
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setActiveSchedules(list);
+    }, (error) => {
+      console.error("[Teacher] Schedules listener error:", error);
     });
   };
 
@@ -135,38 +140,43 @@ export default function AttendanceGenerator() {
       setRecentAttendance(list);
       setIndexError(false);
     }, (error: any) => {
-      console.error("Attendance feed error:", error);
+      console.error("[Teacher] Attendance feed error:", error);
       if (error.code === 'failed-precondition' || error.message?.includes('index')) {
         setIndexError(true);
       }
     });
   };
 
+  const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error' | null, message: string }>({ type: null, message: '' });
+
   const createSchedule = async () => {
+    console.log("[Teacher] createSchedule triggered");
+    setSaveStatus({ type: null, message: '' });
+
     if (!user) {
-      alert("Please log in to set schedules.");
+      setSaveStatus({ type: 'error', message: "Please log in to set schedules." });
       return;
     }
     if (!newSchedule.startTime || !newSchedule.endTime) {
-      alert("Please set start and end times");
+      setSaveStatus({ type: 'error', message: "Please set both start and end times." });
       return;
     }
 
-    // Validate 1-hour maximum
+    // Validate 5-hour maximum (increased from 1 hour)
     const start = new Date(`2000-01-01T${newSchedule.startTime}:00`);
     const end = new Date(`2000-01-01T${newSchedule.endTime}:00`);
     let diffMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
     
-    // Handle midnight crossing if necessary (though usually not for tuition)
+    // Handle midnight crossing
     if (diffMinutes < 0) diffMinutes += 24 * 60;
 
-    if (diffMinutes > 60) {
-      alert("Maximum schedule window is 60 minutes. Please adjust your times.");
+    if (diffMinutes > 300) {
+      setSaveStatus({ type: 'error', message: "Maximum schedule window is 5 hours." });
       return;
     }
 
     if (diffMinutes <= 0) {
-      alert("End time must be after start time.");
+      setSaveStatus({ type: 'error', message: "End time must be after start time." });
       return;
     }
     
@@ -174,50 +184,100 @@ export default function AttendanceGenerator() {
     try {
       const scheduleId = `SCHED_${Date.now()}`;
       const scheduleDate = getTodayString();
-      await setDoc(doc(db, 'attendance_schedules', scheduleId), {
+      const scheduleData = {
         ...newSchedule,
         department: newSchedule.department.toUpperCase(),
         date: scheduleDate,
         id: scheduleId,
-        teacherId: user?.uid,
+        teacherId: user.uid,
         createdAt: new Date().toISOString()
+      };
+      
+      console.log("[Teacher] Writing schedule to Firestore:", scheduleData);
+      
+      await setDoc(doc(db, 'attendance_schedules', scheduleId), scheduleData);
+      console.log("[Teacher] Schedule written successfully");
+      setSaveStatus({ 
+        type: 'success', 
+        message: `Active window for ${scheduleData.department} (Sem ${scheduleData.semester}) set successfully!` 
       });
-      alert("Schedule created successfully!");
+      
+      // Reset status after 3 seconds
+      setTimeout(() => setSaveStatus({ type: null, message: '' }), 3000);
     } catch (error) {
-      console.error("Error creating schedule:", error);
-      alert("Failed to create schedule.");
+      console.error("[Teacher] Error creating schedule:", error);
+      setSaveStatus({ 
+        type: 'error', 
+        message: "Failed to create schedule. Error: " + (error instanceof Error ? error.message : String(error)) 
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  const deleteSchedule = async (id: string) => {
-    if (!window.confirm("Are you sure you want to remove this attendance window?")) return;
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const deleteSchedule = async (id: string, dept: string) => {
+    console.log(`[Teacher] Attempting to delete schedule: id=${id}, dept=${dept}`);
+    
+    // Use multi-click confirmation instead of window.confirm for iframe reliability
+    if (deleteConfirmId !== id) {
+      setDeleteConfirmId(id);
+      // Reset confirmation after 3 seconds
+      setTimeout(() => setDeleteConfirmId(null), 3000);
+      return;
+    }
+    
+    setDeleteConfirmId(null);
+    setSaving(true);
+    setSaveStatus({ type: null, message: '' });
+
     try {
       await deleteDoc(doc(db, 'attendance_schedules', id));
+      console.log(`[Teacher] Schedule ${id} deleted successfully`);
+      setSaveStatus({ type: 'success', message: `Attendance window for ${dept} removed.` });
+      // Clear status after 3s
+      setTimeout(() => setSaveStatus({ type: null, message: '' }), 3000);
     } catch (error) {
-      console.error("Error deleting schedule:", error);
-      alert("Failed to delete schedule");
+      console.error("[Teacher] Error deleting schedule:", error);
+      setSaveStatus({ 
+        type: 'error', 
+        message: "Failed to remove window. " + (error instanceof Error ? error.message : String(error)) 
+      });
+    } finally {
+      setSaving(false);
     }
   };
 
+  const [isClearingFeed, setIsClearingFeed] = useState(false);
+  const [clearConfirmFeed, setClearConfirmFeed] = useState(false);
+
   const deleteAllAttendance = async () => {
     if (recentAttendance.length === 0) return;
-    if (!window.confirm(`Are you sure you want to clear all ${recentAttendance.length} records in this feed? This cannot be undone.`)) return;
     
+    if (!clearConfirmFeed) {
+      setClearConfirmFeed(true);
+      setTimeout(() => setClearConfirmFeed(false), 3000);
+      return;
+    }
+    
+    setClearConfirmFeed(false);
     setSaving(true);
+    setIsClearingFeed(true);
     try {
       const batch = writeBatch(db);
       recentAttendance.forEach((record) => {
         batch.delete(doc(db, 'attendance', record.id));
       });
       await batch.commit();
-      alert("All attendance records cleared.");
+      setSaveStatus({ type: 'success', message: "Attendance Feed cleared successfully." });
+      setTimeout(() => setSaveStatus({ type: null, message: '' }), 3000);
     } catch (error) {
       console.error("Error clearing attendance:", error);
-      alert("Failed to clear records.");
+      setSaveStatus({ type: 'error', message: "Failed to clear records." });
     } finally {
       setSaving(false);
+      setIsClearingFeed(false);
     }
   };
 
@@ -410,6 +470,13 @@ export default function AttendanceGenerator() {
                   </div>
                 </div>
 
+                {saveStatus.type && (
+                  <div className={`p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${saveStatus.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800' : 'bg-red-50 text-red-700 border border-red-100 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800'}`}>
+                    {saveStatus.type === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
+                    <p className="text-xs font-bold leading-tight">{saveStatus.message}</p>
+                  </div>
+                )}
+
                 <button 
                   onClick={createSchedule}
                   disabled={saving}
@@ -469,10 +536,17 @@ export default function AttendanceGenerator() {
               <div className="space-y-6 sm:space-y-8">
                 {/* Active Schedules Ribbon */}
                 <div className="bg-white dark:bg-slate-900 p-5 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
-                  <h3 className="text-sm sm:text-lg font-black text-slate-900 dark:text-white mb-5 sm:mb-6 flex items-center gap-3">
-                    <Users className="text-blue-600 w-5 h-5 sm:w-6 sm:h-6" />
-                    Active Windows
-                  </h3>
+                  <div className="flex items-center justify-between gap-4 mb-5 sm:mb-6">
+                    <h3 className="text-sm sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-3">
+                      <Users className="text-blue-600 w-5 h-5 sm:w-6 sm:h-6" />
+                      Active Windows
+                    </h3>
+                    {saveStatus.type && (
+                      <div className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest animate-in fade-in slide-in-from-right-2 duration-300 ${saveStatus.type === 'success' ? 'bg-emerald-100 text-emerald-600' : 'bg-red-100 text-red-600'}`}>
+                        {saveStatus.message.includes('successfully') || saveStatus.message.includes('removed') ? 'Updated' : 'Error'}
+                      </div>
+                    )}
+                  </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 {activeSchedules.length === 0 ? (
@@ -497,10 +571,22 @@ export default function AttendanceGenerator() {
                       </div>
                       <div className="flex items-center shrink-0">
                         <button 
-                          onClick={() => deleteSchedule(sched.id)}
-                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteSchedule(sched.id, sched.department);
+                          }}
+                          disabled={saving}
+                          className={`p-1.5 rounded-lg transition-all transform active:scale-95 flex items-center gap-1.5 ${
+                            deleteConfirmId === sched.id 
+                              ? 'bg-red-500 text-white px-3 ring-4 ring-red-100 dark:ring-red-900/30 shadow-lg' 
+                              : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                          } disabled:opacity-30`}
+                          title={deleteConfirmId === sched.id ? "Click again to confirm" : "Delete Window"}
                         >
-                          <Trash2 className="w-3.5 h-3.5" />
+                          {deleteConfirmId === sched.id && (
+                            <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Confirm?</span>
+                          )}
+                          <Trash2 className={`${deleteConfirmId === sched.id ? 'w-3 h-3' : 'w-3.5 h-3.5'}`} />
                         </button>
                       </div>
                     </div>
@@ -516,10 +602,15 @@ export default function AttendanceGenerator() {
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Presence Feed</h3>
                   <button 
                     onClick={deleteAllAttendance}
-                    disabled={recentAttendance.length === 0 || saving}
-                    className="mt-2 flex items-center gap-1.5 text-[9px] sm:text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-600 transition-colors disabled:opacity-30"
+                    disabled={recentAttendance.length === 0 || saving || isClearingFeed}
+                    className={`mt-2 flex items-center gap-1.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all px-3 py-1 rounded-lg ${
+                      clearConfirmFeed 
+                        ? 'bg-red-500 text-white shadow-lg ring-4 ring-red-100 animate-pulse' 
+                        : 'text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-900/20'
+                    } disabled:opacity-30`}
                   >
-                    <Trash2 className="w-3 h-3" /> Clear Records
+                    <Trash2 className="w-3 h-3" /> 
+                    {isClearingFeed ? 'Clearing...' : clearConfirmFeed ? 'Confirm Clear?' : 'Clear Records'}
                   </button>
                 </div>
                 <div className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest flex items-center gap-2 self-start sm:self-center">

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, limit, onSnapshot, doc, getDoc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, serverTimestamp, orderBy, limit, onSnapshot, doc, getDoc, updateDoc, deleteDoc, setDoc, writeBatch } from 'firebase/firestore';
 import { db, auth, logError } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -187,6 +187,34 @@ export default function TeacherDashboard() {
     }, (error) => {
       logError("Error fetching recent attendance:", error);
     });
+  };
+
+  const [isClearingFeed, setIsClearingFeed] = useState(false);
+  const [clearConfirm, setClearConfirm] = useState(false);
+
+  const clearAttendanceFeed = async () => {
+    if (recentAttendance.length === 0) return;
+    
+    if (!clearConfirm) {
+      setClearConfirm(true);
+      setTimeout(() => setClearConfirm(null as any), 3000);
+      return;
+    }
+    
+    setClearConfirm(false);
+    setIsClearingFeed(true);
+    try {
+      const batch = writeBatch(db);
+      recentAttendance.forEach(record => {
+        batch.delete(doc(db, 'attendance', record.id));
+      });
+      await batch.commit();
+    } catch (err) {
+      console.error("Error clearing feed:", err);
+      alert("Failed to clear feed");
+    } finally {
+      setIsClearingFeed(false);
+    }
   };
 
   const overviewStats = [
@@ -802,9 +830,24 @@ export default function TeacherDashboard() {
                     <Users className="w-6 h-6 text-blue-600" />
                     Attendance Feed
                   </h2>
-                  <div className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">
-                    <span className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse"></span>
-                    LIVE
+                  <div className="flex items-center gap-2">
+                    {recentAttendance.length > 0 && (
+                      <button 
+                        onClick={clearAttendanceFeed}
+                        disabled={isClearingFeed}
+                        className={`text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-widest transition-all ${
+                          clearConfirm 
+                            ? 'bg-red-600 text-white shadow-lg ring-2 ring-red-100 animate-pulse' 
+                            : 'text-red-600 hover:text-red-700 bg-red-50 dark:bg-red-900/20'
+                        } disabled:opacity-50`}
+                      >
+                        {isClearingFeed ? 'Clearing...' : clearConfirm ? 'Confirm Clear?' : 'Clear'}
+                      </button>
+                    )}
+                    <div className="flex items-center gap-1 text-[10px] font-bold text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded-full">
+                      <span className="w-1.5 h-1.5 bg-green-600 rounded-full animate-pulse"></span>
+                      LIVE
+                    </div>
                   </div>
                 </div>
 
