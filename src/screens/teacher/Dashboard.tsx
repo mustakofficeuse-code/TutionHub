@@ -825,7 +825,7 @@ export default function TeacherDashboard() {
                             <div>
                               <h4 className="font-bold text-slate-900 dark:text-white text-sm">{record.studentName}</h4>
                               <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                                {record.courseName} • {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {record.department || record.courseName} • Sem {record.semester} • {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </p>
                             </div>
                           </div>

@@ -61,12 +61,17 @@ service cloud.firestore {
     match /attendance/{attendanceId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && 
-                      request.resource.data.studentId == request.auth.uid &&
-                      request.resource.data.keys().hasAll(['sessionId', 'studentId', 'timestamp', 'status']);
+                      request.resource.data.studentId == request.auth.uid;
       allow update, delete: if isAdmin();
     }
 
-    // Attendance Sessions
+    // Attendance Schedules
+    match /attendance_schedules/{scheduleId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Attendance Sessions (Legacy/Migration)
     match /attendance_sessions/{sessionId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();

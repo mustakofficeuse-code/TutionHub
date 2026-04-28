@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Camera, MapPin, CheckCircle, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const STATIC_QR_ID = "TUITIONHUB_ATTENDANCE_001";
+const STATIC_QR_VALUE = "TUITIONHUB_STATIC_QR_CENTER_001";
 
 export default function AttendanceScanner() {
   const { user, profile } = useAuth();
@@ -32,114 +32,113 @@ export default function AttendanceScanner() {
   }, [scanning, status]);
 
   async function onScanSuccess(decodedText: string) {
-    if (!decodedText.startsWith('TUITIONHUB_SESS_')) {
+    if (decodedText !== STATIC_QR_VALUE) {
       setScanning(false);
       setStatus('error');
-      setMessage('Invalid QR Code. Please scan the session QR displayed by your teacher.');
+      setMessage('Invalid QR Code. Please scan the official tuition center QR code attached to the wall.');
       return;
     }
 
-    const sessionId = decodedText.replace('TUITIONHUB_SESS_', '');
     setScanning(false);
     setStatus('verifying');
-    setMessage('Verifying session details...');
+    setMessage('Authenticating your location and schedule...');
 
     try {
-      // 1. Fetch Session Details
-      const sessionRef = doc(db, 'attendance_sessions', sessionId);
-      const sessionSnap = await getDoc(sessionRef);
+      // 1. Fetch Tuition Center Config (Location)
+      const configRef = doc(db, 'config', 'attendance');
+      const configSnap = await getDoc(configRef);
+      
+      if (!configSnap.exists()) {
+        throw new Error('Tuition center location is not set. Please contact your teacher.');
+      }
+      
+      const centerConfig = configSnap.data();
 
-      if (!sessionSnap.exists()) {
-        throw new Error('This attendance session is no longer valid or does not exist.');
+      // 2. Validate Location (Must be within 200m)
+      setMessage('Verifying you are at the tuition center...');
+      const position = await getCurrentPosition().catch(err => {
+        console.error("GPS error:", err);
+        throw new Error("Could not access your location. Please ensure GPS is enabled and permissions are granted.");
+      });
+      
+      const distance = calculateDistance(
+        position.coords.latitude,
+        position.coords.longitude,
+        centerConfig.lat,
+        centerConfig.lng
+      );
+
+      if (distance > 0.2) { // 200m strictly
+        throw new Error(`Location mismatch. You are ${Math.round(distance * 1000)}m away. You must be at the tuition center to mark attendance.`);
       }
 
-      const session = sessionSnap.data();
+      // 3. Fetch Today's Schedules
+      setMessage('Matching your profile with active schedules...');
+      const todayString = new Date().toISOString().split('T')[0];
+      const schedulesRef = collection(db, 'attendance_schedules');
+      const q = query(schedulesRef, where('date', '==', todayString));
+      const schedulesSnap = await getDocs(q);
 
-      // 2. Validate Department and Semester
-      const normalize = (val: any) => val?.toString().toLowerCase().replace(/[^a-z0-9]/g, '').trim() || '';
-      const getNumber = (val: any) => val?.toString().replace(/[^0-9]/g, '') || '';
-
-      const studentDept = normalize(profile?.courseName);
-      const sessionDept = normalize(session.department);
-      const studentSem = getNumber(profile?.semester);
-      const sessionSem = getNumber(session.semester);
-
-      const deptMatch = studentDept === sessionDept || studentDept.includes(sessionDept) || sessionDept.includes(studentDept);
-      const semMatch = studentSem === sessionSem && studentSem !== '';
-
-      if (!deptMatch) {
-        throw new Error(`Verification failed. This attendance is for ${session.department}, but your profile says ${profile?.courseName}.`);
-      }
-      if (!semMatch) {
-        throw new Error(`Verification failed. This attendance is for Sem ${session.semester}, but your profile says Sem ${profile?.semester}.`);
+      if (schedulesSnap.empty) {
+        throw new Error('No attendance schedules found for today. Please wait for your teacher to start a session.');
       }
 
-      // 3. Validate Time window
+      // 4. Find matching schedule
       const now = new Date();
-      const startTimeParts = session.startTime.split(':');
-      const sessionStart = new Date();
-      sessionStart.setHours(parseInt(startTimeParts[0]), parseInt(startTimeParts[1]), 0, 0);
+      const currentTimeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+      
+      const studentDept = String(profile?.courseId || profile?.courseName || '').toUpperCase();
+      const studentSem = String(profile?.semester || '');
 
-      const validityPeriod = parseInt(session.validDuration) * 60 * 1000; // in ms
-      const sessionExpiry = new Date(sessionStart.getTime() + validityPeriod);
+      let matchingSchedule = null;
 
-      if (now < sessionStart) {
-        throw new Error(`Attendance window hasn't started yet. Starts at ${session.startTime}.`);
-      }
-
-      if (now > sessionExpiry) {
-        throw new Error(`Attendance window has expired. It was valid for ${session.validDuration} minutes from ${session.startTime}.`);
-      }
-
-      // 4. Check Location (GPS Radius 200m)
-      let studentPos: { lat: number, lng: number } | null = null;
-
-      if (session.requireLocation !== false && session.location) {
-        setMessage('Checking your location...');
-        const position = await getCurrentPosition().catch(err => {
-          console.error("GPS error:", err);
-          throw new Error("Could not access your location. Please ensure GPS is enabled and permissions are granted.");
-        });
+      for (const docSnap of schedulesSnap.docs) {
+        const sched = docSnap.data();
         
-        const distance = calculateDistance(
-          position.coords.latitude,
-          position.coords.longitude,
-          session.location.lat,
-          session.location.lng
-        );
-  
-        if (distance > 0.5) { // 0.5 km = 500m
-          throw new Error(`You must be within 500m of the tuition center to mark attendance. You are currently ${Math.round(distance * 1000)}m away.`);
-        }
+        // Match Dept & Sem
+        const deptMatch = sched.department === 'ALL' || sched.department.toUpperCase() === studentDept;
+        const semMatch = sched.semester === 'ALL' || sched.semester === studentSem;
 
-        studentPos = { lat: position.coords.latitude, lng: position.coords.longitude };
+        if (deptMatch && semMatch) {
+          // Check Time Window
+          if (currentTimeStr >= sched.startTime && currentTimeStr <= sched.endTime) {
+            matchingSchedule = sched;
+            break;
+          }
+        }
       }
 
-      // 5. Check Duplicate Attendance
-      const attendanceId = `${user?.uid}_${sessionId}`;
+      if (!matchingSchedule) {
+        throw new Error(`No active schedule found for ${studentDept} Sem ${studentSem} at this time (${currentTimeStr}).`);
+      }
+
+      // 5. Check Duplicate
+      const attendanceId = `${user?.uid}_${todayString}_${matchingSchedule.id}`;
       const attRef = doc(db, 'attendance', attendanceId);
       const attSnap = await getDoc(attRef);
 
       if (attSnap.exists()) {
-        throw new Error('You have already marked your attendance for this session.');
+        throw new Error('You have already marked your attendance for this scheduled session.');
       }
 
-      // 6. Mark Attendance
+      // 6. Record Attendance
       await setDoc(attRef, {
-        sessionId: sessionId,
-        teacherId: session.teacherId || 'unknown',
+        scheduleId: matchingSchedule.id,
+        teacherId: matchingSchedule.teacherId,
         studentId: user?.uid,
         studentName: profile?.name,
         studentIdNum: profile?.studentId || 'N/A',
-        department: profile?.courseName || 'unknown',
-        semester: profile?.semester || 'unknown',
+        department: studentDept,
+        semester: studentSem,
         timestamp: new Date().toISOString(),
+        date: todayString,
         status: 'present',
-        location: studentPos
+        location: { lat: position.coords.latitude, lng: position.coords.longitude }
       });
 
       setStatus('success');
-      setMessage('Attendance marked successfully!');
+      setMessage(`Knowledge is power! Your attendance for ${studentDept} Sem ${studentSem} has been recorded.`);
+      
     } catch (error: any) {
       logError("Attendance scanner error:", error);
       setStatus('error');

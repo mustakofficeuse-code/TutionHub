@@ -80,6 +80,22 @@
         "status": { "type": "string" }
       }
     },
+    "attendance_schedules": {
+      "title": "Attendance Schedule",
+      "description": "Scheduled time windows for marking attendance",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "teacherId": { "type": "string" },
+        "department": { "type": "string", "description": "e.g., 'BCA', 'BSC', or 'ALL'" },
+        "semester": { "type": "string", "description": "e.g., '1', '2', or 'ALL'" },
+        "date": { "type": "string", "format": "date" },
+        "startTime": { "type": "string", "format": "time" },
+        "endTime": { "type": "string", "format": "time" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["teacherId", "department", "semester", "date", "startTime", "endTime"]
+    },
     "fees": {
       "title": "Fee",
       "description": "Fee structure for students/courses",
@@ -290,6 +306,10 @@
     "/attendance_sessions/{sessionId}": {
       "schema": "attendance_sessions",
       "description": "Attendance generation sessions"
+    },
+    "/attendance_schedules/{scheduleId}": {
+      "schema": "attendance_schedules",
+      "description": "Scheduled attendance windows"
     },
     "/fees/{feeId}": {
       "schema": "fees",
