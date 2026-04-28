@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc, setDoc, deleteDoc, collection, query, orderBy, onSnapshot, limit, where } from 'firebase/firestore';
+import { doc, getDoc, setDoc, deleteDoc, collection, query, orderBy, onSnapshot, limit, where, writeBatch } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../../context/AuthContext';
@@ -103,6 +103,24 @@ export default function AttendanceGenerator() {
       alert("Please set start and end times");
       return;
     }
+
+    // Validate 1-hour maximum
+    const start = new Date(`2000-01-01T${newSchedule.startTime}:00`);
+    const end = new Date(`2000-01-01T${newSchedule.endTime}:00`);
+    let diffMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
+    
+    // Handle midnight crossing if necessary (though usually not for tuition)
+    if (diffMinutes < 0) diffMinutes += 24 * 60;
+
+    if (diffMinutes > 60) {
+      alert("Maximum schedule window is 60 minutes. Please adjust your times.");
+      return;
+    }
+
+    if (diffMinutes <= 0) {
+      alert("End time must be after start time.");
+      return;
+    }
     
     setSaving(true);
     try {
@@ -130,6 +148,31 @@ export default function AttendanceGenerator() {
       console.error("Error deleting schedule:", error);
       alert("Failed to delete schedule");
     }
+  };
+
+  const deleteAllAttendance = async () => {
+    if (recentAttendance.length === 0) return;
+    if (!window.confirm(`Are you sure you want to clear all ${recentAttendance.length} records in this feed? This cannot be undone.`)) return;
+    
+    setSaving(true);
+    try {
+      const batch = writeBatch(db);
+      recentAttendance.forEach((record) => {
+        batch.delete(doc(db, 'attendance', record.id));
+      });
+      await batch.commit();
+      alert("All attendance records cleared.");
+    } catch (error) {
+      console.error("Error clearing attendance:", error);
+      alert("Failed to clear records.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePrint = () => {
+    // Standard print call
+    window.print();
   };
 
   const updateLocation = async () => {
@@ -160,11 +203,11 @@ export default function AttendanceGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors font-sans">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors font-sans print:p-0 print:bg-white">
+      <div className="max-w-7xl mx-auto print:max-w-none">
         <button 
           onClick={() => navigate('/')}
-          className="mb-8 flex items-center gap-2 text-slate-500 font-bold hover:text-blue-600 transition-all border-b-2 border-transparent hover:border-blue-600 pb-1"
+          className="mb-8 flex items-center gap-2 text-slate-500 font-bold hover:text-blue-600 transition-all border-b-2 border-transparent hover:border-blue-600 pb-1 print:hidden"
         >
           <ArrowLeft className="w-5 h-5" /> Back to Dashboard
         </button>
@@ -172,27 +215,34 @@ export default function AttendanceGenerator() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
           {/* LEFT: Scheduling & Static QR */}
-          <div className="lg:col-span-4 space-y-8">
+          <div className="lg:col-span-4 space-y-8 print:col-span-12 print:space-y-0">
             
             {/* The Wall QR Code (Static) */}
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 text-center group cursor-pointer" onClick={() => window.print()}>
-              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-200 dark:shadow-none animate-pulse">
+            <div 
+              className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 text-center group cursor-pointer relative overflow-hidden print:shadow-none print:border-0 print:p-0" 
+              onClick={handlePrint}
+              role="button"
+              tabIndex={0}
+            >
+              <div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-5 transition-opacity print:hidden"></div>
+              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-200 dark:shadow-none animate-pulse print:hidden">
                 <QrCode className="text-white w-8 h-8" />
               </div>
               <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Static Center QR</h2>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-8">Stick this on the tuition wall</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-8 print:text-black">Stick this on the tuition wall</p>
               
-              <div className="bg-slate-50 dark:bg-slate-950 p-8 rounded-[2rem] inline-block border-2 border-slate-100 dark:border-slate-800 mb-6 group-hover:bg-white dark:group-hover:bg-slate-900 transition-colors">
-                <QRCodeSVG value={STATIC_QR_VALUE} size={220} level="H" includeMargin={true} />
+              <div className="bg-slate-50 dark:bg-slate-950 p-8 rounded-[2rem] inline-block border-2 border-slate-100 dark:border-slate-800 mb-6 group-hover:bg-white dark:group-hover:bg-slate-900 transition-colors print:border-slate-200 print:bg-white">
+                <QRCodeSVG value={STATIC_QR_VALUE} size={280} level="H" includeMargin={true} className="mx-auto" />
               </div>
               
-              <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center justify-center gap-2">
+              <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center justify-center gap-2 print:hidden">
                 <RefreshCw className="w-3 h-3" /> Click to Print Permanent QR
               </p>
+              <p className="hidden print:block text-[10px] font-bold text-slate-500 mt-4 uppercase">TuitionHub Automated Attendance System</p>
             </div>
 
             {/* Set New Schedule */}
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
+            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 print:hidden">
               <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3">
                 <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
                   <Calendar className="text-indigo-600 w-5 h-5" />
@@ -274,7 +324,7 @@ export default function AttendanceGenerator() {
             </div>
 
             {/* Location Config Mini */}
-            <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl overflow-hidden relative">
+            <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl overflow-hidden relative print:hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/20 blur-3xl -mr-16 -mt-16"></div>
               <h3 className="font-black mb-4 flex items-center gap-2 relative z-10">
                 <MapPin className="text-blue-400 w-5 h-5" />
@@ -299,7 +349,7 @@ export default function AttendanceGenerator() {
           </div>
 
           {/* RIGHT: Active Windows & Reality Feed */}
-          <div className="lg:col-span-8 space-y-8">
+          <div className="lg:col-span-8 space-y-8 print:hidden">
             
             {/* Active Schedules Ribbon */}
             <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
@@ -348,7 +398,16 @@ export default function AttendanceGenerator() {
             {/* Attendance reality feed */}
             <div className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border border-slate-100 dark:border-slate-800 min-h-[500px]">
               <div className="flex justify-between items-center mb-8">
-                <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Today's Presence Feed</h3>
+                <div>
+                  <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Today's Presence Feed</h3>
+                  <button 
+                    onClick={deleteAllAttendance}
+                    disabled={recentAttendance.length === 0 || saving}
+                    className="mt-2 flex items-center gap-1.5 text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-600 transition-colors disabled:opacity-30"
+                  >
+                    <Trash2 className="w-3 h-3" /> Clear All Records
+                  </button>
+                </div>
                 <div className="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full animate-ping"></div>
                   Reality Monitoring

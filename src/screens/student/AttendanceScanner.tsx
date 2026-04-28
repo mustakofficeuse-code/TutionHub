@@ -32,7 +32,8 @@ export default function AttendanceScanner() {
   }, [scanning, status]);
 
   async function onScanSuccess(decodedText: string) {
-    if (decodedText !== STATIC_QR_VALUE) {
+    const cleanText = decodedText.trim();
+    if (cleanText !== STATIC_QR_VALUE) {
       setScanning(false);
       setStatus('error');
       setMessage('Invalid QR Code. Please scan the official tuition center QR code attached to the wall.');
@@ -67,11 +68,16 @@ export default function AttendanceScanner() {
 
       // 3. Find matching schedule
       const now = new Date();
-      const currentTimeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+      // Ensure HH:mm format for comparison
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const currentTimeStr = `${hours}:${minutes}`;
       
       const rawDept = String(profile?.courseId || profile?.courseName || '').toUpperCase();
       const studentDept = (rawDept === 'GENERAL' || rawDept === '' || rawDept === 'OTHER') ? 'BCA' : rawDept;
       const studentSem = String(profile?.semester || '');
+
+      console.log(`Checking match for: Dept:${studentDept}, Sem:${studentSem}, Time:${currentTimeStr}`);
 
       let matchingSchedule = null;
 
@@ -80,7 +86,7 @@ export default function AttendanceScanner() {
         
         // Match Dept & Sem
         const deptMatch = sched.department === 'ALL' || sched.department.toUpperCase() === studentDept;
-        const semMatch = sched.semester === 'ALL' || sched.semester === studentSem;
+        const semMatch = sched.semester === 'ALL' || String(sched.semester) === studentSem;
 
         if (deptMatch && semMatch) {
           // Check Time Window
@@ -92,7 +98,7 @@ export default function AttendanceScanner() {
       }
 
       if (!matchingSchedule) {
-        throw new Error(`No active schedule found for ${studentDept} Sem ${studentSem} at this time (${currentTimeStr}).`);
+        throw new Error(`Schedule mismatch. Please ensure you are scanning at your scheduled time (${studentDept} Sem ${studentSem}). Current time: ${currentTimeStr}`);
       }
 
       // 4. Validate Location (ONLY if required by schedule)
@@ -111,8 +117,8 @@ export default function AttendanceScanner() {
           centerConfig.lng
         );
 
-        if (distance > 0.2) { // 200m strictly
-          throw new Error(`Location mismatch. You are ${Math.round(distance * 1000)}m away. You must be at the tuition center to mark attendance.`);
+        if (distance > 0.3) { // 300m for better tolerance
+          throw new Error(`Location mismatch. You are ${Math.round(distance * 1000)}m away. You must be at the tuition center.`);
         }
         studentPos = { lat: position.coords.latitude, lng: position.coords.longitude };
       }
