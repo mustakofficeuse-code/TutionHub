@@ -54,25 +54,7 @@ export default function AttendanceScanner() {
       
       const centerConfig = configSnap.data();
 
-      // 2. Validate Location (Must be within 200m)
-      setMessage('Verifying you are at the tuition center...');
-      const position = await getCurrentPosition().catch(err => {
-        console.error("GPS error:", err);
-        throw new Error("Could not access your location. Please ensure GPS is enabled and permissions are granted.");
-      });
-      
-      const distance = calculateDistance(
-        position.coords.latitude,
-        position.coords.longitude,
-        centerConfig.lat,
-        centerConfig.lng
-      );
-
-      if (distance > 0.2) { // 200m strictly
-        throw new Error(`Location mismatch. You are ${Math.round(distance * 1000)}m away. You must be at the tuition center to mark attendance.`);
-      }
-
-      // 3. Fetch Today's Schedules
+      // 2. Fetch Today's Schedules
       setMessage('Matching your profile with active schedules...');
       const todayString = new Date().toISOString().split('T')[0];
       const schedulesRef = collection(db, 'attendance_schedules');
@@ -83,7 +65,7 @@ export default function AttendanceScanner() {
         throw new Error('No attendance schedules found for today. Please wait for your teacher to start a session.');
       }
 
-      // 4. Find matching schedule
+      // 3. Find matching schedule
       const now = new Date();
       const currentTimeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
       
@@ -113,6 +95,28 @@ export default function AttendanceScanner() {
         throw new Error(`No active schedule found for ${studentDept} Sem ${studentSem} at this time (${currentTimeStr}).`);
       }
 
+      // 4. Validate Location (ONLY if required by schedule)
+      let studentPos = null;
+      if (matchingSchedule.requireGPS) {
+        setMessage('Verifying you are at the tuition center...');
+        const position = await getCurrentPosition().catch(err => {
+          console.error("GPS error:", err);
+          throw new Error("Could not access your location. Please ensure GPS is enabled and permissions are granted.");
+        });
+        
+        const distance = calculateDistance(
+          position.coords.latitude,
+          position.coords.longitude,
+          centerConfig.lat,
+          centerConfig.lng
+        );
+
+        if (distance > 0.2) { // 200m strictly
+          throw new Error(`Location mismatch. You are ${Math.round(distance * 1000)}m away. You must be at the tuition center to mark attendance.`);
+        }
+        studentPos = { lat: position.coords.latitude, lng: position.coords.longitude };
+      }
+
       // 5. Check Duplicate
       const attendanceId = `${user?.uid}_${todayString}_${matchingSchedule.id}`;
       const attRef = doc(db, 'attendance', attendanceId);
@@ -134,7 +138,8 @@ export default function AttendanceScanner() {
         timestamp: new Date().toISOString(),
         date: todayString,
         status: 'present',
-        location: { lat: position.coords.latitude, lng: position.coords.longitude }
+        location: studentPos,
+        requireGPS: matchingSchedule.requireGPS || false
       });
 
       setStatus('success');

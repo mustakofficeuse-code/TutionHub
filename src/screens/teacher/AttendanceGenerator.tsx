@@ -38,6 +38,7 @@ export default function AttendanceGenerator() {
     semester: '1',
     startTime: '',
     endTime: '',
+    requireGPS: true,
     date: new Date().toISOString().split('T')[0]
   });
 
@@ -238,14 +239,26 @@ export default function AttendanceGenerator() {
                       className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 px-4 text-sm font-bold transition-all outline-none"
                     />
                   </div>
-                  <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">End Time</label>
-                    <input 
-                      type="time"
-                      value={newSchedule.endTime}
-                      onChange={(e) => setNewSchedule({...newSchedule, endTime: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 px-4 text-sm font-bold transition-all outline-none"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">End Time</label>
+                      <input 
+                        type="time"
+                        value={newSchedule.endTime}
+                        onChange={(e) => setNewSchedule({...newSchedule, endTime: e.target.value})}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 px-4 text-sm font-bold transition-all outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Location Check</label>
+                      <button 
+                        onClick={() => setNewSchedule({...newSchedule, requireGPS: !newSchedule.requireGPS})}
+                        className={`w-full py-3.5 px-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-2 ${newSchedule.requireGPS ? 'bg-blue-600 border-blue-600 text-white' : 'bg-slate-100 border-slate-200 text-slate-400 dark:bg-slate-800 dark:border-slate-700'}`}
+                      >
+                        <MapPin className="w-3 h-3" />
+                        GPS {newSchedule.requireGPS ? 'ON' : 'OFF'}
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -307,9 +320,14 @@ export default function AttendanceGenerator() {
                       </div>
                       <div>
                         <h4 className="font-black text-slate-900 dark:text-white text-sm">{sched.department} Batch</h4>
-                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                          {sched.startTime} — {sched.endTime}
-                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            {sched.startTime} — {sched.endTime}
+                          </p>
+                          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter ${sched.requireGPS ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
+                            {sched.requireGPS ? 'GPS REQD' : 'GPS SKIP'}
+                          </span>
+                        </div>
                       </div>
                       <div className="flex items-center gap-3 ml-auto">
                         <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-200"></div>
