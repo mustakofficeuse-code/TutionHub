@@ -276,46 +276,46 @@ export default function AttendanceGenerator() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors font-sans print:p-0 print:bg-white">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 transition-colors font-sans print:p-0 print:bg-white">
       <div className="max-w-7xl mx-auto print:max-w-none">
         <button 
           onClick={() => navigate('/')}
-          className="mb-8 flex items-center gap-2 text-slate-500 font-bold hover:text-blue-600 transition-all border-b-2 border-transparent hover:border-blue-600 pb-1 print:hidden"
+          className="mb-6 sm:mb-8 flex items-center gap-2 text-slate-500 font-bold hover:text-blue-600 transition-all border-b-2 border-transparent hover:border-blue-600 pb-1 print:hidden"
         >
           <ArrowLeft className="w-5 h-5" /> Back to Dashboard
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           
           {/* LEFT: Scheduling & Static QR */}
-          <div className="lg:col-span-4 space-y-8 print:col-span-12 print:space-y-0">
+          <div className="lg:col-span-4 space-y-6 sm:space-y-8 print:col-span-12 print:space-y-0">
             
             {/* The Wall QR Code (Static) */}
             <div 
-              className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 text-center group cursor-pointer relative overflow-hidden print:shadow-none print:border-0 print:p-0" 
+              className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-slate-800 text-center group cursor-pointer relative overflow-hidden print:shadow-none print:border-0 print:p-0" 
               onClick={handlePrint}
               role="button"
               tabIndex={0}
             >
               <div className="absolute inset-0 bg-blue-600 opacity-0 group-hover:opacity-5 transition-opacity print:hidden"></div>
-              <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-200 dark:shadow-none animate-pulse print:hidden">
-                <QrCode className="text-white w-8 h-8" />
+              <div className="w-14 h-14 sm:w-16 sm:h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-blue-200 dark:shadow-none animate-pulse print:hidden">
+                <QrCode className="text-white w-7 h-7 sm:w-8 sm:h-8" />
               </div>
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Static Center QR</h2>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-8 print:text-black">Stick this on the tuition wall</p>
+              <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Static Center QR</h2>
+              <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 sm:mb-8 print:text-black">Stick this on the tuition wall</p>
               
-              <div className="bg-slate-50 dark:bg-slate-950 p-8 rounded-[2rem] inline-block border-2 border-slate-100 dark:border-slate-800 mb-6 group-hover:bg-white dark:group-hover:bg-slate-900 transition-colors print:border-slate-200 print:bg-white">
-                <QRCodeSVG value={STATIC_QR_VALUE} size={280} level="H" includeMargin={true} className="mx-auto" />
+              <div className="bg-slate-50 dark:bg-slate-950 p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] inline-block border-2 border-slate-100 dark:border-slate-800 mb-6 group-hover:bg-white dark:group-hover:bg-slate-900 transition-colors print:border-slate-200 print:bg-white">
+                <QRCodeSVG value={STATIC_QR_VALUE} size={window.innerWidth < 640 ? 200 : 250} level="H" includeMargin={true} className="mx-auto max-w-full h-auto" />
               </div>
               
-              <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center justify-center gap-2 print:hidden">
+              <p className="text-[9px] sm:text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center justify-center gap-2 print:hidden">
                 <RefreshCw className="w-3 h-3" /> Click to Print Permanent QR
               </p>
               <p className="hidden print:block text-[10px] font-bold text-slate-500 mt-4 uppercase">TuitionHub Automated Attendance System</p>
             </div>
 
             {/* Set New Schedule */}
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 print:hidden">
+            <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 print:hidden">
               <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3">
                 <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl flex items-center justify-center">
                   <Calendar className="text-indigo-600 w-5 h-5" />
@@ -323,14 +323,14 @@ export default function AttendanceGenerator() {
                 Schedule Session
               </h3>
               
-              <div className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-4 sm:space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Dept</label>
                     <select 
                       value={newSchedule.department}
                       onChange={(e) => setNewSchedule({...newSchedule, department: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 px-4 text-sm font-bold transition-all outline-none"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none"
                     >
                       <option value="BCA">BCA</option>
                       <option value="BSC">BSC</option>
@@ -344,7 +344,7 @@ export default function AttendanceGenerator() {
                     <select 
                       value={newSchedule.semester}
                       onChange={(e) => setNewSchedule({...newSchedule, semester: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 px-4 text-sm font-bold transition-all outline-none"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none"
                     >
                       {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={String(s)}>Sem {s}</option>)}
                       <option value="ALL">ALL SEM</option>
@@ -352,57 +352,58 @@ export default function AttendanceGenerator() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Start Time</label>
                     <input 
                       type="time"
                       value={newSchedule.startTime}
                       onChange={(e) => setNewSchedule({...newSchedule, startTime: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 px-4 text-sm font-bold transition-all outline-none"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none appearance-none"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">End Time</label>
-                      <input 
-                        type="time"
-                        value={newSchedule.endTime}
-                        onChange={(e) => setNewSchedule({...newSchedule, endTime: e.target.value})}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 px-4 text-sm font-bold transition-all outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Grace Period (Min)</label>
-                      <select 
-                        value={newSchedule.gracePeriod}
-                        onChange={(e) => setNewSchedule({...newSchedule, gracePeriod: e.target.value})}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 px-4 text-sm font-bold transition-all outline-none"
-                      >
-                        <option value="5">5 Minutes</option>
-                        <option value="10">10 Minutes</option>
-                        <option value="15">15 Minutes</option>
-                        <option value="30">30 Minutes</option>
-                        <option value="60">Ends at session end</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Location Check</label>
-                      <button 
-                        onClick={() => setNewSchedule({...newSchedule, requireGPS: !newSchedule.requireGPS})}
-                        className={`w-full py-3.5 px-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-2 ${newSchedule.requireGPS ? 'bg-blue-600 border-blue-600 text-white' : 'bg-slate-100 border-slate-200 text-slate-400 dark:bg-slate-800 dark:border-slate-700'}`}
-                      >
-                        <MapPin className="w-3 h-3" />
-                        GPS {newSchedule.requireGPS ? 'ON' : 'OFF'}
-                      </button>
-                    </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">End Time</label>
+                    <input 
+                      type="time"
+                      value={newSchedule.endTime}
+                      onChange={(e) => setNewSchedule({...newSchedule, endTime: e.target.value})}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none appearance-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Grace Period</label>
+                    <select 
+                      value={newSchedule.gracePeriod}
+                      onChange={(e) => setNewSchedule({...newSchedule, gracePeriod: e.target.value})}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none"
+                    >
+                      <option value="5">5 Mins</option>
+                      <option value="10">10 Mins</option>
+                      <option value="15">15 Mins</option>
+                      <option value="30">30 Mins</option>
+                      <option value="60">Max (60)</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Strict Location</label>
+                    <button 
+                      onClick={() => setNewSchedule({...newSchedule, requireGPS: !newSchedule.requireGPS})}
+                      className={`w-full py-3 px-4 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-2 ${newSchedule.requireGPS ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-200 dark:shadow-none' : 'bg-slate-50 border-slate-100 text-slate-400 dark:bg-slate-800 dark:border-slate-700'}`}
+                    >
+                      <MapPin className="w-3 h-3" />
+                      GPS {newSchedule.requireGPS ? 'ON' : 'OFF'}
+                    </button>
                   </div>
                 </div>
 
                 <button 
                   onClick={createSchedule}
                   disabled={saving}
-                  className="w-full py-4 bg-indigo-600 hover:bg-slate-900 text-white rounded-[1.5rem] font-black shadow-lg shadow-indigo-100 dark:shadow-none transition-all flex items-center justify-center gap-2 transform active:scale-95"
+                  className="w-full py-4 bg-indigo-600 hover:bg-slate-900 text-white rounded-[1.25rem] sm:rounded-[1.5rem] font-black shadow-lg shadow-indigo-100 dark:shadow-none transition-all flex items-center justify-center gap-2 transform active:scale-95 mt-2"
                 >
                   {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Clock className="w-5 h-5" />}
                   Set Active Window
@@ -411,85 +412,84 @@ export default function AttendanceGenerator() {
             </div>
 
             {/* Location Config Mini */}
-            <div className="bg-slate-900 text-white p-8 rounded-[2.5rem] shadow-xl overflow-hidden relative print:hidden">
+            <div className="bg-slate-900 text-white p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-xl overflow-hidden relative print:hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/20 blur-3xl -mr-16 -mt-16"></div>
-              <h3 className="font-black mb-4 flex items-center gap-2 relative z-10">
+              <h3 className="font-black mb-4 flex items-center gap-2 relative z-10 text-sm sm:text-base">
                 <MapPin className="text-blue-400 w-5 h-5" />
                 GPS Anchor
               </h3>
               {tuitionLocation ? (
                 <div className="space-y-4 relative z-10">
-                  <div className="p-4 bg-white/5 rounded-2xl backdrop-blur-md border border-white/10">
-                    <p className="text-[10px] font-black text-blue-400 uppercase mb-1 tracking-widest">Active Coordinates</p>
-                    <p className="text-xs font-mono opacity-60">Lat: {tuitionLocation.lat.toFixed(6)}</p>
-                    <p className="text-xs font-mono opacity-60">Lng: {tuitionLocation.lng.toFixed(6)}</p>
+                  <div className="p-3 sm:p-4 bg-white/5 rounded-2xl backdrop-blur-md border border-white/10">
+                    <p className="text-[9px] sm:text-[10px] font-black text-blue-400 uppercase mb-1 tracking-widest">Active Coordinates</p>
+                    <p className="text-[10px] sm:text-xs font-mono opacity-60">Lat: {tuitionLocation.lat.toFixed(5)}</p>
+                    <p className="text-[10px] sm:text-xs font-mono opacity-60">Lng: {tuitionLocation.lng.toFixed(5)}</p>
                   </div>
-                  <button onClick={updateLocation} className="text-[10px] font-black text-blue-400 hover:text-white transition-colors uppercase tracking-[0.2em] flex items-center gap-1">
+                  <button onClick={updateLocation} className="text-[9px] sm:text-[10px] font-black text-blue-400 hover:text-white transition-colors uppercase tracking-[0.2em] flex items-center gap-1">
                     <RefreshCw className="w-3 h-3" /> Reset to Current Spot
                   </button>
                 </div>
               ) : (
-                <button onClick={updateLocation} className="w-full py-3 bg-blue-600 rounded-xl font-bold">Initialize Location</button>
+                <button onClick={updateLocation} className="w-full py-3 bg-blue-600 rounded-xl font-bold text-sm">Initialize Location</button>
               )}
             </div>
 
           </div>
 
           {/* RIGHT: Monitor / History Tabs */}
-          <div className="lg:col-span-8 space-y-8 print:hidden">
+          <div className="lg:col-span-8 space-y-6 sm:space-y-8 print:hidden">
             
             {/* Tab Selection */}
-            <div className="flex bg-white dark:bg-slate-900 p-2 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative z-20">
+            <div className="flex bg-white dark:bg-slate-900 p-1.5 sm:p-2 rounded-2xl sm:rounded-3xl border border-slate-100 dark:border-slate-800 shadow-sm relative z-20">
               <button 
                 onClick={() => setActiveTab('monitor')}
-                className={`flex-1 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${activeTab === 'monitor' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                className={`flex-1 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${activeTab === 'monitor' ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 dark:shadow-none' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
               >
                 <Activity className="w-4 h-4" /> Live Monitor
               </button>
               <button 
                 onClick={() => setActiveTab('history')}
-                className={`flex-1 py-4 rounded-2xl text-xs font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${activeTab === 'history' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
+                className={`flex-1 py-3 sm:py-4 rounded-xl sm:rounded-2xl text-[10px] sm:text-xs font-black uppercase tracking-[0.15em] sm:tracking-[0.2em] transition-all flex items-center justify-center gap-2 ${activeTab === 'history' ? 'bg-blue-600 text-white shadow-lg shadow-blue-100 dark:shadow-none' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'}`}
               >
                 <FileText className="w-4 h-4" /> History
               </button>
             </div>
 
             {activeTab === 'monitor' ? (
-              <>
+              <div className="space-y-6 sm:space-y-8">
                 {/* Active Schedules Ribbon */}
-                <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
-                  <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3">
-                    <Users className="text-blue-600 w-6 h-6" />
+                <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800">
+                  <h3 className="text-base sm:text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-3">
+                    <Users className="text-blue-600 w-5 h-5 sm:w-6 sm:h-6" />
                     Active Attendance Windows
                   </h3>
               
-              <div className="flex flex-wrap gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {activeSchedules.length === 0 ? (
-                  <p className="text-slate-400 font-bold text-sm italic py-4 px-2">No active windows set for today.</p>
+                  <p className="text-slate-400 font-bold text-sm italic py-4 px-2 col-span-full">No active windows set for today.</p>
                 ) : (
                   activeSchedules.map(sched => (
-                    <div key={sched.id} className="bg-slate-50 dark:bg-slate-800/50 p-5 rounded-3xl border border-slate-100 dark:border-slate-800 flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-500">
-                      <div className="w-12 h-12 bg-white dark:bg-slate-950 rounded-2xl flex flex-col items-center justify-center shadow-sm">
-                        <span className="text-[8px] font-black text-slate-400 uppercase leading-none">Sem</span>
-                        <span className="text-lg font-black text-blue-600 leading-none">{sched.semester}</span>
+                    <div key={sched.id} className="bg-slate-50 dark:bg-slate-800/50 p-4 sm:p-5 rounded-2xl sm:rounded-3xl border border-slate-100 dark:border-slate-800 flex items-center gap-4 animate-in slide-in-from-bottom-4 duration-500">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white dark:bg-slate-950 rounded-xl sm:rounded-2xl flex flex-col items-center justify-center shadow-sm shrink-0">
+                        <span className="text-[7px] sm:text-[8px] font-black text-slate-400 uppercase leading-none">Sem</span>
+                        <span className="text-base sm:text-lg font-black text-blue-600 leading-none">{sched.semester}</span>
                       </div>
-                      <div>
-                        <h4 className="font-black text-slate-900 dark:text-white text-sm">{sched.department} Batch</h4>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                            {sched.startTime} — {sched.endTime}
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-black text-slate-900 dark:text-white text-xs sm:text-sm truncate">{sched.department} Batch</h4>
+                        <div className="flex flex-wrap items-center gap-2 mt-1">
+                          <p className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">
+                            {sched.startTime}—{sched.endTime}
                           </p>
-                          <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter ${sched.requireGPS ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
-                            {sched.requireGPS ? 'GPS REQD' : 'GPS SKIP'}
+                          <span className={`text-[7px] sm:text-[8px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter shrink-0 ${sched.requireGPS ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'}`}>
+                            {sched.requireGPS ? 'GPS' : 'SKIP GPS'}
                           </span>
-                          <span className="text-[8px] font-black px-1.5 py-0.5 bg-indigo-100 text-indigo-600 dark:bg-indigo-900/30 rounded uppercase tracking-tighter">{sched.gracePeriod}m Grace</span>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3 ml-auto">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse shadow-lg shadow-emerald-200"></div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></div>
                         <button 
                           onClick={() => deleteSchedule(sched.id)}
-                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors ml-2"
+                          className="p-1.5 sm:p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                           title="Remove Schedule"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -502,53 +502,53 @@ export default function AttendanceGenerator() {
             </div>
 
             {/* Attendance reality feed */}
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border border-slate-100 dark:border-slate-800 min-h-[500px]">
-              <div className="flex justify-between items-center mb-8">
+            <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2.5rem] sm:rounded-[3rem] shadow-sm border border-slate-100 dark:border-slate-800 min-h-[500px]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                 <div>
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">Today's Presence Feed</h3>
+                  <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Presence Feed</h3>
                   <button 
                     onClick={deleteAllAttendance}
                     disabled={recentAttendance.length === 0 || saving}
-                    className="mt-2 flex items-center gap-1.5 text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-600 transition-colors disabled:opacity-30"
+                    className="mt-2 flex items-center gap-1.5 text-[9px] sm:text-[10px] font-black text-red-500 uppercase tracking-widest hover:text-red-600 transition-colors disabled:opacity-30"
                   >
-                    <Trash2 className="w-3 h-3" /> Clear All Records
+                    <Trash2 className="w-3 h-3" /> Clear Records
                   </button>
                 </div>
-                <div className="px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 bg-emerald-600 rounded-full animate-ping"></div>
+                <div className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest flex items-center gap-2 self-start sm:self-center">
+                  <div className="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-emerald-600 rounded-full animate-ping"></div>
                   Reality Monitoring
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {recentAttendance.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-20 text-slate-400 opacity-50">
-                    <Clock className="w-16 h-16 mb-4 stroke-1" />
-                    <p className="font-bold uppercase tracking-widest text-[10px]">Awaiting First Scan...</p>
+                    <Clock className="w-12 h-12 sm:w-16 sm:h-16 mb-4 stroke-1" />
+                    <p className="font-bold uppercase tracking-widest text-[9px] sm:text-[10px]">Awaiting First Scan...</p>
                   </div>
                 ) : (
                   recentAttendance.map((record) => (
-                    <div key={record.id} className="group flex items-center justify-between p-6 bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-900 hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none rounded-[2rem] border border-slate-100 dark:border-slate-800 transition-all duration-300">
-                      <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 bg-white dark:bg-slate-950 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                          <User className="text-blue-600 w-7 h-7" />
+                    <div key={record.id} className="group flex items-center justify-between p-4 sm:p-6 bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-900 hover:shadow-lg rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 dark:border-slate-800 transition-all duration-300">
+                      <div className="flex items-center gap-3 sm:gap-5 min-w-0">
+                        <div className="w-10 h-10 sm:w-14 sm:h-14 bg-white dark:bg-slate-950 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
+                          <User className="text-blue-600 w-5 h-5 sm:w-7 sm:h-7" />
                         </div>
-                        <div>
-                          <h4 className="font-black text-lg text-slate-900 dark:text-white tracking-tight">{record.studentName}</h4>
-                          <div className="flex gap-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">
-                            <span className="text-blue-600">{record.department}</span>
-                            <span className="opacity-30">•</span>
-                            <span>Semester {record.semester}</span>
+                        <div className="min-w-0">
+                          <h4 className="font-black text-sm sm:text-lg text-slate-900 dark:text-white tracking-tight truncate">{record.studentName}</h4>
+                          <div className="flex gap-2 sm:gap-3 text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5 sm:mt-1">
+                            <span className="text-blue-600 truncate">{record.department}</span>
+                            <span className="opacity-30 shrink-0">•</span>
+                            <span className="shrink-0">Sem {record.semester}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-black text-slate-900 dark:text-white mb-1">
+                      <div className="text-right shrink-0 ml-4">
+                        <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white mb-1">
                           {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
-                        <div className="flex items-center gap-1.5 text-[9px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-3 py-1.5 rounded-xl uppercase tracking-widest">
-                          <CheckCircle className="w-3 h-3" />
-                          Authenticated
+                        <div className="hidden xs:flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl uppercase tracking-widest">
+                          <CheckCircle className="w-2.5 h-2.5 sm:w-3 h-3" />
+                          Live
                         </div>
                       </div>
                     </div>
@@ -556,93 +556,95 @@ export default function AttendanceGenerator() {
                 )}
               </div>
             </div>
-            </>
+          </div>
             ) : (
               /* HISTORY VIEW */
               <div className="space-y-6 animate-in fade-in duration-500">
-                <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 space-y-6">
-                  <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
+                <div className="bg-white dark:bg-slate-900 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 space-y-6">
+                  <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight flex items-center gap-2">
                     <Search className="w-5 h-5 text-blue-600" />
-                    History Filter
+                    Filters
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="relative">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input 
                         type="text" 
-                        placeholder="Search Name..."
+                        placeholder="Search student..."
                         value={searchQuery.name}
                         onChange={(e) => setSearchQuery({...searchQuery, name: e.target.value})}
-                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 pl-12 pr-4 text-sm font-bold transition-all outline-none"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 pl-12 text-sm font-bold transition-all outline-none"
                       />
                     </div>
                     <select 
                       value={searchQuery.department}
                       onChange={(e) => setSearchQuery({...searchQuery, department: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 px-4 text-sm font-bold transition-all outline-none"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none cursor-pointer"
                     >
-                      <option value="ALL">All Departments</option>
+                      <option value="ALL">All Depts</option>
                       <option value="BCA">BCA</option>
                       <option value="BSC">BSC</option>
                       <option value="BTECH">BTECH</option>
                       <option value="MCA">MCA</option>
                       <option value="BBA">BBA</option>
-                      <option value="GENERAL">General</option>
                     </select>
                     <select 
                       value={searchQuery.semester}
                       onChange={(e) => setSearchQuery({...searchQuery, semester: e.target.value})}
-                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3.5 px-4 text-sm font-bold transition-all outline-none"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none cursor-pointer"
                     >
-                      <option value="ALL">All Semesters</option>
-                      {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={String(s)}>Semester {s}</option>)}
+                      <option value="ALL">All Sem</option>
+                      {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={String(s)}>Sem {s}</option>)}
                     </select>
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm">
-                  <div className="p-8 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/30">
-                    <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Aggregated Attendance</h3>
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{getAggregatedHistory().length} Students Found</span>
+                <div className="bg-white dark:bg-slate-900 rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 dark:border-slate-800 overflow-hidden shadow-sm">
+                  <div className="p-6 sm:p-8 border-b border-slate-50 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-slate-50/50 dark:bg-slate-800/30">
+                    <h3 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Stats Aggregation</h3>
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{getAggregatedHistory().length} Unique Students Found</span>
                   </div>
                   
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                  <div className="overflow-x-auto scrollbar-hide">
+                    <table className="w-full text-left border-collapse min-w-[600px]">
                       <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-800/50">
-                          <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
-                          <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Batch</th>
-                          <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Seen</th>
-                          <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Total Presence</th>
+                        <tr className="bg-slate-50/50 dark:bg-slate-800/50">
+                          <th className="px-6 sm:px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Student</th>
+                          <th className="px-6 sm:px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Context</th>
+                          <th className="px-6 sm:px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Activity</th>
+                          <th className="px-6 sm:px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Score</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                        {getAggregatedHistory().map((student) => (
-                          <tr key={student.name + student.count} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                            <td className="px-8 py-6">
-                              <div className="flex items-center gap-4">
-                                <div className="relative">
-                                  <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs uppercase">
-                                    {student.name.substring(0, 1)}
-                                  </div>
-                                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-500 rounded-full border-2 border-white dark:border-slate-900"></div>
+                        {getAggregatedHistory().map((student, idx) => (
+                          <tr key={`${student.name}-${idx}`} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/20 transition-colors">
+                            <td className="px-6 sm:px-8 py-5">
+                              <div className="flex items-center gap-3">
+                                <div className="shrink-0 w-9 h-9 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs">
+                                  {student.name.charAt(0)}
                                 </div>
-                                <span className="font-black text-slate-900 dark:text-white text-sm">{student.name}</span>
+                                <div className="min-w-0">
+                                  <p className="font-black text-slate-900 dark:text-white text-sm truncate">{student.name}</p>
+                                  <p className="text-[9px] font-bold text-slate-400 uppercase">{student.dept} Batch</p>
+                                </div>
                               </div>
                             </td>
-                            <td className="px-8 py-6">
-                              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 tracking-wider uppercase">{student.dept} · SEM {student.sem}</span>
+                            <td className="px-6 sm:px-8 py-5">
+                              <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded text-[10px] font-bold uppercase">Sem {student.sem}</span>
                             </td>
-                            <td className="px-8 py-6">
-                              <span className="text-xs font-bold text-slate-400 uppercase">
-                                {new Date(student.lastTime).toLocaleDateString([], { month: 'short', day: 'numeric' })} at {new Date(student.lastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </span>
+                            <td className="px-6 sm:px-8 py-5">
+                              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                                {new Date(student.lastTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                              </p>
+                              <p className="text-[10px] opacity-50 uppercase tracking-wider">
+                                {new Date(student.lastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                              </p>
                             </td>
-                            <td className="px-8 py-6 text-center">
+                            <td className="px-6 sm:px-8 py-5">
                               <div className="flex items-center justify-center gap-3">
                                 <span className="text-sm font-black text-slate-900 dark:text-white">{student.count}</span>
-                                <div className="h-1.5 w-20 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                  <div className="h-full bg-blue-500 transition-all duration-1000" style={{ width: `${Math.min(100, (student.count / 10) * 100)}%` }}></div>
+                                <div className="hidden sm:block h-1.5 w-16 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, (student.count / 10) * 100)}%` }}></div>
                                 </div>
                               </div>
                             </td>
@@ -653,9 +655,9 @@ export default function AttendanceGenerator() {
                   </div>
 
                   {getAggregatedHistory().length === 0 && (
-                    <div className="p-20 text-center">
-                      <Search className="w-12 h-12 text-slate-100 mx-auto mb-4" />
-                      <p className="text-sm font-bold text-slate-400">No records found for your search</p>
+                    <div className="p-16 text-center">
+                      <Search className="w-12 h-12 text-slate-100 dark:text-slate-800 mx-auto mb-4" />
+                      <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">No matching records found</p>
                     </div>
                   )}
                 </div>
