@@ -58,6 +58,12 @@ service cloud.firestore {
     }
 
     // Attendance
+    // Global Config (Tuition Location etc)
+    match /config/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
     match /attendance/{attendanceId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && 

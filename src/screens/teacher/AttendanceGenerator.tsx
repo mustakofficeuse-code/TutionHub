@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const STATIC_QR_VALUE = "TUITIONHUB_STATIC_QR_CENTER_001";
+const STATIC_QR_VALUE = "TUITIONHUB_WALL_QR_2026_SECURE";
 
 export default function AttendanceGenerator() {
   const navigate = useNavigate();

@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 import { Camera, MapPin, CheckCircle, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const STATIC_QR_VALUE = "TUITIONHUB_STATIC_QR_CENTER_001";
+const STATIC_QR_VALUE = "TUITIONHUB_WALL_QR_2026_SECURE";
 
 export default function AttendanceScanner() {
   const { user, profile } = useAuth();
@@ -87,7 +87,8 @@ export default function AttendanceScanner() {
       const now = new Date();
       const currentTimeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
       
-      const studentDept = String(profile?.courseId || profile?.courseName || '').toUpperCase();
+      const rawDept = String(profile?.courseId || profile?.courseName || '').toUpperCase();
+      const studentDept = (rawDept === 'GENERAL' || rawDept === '' || rawDept === 'OTHER') ? 'BCA' : rawDept;
       const studentSem = String(profile?.semester || '');
 
       let matchingSchedule = null;
@@ -194,7 +195,7 @@ export default function AttendanceScanner() {
             <Camera className="w-8 h-8" />
           </div>
           <h1 className="text-2xl font-bold">Attendance Scanner</h1>
-          <p className="text-blue-100 text-sm mt-2">Scan the QR code displayed by your teacher</p>
+          <p className="text-blue-100 text-sm mt-2">Scan the official QR code attached to the tuition wall</p>
         </div>
 
         <div className="p-8">
