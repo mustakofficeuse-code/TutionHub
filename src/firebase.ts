@@ -8,7 +8,11 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 // Initialize Firestore with settings that might help in a proxied environment
-const firestoreSettings: any = {};
+const firestoreSettings: any = {
+  // Add this to help with internal SDK stability in certain environments
+  useFetchStreams: false
+};
+
 if (typeof window !== 'undefined') {
   // Use long polling if the backend is unreachable via WebSockets
   firestoreSettings.experimentalForceLongPolling = true;
