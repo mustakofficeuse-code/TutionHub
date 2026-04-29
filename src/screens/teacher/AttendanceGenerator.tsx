@@ -181,6 +181,19 @@ export default function AttendanceGenerator() {
     });
   };
 
+  const [customDuration, setCustomDuration] = useState('');
+  const [isCustomMode, setIsCustomMode] = useState(false);
+
+  const calculateEndTime = (startTime: string, minutes: number) => {
+    if (!startTime) return '';
+    const [h, m] = startTime.split(':').map(Number);
+    const start = new Date(2000, 0, 1, h, m);
+    const end = new Date(start.getTime() + minutes * 60000);
+    const eh = String(end.getHours()).padStart(2, '0');
+    const em = String(end.getMinutes()).padStart(2, '0');
+    return `${eh}:${em}`;
+  };
+
   const createSchedule = async () => {
     console.log("[Teacher] createSchedule triggered");
     setSaveStatus({ type: null, message: '' });
@@ -467,40 +480,62 @@ export default function AttendanceGenerator() {
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Session Duration</label>
                     <select 
                       onChange={(e) => {
-                        if (!e.target.value) return;
-                        if (!newSchedule.startTime) {
-                          const now = new Date();
-                          const h = String(now.getHours()).padStart(2, '0');
-                          const m = String(now.getMinutes()).padStart(2, '0');
-                          const start = `${h}:${m}`;
-                          const duration = parseInt(e.target.value);
-                          const end = new Date(now.getTime() + duration * 60000);
-                          const eh = String(end.getHours()).padStart(2, '0');
-                          const em = String(end.getMinutes()).padStart(2, '0');
-                          setNewSchedule({...newSchedule, startTime: start, endTime: `${eh}:${em}`});
-                        } else {
-                          const [h, m] = newSchedule.startTime.split(':').map(Number);
-                          const start = new Date(2000, 0, 1, h, m);
-                          const duration = parseInt(e.target.value);
-                          const end = new Date(start.getTime() + duration * 60000);
-                          const eh = String(end.getHours()).padStart(2, '0');
-                          const em = String(end.getMinutes()).padStart(2, '0');
-                          setNewSchedule({...newSchedule, endTime: `${eh}:${em}`});
+                        const val = e.target.value;
+                        if (val === 'custom') {
+                          setIsCustomMode(true);
+                          return;
                         }
+                        setIsCustomMode(false);
+                        if (!val) return;
+                        
+                        let currentStart = newSchedule.startTime;
+                        if (!currentStart) {
+                          const now = new Date();
+                          currentStart = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                        }
+                        
+                        const duration = parseInt(val);
+                        const end = calculateEndTime(currentStart, duration);
+                        setNewSchedule({...newSchedule, startTime: currentStart, endTime: end});
                       }}
                       className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none cursor-pointer"
                     >
-                      <option value="">Manual / Custom</option>
-                      <option value="5">5 Mins</option>
-                      <option value="10">10 Mins</option>
-                      <option value="15">15 Mins</option>
+                      <option value="">Manual Entry</option>
                       <option value="30">30 Mins</option>
-                      <option value="45">45 Mins</option>
                       <option value="60">1 Hour</option>
+                      <option value="90">1.5 Hours</option>
+                      <option value="120">2 Hours</option>
+                      <option value="custom">Custom Duration...</option>
                     </select>
                   </div>
-                  <div className="flex items-end pb-3 text-[10px] font-bold text-slate-400 italic">
-                    * Auto-sets end time
+                  <div className="flex items-end pb-3">
+                    {isCustomMode ? (
+                      <div className="w-full animate-in zoom-in-95 duration-200">
+                        <input 
+                          type="number"
+                          placeholder="Mins (e.g. 45)"
+                          value={customDuration}
+                          onChange={(e) => {
+                            const mins = e.target.value;
+                            setCustomDuration(mins);
+                            if (mins && !isNaN(parseInt(mins))) {
+                              let currentStart = newSchedule.startTime;
+                              if (!currentStart) {
+                                const now = new Date();
+                                currentStart = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                              }
+                              const end = calculateEndTime(currentStart, parseInt(mins));
+                              setNewSchedule({...newSchedule, startTime: currentStart, endTime: end});
+                            }
+                          }}
+                          className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none"
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-[10px] font-bold text-slate-400 italic">
+                        * Auto-sets end time
+                      </div>
+                    )}
                   </div>
                 </div>
 

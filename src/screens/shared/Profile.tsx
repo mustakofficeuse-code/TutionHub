@@ -321,13 +321,19 @@ export default function Profile() {
                         <BookOpen className="w-4 h-4 text-slate-400" /> Semester
                       </label>
                       <select 
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                         value={semester}
                         onChange={(e) => setSemester(e.target.value)}
+                        disabled={profile?.role === 'student' && !!profile?.semester}
                       >
                         <option value="">Select Semester</option>
                         {[1,2,3,4,5,6].map(s => <option key={s} value={s}>{s}</option>)}
                       </select>
+                      {profile?.role === 'student' && !!profile?.semester && (
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1 mt-1">
+                          <Lock className="w-3 h-3" /> Locked. Contact teacher to change.
+                        </p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -336,12 +342,19 @@ export default function Profile() {
                       </label>
                       <input 
                         type="text" 
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                         placeholder="e.g. BCA, MCA, B.Tech"
                         value={courseId}
                         onChange={(e) => setCourseId(e.target.value.toLowerCase())}
+                        disabled={profile?.role === 'student' && (!!profile?.courseId || !!profile?.department || !!profile?.courseName)}
                       />
-                      <p className="text-[10px] text-slate-400 dark:text-slate-500">Update your Department (e.g. "bca") if it says "legacy"</p>
+                      {profile?.role === 'student' && (!!profile?.courseId || !!profile?.department || !!profile?.courseName) ? (
+                        <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1 mt-1">
+                          <Lock className="w-3 h-3" /> Locked. Contact teacher to change.
+                        </p>
+                      ) : (
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500">Update your Department (e.g. "bca") if it says "legacy"</p>
+                      )}
                     </div>
                   </>
                 )}

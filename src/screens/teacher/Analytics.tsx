@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, getDocs, where } from 'firebase/firestore';
+import { collection, query, getDocs, where, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { 
   TrendingUp, 
@@ -33,7 +33,7 @@ import {
 export default function TeacherAnalytics() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [courses, setCourses] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
   const [courseStats, setCourseStats] = useState<any[]>([]);
   const [overallStats, setOverallStats] = useState({
     totalStudents: 0,
@@ -43,16 +43,17 @@ export default function TeacherAnalytics() {
   });
 
   useEffect(() => {
-    fetchData();
+    const unsubDepts = onSnapshot(collection(db, 'departments'), (snap) => {
+      const deptList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setDepartments(deptList);
+      fetchData(deptList);
+    });
+
+    return () => unsubDepts();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (deptList: any[]) => {
     try {
-      // 1. Fetch Courses
-      const courseSnap = await getDocs(collection(db, 'courses'));
-      const courseList = courseSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setCourses(courseList);
-
       // 2. Fetch Students
       const studentSnap = await getDocs(query(collection(db, 'users'), where('role', '==', 'student')));
       const students = studentSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -69,25 +70,33 @@ export default function TeacherAnalytics() {
       const feeSnap = await getDocs(collection(db, 'payments'));
       const fees = feeSnap.docs.map(doc => doc.data());
 
-      // Calculate Course-wise Stats
-      const cStats = courseList.map((course: any) => {
-        const courseStudents = students.filter((s: any) => s.courseId === course.id);
-        const courseAtt = attendance.filter((a: any) => a.courseId === course.id);
-        const courseQuizzes = quizResults.filter((r: any) => courseStudents.some((s: any) => s.id === r.studentId));
+      // Calculate Department-wise Stats
+      const cStats = deptList.map((dept: any) => {
+        const deptStudents = students.filter((s: any) => {
+          const sDept = String(s.courseId || s.courseName || s.department || '').toUpperCase();
+          return sDept === dept.name.toUpperCase();
+        });
         
-        const attPercent = courseAtt.length > 0 
-          ? Math.round((courseAtt.filter(a => a.status === 'present').length / courseAtt.length) * 100) 
+        const deptAtt = attendance.filter((a: any) => {
+           const aDept = String(a.courseId || a.courseName || a.department || '').toUpperCase();
+           return aDept === dept.name.toUpperCase();
+        });
+        
+        const deptQuizzes = quizResults.filter((r: any) => deptStudents.some((s: any) => s.id === r.studentId));
+        
+        const attPercent = deptAtt.length > 0 
+          ? Math.round((deptAtt.filter(a => a.status === 'present').length / deptAtt.length) * 100) 
           : 0;
           
-        const quizAvg = courseQuizzes.length > 0
-          ? Math.round((courseQuizzes.reduce((acc, curr) => acc + (curr.score / curr.totalQuestions), 0) / courseQuizzes.length) * 100)
+        const quizAvg = deptQuizzes.length > 0
+          ? Math.round((deptQuizzes.reduce((acc, curr) => acc + (curr.score / curr.totalQuestions), 0) / deptQuizzes.length) * 100)
           : 0;
 
         return {
-          name: course.name,
+          name: dept.name,
           attendance: attPercent,
           quizScore: quizAvg,
-          students: courseStudents.length
+          students: deptStudents.length
         };
       });
       setCourseStats(cStats);

@@ -76,6 +76,7 @@ export default function TeacherDashboard() {
   const [isPermanentDeleting, setIsPermanentDeleting] = useState(false);
   
   const [expandedDept, setExpandedDept] = useState<string | null>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   // Real-time stats
   const [totalStudents, setTotalStudents] = useState(0);
@@ -161,15 +162,21 @@ export default function TeacherDashboard() {
   };
 
   const handleDeleteDepartment = async (id: string, isDefault?: boolean) => {
-    const msg = isDefault 
-      ? `Are you sure you want to delete the default department ${id}?` 
-      : `Are you sure you want to delete the department ${id}?`;
+    console.log(`[Admin] Attempting to delete department: ${id}, isDefault: ${isDefault}`);
     
-    if (!confirm(msg + " This may leave students without a category.")) return;
+    if (deleteConfirmId !== id) {
+      setDeleteConfirmId(id);
+      setTimeout(() => setDeleteConfirmId(null), 3000);
+      return;
+    }
+
+    setDeleteConfirmId(null);
     try {
       await deleteDoc(doc(db, 'departments', id));
+      console.log(`[Admin] Department ${id} deleted successfully`);
     } catch (err) {
       console.error("Error deleting department:", err);
+      alert("Failed to delete department. Check console for details.");
     }
   };
 
@@ -580,6 +587,12 @@ export default function TeacherDashboard() {
           >
             <QrCode className="w-5 h-5" /> Attendance
           </button>
+          <button 
+            onClick={() => navigate('/fees/manage')}
+            className="hidden sm:flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-4"
+          >
+            <CreditCard className="w-5 h-5" /> Fees
+          </button>
 
           {(profile?.role === 'admin' || profile?.role === 'teacher') && (
             <button 
@@ -698,7 +711,8 @@ export default function TeacherDashboard() {
               {overviewStats.map((stat, i) => (
                 <div 
                   key={i} 
-                  className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4"
+                  onClick={stat.label === 'Pending Fees' ? () => navigate('/fees/manage') : undefined}
+                  className={`bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4 ${stat.label === 'Pending Fees' ? 'cursor-pointer hover:border-blue-500 transition-all' : ''}`}
                 >
                   <div className={`${stat.bg} dark:bg-slate-800 p-3 rounded-xl`}>
                     <stat.icon className={`${stat.color} w-6 h-6`} />
@@ -734,26 +748,14 @@ export default function TeacherDashboard() {
                 </div>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  {(() => {
-                    const discoveredDepts = Array.from(new Set(allStudents.map(s => {
-                      const d = String(s.courseId || s.courseName || s.department || '').toUpperCase();
-                      return (d === 'GENERAL' || d === '' || d === 'OTHER') ? 'BCA' : d;
-                    })));
-                    const managedDeptNames = departments.map(d => d.name.toUpperCase());
-                    const combinedDepts = Array.from(new Set([...managedDeptNames, ...discoveredDepts])).sort();
-
-                    if (combinedDepts.length === 0) {
-                      return (
-                        <div className="col-span-full py-8 text-center bg-slate-50 dark:bg-slate-800/30 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
-                          <p className="text-sm font-bold text-slate-400">No departments found. Click + to create one.</p>
-                        </div>
-                      );
-                    }
-
-                    return combinedDepts.map((dept) => {
+                  {departments.length === 0 ? (
+                    <div className="col-span-full py-8 text-center bg-slate-50 dark:bg-slate-800/30 rounded-3xl border-2 border-dashed border-slate-200 dark:border-slate-800">
+                      <p className="text-sm font-bold text-slate-400">No departments found. Click + to create one.</p>
+                    </div>
+                  ) : (
+                    departments.sort((a, b) => a.name.localeCompare(b.name)).map((deptObj) => {
+                      const dept = deptObj.name.toUpperCase();
                       const isActive = expandedDept === dept;
-                      const deptObj = departments.find(d => d.name.toUpperCase() === dept);
-                      const isManaged = !!deptObj;
                       const deptCount = allStudents.filter(s => {
                         const d = String(s.courseId || s.courseName || s.department || '').toUpperCase();
                         const normalized = (d === 'GENERAL' || d === '' || d === 'OTHER') ? 'BCA' : d;
@@ -761,10 +763,18 @@ export default function TeacherDashboard() {
                       }).length;
 
                       return (
-                        <button
+                        <div
                           key={dept}
+                          role="button"
+                          tabIndex={0}
                           onClick={() => setExpandedDept(isActive ? null : dept)}
-                          className={`p-4 rounded-2xl border transition-all text-left flex flex-col justify-between h-32 relative group ${
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setExpandedDept(isActive ? null : dept);
+                            }
+                          }}
+                          className={`p-4 rounded-2xl border transition-all text-left flex flex-col justify-between h-32 relative group cursor-pointer ${
                             isActive 
                               ? 'bg-blue-600 border-blue-600 text-white shadow-xl shadow-blue-100 dark:shadow-none' 
                               : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-500'
@@ -775,13 +785,25 @@ export default function TeacherDashboard() {
                               <BookOpen className={`w-4 h-4 ${isActive ? 'text-white' : 'text-blue-600'}`} />
                             </div>
                             <div className="flex items-center gap-1">
-                              {isManaged && !isActive && (
-                                <div 
-                                  onClick={(e) => { e.stopPropagation(); handleDeleteDepartment(dept, deptObj?.isDefault); }}
-                                  className="p-1 px-1.5 hover:text-red-500 transition-colors"
+                              {deptObj && !isActive && (
+                                <button 
+                                  type="button"
+                                  onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    handleDeleteDepartment(deptObj.id, deptObj?.isDefault); 
+                                  }}
+                                  className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                                    deleteConfirmId === deptObj.id 
+                                      ? 'bg-red-500 text-white px-3 ring-4 ring-red-100 dark:ring-red-900/30 shadow-lg' 
+                                      : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                                  } cursor-pointer`}
+                                  title={deleteConfirmId === deptObj.id ? "Click again to confirm" : "Delete Department"}
                                 >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </div>
+                                  {deleteConfirmId === deptObj.id && (
+                                    <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Confirm?</span>
+                                  )}
+                                  <Trash2 className={`${deleteConfirmId === deptObj.id ? 'w-3 h-3' : 'w-3.5 h-3.5'}`} />
+                                </button>
                               )}
                               {isActive ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
                             </div>
@@ -791,10 +813,10 @@ export default function TeacherDashboard() {
                             <p className="text-lg font-bold truncate">{dept}</p>
                             <p className={`text-[10px] ${isActive ? 'text-white/80' : 'text-slate-500'}`}>{deptCount} Students</p>
                           </div>
-                        </button>
+                        </div>
                       );
-                    });
-                  })()}
+                    })
+                  )}
                 </div>
 
                 <AnimatePresence mode="wait">

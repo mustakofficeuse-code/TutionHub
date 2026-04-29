@@ -28,7 +28,7 @@ const ROMAN_UNITS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'
 export default function MaterialManager() {
   const navigate = useNavigate();
   const [materials, setMaterials] = useState<any[]>([]);
-  const [courses, setCourses] = useState<any[]>([]);
+  const [departments, setDepartments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -56,9 +56,9 @@ export default function MaterialManager() {
   const [uploadStatus, setUploadStatus] = useState('');
 
   useEffect(() => {
-    // Real-time listener
+    // Real-time materials listener
     const q = query(collection(db, 'materials'), orderBy('createdAt', 'desc'));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsubscribeMaterials = onSnapshot(q, (snapshot) => {
       setMaterials(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     }, (error) => {
@@ -66,9 +66,14 @@ export default function MaterialManager() {
       setLoading(false);
     });
 
-    fetchCourses();
+    // Real-time departments listener
+    const unsubscribeDepts = onSnapshot(collection(db, 'departments'), (snap) => {
+      setDepartments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
     return () => {
-      unsubscribe();
+      unsubscribeMaterials();
+      unsubscribeDepts();
       if (cameraStream) stopCamera();
     };
   }, []);
@@ -128,15 +133,6 @@ export default function MaterialManager() {
 
   const removeCapture = (index: number) => {
     setCaptures(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const fetchCourses = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, 'courses'));
-      setCourses(snapshotDocs(querySnapshot.docs));
-    } catch (error) {
-      console.error("Error fetching courses:", error);
-    }
   };
 
   function snapshotDocs(docs: any[]) {
@@ -416,7 +412,7 @@ export default function MaterialManager() {
                   <div>
                     <h3 className="font-bold text-slate-900 dark:text-white text-lg line-clamp-1">{m.title}</h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-1">
-                      {m.subject} • {courses.find(c => c.id === m.courseId)?.name || (m.courseId === 'all' ? 'All Courses' : m.courseId?.toUpperCase())}
+                      {m.subject} • {departments.find(d => d.id === m.courseId || d.name === m.courseId)?.name || (m.courseId === 'all' ? 'All Courses' : m.courseId?.toUpperCase())}
                     </p>
                     {m.topic && <p className="text-[10px] text-slate-400 mt-1 line-clamp-1">Topic: {m.topic}</p>}
                   </div>
@@ -530,17 +526,18 @@ export default function MaterialManager() {
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Target Course</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Target Department</label>
                   <select
                     required
                     className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white"
                     value={courseId}
                     onChange={(e) => setCourseId(e.target.value)}
                   >
-                    <option value="">Select Course</option>
-                    <option value="all">All Courses</option>
-                    <option value="bca">BCA</option>
-                    <option value="bsc">BSC</option>
+                    <option value="">Select Department</option>
+                    <option value="all">All Departments</option>
+                    {departments.map(d => (
+                      <option key={d.id} value={d.name}>{d.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div>

@@ -51,15 +51,7 @@ export default function FeeManagement() {
 
     const unsubDepts = onSnapshot(collection(db, 'departments'), (snap) => {
       const managedDepts = snap.docs.map(doc => doc.data().name);
-      
-      // Discovery from students for reliability
-      const discoveredDepts = students.map(s => {
-        const d = cleanStr(s.courseId) || cleanStr(s.courseName) || cleanStr(s.department) || '';
-        return d.toUpperCase() || 'BCA';
-      });
-      
-      const combined = Array.from(new Set([...managedDepts, ...discoveredDepts])).filter(d => !!d).sort();
-      setDepartments(combined);
+      setDepartments(managedDepts.sort());
     });
 
     return () => unsubDepts();
