@@ -31,6 +31,7 @@ import {
   Trash2,
   X,
   UserX,
+  UserCheck,
   ChevronDown,
   ChevronUp,
   Phone,
@@ -946,6 +947,86 @@ export default function TeacherDashboard() {
               </div>
             </div>
 
+            {/* Block List Section */}
+            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center">
+                    <UserX className="w-6 h-6 text-red-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Block List</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Manage suspended student accounts</p>
+                  </div>
+                </div>
+                {blacklistDocs.some(s => s.permanentlyDeleted) && (
+                  <button 
+                    onClick={clearDeletedRecords}
+                    className="text-xs text-red-600 hover:underline font-bold px-3 py-1.5 bg-red-50 dark:bg-red-900/20 rounded-lg"
+                  >
+                    Clear Deleted History
+                  </button>
+                )}
+              </div>
+              
+              {blacklistDocs.length === 0 ? (
+                <div className="text-center py-8 text-slate-500 dark:text-slate-400 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl">
+                  No blocked students.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {blacklistDocs.map((student: any) => (
+                    <div key={student.id} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 rounded-2xl border transition-all bg-red-50/30 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-100 dark:bg-red-900/20">
+                          <UserX className="w-5 h-5 text-red-500" />
+                        </div>
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name || 'Unknown Student'}</p>
+                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 uppercase tracking-widest">
+                              Login ID: {student.studentId || student.id?.substring(0, 8)}
+                            </span>
+                          </div>
+                          <div className="flex flex-col gap-0.5 mt-1">
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Login Email: {student.email}</p>
+                            {student.realEmail && (
+                              <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1">
+                                <Mail className="w-3 h-3" /> Real Email: {student.realEmail}
+                              </p>
+                            )}
+                            {student.phoneNumber && (
+                              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                                <Phone className="w-3 h-3" /> Phone: {student.phoneNumber}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 w-full md:w-auto justify-end">
+                        {!student.permanentlyDeleted && (
+                          <>
+                            <button 
+                              onClick={() => setStudentToBlock(student)}
+                              className="px-4 py-2 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-bold shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center gap-2"
+                            >
+                              <UserCheck className="w-4 h-4" /> Unblock
+                            </button>
+                            <button 
+                              onClick={() => setStudentToPermanentDelete(student)}
+                              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-2"
+                            >
+                              <Trash2 className="w-4 h-4" /> Delete Permanently
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            
             {/* Quick Actions */}
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Quick Actions</h2>
