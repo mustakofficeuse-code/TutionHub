@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { doc, setDoc, collection, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, collection, onSnapshot, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import firebaseConfig from '../../../firebase-applet-config.json';
 
@@ -46,6 +46,20 @@ export default function AddStudent() {
 
     let secondaryApp = null;
     try {
+      // 1. Check if name, phone, or email is blacklisted
+      const blacklistSnap = await getDocs(collection(db, 'blacklist'));
+      const isBlacklisted = blacklistSnap.docs.some(doc => {
+        const data = doc.data();
+        const nameMatch = (data.name || '').toLowerCase() === name.toLowerCase();
+        const phoneMatch = phoneNumber && data.phoneNumber === phoneNumber;
+        const emailMatch = realEmail && (data.realEmail || '').toLowerCase() === realEmail.toLowerCase();
+        return nameMatch || phoneMatch || emailMatch;
+      });
+
+      if (isBlacklisted) {
+        throw new Error('This student (name, phone, or email) is blacklisted and cannot be enrolled.');
+      }
+
       const uniqueId = 'TH' + Math.floor(10000 + Math.random() * 90000);
       const generatedEmail = `${uniqueId.toLowerCase()}@student.tutionhub.com`;
 

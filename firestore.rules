@@ -20,6 +20,15 @@ service cloud.firestore {
       );
     }
 
+    function isBlacklisted() {
+      let data = request.resource.data;
+      let hasPhone = 'phoneNumber' in data && data.phoneNumber != null && data.phoneNumber != "";
+      let hasEmail = 'realEmail' in data && data.realEmail != null && data.realEmail != "";
+      
+      return (hasPhone && exists(/databases/$(database)/documents/blacklist_phones/$(data.phoneNumber))) ||
+             (hasEmail && exists(/databases/$(database)/documents/blacklist_emails/$(data.realEmail.lower())));
+    }
+
     function hasOnlyAllowedFields(fields) {
       return request.resource.data.keys().hasOnly(fields);
     }
@@ -32,7 +41,8 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && (request.auth.uid == userId || isAdmin()) && 
-                      hasOnlyAllowedFields(['uid', 'studentId', 'name', 'email', 'role', 'createdAt', 'profileComplete', 'phoneNumber', 'rollNumber', 'semester', 'courseId', 'courseName']) &&
+                      !isBlacklisted() &&
+                      hasOnlyAllowedFields(['uid', 'studentId', 'name', 'email', 'role', 'createdAt', 'profileComplete', 'phoneNumber', 'rollNumber', 'semester', 'courseId', 'courseName', 'realEmail']) &&
                       isValidString('name', 100) &&
                       isValidString('email', 100) &&
                       request.resource.data.role in ['student', 'teacher'];
@@ -42,6 +52,16 @@ service cloud.firestore {
     // Blacklist
     match /blacklist/{docId} {
       allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /blacklist_phones/{docId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /blacklist_emails/{docId} {
+      allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
 

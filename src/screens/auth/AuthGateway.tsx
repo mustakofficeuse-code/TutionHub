@@ -212,7 +212,9 @@ export default function AuthGateway() {
           const sId = (data.studentId || '').toLowerCase();
           const sName = (data.name || '').toLowerCase();
           const sEmail = (data.email || '').toLowerCase();
-          return sId === cleanId || sName === cleanId || sEmail === cleanId;
+          const sRealEmail = (data.realEmail || '').toLowerCase();
+          const sPhone = (data.phoneNumber || '').toLowerCase();
+          return sId === cleanId || sName === cleanId || sEmail === cleanId || sRealEmail === cleanId || sPhone === cleanId;
         });
         
         if (matchedUser && matchedUser.data().email && !emailsToTry.includes(matchedUser.data().email)) {
@@ -324,15 +326,20 @@ export default function AuthGateway() {
         throw new Error('Please enter a valid 10-digit phone number');
       }
 
-      if (!studentRealEmail.includes('@') || !studentRealEmail.includes('.')) {
-        throw new Error('Please enter a valid Gmail/email address');
+      // Stronger email regex
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(studentRealEmail)) {
+        throw new Error('Please enter a valid email address (e.g. name@gmail.com)');
       }
 
-      // 1. Check if name is blacklisted
+      // 1. Check if name, phone, or email is blacklisted
       const blacklistSnap = await getDocs(collection(db, 'blacklist'));
       const isBlacklisted = blacklistSnap.docs.some(doc => {
         const data = doc.data();
-        return (data.name || '').toLowerCase() === studentName.toLowerCase();
+        const nameMatch = (data.name || '').toLowerCase() === studentName.toLowerCase();
+        const phoneMatch = studentPhoneNumber && data.phoneNumber === studentPhoneNumber;
+        const emailMatch = studentRealEmail && (data.realEmail || '').toLowerCase() === studentRealEmail.toLowerCase();
+        return nameMatch || phoneMatch || emailMatch;
       });
 
       if (isBlacklisted) {

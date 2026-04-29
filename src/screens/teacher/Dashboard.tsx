@@ -323,17 +323,26 @@ export default function TeacherDashboard() {
     const isCurrentlyBlocked = blacklist.includes(emailToUse);
 
     try {
+      const batch = writeBatch(db);
       if (isCurrentlyBlocked) {
         // Unblock
-        await deleteDoc(doc(db, 'blacklist', emailToUse));
+        batch.delete(doc(db, 'blacklist', emailToUse));
+        if (student.phoneNumber) batch.delete(doc(db, 'blacklist_phones', student.phoneNumber));
+        if (student.realEmail) batch.delete(doc(db, 'blacklist_emails', student.realEmail.toLowerCase()));
       } else {
         // Block
-        await setDoc(doc(db, 'blacklist', emailToUse), {
+        const blockData = {
           email: emailToUse,
+          phoneNumber: student.phoneNumber || null,
+          realEmail: student.realEmail || null,
           name: student.name || 'Unknown Student',
           blockedAt: new Date().toISOString()
-        });
+        };
+        batch.set(doc(db, 'blacklist', emailToUse), blockData);
+        if (student.phoneNumber) batch.set(doc(db, 'blacklist_phones', student.phoneNumber), { blocked: true, studentId: student.id });
+        if (student.realEmail) batch.set(doc(db, 'blacklist_emails', student.realEmail.toLowerCase()), { blocked: true, studentId: student.id });
       }
+      await batch.commit();
       setStudentToBlock(null);
     } catch (error) {
       console.error("Error toggling block status:", error);
@@ -358,18 +367,26 @@ export default function TeacherDashboard() {
     setIsPermanentDeleting(true);
 
     try {
+      const batch = writeBatch(db);
+      
       const q = query(collection(db, 'users'), where('email', '==', emailToUse));
       const snap = await getDocs(q);
-      const deletePromises = snap.docs.map(d => deleteDoc(doc(db, 'users', d.id)));
-      await Promise.all(deletePromises);
+      snap.docs.forEach(d => batch.delete(doc(db, 'users', d.id)));
 
-      await setDoc(doc(db, 'blacklist', emailToUse), {
+      const blockData = {
         email: emailToUse,
+        phoneNumber: student.phoneNumber || null,
+        realEmail: student.realEmail || null,
         name: student.name || 'Unknown Student',
         permanentlyDeleted: true,
         blockedAt: new Date().toISOString()
-      }, { merge: true });
+      };
+      
+      batch.set(doc(db, 'blacklist', emailToUse), blockData, { merge: true });
+      if (student.phoneNumber) batch.set(doc(db, 'blacklist_phones', student.phoneNumber), { blocked: true, studentId: student.id });
+      if (student.realEmail) batch.set(doc(db, 'blacklist_emails', student.realEmail.toLowerCase()), { blocked: true, studentId: student.id });
 
+      await batch.commit();
       setStudentToPermanentDelete(null);
     } catch (error) {
       console.error("Error permanently deleting student:", error);
