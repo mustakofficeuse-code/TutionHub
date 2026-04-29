@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, getDocs, doc, updateDoc, deleteDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { collection, query, getDocs, doc, updateDoc, deleteDoc, setDoc, writeBatch, where } from 'firebase/firestore';
+import { db, auth } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { 
@@ -17,6 +17,7 @@ import {
   UserCheck,
   UserX,
   UserPlus,
+  Phone,
   Moon,
   Sun,
   LayoutDashboard
@@ -28,6 +29,7 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
   const [blacklist, setBlacklist] = useState<string[]>([]);
+  const [blacklistDocs, setBlacklistDocs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [userToDelete, setUserToDelete] = useState<any | null>(null);
@@ -44,7 +46,9 @@ export default function AdminDashboard() {
     try {
       const q = query(collection(db, 'blacklist'));
       const querySnapshot = await getDocs(q);
-      setBlacklist(querySnapshot.docs.map(doc => doc.id));
+      const docs = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setBlacklistDocs(docs);
+      setBlacklist(docs.map(d => d.id));
     } catch (error) {
       console.error("Error fetching blacklist:", error);
     }
@@ -76,8 +80,21 @@ export default function AdminDashboard() {
     if (!userToDelete) return;
     setIsDeleting(true);
     try {
-      await deleteDoc(doc(db, 'users', userToDelete.id));
+      const batch = writeBatch(db);
+      
+      // Delete from users (multiple possible docs if indexing is weird, but usually 1)
+      const q = query(collection(db, 'users'), where('email', '==', userToDelete.email));
+      const snap = await getDocs(q);
+      snap.docs.forEach(d => batch.delete(doc(db, 'users', d.id)));
+      
+      // Also delete from blacklist if it's a block list permanent delete
+      batch.delete(doc(db, 'blacklist', userToDelete.email));
+      if (userToDelete.phoneNumber) batch.delete(doc(db, 'blacklist_phones', userToDelete.phoneNumber));
+      if (userToDelete.realEmail) batch.delete(doc(db, 'blacklist_emails', userToDelete.realEmail.toLowerCase()));
+      
+      await batch.commit();
       fetchUsers();
+      fetchBlacklist();
       setUserToDelete(null);
     } catch (error) {
       console.error("Error deleting user:", error);
@@ -107,22 +124,35 @@ export default function AdminDashboard() {
     }
   };
 
-  const toggleBlock = async (email: string, currentlyBlocked: boolean) => {
+  const toggleBlock = async (user: any, currentlyBlocked: boolean) => {
+    const email = user.email;
     if (!email) {
-      alert("Student email is missing.");
+      alert("User email is missing.");
       return;
     }
     try {
+      const batch = writeBatch(db);
       const blacklistRef = doc(db, 'blacklist', email);
+      
       if (currentlyBlocked) {
-        await deleteDoc(blacklistRef);
+        batch.delete(blacklistRef);
+        if (user.phoneNumber) batch.delete(doc(db, 'blacklist_phones', user.phoneNumber));
+        if (user.realEmail) batch.delete(doc(db, 'blacklist_emails', user.realEmail.toLowerCase()));
       } else {
-        await setDoc(blacklistRef, {
+        const blockData = {
+          email: email,
+          phoneNumber: user.phoneNumber || null,
+          realEmail: user.realEmail || null,
+          name: user.name || 'Unknown User',
           blockedAt: new Date().toISOString(),
-          reason: 'Blocked by admin',
-          blockedUserEmail: email
-        });
+          reason: 'Blocked by admin'
+        };
+        batch.set(blacklistRef, blockData);
+        if (user.phoneNumber) batch.set(doc(db, 'blacklist_phones', user.phoneNumber), { blocked: true, userId: user.id });
+        if (user.realEmail) batch.set(doc(db, 'blacklist_emails', user.realEmail.toLowerCase()), { blocked: true, userId: user.id });
       }
+      
+      await batch.commit();
       await fetchBlacklist();
     } catch (error: any) {
       console.error("Error toggling block status:", error);
@@ -241,8 +271,8 @@ export default function AdminDashboard() {
                 <tr className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
                   <th className="px-6 py-4">User</th>
                   <th className="px-6 py-4">Role</th>
-                  <th className="px-6 py-4">Joined</th>
-                  <th className="px-6 py-4 text-right">Actions</th>
+                  <th className="px-6 py-4">Call</th>
+                  <th className="px-6 py-4 text-right">Joined</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
@@ -288,36 +318,21 @@ export default function AdminDashboard() {
                           {user.role}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                      <td className="px-6 py-4">
+                        {user.phoneNumber ? (
+                          <a 
+                            href={`tel:${user.phoneNumber}`}
+                            className="flex items-center gap-2 text-indigo-600 dark:text-indigo-400 hover:underline font-bold text-sm"
+                          >
+                            <Phone className="w-4 h-4" />
+                            {user.phoneNumber}
+                          </a>
+                        ) : (
+                          <span className="text-slate-400 text-xs italic">No Phone</span>
+                        )}
                       </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex justify-end gap-2 items-center">
-                          <select 
-                            className="text-xs bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1 outline-none text-slate-600 dark:text-slate-400"
-                            value={user.role}
-                            onChange={(e) => updateUserRole(user.id, e.target.value)}
-                          >
-                            <option value="student">Student</option>
-                            <option value="teacher">Teacher</option>
-                            <option value="admin">Admin</option>
-                          </select>
-                          {user.role === 'student' && !blacklist.includes(user.email) && (
-                            <button 
-                              onClick={() => toggleBlock(user.email, false)}
-                              className="p-2 transition-colors rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
-                              title="Block Student"
-                            >
-                              <UserX className="w-4 h-4" />
-                            </button>
-                          )}
-                          <button 
-                            onClick={() => setUserToDelete(user)}
-                            className="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                      <td className="px-6 py-4 text-right text-sm text-slate-500 dark:text-slate-400">
+                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
                     </tr>
                   ))
@@ -329,30 +344,33 @@ export default function AdminDashboard() {
 
         {/* Blocks List Table */}
         <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
-          <div className="p-6 border-b border-slate-50 dark:border-slate-800">
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <UserX className="w-5 h-5 text-red-500" /> Blocks List
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Students suspended by the teacher.</p>
+          <div className="p-6 border-b border-slate-50 dark:border-slate-800 flex justify-between items-center">
+            <div>
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <UserX className="w-5 h-5 text-red-500" /> Blocks List
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Users suspended from accessing TuitionHub.</p>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-red-50/50 dark:bg-red-900/10 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider">
-                  <th className="px-6 py-4">Student</th>
+                  <th className="px-6 py-4">User</th>
+                  <th className="px-6 py-4">Current Role</th>
                   <th className="px-6 py-4">Status</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                {blockedUsers.length === 0 ? (
+                {blacklistDocs.length === 0 ? (
                   <tr>
-                    <td colSpan={3} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
-                      No blocked students.
+                    <td colSpan={4} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                      No blocked users.
                     </td>
                   </tr>
                 ) : (
-                  blockedUsers.map((user) => (
+                  blacklistDocs.map((user) => (
                     <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
@@ -362,10 +380,15 @@ export default function AdminDashboard() {
                           <div>
                             <p className="font-bold text-slate-900 dark:text-white">{user.name}</p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                              ID: {user.studentId || user.email?.split('@')[0]?.toUpperCase()}
+                              {user.email}
                             </p>
                           </div>
                         </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+                          {user.role || 'Student'}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         <span className="px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
@@ -373,12 +396,25 @@ export default function AdminDashboard() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <button 
-                          onClick={() => toggleBlock(user.email, true)}
-                          className="px-4 py-2 bg-orange-50 hover:bg-orange-100 dark:bg-orange-900/20 dark:hover:bg-orange-900/40 text-orange-600 dark:text-orange-400 rounded-xl text-sm font-bold transition-all"
-                        >
-                          Unblock
-                        </button>
+                        <div className="flex justify-end gap-2">
+                          <button 
+                            onClick={async () => {
+                              if (window.confirm(`Are you sure you want to unblock ${user.name || 'this user'}?`)) {
+                                await toggleBlock(user, true);
+                              }
+                            }}
+                            className="px-4 py-2 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:hover:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-bold transition-all"
+                          >
+                            Unblock
+                          </button>
+                          <button 
+                            onClick={() => setUserToDelete(user)}
+                            className="px-4 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 text-red-600 dark:text-red-400 rounded-xl text-sm font-bold transition-all"
+                            title="Delete Permanently"
+                          >
+                            Delete Permanently
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

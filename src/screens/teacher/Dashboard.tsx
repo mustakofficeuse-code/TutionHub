@@ -369,22 +369,15 @@ export default function TeacherDashboard() {
     try {
       const batch = writeBatch(db);
       
+      // Delete from users
       const q = query(collection(db, 'users'), where('email', '==', emailToUse));
       const snap = await getDocs(q);
       snap.docs.forEach(d => batch.delete(doc(db, 'users', d.id)));
 
-      const blockData = {
-        email: emailToUse,
-        phoneNumber: student.phoneNumber || null,
-        realEmail: student.realEmail || null,
-        name: student.name || 'Unknown Student',
-        permanentlyDeleted: true,
-        blockedAt: new Date().toISOString()
-      };
-      
-      batch.set(doc(db, 'blacklist', emailToUse), blockData, { merge: true });
-      if (student.phoneNumber) batch.set(doc(db, 'blacklist_phones', student.phoneNumber), { blocked: true, studentId: student.id });
-      if (student.realEmail) batch.set(doc(db, 'blacklist_emails', student.realEmail.toLowerCase()), { blocked: true, studentId: student.id });
+      // Delete from blacklist system entirely
+      batch.delete(doc(db, 'blacklist', emailToUse));
+      if (student.phoneNumber) batch.delete(doc(db, 'blacklist_phones', student.phoneNumber));
+      if (student.realEmail) batch.delete(doc(db, 'blacklist_emails', student.realEmail.toLowerCase()));
 
       await batch.commit();
       setStudentToPermanentDelete(null);
@@ -423,9 +416,6 @@ export default function TeacherDashboard() {
 
     try {
       await updateDoc(doc(db, 'users', editingStudent.id), {
-        name: editName,
-        phoneNumber: editPhoneNumber,
-        realEmail: editRealEmail,
         semester: editSemester,
         courseName: editDepartment,
         courseId: editDepartment.toLowerCase()
@@ -499,7 +489,7 @@ export default function TeacherDashboard() {
                       <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Student Profile</th>
                       <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800 hidden md:table-cell">Reg Details</th>
                       <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800">Account Status</th>
-                      <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800 text-right">Management</th>
+                      <th className="px-8 py-4 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-b border-slate-100 dark:border-slate-800 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-50 dark:divide-slate-800/50">
@@ -559,13 +549,15 @@ export default function TeacherDashboard() {
                             >
                               <Edit className="w-4.5 h-4.5" />
                             </button>
-                            <button 
-                              onClick={() => setStudentToBlock(student)}
-                              className={`p-3 rounded-xl transition-all shadow-sm border border-transparent ${isBlocked ? 'text-red-500 bg-red-50 dark:bg-red-900/20 hover:text-red-700 border-red-100 dark:border-red-900/30' : 'text-slate-400 hover:text-red-600 hover:bg-white dark:hover:bg-slate-800 hover:border-slate-100 dark:hover:border-slate-700'}`}
-                              title={isBlocked ? "Reactivate Access" : "Suspend Access"}
-                            >
-                              <UserX className="w-4.5 h-4.5" />
-                            </button>
+                            {!isBlocked && (
+                              <button 
+                                onClick={() => setStudentToBlock(student)}
+                                className="p-3 text-slate-400 hover:text-red-600 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100 dark:hover:border-slate-700"
+                                title="Suspend Access"
+                              >
+                                <UserX className="w-4.5 h-4.5" />
+                              </button>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -884,91 +876,6 @@ export default function TeacherDashboard() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-                
-                {/* Blocks List */}
-                <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6 mt-8">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center">
-                        <UserX className="w-6 h-6 text-red-600" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">Blocks List</h3>
-                        <p className="text-sm text-slate-500 dark:text-slate-400">Suspended students by teacher</p>
-                      </div>
-                    </div>
-                    {blacklistDocs.some(s => s.permanentlyDeleted) && (
-                      <button 
-                        onClick={clearDeletedRecords}
-                        className="text-xs text-red-600 hover:underline font-bold px-3 py-1.5 bg-red-50 dark:bg-red-900/20 rounded-lg"
-                      >
-                        Clear Deleted History
-                      </button>
-                    )}
-                  </div>
-                  
-                  {blacklistDocs.length === 0 ? (
-                    <div className="text-center py-8 text-slate-500 dark:text-slate-400">
-                      No blocked students.
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {blacklistDocs.map((student: any) => (
-                        <div key={student.id} className="flex items-center justify-between p-3 rounded-xl border transition-all bg-red-50/50 dark:bg-red-900/10 border-red-100 dark:border-red-900/30">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-red-100 dark:bg-red-900/20">
-                              <UserX className="w-5 h-5 text-red-500" />
-                            </div>
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name || 'Unknown Student'}</p>
-                                <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 uppercase tracking-widest">
-                                  ID: {student.studentId || student.id?.substring(0, 8)}
-                                </span>
-                                <span className={`px-1.5 py-0.5 rounded text-[8px] font-bold uppercase tracking-widest ${student.permanentlyDeleted ? 'bg-red-200 dark:bg-red-800 text-red-800 dark:text-red-100' : 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'}`}>
-                                  {student.permanentlyDeleted ? 'Deleted' : 'Suspended'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            {student.permanentlyDeleted ? (
-                               <div className="flex items-center gap-2">
-                                 <span className="px-3 py-1 bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 font-bold text-xs rounded-lg uppercase tracking-wider">
-                                   Permanently Deleted
-                                 </span>
-                                 <button 
-                                   onClick={() => handleRemoveFromBlacklist(student.id)}
-                                   className="p-2 text-slate-400 hover:text-red-600 transition-colors"
-                                   title="Remove from history"
-                                 >
-                                   <X className="w-4 h-4" />
-                                 </button>
-                               </div>
-                            ) : (
-                              <>
-                                <button 
-                                  onClick={() => setStudentToBlock(student)}
-                                  className="px-4 py-2 bg-white dark:bg-slate-800 text-red-600 dark:text-red-400 rounded-xl text-sm font-bold shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
-                                  title="Unblock Student"
-                                >
-                                  Unblock
-                                </button>
-                                <button 
-                                  onClick={() => setStudentToPermanentDelete(student)}
-                                  className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold shadow-sm transition-all"
-                                  title="Permanently Delete Student"
-                                >
-                                  Delete
-                                </button>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
 
               {/* Attendance Feed */}
@@ -1039,7 +946,7 @@ export default function TeacherDashboard() {
               </div>
             </div>
 
-            {/* Bottom Section — Quick Actions */}
+            {/* Quick Actions */}
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Quick Actions</h2>
               <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
@@ -1100,17 +1007,11 @@ export default function TeacherDashboard() {
               </button>
             </div>
             <form onSubmit={handleUpdateStudent} className="space-y-5">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Full Name</label>
-                <input
-                  type="text"
-                  required
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                />
+              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-2xl mb-4">
+                <p className="text-sm font-bold text-blue-900 dark:text-blue-100">{editingStudent.name}</p>
+                <p className="text-[10px] text-blue-700 dark:text-blue-300 uppercase tracking-widest">{editingStudent.studentId}</p>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Semester</label>
                   <select
@@ -1138,30 +1039,6 @@ export default function TeacherDashboard() {
                     {departments.length === 0 && <option value="BCA">BCA (Default)</option>}
                   </select>
                 </div>
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Phone Number</label>
-                <input
-                  type="tel"
-                  maxLength={10}
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  placeholder="e.g. 9876543210"
-                  value={editPhoneNumber}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '');
-                    if (val.length <= 10) setEditPhoneNumber(val);
-                  }}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Real Email (Gmail)</label>
-                <input
-                  type="email"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  placeholder="e.g. student@gmail.com"
-                  value={editRealEmail}
-                  onChange={(e) => setEditRealEmail(e.target.value)}
-                />
               </div>
               <div className="flex gap-3 pt-4">
                 <button 
