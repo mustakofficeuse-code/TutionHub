@@ -610,9 +610,13 @@ export default function AuthGateway() {
                       type="tel"
                       required
                       placeholder="e.g. 9876543210"
+                      maxLength={10}
                       className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                       value={studentPhoneNumber}
-                      onChange={(e) => setStudentPhoneNumber(e.target.value)}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '');
+                        if (val.length <= 10) setStudentPhoneNumber(val);
+                      }}
                     />
                   </div>
                 </div>

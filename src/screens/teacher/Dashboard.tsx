@@ -1126,10 +1126,14 @@ export default function TeacherDashboard() {
                 <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Phone Number</label>
                 <input
                   type="tel"
+                  maxLength={10}
                   className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                   placeholder="e.g. 9876543210"
                   value={editPhoneNumber}
-                  onChange={(e) => setEditPhoneNumber(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    if (val.length <= 10) setEditPhoneNumber(val);
+                  }}
                 />
               </div>
               <div>

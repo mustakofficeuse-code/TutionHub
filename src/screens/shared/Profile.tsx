@@ -304,6 +304,7 @@ export default function Profile() {
                   </label>
                   <input 
                     type="tel" 
+                    maxLength={10}
                     className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                     placeholder="9876543210"
                     value={phoneNumber}
