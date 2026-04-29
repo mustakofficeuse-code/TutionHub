@@ -32,7 +32,9 @@ import {
   X,
   UserX,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Phone,
+  Mail
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { motion, AnimatePresence } from 'motion/react';
@@ -63,6 +65,8 @@ export default function TeacherDashboard() {
   // Edit Student State
   const [editingStudent, setEditingStudent] = useState<any | null>(null);
   const [editName, setEditName] = useState('');
+  const [editPhoneNumber, setEditPhoneNumber] = useState('');
+  const [editRealEmail, setEditRealEmail] = useState('');
   const [editSemester, setEditSemester] = useState('');
   const [editDepartment, setEditDepartment] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
@@ -342,6 +346,8 @@ export default function TeacherDashboard() {
   const openEditModal = (student: any) => {
     setEditingStudent(student);
     setEditName(student.name || '');
+    setEditPhoneNumber(student.phoneNumber || '');
+    setEditRealEmail(student.realEmail || '');
     setEditSemester(student.semester || '1');
     setEditDepartment(student.courseName || 'BCA');
   };
@@ -401,6 +407,8 @@ export default function TeacherDashboard() {
     try {
       await updateDoc(doc(db, 'users', editingStudent.id), {
         name: editName,
+        phoneNumber: editPhoneNumber,
+        realEmail: editRealEmail,
         semester: editSemester,
         courseName: editDepartment,
         courseId: editDepartment.toLowerCase()
@@ -489,7 +497,20 @@ export default function TeacherDashboard() {
                             </div>
                             <div>
                               <p className={`font-black text-base tracking-tight ${isBlocked ? 'text-red-900 dark:text-red-100' : 'text-slate-900 dark:text-white'}`}>{student.name}</p>
-                              <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider hidden sm:block">{student.email}</p>
+                              <div className="flex items-center gap-2">
+                                <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider hidden sm:block">
+                                  {student.realEmail || student.email}
+                                </p>
+                                {student.phoneNumber && (
+                                  <a 
+                                    href={`tel:${student.phoneNumber}`}
+                                    className="p-1 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-md transition-colors"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <Phone className="w-3 h-3" />
+                                  </a>
+                                )}
+                              </div>
                             </div>
                           </div>
                         </td>
@@ -1100,6 +1121,26 @@ export default function TeacherDashboard() {
                     {departments.length === 0 && <option value="BCA">BCA (Default)</option>}
                   </select>
                 </div>
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Phone Number</label>
+                <input
+                  type="tel"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  placeholder="e.g. 9876543210"
+                  value={editPhoneNumber}
+                  onChange={(e) => setEditPhoneNumber(e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Real Email (Gmail)</label>
+                <input
+                  type="email"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  placeholder="e.g. student@gmail.com"
+                  value={editRealEmail}
+                  onChange={(e) => setEditRealEmail(e.target.value)}
+                />
               </div>
               <div className="flex gap-3 pt-4">
                 <button 

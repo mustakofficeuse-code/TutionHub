@@ -44,6 +44,7 @@ export default function Profile() {
   // Form state
   const [name, setName] = useState(profile?.name || '');
   const [phoneNumber, setPhoneNumber] = useState(profile?.phoneNumber || '');
+  const [realEmail, setRealEmail] = useState(profile?.realEmail || '');
   const [semester, setSemester] = useState(profile?.semester || '');
   const [courseId, setCourseId] = useState(profile?.courseId || '');
   
@@ -57,6 +58,7 @@ export default function Profile() {
     if (profile) {
       setName(profile.name || '');
       setPhoneNumber(profile.phoneNumber || '');
+      setRealEmail(profile.realEmail || '');
       setSemester(profile.semester || '');
       setCourseId(profile.courseId || '');
       
@@ -104,6 +106,7 @@ export default function Profile() {
       const updates: any = {
         name,
         phoneNumber,
+        realEmail,
         profileComplete: true
       };
 
@@ -311,6 +314,22 @@ export default function Profile() {
                   />
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 dark:text-slate-400">
                     {phoneNumber.length}/10 digits
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-slate-400" /> Real Email (Gmail)
+                  </label>
+                  <input 
+                    type="email" 
+                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    placeholder="student@gmail.com"
+                    value={realEmail}
+                    onChange={(e) => setRealEmail(e.target.value)}
+                  />
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                    This is your personal contact email.
                   </p>
                 </div>
 

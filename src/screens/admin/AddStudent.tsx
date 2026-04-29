@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {ArrowLeft, UserPlus, Loader2, CheckCircle, Shield, User, Lock, BookOpen, GraduationCap, Copy, Check, Eye, EyeOff } from 'lucide-react';
+import {ArrowLeft, UserPlus, Loader2, CheckCircle, Shield, User, Lock, BookOpen, GraduationCap, Copy, Check, Eye, EyeOff, Mail, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAuth } from '../../context/AuthContext';
 import { initializeApp, deleteApp } from 'firebase/app';
@@ -20,6 +20,8 @@ export default function AddStudent() {
 
   // Form State
   const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [realEmail, setRealEmail] = useState('');
   const [password, setPassword] = useState('');
   const [semester, setSemester] = useState('1');
   const [department, setDepartment] = useState('');
@@ -61,6 +63,8 @@ export default function AddStudent() {
         studentId: uniqueId,
         name,
         email: generatedEmail,
+        realEmail: realEmail || null,
+        phoneNumber: phoneNumber || null,
         role: 'student',
         semester,
         courseName: department,
@@ -176,6 +180,35 @@ export default function AddStudent() {
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Phone Number</label>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input
+                        type="tel"
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                        placeholder="e.g. 9876543210"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Real Email (Gmail)</label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                      <input
+                        type="email"
+                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                        placeholder="e.g. student@gmail.com"
+                        value={realEmail}
+                        onChange={(e) => setRealEmail(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Department</label>
@@ -287,6 +320,8 @@ export default function AddStudent() {
                   onClick={() => {
                     setSuccess(null);
                     setName('');
+                    setPhoneNumber('');
+                    setRealEmail('');
                     setPassword('');
                   }}
                   className="w-full py-4 bg-slate-900 dark:bg-white dark:text-slate-900 text-white font-bold rounded-2xl hover:opacity-90 transition-all"
