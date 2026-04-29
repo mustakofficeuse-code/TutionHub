@@ -4,7 +4,7 @@ import { doc, getDoc, setDoc, collection, getDocs, query, where, onSnapshot } fr
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, db, logError } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
-import { Loader2, User, Lock, BookOpen, Layers, Key, CheckCircle, Eye, EyeOff } from 'lucide-react';
+import { Loader2, User, Lock, BookOpen, Layers, Key, CheckCircle, Eye, EyeOff, Mail, Phone } from 'lucide-react';
 
 export default function AuthGateway() {
   const [view, setView] = useState<'loading' | 'teacher-setup' | 'teacher-login' | 'student-enroll' | 'student-login'>('loading');
@@ -19,6 +19,8 @@ export default function AuthGateway() {
   const [department, setDepartment] = useState('');
   const [departments, setDepartments] = useState<string[]>([]);
   const [studentInviteCode, setStudentInviteCode] = useState('');
+  const [studentRealEmail, setStudentRealEmail] = useState('');
+  const [studentPhoneNumber, setStudentPhoneNumber] = useState('');
   const [studentId, setStudentId] = useState('');
   const [studentPassword, setStudentPassword] = useState('');
   const [generatedId, setGeneratedId] = useState('');
@@ -317,6 +319,15 @@ export default function AuthGateway() {
         throw new Error('Invalid Invite Code');
       }
 
+      // Basic validation
+      if (!/^\d{10}$/.test(studentPhoneNumber)) {
+        throw new Error('Please enter a valid 10-digit phone number');
+      }
+
+      if (!studentRealEmail.includes('@') || !studentRealEmail.includes('.')) {
+        throw new Error('Please enter a valid Gmail/email address');
+      }
+
       // 1. Check if name is blacklisted
       const blacklistSnap = await getDocs(collection(db, 'blacklist'));
       const isBlacklisted = blacklistSnap.docs.some(doc => {
@@ -355,6 +366,8 @@ export default function AuthGateway() {
         studentId: uniqueId,
         name: studentName,
         email: generatedEmail,
+        realEmail: studentRealEmail || null,
+        phoneNumber: studentPhoneNumber || null,
         role: 'student',
         semester,
         courseName: department,
@@ -586,6 +599,36 @@ export default function AuthGateway() {
                     value={studentName}
                     onChange={(e) => setStudentName(e.target.value)}
                   />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <input
+                      type="tel"
+                      required
+                      placeholder="e.g. 9876543210"
+                      className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      value={studentPhoneNumber}
+                      onChange={(e) => setStudentPhoneNumber(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email (Gmail)</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                    <input
+                      type="email"
+                      required
+                      placeholder="student@gmail.com"
+                      className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                      value={studentRealEmail}
+                      onChange={(e) => setStudentRealEmail(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
