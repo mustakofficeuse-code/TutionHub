@@ -35,7 +35,7 @@ const getTodayString = () => {
 
 export default function AttendanceGenerator() {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   
   const [tuitionLocation, setTuitionLocation] = useState<{lat: number, lng: number} | null>(null);
   const [loading, setLoading] = useState(true);
@@ -235,6 +235,7 @@ export default function AttendanceGenerator() {
         date: scheduleDate,
         id: scheduleId,
         teacherId: user.uid,
+        teacherName: profile?.name || 'Teacher',
         createdAt: new Date().toISOString()
       };
       
@@ -339,7 +340,7 @@ export default function AttendanceGenerator() {
       return nameMatch && deptMatch && semMatch;
     });
 
-    const studentCounts: Record<string, { name: string, dept: string, sem: string, count: number, lastTime: string, records: any[] }> = {};
+    const studentCounts: Record<string, { name: string, dept: string, sem: string, avatarUrl: string, count: number, lastTime: string, records: any[] }> = {};
     
     filtered.forEach(rec => {
       if (!studentCounts[rec.studentId]) {
@@ -347,6 +348,7 @@ export default function AttendanceGenerator() {
           name: rec.studentName || 'Unknown Student',
           dept: rec.department || 'N/A',
           sem: rec.semester || 'N/A',
+          avatarUrl: rec.studentAvatarUrl || '',
           count: 0,
           lastTime: rec.timestamp,
           records: [] 
@@ -747,8 +749,12 @@ export default function AttendanceGenerator() {
                   getLiveAttendance().map((record) => (
                     <div key={record.id} className="group flex items-center justify-between p-4 sm:p-6 bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-900 hover:shadow-lg rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 dark:border-slate-800 transition-all duration-300">
                       <div className="flex items-center gap-3 sm:gap-5 min-w-0">
-                        <div className="w-10 h-10 sm:w-14 sm:h-14 bg-white dark:bg-slate-950 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform">
-                          <User className="text-blue-600 w-5 h-5 sm:w-7 sm:h-7" />
+                        <div className="w-10 h-10 sm:w-14 sm:h-14 bg-white dark:bg-slate-950 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                          {record.studentAvatarUrl ? (
+                            <img src={record.studentAvatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                          ) : (
+                            <User className="text-blue-600 w-5 h-5 sm:w-7 sm:h-7" />
+                          )}
                         </div>
                         <div className="min-w-0">
                           <h4 className="font-black text-sm sm:text-lg text-slate-900 dark:text-white tracking-tight truncate">{record.studentName}</h4>
@@ -835,8 +841,12 @@ export default function AttendanceGenerator() {
                           <tr key={`${student.name}-${idx}`} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/20 transition-colors">
                             <td className="px-6 sm:px-8 py-5">
                               <div className="flex items-center gap-3">
-                                <div className="shrink-0 w-9 h-9 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs">
-                                  {student.name.charAt(0)}
+                                <div className="shrink-0 w-9 h-9 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs overflow-hidden border border-slate-100 dark:border-slate-800">
+                                  {student.avatarUrl ? (
+                                    <img src={student.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                  ) : (
+                                    student.name.charAt(0)
+                                  )}
                                 </div>
                                 <div className="min-w-0">
                                   <p className="font-black text-slate-900 dark:text-white text-sm truncate">{student.name}</p>

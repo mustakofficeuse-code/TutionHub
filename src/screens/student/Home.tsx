@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, onSnapshot, orderBy, limit, doc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, orderBy, limit, doc, getDoc } from 'firebase/firestore';
 import { db, auth, logError } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -19,7 +19,9 @@ import {
   MessageSquare,
   TrendingUp,
   Moon,
-  Sun
+  Sun,
+  Mail,
+  Phone
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 
@@ -39,6 +41,8 @@ export default function StudentHome() {
     payableFee: '₹0'
   });
   const [upcomingClasses, setUpcomingClasses] = useState<any[]>([]);
+  const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
+  const [teacherInfo, setTeacherInfo] = useState<{name: string, phone?: string, email?: string} | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,6 +51,29 @@ export default function StudentHome() {
       return;
     }
 
+    const dept = (profile.courseId || profile.courseName || profile.department || '').toUpperCase();
+    const sem = String(profile.semester || '1');
+
+    // Fetch Teacher Info
+    const fetchTeacherInfo = async () => {
+      try {
+        const docRef = doc(db, 'config', 'appSettings');
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setTeacherInfo({
+            name: data.teacherName || 'Barun Maity',
+            phone: data.teacherPhone,
+            email: data.teacherEmail,
+            avatarUrl: data.teacherAvatarUrl || data.avatarUrl
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching teacher info:", err);
+      }
+    };
+    fetchTeacherInfo();
+
     // 1. Attendance Count
     const unsubAtt = onSnapshot(
       query(collection(db, 'attendance'), where('studentId', '==', user.uid)),
@@ -54,14 +81,23 @@ export default function StudentHome() {
       (error) => logError("Error fetching attendance:", error)
     );
 
-    // 2. Sessions Count
+    // 2. Recent Attendance Feed
+    const unsubRecentAtt = onSnapshot(
+      query(collection(db, 'attendance'), where('studentId', '==', user.uid), orderBy('timestamp', 'desc'), limit(5)),
+      (snapshot) => {
+        setRecentAttendance(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      },
+      (error) => logError("Error fetching recent attendance:", error)
+    );
+
+    // 3. Sessions Count
     const unsubSess = onSnapshot(
       query(collection(db, 'sessions'), where('courseId', '==', profile.courseId)),
       (snapshot) => setSessionCount(snapshot.size),
       (error) => logError("Error fetching sessions:", error)
     );
 
-    // 3. Fee Structure Listener
+    // 4. Fee Structure Listener
     const unsubStructure = onSnapshot(
       doc(db, 'config', 'feeStructure'),
       (snapshot) => {
@@ -70,7 +106,7 @@ export default function StudentHome() {
       (error) => logError("Error fetching fee structure:", error)
     );
 
-    // 4. Student Payments Listener
+    // 5. Student Payments Listener
     const studentIds = [user.uid, profile.studentId, profile.id].filter(Boolean);
     const unsubFees = onSnapshot(
       query(collection(db, 'payments'), where('studentId', 'in', studentIds)),
@@ -80,16 +116,24 @@ export default function StudentHome() {
       (error) => logError("Error fetching payments:", error)
     );
 
-    // 5. Upcoming Classes
+    // 6. Upcoming Classes (from schedules and attendance_schedules)
     const unsubSchedule = onSnapshot(
       query(collection(db, 'schedules'), where('courseId', '==', profile.courseId)),
       (snapshot) => {
-        const classes = snapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() }))
-          .filter((c: any) => c.date && c.date >= today)
-          .sort((a: any, b: any) => new Date(a.date).getTime() - new Date(b.date).getTime());
+        const permanentClasses = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data(), type: 'permanent' }))
+          .filter((c: any) => c.date && c.date >= today);
           
-        setUpcomingClasses(classes);
+        setUpcomingClasses(prev => {
+          const others = prev.filter(c => c.type !== 'permanent');
+          const combined = [...others, ...permanentClasses]
+            .sort((a: any, b: any) => {
+              const dateA = a.date || today;
+              const dateB = b.date || today;
+              return new Date(dateA).getTime() - new Date(dateB).getTime();
+            });
+          return combined;
+        });
         setLoading(false);
       },
       (error) => {
@@ -98,14 +142,43 @@ export default function StudentHome() {
       }
     );
 
+    const unsubActiveSchedules = onSnapshot(
+      query(
+        collection(db, 'attendance_schedules'), 
+        where('date', '==', today),
+        where('department', 'in', [dept, 'ALL'])
+      ),
+      (snapshot) => {
+        const activeClasses = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data(), type: 'active' }))
+          .filter((c: any) => {
+            const schedSem = String(c.semester);
+            return schedSem === sem || schedSem === 'ALL';
+          });
+
+        setUpcomingClasses(prev => {
+          const others = prev.filter(c => c.type !== 'active');
+          const combined = [...others, ...activeClasses]
+            .sort((a: any, b: any) => {
+              const dateA = a.date || today;
+              const dateB = b.date || today;
+              return new Date(dateA).getTime() - new Date(dateB).getTime();
+            });
+          return combined;
+        });
+      }
+    );
+
     return () => {
       unsubAtt();
+      unsubRecentAtt();
       unsubSess();
       unsubStructure();
       unsubFees();
       unsubSchedule();
+      unsubActiveSchedules();
     };
-  }, [user?.uid, profile?.courseId, profile?.courseName, profile?.semester]);
+  }, [user?.uid, profile?.courseId, profile?.courseName, profile?.semester, profile?.department]);
 
   useEffect(() => {
     const attPercentage = sessionCount > 0 ? Math.round((attendanceCount / sessionCount) * 100) : 0;
@@ -148,13 +221,30 @@ export default function StudentHome() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 transition-colors">
       {/* Header */}
-      <header className="bg-blue-600 text-white px-6 pt-12 pb-20 rounded-b-[40px] shadow-lg shadow-blue-100 dark:shadow-none relative overflow-hidden">
+      <header className="bg-blue-600 text-white px-6 pt-12 pb-20 rounded-b-[40px] shadow-lg shadow-blue-100 dark:shadow-none relative overflow-hidden transition-all">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
         <div className="relative z-10 flex justify-between items-start">
-          <div>
-            <p className="text-blue-100 text-sm font-medium">Welcome back,</p>
-            <h1 className="text-2xl font-bold">{profile?.name}</h1>
-            <p className="text-blue-100 text-xs mt-1">Sem {profile?.semester}</p>
+          <div className="flex items-center gap-4">
+            <div 
+              onClick={() => navigate('/profile')}
+              className="w-14 h-14 bg-white/20 rounded-2xl p-1 backdrop-blur-md cursor-pointer hover:scale-105 transition-transform overflow-hidden"
+            >
+              <div className="w-full h-full bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-xl overflow-hidden">
+                {profile?.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  profile?.name?.charAt(0) || 'S'
+                )}
+              </div>
+            </div>
+            <div>
+              <p className="text-blue-100 text-[10px] font-black uppercase tracking-wider">Welcome back,</p>
+              <h1 className="text-2xl font-black tracking-tight">{profile?.name}</h1>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="px-1.5 py-0.5 bg-white/20 rounded text-[9px] font-bold backdrop-blur-sm border border-white/10">Sem {profile?.semester}</span>
+                <span className="px-1.5 py-0.5 bg-white/20 rounded text-[9px] font-bold backdrop-blur-sm border border-white/10">{profile?.courseName}</span>
+              </div>
+            </div>
           </div>
           <div className="flex gap-2">
             <button
@@ -216,6 +306,52 @@ export default function StudentHome() {
               ))}
             </div>
 
+            {/* Teacher Contact Section */}
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
+               <div className="flex items-center justify-between mb-4">
+                 <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                   <User className="text-blue-600 w-5 h-5" />
+                   Your Teacher
+                 </h3>
+                 <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Available</span>
+               </div>
+               <div className="flex items-center justify-between">
+                 <div className="flex items-center gap-3">
+                   <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center text-blue-600 overflow-hidden">
+                     {teacherInfo?.avatarUrl ? (
+                       <img src={teacherInfo.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                     ) : (
+                       <User className="w-6 h-6" />
+                     )}
+                   </div>
+                   <div>
+                     <p className="font-bold text-slate-900 dark:text-white text-sm">{teacherInfo?.name || 'Barun Maity'}</p>
+                     <p className="text-[10px] text-slate-500 dark:text-slate-400">Lead Instructor</p>
+                   </div>
+                 </div>
+                 <div className="flex items-center gap-2">
+                   {teacherInfo?.phone && (
+                     <a 
+                       href={`tel:${teacherInfo.phone}`}
+                       className="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl hover:bg-emerald-100 transition-all border border-emerald-100 dark:border-emerald-800"
+                       title="Call Teacher"
+                     >
+                       <Phone className="w-5 h-5" />
+                     </a>
+                   )}
+                   {teacherInfo?.email && (
+                     <a 
+                       href={`mailto:${teacherInfo.email}`}
+                       className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl hover:bg-blue-100 transition-all border border-blue-100 dark:border-blue-800"
+                       title="Email Teacher"
+                     >
+                       <Mail className="w-5 h-5" />
+                     </a>
+                   )}
+                 </div>
+               </div>
+            </div>
+
             {/* Scan Attendance Card */}
             <div 
               onClick={() => navigate('/attendance/scan')}
@@ -247,18 +383,58 @@ export default function StudentHome() {
                   </div>
                 ) : (
                   upcomingClasses.map((cls, i) => (
-                    <div key={i} className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <div key={i} className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2 duration-300">
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center">
                           <Clock className="text-blue-600 dark:text-blue-400 w-6 h-6" />
                         </div>
                         <div>
-                          <h4 className="font-bold text-slate-900 dark:text-white">{cls.subject}</h4>
+                          <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-0.5">{cls.type === 'active' ? 'Live Session' : 'Scheduled'}</p>
+                          <h4 className="font-bold text-slate-900 dark:text-white">{cls.subject || `${cls.department} Sem ${cls.semester}`}</h4>
                           <p className="text-xs text-slate-500 dark:text-slate-400">{cls.teacherName || 'Teacher'} • {cls.date === today ? 'Today' : cls.date}</p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{cls.startTime}</p>
+                        {cls.type === 'active' && (
+                          <span className="inline-flex items-center gap-1 text-[8px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full uppercase mt-1">
+                            <span className="w-1 h-1 bg-emerald-600 rounded-full animate-ping"></span>
+                            Live
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+
+            {/* Recent Attendance */}
+            <div className="space-y-4 pb-4">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Recent Attendance</h2>
+              <div className="space-y-3">
+                {recentAttendance.length === 0 ? (
+                  <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center">
+                    <CheckCircle2 className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
+                    <p className="text-slate-500 dark:text-slate-400 text-sm">No recent records found</p>
+                  </div>
+                ) : (
+                  recentAttendance.map((record, i) => (
+                    <div key={record.id || i} className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center">
+                          <CheckCircle2 className="text-emerald-600 w-5 h-5" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">Present</p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                            {new Date(record.timestamp).toLocaleDateString()} at {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{record.department}</p>
+                        <p className="text-[10px] text-slate-400 uppercase">Sem {record.semester}</p>
                       </div>
                     </div>
                   ))
@@ -314,9 +490,15 @@ export default function StudentHome() {
         )}
         <button 
           onClick={() => navigate('/profile')}
-          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 dark:text-slate-400"
+          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 dark:text-slate-400 group"
         >
-          <User className="w-6 h-6" />
+          <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center transition-all overflow-hidden border-2 border-transparent group-hover:border-blue-500">
+            {profile?.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              <User className="w-4 h-4" />
+            )}
+          </div>
           <span className="text-[10px] font-bold">Profile</span>
         </button>
       </div>

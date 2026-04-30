@@ -195,9 +195,21 @@ export default function AdminDashboard() {
           >
             {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
           </button>
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-semibold text-slate-900 dark:text-white">{profile?.name}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">System Administrator</p>
+          <div className="flex items-center gap-3">
+            <div className="text-right hidden sm:block">
+              <p className="text-sm font-semibold text-slate-900 dark:text-white">{profile?.name}</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">System Administrator</p>
+            </div>
+            <div 
+              onClick={() => navigate('/profile')}
+              className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold overflow-hidden cursor-pointer shadow-sm"
+            >
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                profile?.name?.charAt(0) || 'A'
+              )}
+            </div>
           </div>
         </div>
       </nav>
@@ -294,17 +306,47 @@ export default function AdminDashboard() {
                     <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400">
-                            <Users className="w-5 h-5" />
+                          <div className="w-10 h-10 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center text-slate-400 overflow-hidden border border-slate-200 dark:border-slate-800">
+                            {user.avatarUrl ? (
+                              <img src={user.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            ) : (
+                              <Users className="w-5 h-5" />
+                            )}
                           </div>
                           <div>
-                            <p className="font-bold text-slate-900 dark:text-white">{user.name}</p>
-                            <p className="text-xs text-slate-500 dark:text-slate-400">
-                              {user.role === 'student' 
-                                ? (user.realEmail || user.email || `ID: ${user.studentId || user.id}`)
-                                : user.email
-                              }
+                            <p className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                              {user.name}
+                              {(user.role === 'teacher' || user.role === 'admin') && (
+                                <span className={`px-1.5 py-0.5 text-[8px] font-black uppercase rounded border ${
+                                  user.role === 'teacher' 
+                                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-800' 
+                                    : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 border-indigo-100 dark:border-indigo-800'
+                                }`}>
+                                  {user.role}
+                                </span>
+                              )}
                             </p>
+                            <div className="flex flex-col gap-0.5">
+                              {user.role === 'student' ? (
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                  {user.realEmail || user.email || `ID: ${user.studentId || user.id}`}
+                                </p>
+                              ) : (
+                                <>
+                                  <p className="text-[10px] text-slate-400 font-mono">Login: {user.email}</p>
+                                  {user.realEmail && (
+                                    <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1">
+                                      <Mail className="w-3 h-3" /> {user.realEmail}
+                                    </p>
+                                  )}
+                                  {user.phoneNumber && (
+                                    <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+                                      <Phone className="w-3 h-3" /> {user.phoneNumber}
+                                    </p>
+                                  )}
+                                </>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </td>

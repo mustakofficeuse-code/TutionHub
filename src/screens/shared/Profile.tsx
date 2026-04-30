@@ -47,6 +47,7 @@ export default function Profile() {
   const [realEmail, setRealEmail] = useState(profile?.realEmail || '');
   const [semester, setSemester] = useState(profile?.semester || '');
   const [courseId, setCourseId] = useState(profile?.courseId || '');
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl || '');
   
   // Password state
   const [currentPassword, setCurrentPassword] = useState('');
@@ -61,6 +62,7 @@ export default function Profile() {
       setRealEmail(profile.realEmail || '');
       setSemester(profile.semester || '');
       setCourseId(profile.courseId || '');
+      setAvatarUrl(profile.avatarUrl || '');
       
       if (profile.role === 'teacher') {
         fetchInviteCode();
@@ -94,6 +96,11 @@ export default function Profile() {
     }
   };
 
+  const randomizeAvatar = () => {
+    const seed = Math.random().toString(36).substring(7);
+    setAvatarUrl(`https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`);
+  };
+
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile?.uid) return;
@@ -107,6 +114,7 @@ export default function Profile() {
         name,
         phoneNumber,
         realEmail,
+        avatarUrl,
         profileComplete: true
       };
 
@@ -117,6 +125,22 @@ export default function Profile() {
       }
 
       await updateDoc(userRef, updates);
+
+      // If teacher, also update global app settings for students to see
+      if (profile.role === 'teacher' || profile.role === 'admin') {
+        try {
+          const appSettingsRef = doc(db, 'config', 'appSettings');
+          await updateDoc(appSettingsRef, {
+            teacherName: name,
+            teacherPhone: phoneNumber,
+            teacherEmail: realEmail,
+            teacherAvatarUrl: avatarUrl
+          });
+        } catch (err) {
+          console.warn("Failed to update appSettings, might not exist yet:", err);
+        }
+      }
+
       await refreshProfile();
       setMessage({ type: 'success', text: 'Profile updated successfully!' });
     } catch (error) {
@@ -233,10 +257,19 @@ export default function Profile() {
           <div className="bg-blue-600 h-32 relative">
             <div className="absolute -bottom-12 left-8">
               <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-3xl p-1 shadow-lg">
-                <div className="w-full h-full bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-500 dark:text-slate-400 relative group">
-                  <User className="w-12 h-12" />
-                  <button className="absolute inset-0 bg-black/20 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
-                    <Camera className="w-6 h-6" />
+                <div className="w-full h-full bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-500 relative group overflow-hidden">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover rounded-2xl" referrerPolicy="no-referrer" />
+                  ) : (
+                    <User className="w-12 h-12" />
+                  )}
+                  <button 
+                    type="button"
+                    onClick={randomizeAvatar}
+                    className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white"
+                  >
+                    <Camera className="w-6 h-6 mb-1" />
+                    <span className="text-[10px] font-bold">Randomize</span>
                   </button>
                 </div>
               </div>
@@ -244,7 +277,27 @@ export default function Profile() {
           </div>
 
           <div className="pt-16 p-8">
-            <div className="mb-8 flex justify-between items-start">
+            <div className="mb-0">
+              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">Avatar URL (Optional)</label>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  className="flex-1 px-3 py-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 rounded-lg text-xs text-slate-600 dark:text-slate-400 focus:ring-1 focus:ring-blue-500 outline-none"
+                  placeholder="Paste image URL here"
+                  value={avatarUrl}
+                  onChange={(e) => setAvatarUrl(e.target.value)}
+                />
+                <button 
+                  type="button"
+                  onClick={randomizeAvatar}
+                  className="px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-[10px] font-bold rounded-lg border border-blue-100 dark:border-blue-900/50 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+                >
+                  Generate
+                </button>
+              </div>
+            </div>
+
+            <div className="my-8 flex justify-between items-start">
               <div>
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{profile?.name}</h1>
                 <p className="text-slate-500 dark:text-slate-400 capitalize">{profile?.role} Account {profile?.role === 'student' && `• ${profile?.courseName} Sem ${profile?.semester}`}</p>

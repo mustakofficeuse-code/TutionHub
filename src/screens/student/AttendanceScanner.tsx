@@ -154,7 +154,9 @@ export default function AttendanceScanner() {
       await setDoc(attRef, {
         scheduleId: matchingSchedule.id,
         teacherId: matchingSchedule.teacherId,
+        teacherName: matchingSchedule.teacherName || 'Teacher',
         studentId: user?.uid,
+        studentAvatarUrl: profile?.avatarUrl || '',
         studentName: profile?.name,
         studentIdNum: profile?.studentId || 'N/A',
         department: studentDept,
@@ -246,15 +248,26 @@ export default function AttendanceScanner() {
           )}
 
           {status === 'success' && (
-            <div className="py-12 flex flex-col items-center text-center space-y-4">
-              <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mb-2">
-                <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
+            <div className="py-12 flex flex-col items-center text-center space-y-6">
+              <div className="relative">
+                <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center overflow-hidden border-4 border-emerald-50 content-none">
+                  {profile?.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  ) : (
+                    <CheckCircle className="w-12 h-12 text-emerald-600" />
+                  )}
+                </div>
+                <div className="absolute -bottom-2 -right-2 bg-emerald-600 text-white p-2 rounded-full shadow-lg">
+                  <CheckCircle className="w-5 h-5" />
+                </div>
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Success!</h2>
-              <p className="text-slate-600 dark:text-slate-400">{message}</p>
+              <div>
+                <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Success!</h3>
+                <p className="text-slate-600 dark:text-slate-400 font-medium px-4">{message}</p>
+              </div>
               <button 
                 onClick={() => navigate('/')}
-                className="mt-6 w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-lg shadow-blue-100 dark:shadow-none"
+                className="mt-6 w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3 rounded-xl font-bold shadow-lg shadow-blue-100 dark:shadow-none transition-all"
               >
                 Done
               </button>
