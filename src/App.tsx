@@ -7,20 +7,16 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import AuthGateway from './screens/auth/AuthGateway';
-import TeacherDashboard from './screens/teacher/Dashboard';
-import StudentHome from './screens/student/Home';
+import StudentView from './screens/student/StudentView';
 import AttendanceScanner from './screens/student/AttendanceScanner';
 import AttendanceGenerator from './screens/teacher/AttendanceGenerator';
 import FeeManagement from './screens/teacher/FeeManagement';
-import PaymentHistory from './screens/student/PaymentHistory';
 import MaterialManager from './screens/teacher/MaterialManager';
-import StudentMaterials from './screens/student/Materials';
-import DoubtSection from './screens/shared/DoubtSection';
-import StudentAnalytics from './screens/student/Analytics';
+import TeacherDashboard from './screens/teacher/Dashboard';
+import TeacherView from './screens/teacher/TeacherView';
 import TeacherAnalytics from './screens/teacher/Analytics';
 import AdminDashboard from './screens/admin/AdminDashboard';
 import AddStudent from './screens/admin/AddStudent';
-import Profile from './screens/shared/Profile';
 import { Loader2 } from 'lucide-react';
 
 function AppRoutes() {
@@ -49,8 +45,8 @@ function AppRoutes() {
         path="/" 
         element={
           role === 'admin' ? <AdminDashboard /> :
-          role === 'teacher' ? <TeacherDashboard /> : 
-          <StudentHome />
+          role === 'teacher' ? <TeacherView /> : 
+          <StudentView />
         } 
       />
       <Route path="/admin" element={<AdminDashboard />} />
@@ -58,14 +54,9 @@ function AppRoutes() {
       <Route path="/attendance/scan" element={<AttendanceScanner />} />
       <Route path="/attendance/generate" element={<AttendanceGenerator />} />
       <Route path="/fees/manage" element={<FeeManagement />} />
-      <Route path="/fees/history" element={<PaymentHistory />} />
       <Route path="/materials/manage" element={<MaterialManager />} />
-      <Route path="/materials/list" element={<StudentMaterials />} />
-      <Route path="/doubts" element={<DoubtSection />} />
-      <Route path="/student/analytics" element={<StudentAnalytics />} />
       <Route path="/teacher/analytics" element={<TeacherAnalytics />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="*" element={<Navigate to="/" />} />
+      <Route path="*" element={role === 'student' ? <Navigate to="/" /> : <Navigate to="/" />} />
     </Routes>
   );
 }

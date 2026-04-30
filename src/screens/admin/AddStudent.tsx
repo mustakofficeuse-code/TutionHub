@@ -82,7 +82,7 @@ export default function AddStudent() {
         role: 'student',
         semester,
         courseName: department,
-        courseId: department.toLowerCase(),
+        courseId: department.toUpperCase(),
         createdAt: new Date().toISOString(),
         profileComplete: true
       });

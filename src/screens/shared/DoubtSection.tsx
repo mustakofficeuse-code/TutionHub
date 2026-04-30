@@ -25,7 +25,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 
-export default function DoubtSection() {
+export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [doubts, setDoubts] = useState<any[]>([]);
@@ -212,15 +212,19 @@ export default function DoubtSection() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24 transition-colors">
+    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors ${isEmbedded ? '' : 'pb-24'}`}>
       <div className="max-w-6xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" /> Back
-          </button>
+          {!isEmbedded ? (
+            <button 
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" /> Back
+            </button>
+          ) : (
+            <div></div>
+          )}
           {profile?.role === 'student' && (
             <button 
               onClick={() => setShowAdd(true)}

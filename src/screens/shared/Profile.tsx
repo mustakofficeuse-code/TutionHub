@@ -29,7 +29,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
 
-export default function Profile() {
+export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
   const { profile, refreshProfile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -155,7 +155,7 @@ export default function Profile() {
 
       if (profile.role === 'student') {
         updates.semester = semester;
-        updates.courseId = courseId.toLowerCase();
+        updates.courseId = courseId.toUpperCase();
         updates.courseName = courseId.toUpperCase();
       }
 
@@ -264,15 +264,19 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24 transition-colors">
+    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors ${isEmbedded ? '' : 'pb-24'}`}>
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-8">
-          <button 
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" /> Back
-          </button>
+          {!isEmbedded ? (
+            <button 
+              onClick={() => navigate(-1)}
+              className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            >
+              <ArrowLeft className="w-5 h-5" /> Back
+            </button>
+          ) : (
+            <div></div>
+          )}
           <div className="flex items-center gap-4">
             <button
               onClick={toggleTheme}
@@ -520,10 +524,10 @@ export default function Profile() {
                       </label>
                       <input 
                         type="text" 
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase"
                         placeholder="e.g. BCA, MCA, B.Tech"
                         value={courseId}
-                        onChange={(e) => setCourseId(e.target.value.toLowerCase())}
+                        onChange={(e) => setCourseId(e.target.value.toUpperCase())}
                         disabled={!isEditing || (profile?.role === 'student' && (!!profile?.courseId || !!profile?.department || !!profile?.courseName))}
                       />
                       {profile?.role === 'student' && (!!profile?.courseId || !!profile?.department || !!profile?.courseName) ? (

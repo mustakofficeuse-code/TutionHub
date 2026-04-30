@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, getDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, getDoc, doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export default function PaymentHistory() {
+export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean }) {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [payments, setPayments] = useState<any[]>([]);
@@ -30,28 +30,36 @@ export default function PaymentHistory() {
   const [feeStructure, setFeeStructure] = useState<any>({});
 
   useEffect(() => {
-    if (profile) fetchData();
+    if (!profile) return;
+
+    // Fetch global fee structure in real-time
+    const unsubStructure = onSnapshot(
+      doc(db, 'config', 'feeStructure'),
+      (snapshot) => {
+        if (snapshot.exists()) setFeeStructure(snapshot.data());
+      },
+      (error) => console.error("Error fetching fee structure:", error)
+    );
+
+    fetchPayments();
+
+    return () => unsubStructure();
   }, [profile]);
 
-  const fetchData = async () => {
+  const fetchPayments = async () => {
+    setLoading(true);
     try {
-      // Fetch global fee structure
-      const structSnap = await getDoc(doc(db, 'config', 'feeStructure'));
-      if (structSnap.exists()) {
-        setFeeStructure(structSnap.data());
-      }
-      
       // Fetch all payments made by this student
       const studentIds = [profile?.uid, profile?.studentId, profile?.id].filter(Boolean);
       let loadedPayments: any[] = [];
-      if (studentIds.length > 0) {
+      if (studentIds && studentIds.length > 0) {
         const q = query(collection(db, 'payments'), where('studentId', 'in', studentIds));
         const querySnapshot = await getDocs(q);
         loadedPayments = querySnapshot.docs.map(d => ({ id: d.id, ...d.data() }));
       }
       setPayments(loadedPayments);
     } catch (error) {
-      console.error("Error fetching fee details:", error);
+      console.error("Error fetching payments:", error);
     } finally {
       setLoading(false);
     }
@@ -78,7 +86,7 @@ export default function PaymentHistory() {
       setPaymentAmount('');
       setPaymentMethod(null);
       alert('Payment reference submitted successfully! Teacher will verify it soon.');
-      fetchData();
+      fetchPayments();
     } catch (error) {
       console.error("Error submitting payment:", error);
       alert('Failed to submit payment reference.');
@@ -96,13 +104,15 @@ export default function PaymentHistory() {
   const semestersDue = Array.from({ length: currentSem }, (_, i) => i + 1);
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24">
-      <button 
-        onClick={() => navigate('/')}
-        className="mb-8 flex items-center gap-2 text-slate-600 font-semibold hover:text-blue-600 transition-colors"
-      >
-        <ArrowLeft className="w-5 h-5" /> Back to Home
-      </button>
+    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 p-6 ${isEmbedded ? '' : 'pb-24'}`}>
+      {!isEmbedded && (
+        <button 
+          onClick={() => navigate('/')}
+          className="mb-8 flex items-center gap-2 text-slate-600 font-semibold hover:text-blue-600 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" /> Back to Home
+        </button>
+      )}
 
       <div className="max-w-6xl mx-auto space-y-8">
         <div>
@@ -165,12 +175,41 @@ export default function PaymentHistory() {
                 <CreditCard className="w-6 h-6 text-slate-400" /> Pay Now Dashboard
               </h2>
               {(() => {
-                const cleanDeptKey = (str: any) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
-                const currentDept = cleanDeptKey(profile?.courseId) || cleanDeptKey(profile?.courseName) || cleanDeptKey(profile?.department) || 'BCA';
+                const getExpectedFee = () => {
+                  if (!feeStructure || Object.keys(feeStructure).length === 0) return { amount: 0, deptName: 'BCA' };
+                  
+                  const studentDept = (profile?.courseId || profile?.courseName || profile?.department || '').trim();
+                  const sem = Number(profile?.semester) || 1;
+
+                  // 1. Try exact match
+                  if (feeStructure[studentDept] && feeStructure[studentDept][sem] !== undefined) {
+                    return { amount: feeStructure[studentDept][sem], deptName: studentDept };
+                  }
+
+                  // 2. Try uppercase match
+                  const upperDept = studentDept.toUpperCase();
+                  if (feeStructure[upperDept] && feeStructure[upperDept][sem] !== undefined) {
+                    return { amount: feeStructure[upperDept][sem], deptName: upperDept };
+                  }
+
+                  // 3. Try "cleaned" match (fallback for legacy)
+                  const cleanStr = (str: string) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
+                  const cleanedStudentDept = cleanStr(studentDept) || 'BCA';
+                  
+                  const matchingKey = Object.keys(feeStructure).find(key => cleanStr(key) === cleanedStudentDept);
+                  if (matchingKey && feeStructure[matchingKey][sem] !== undefined) {
+                    return { amount: feeStructure[matchingKey][sem], deptName: matchingKey };
+                  }
+
+                  return { amount: 0, deptName: studentDept || 'BCA' };
+                };
+
+                const expectedFeeResult = getExpectedFee();
+                const expectedAmount = expectedFeeResult.amount;
+                const currentDept = expectedFeeResult.deptName;
 
                 // Focus ONLY on the current semester
                 const sem = Number(profile?.semester) || 1;
-                const expectedAmount = feeStructure[currentDept]?.[sem] || 0;
                 const semPayments = payments.filter(p => Number(p.semester) === sem);
                 const paidAmount = semPayments
                   .filter(p => p.status === 'confirmed')

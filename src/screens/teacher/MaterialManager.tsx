@@ -25,7 +25,7 @@ import { QRCodeSVG } from 'qrcode.react';
 
 const ROMAN_UNITS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV'];
 
-export default function MaterialManager() {
+export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }) {
   const navigate = useNavigate();
   const [materials, setMaterials] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
@@ -338,12 +338,14 @@ export default function MaterialManager() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
-      <button 
-        onClick={() => navigate('/')}
-        className="mb-8 flex items-center gap-2 text-slate-600 font-semibold hover:text-blue-600 transition-colors"
-      >
-        <ArrowLeft className="w-5 h-5" /> Back to Dashboard
-      </button>
+      {!isEmbedded && (
+        <button 
+          onClick={() => navigate('/')}
+          className="mb-8 flex items-center gap-2 text-slate-600 font-semibold hover:text-blue-600 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" /> Back to Dashboard
+        </button>
+      )}
 
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex justify-between items-center">

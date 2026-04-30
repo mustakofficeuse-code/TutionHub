@@ -12,6 +12,7 @@ import {
   Save,
   Clock,
   User,
+  X,
   Users,
   Calendar,
   AlertCircle,
@@ -63,6 +64,7 @@ export default function AttendanceGenerator() {
   const [historyRecords, setHistoryRecords] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'monitor' | 'history'>('monitor');
   const [departments, setDepartments] = useState<string[]>([]);
+  const [zoomedPhoto, setZoomedPhoto] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -80,10 +82,12 @@ export default function AttendanceGenerator() {
     const qHistory = query(
       collection(db, 'attendance'), 
       where('teacherId', '==', user.uid),
-      orderBy('timestamp', 'desc')
+      limit(200)
     );
     const unsubHistory = onSnapshot(qHistory, (snap) => {
-      const records = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const records = snap.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
       setHistoryRecords(records);
     }, (error) => {
       console.error("History listener error:", error);
@@ -365,6 +369,19 @@ export default function AttendanceGenerator() {
     return Object.values(studentCounts).sort((a, b) => b.count - a.count);
   };
 
+  const getGroupedHistory = () => {
+    const aggregated = getAggregatedHistory();
+    const groups: Record<string, any[]> = {};
+    
+    aggregated.forEach(student => {
+      const dept = student.dept || 'Other';
+      if (!groups[dept]) groups[dept] = [];
+      groups[dept].push(student);
+    });
+    
+    return groups;
+  };
+
   const updateLocation = async () => {
     if (navigator.geolocation) {
       setSaving(true);
@@ -421,8 +438,32 @@ export default function AttendanceGenerator() {
               <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Static Center QR</h2>
               <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 sm:mb-8 print:text-black">Stick this on the tuition wall</p>
               
-              <div className="bg-slate-50 dark:bg-slate-950 p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] inline-block border-2 border-slate-100 dark:border-slate-800 mb-6 group-hover:bg-white dark:group-hover:bg-slate-900 transition-colors print:border-slate-200 print:bg-white">
+              <div className="bg-slate-50 dark:bg-slate-950 p-6 sm:p-8 rounded-[1.5rem] sm:rounded-[2rem] inline-block border-2 border-slate-100 dark:border-slate-800 mb-6 group-hover:bg-white dark:group-hover:bg-slate-900 transition-colors print:border-slate-200 print:bg-white relative">
                 <QRCodeSVG value={STATIC_QR_VALUE} size={window.innerWidth < 640 ? 200 : 250} level="H" includeMargin={true} className="mx-auto max-w-full h-auto" />
+                
+                {/* Current Active Info Overlay for better visibility */}
+                {activeSchedules.filter(isScheduleActive).length > 0 && (
+                  <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-200 dark:shadow-none whitespace-nowrap animate-bounce">
+                    Active for {activeSchedules.filter(isScheduleActive)[0].department}
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-2 mb-6">
+                {activeSchedules.filter(isScheduleActive).length > 0 ? (
+                  activeSchedules.filter(isScheduleActive).map(sched => (
+                    <div key={sched.id} className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-2xl border border-blue-100 dark:border-blue-800 animate-in fade-in zoom-in-95">
+                      <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none mb-1">Current Session</p>
+                      <p className="text-sm font-bold text-slate-900 dark:text-white">{sched.subject || 'Class'}</p>
+                      <p className="text-[10px] font-bold text-slate-500 uppercase">{sched.department} • Sem {sched.semester}</p>
+                    </div>
+                  ))
+                ) : (
+                  <div className="p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-dashed border-slate-200 dark:border-slate-700">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">No Active Session</p>
+                    <p className="text-[9px] text-slate-400 italic">QR remains inactive for students</p>
+                  </div>
+                )}
               </div>
               
               <p className="text-[9px] sm:text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] flex items-center justify-center gap-2 print:hidden">
@@ -749,7 +790,10 @@ export default function AttendanceGenerator() {
                   getLiveAttendance().map((record) => (
                     <div key={record.id} className="group flex items-center justify-between p-4 sm:p-6 bg-slate-50 dark:bg-slate-800/50 hover:bg-white dark:hover:bg-slate-900 hover:shadow-lg rounded-[1.5rem] sm:rounded-[2rem] border border-slate-100 dark:border-slate-800 transition-all duration-300">
                       <div className="flex items-center gap-3 sm:gap-5 min-w-0">
-                        <div className="w-10 h-10 sm:w-14 sm:h-14 bg-white dark:bg-slate-950 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                        <div 
+                          onClick={() => record.studentAvatarUrl && setZoomedPhoto(record.studentAvatarUrl)}
+                          className={`w-10 h-10 sm:w-14 sm:h-14 bg-white dark:bg-slate-950 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-sm shrink-0 group-hover:scale-105 transition-transform overflow-hidden ${record.studentAvatarUrl ? 'cursor-zoom-in' : ''}`}
+                        >
                           {record.studentAvatarUrl ? (
                             <img src={record.studentAvatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           ) : (
@@ -837,43 +881,61 @@ export default function AttendanceGenerator() {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
-                        {getAggregatedHistory().map((student, idx) => (
-                          <tr key={`${student.name}-${idx}`} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/20 transition-colors">
-                            <td className="px-6 sm:px-8 py-5">
-                              <div className="flex items-center gap-3">
-                                <div className="shrink-0 w-9 h-9 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs overflow-hidden border border-slate-100 dark:border-slate-800">
-                                  {student.avatarUrl ? (
-                                    <img src={student.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                                  ) : (
-                                    student.name.charAt(0)
-                                  )}
+                        {Object.entries(getGroupedHistory()).sort(([a], [b]) => a.localeCompare(b)).map(([dept, students]) => (
+                          <>
+                            <tr key={dept} className="bg-slate-50/80 dark:bg-slate-800/80">
+                              <td colSpan={4} className="px-6 sm:px-8 py-3">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                                  <span className="text-[10px] font-black text-slate-900 dark:text-white uppercase tracking-widest">{dept} Department</span>
+                                  <span className="text-[8px] font-bold text-slate-400 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-full border border-slate-100 dark:border-slate-800 ml-2">
+                                    {students.length} {students.length === 1 ? 'Student' : 'Students'}
+                                  </span>
                                 </div>
-                                <div className="min-w-0">
-                                  <p className="font-black text-slate-900 dark:text-white text-sm truncate">{student.name}</p>
-                                  <p className="text-[9px] font-bold text-slate-400 uppercase">{student.dept} Batch</p>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 sm:px-8 py-5">
-                              <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded text-[10px] font-bold uppercase">Sem {student.sem}</span>
-                            </td>
-                            <td className="px-6 sm:px-8 py-5">
-                              <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
-                                {new Date(student.lastTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}
-                              </p>
-                              <p className="text-[10px] opacity-50 uppercase tracking-wider">
-                                {new Date(student.lastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                              </p>
-                            </td>
-                            <td className="px-6 sm:px-8 py-5">
-                              <div className="flex items-center justify-center gap-3">
-                                <span className="text-sm font-black text-slate-900 dark:text-white">{student.count}</span>
-                                <div className="hidden sm:block h-1.5 w-16 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                                  <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, (student.count / 10) * 100)}%` }}></div>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
+                              </td>
+                            </tr>
+                            {students.map((student, idx) => (
+                              <tr key={`${student.name}-${idx}`} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/20 transition-colors">
+                                <td className="px-6 sm:px-8 py-5">
+                                  <div className="flex items-center gap-3">
+                                    <div 
+                                      onClick={() => student.avatarUrl && setZoomedPhoto(student.avatarUrl)}
+                                      className={`shrink-0 w-9 h-9 bg-blue-100 dark:bg-blue-900/30 rounded-xl flex items-center justify-center text-blue-600 font-black text-xs overflow-hidden border border-slate-100 dark:border-slate-800 ${student.avatarUrl ? 'cursor-zoom-in' : ''}`}
+                                    >
+                                      {student.avatarUrl ? (
+                                        <img src={student.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                      ) : (
+                                        student.name.charAt(0)
+                                      )}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="font-black text-slate-900 dark:text-white text-sm truncate">{student.name}</p>
+                                      <p className="text-[9px] font-bold text-slate-400 uppercase">Batch {student.sem}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 sm:px-8 py-5">
+                                  <span className="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 rounded text-[10px] font-bold uppercase">Sem {student.sem}</span>
+                                </td>
+                                <td className="px-6 sm:px-8 py-5">
+                                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400">
+                                    {new Date(student.lastTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                                  </p>
+                                  <p className="text-[10px] opacity-50 uppercase tracking-wider">
+                                    {new Date(student.lastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                </td>
+                                <td className="px-6 sm:px-8 py-5">
+                                  <div className="flex items-center justify-center gap-3">
+                                    <span className="text-sm font-black text-slate-900 dark:text-white">{student.count}</span>
+                                    <div className="hidden sm:block h-1.5 w-16 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${Math.min(100, (student.count / 10) * 100)}%` }}></div>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </>
                         ))}
                       </tbody>
                     </table>
@@ -891,6 +953,23 @@ export default function AttendanceGenerator() {
           </div>
         </div>
       </div>
+      {/* Photo Zoom Modal */}
+      {zoomedPhoto && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[100] animate-in fade-in duration-300">
+          <button 
+            onClick={() => setZoomedPhoto(null)}
+            className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white"
+          >
+            <X className="w-8 h-8" />
+          </button>
+          <img 
+            src={zoomedPhoto} 
+            alt="Profile View" 
+            className="max-w-full max-h-[85vh] rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+      )}
     </div>
   );
 }

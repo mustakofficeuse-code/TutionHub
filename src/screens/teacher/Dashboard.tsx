@@ -28,6 +28,7 @@ import {
   ClipboardList,
   Trophy,
   Edit,
+  Edit2,
   Trash2,
   X,
   UserX,
@@ -35,12 +36,13 @@ import {
   ChevronDown,
   ChevronUp,
   Phone,
-  Mail
+  Mail,
+  Save
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { motion, AnimatePresence } from 'motion/react';
 
-export default function TeacherDashboard() {
+export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean }) {
   const { profile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -61,6 +63,8 @@ export default function TeacherDashboard() {
   const [departments, setDepartments] = useState<any[]>([]);
   const [showAddDeptModal, setShowAddDeptModal] = useState(false);
   const [newDeptName, setNewDeptName] = useState('');
+  const [newDeptSemesters, setNewDeptSemesters] = useState('8');
+  const [editingDept, setEditingDept] = useState<any | null>(null);
   const [isAddingDept, setIsAddingDept] = useState(false);
 
   // Schedule Management
@@ -73,7 +77,9 @@ export default function TeacherDashboard() {
     semester: '1',
     startTime: '10:00',
     endTime: '11:00',
-    date: new Date().toISOString().split('T')[0]
+    date: new Date().toISOString().split('T')[0],
+    requireGPS: true,
+    gracePeriod: '15'
   });
 
   // Edit Student State
@@ -95,6 +101,24 @@ export default function TeacherDashboard() {
   
   const [expandedDept, setExpandedDept] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [zoomedPhoto, setZoomedPhoto] = useState<string | null>(null);
+  const [scheduleToDelete, setScheduleToDelete] = useState<string | null>(null);
+  const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
+
+  const startEditSchedule = (item: any) => {
+    setEditingScheduleId(item.id);
+    setScheduleForm({
+      subject: item.subject || '',
+      department: item.department || 'BCA',
+      semester: item.semester || '1',
+      startTime: item.startTime || '10:00',
+      endTime: item.endTime || '11:00',
+      date: item.date || new Date().toISOString().split('T')[0],
+      requireGPS: item.requireGPS ?? true,
+      gracePeriod: item.gracePeriod || '15'
+    });
+    setShowScheduleModal(true);
+  };
 
   // Real-time stats
   const [totalStudents, setTotalStudents] = useState(0);
@@ -143,32 +167,79 @@ export default function TeacherDashboard() {
     e.preventDefault();
     setIsSavingSchedule(true);
     try {
-      await addDoc(collection(db, 'schedules'), {
+      const scheduleData = {
         ...scheduleForm,
-        courseId: scheduleForm.department.toLowerCase(),
+        courseId: scheduleForm.department.toUpperCase(),
         teacherName: profile?.name || 'Teacher',
         teacherId: auth.currentUser?.uid,
-        createdAt: serverTimestamp()
+        updatedAt: serverTimestamp()
+      };
+
+      let currentScheduleId = editingScheduleId;
+
+      if (editingScheduleId) {
+        await updateDoc(doc(db, 'schedules', editingScheduleId), scheduleData);
+      } else {
+        const docRef = await addDoc(collection(db, 'schedules'), {
+          ...scheduleData,
+          createdAt: serverTimestamp()
+        });
+        currentScheduleId = docRef.id;
+      }
+
+      // Automatically activate attendance window in current session logic
+      // This maps the Class Schedule to the Attendance Schedule system
+      const attendanceScheduleId = `ATT_SCHED_${currentScheduleId}`;
+      await setDoc(doc(db, 'attendance_schedules', attendanceScheduleId), {
+        id: attendanceScheduleId,
+        department: scheduleForm.department.toUpperCase(),
+        semester: scheduleForm.semester,
+        startTime: scheduleForm.startTime,
+        endTime: scheduleForm.endTime,
+        date: scheduleForm.date,
+        requireGPS: scheduleForm.requireGPS,
+        gracePeriod: scheduleForm.gracePeriod,
+        teacherId: auth.currentUser?.uid,
+        teacherName: profile?.name || 'Teacher',
+        subject: scheduleForm.subject,
+        updatedAt: serverTimestamp()
       });
+
+      // Notify Students
+      await addDoc(collection(db, 'notifications'), {
+        title: editingScheduleId ? 'Class Schedule Updated' : 'New Class Scheduled',
+        message: `${scheduleForm.subject} for ${scheduleForm.department} Sem ${scheduleForm.semester} on ${scheduleForm.date} at ${scheduleForm.startTime}.`,
+        targetRole: 'student',
+        targetDept: scheduleForm.department.toUpperCase(),
+        targetSem: scheduleForm.semester,
+        type: 'schedule',
+        timestamp: new Date().toISOString(),
+        read: false
+      });
+
       setShowScheduleModal(false);
+      setEditingScheduleId(null);
       setScheduleForm({
         ...scheduleForm,
         subject: ''
       });
     } catch (err) {
-      console.error("Error adding schedule:", err);
-      alert("Failed to add schedule");
+      console.error("Error adding/updating schedule:", err);
+      alert("Failed to save schedule");
     } finally {
       setIsSavingSchedule(false);
     }
   };
 
   const handleDeleteSchedule = async (id: string) => {
-    if (!window.confirm("Delete this schedule?")) return;
     try {
       await deleteDoc(doc(db, 'schedules', id));
+      // Also delete the associated attendance window
+      await deleteDoc(doc(db, 'attendance_schedules', `ATT_SCHED_${id}`));
+      setScheduleToDelete(null);
     } catch (err) {
       console.error("Error deleting schedule:", err);
+      alert("Failed to delete schedule");
     }
   };
 
@@ -204,18 +275,31 @@ export default function TeacherDashboard() {
     if (!newDeptName.trim()) return;
     setIsAddingDept(true);
     try {
-      const deptId = newDeptName.trim().toUpperCase();
-      await setDoc(doc(db, 'departments', deptId), {
-        name: deptId,
-        createdAt: new Date().toISOString(),
-        teacherId: auth.currentUser?.uid,
-        isCustom: true
-      });
+      const deptId = editingDept ? editingDept.id : newDeptName.trim().toUpperCase();
+      const deptData = {
+        name: newDeptName.trim().toUpperCase(),
+        totalSemesters: Number(newDeptSemesters) || 8,
+        updatedAt: new Date().toISOString(),
+      };
+
+      if (editingDept) {
+        await updateDoc(doc(db, 'departments', editingDept.id), deptData);
+      } else {
+        await setDoc(doc(db, 'departments', deptId), {
+          ...deptData,
+          createdAt: new Date().toISOString(),
+          teacherId: auth.currentUser?.uid,
+          isCustom: true
+        });
+      }
+      
       setNewDeptName('');
+      setNewDeptSemesters('8');
+      setEditingDept(null);
       setShowAddDeptModal(false);
     } catch (err) {
-      console.error("Error adding department:", err);
-      alert("Failed to add department");
+      console.error("Error saving department:", err);
+      alert("Failed to save department");
     } finally {
       setIsAddingDept(false);
     }
@@ -241,10 +325,17 @@ export default function TeacherDashboard() {
   };
 
   const listenToNotifications = () => {
-    const q = query(collection(db, 'notifications'), orderBy('timestamp', 'desc'), limit(10));
+    // Only show notifications for teachers/admins
+    const q = query(
+      collection(db, 'notifications'), 
+      where('targetRole', 'in', ['teacher', 'admin', 'ALL']), 
+      limit(50)
+    );
     return onSnapshot(q, (snapshot) => {
-      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setNotifications(list);
+      const list = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      setNotifications(list.slice(0, 20));
     });
   };
 
@@ -320,7 +411,28 @@ export default function TeacherDashboard() {
   };
 
   const [isClearingFeed, setIsClearingFeed] = useState(false);
+  const [isClearingNotifs, setIsClearingNotifs] = useState(false);
   const [clearConfirm, setClearConfirm] = useState(false);
+
+  const handleClearNotifications = async () => {
+    if (notifications.length === 0) return;
+    if (!window.confirm("Are you sure you want to clear all your notifications?")) return;
+
+    setIsClearingNotifs(true);
+    try {
+      const batch = writeBatch(db);
+      notifications.forEach(notif => {
+        batch.delete(doc(db, 'notifications', notif.id));
+      });
+      await batch.commit();
+      setShowNotifications(false);
+    } catch (err) {
+      console.error("Error clearing notifications:", err);
+      alert("Failed to clear notifications");
+    } finally {
+      setIsClearingNotifs(false);
+    }
+  };
 
   const clearAttendanceFeed = async () => {
     if (recentAttendance.length === 0) return;
@@ -474,7 +586,7 @@ export default function TeacherDashboard() {
       await updateDoc(doc(db, 'users', editingStudent.id), {
         semester: editSemester,
         courseName: editDepartment,
-        courseId: editDepartment.toLowerCase()
+        courseId: editDepartment.toUpperCase()
       });
       setEditingStudent(null);
     } catch (error) {
@@ -555,7 +667,10 @@ export default function TeacherDashboard() {
                       <tr key={student.id} className={`group/row ${isBlocked ? 'bg-red-50/10' : 'hover:bg-blue-50/30 dark:hover:bg-blue-900/10'} transition-colors`}>
                         <td className="px-8 py-5 whitespace-nowrap">
                           <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all overflow-hidden ${isBlocked ? 'bg-red-100 dark:bg-red-900/20' : 'bg-slate-100 dark:bg-slate-800 group-hover/row:bg-white dark:group-hover/row:bg-slate-900 group-hover/row:shadow-md'}`}>
+                            <div 
+                              onClick={() => student.avatarUrl && setZoomedPhoto(student.avatarUrl)}
+                              className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all overflow-hidden ${isBlocked ? 'bg-red-100 dark:bg-red-900/20' : 'bg-slate-100 dark:bg-slate-800 group-hover/row:bg-white dark:group-hover/row:bg-slate-900 group-hover/row:shadow-md'} ${student.avatarUrl ? 'cursor-zoom-in' : ''}`}
+                            >
                               {student.avatarUrl ? (
                                 <img src={student.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                               ) : (
@@ -693,56 +808,17 @@ export default function TeacherDashboard() {
             </button>
           )}
           
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all relative"
-            >
-              <Bell className="w-5 h-5" />
-              {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-              )}
-            </button>
-
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-100 dark:border-slate-800 overflow-hidden z-50">
-                <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
-                  <h3 className="font-bold text-slate-900 dark:text-white">Notifications</h3>
-                  {unreadCount > 0 && (
-                    <span className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded-full font-bold">
-                      {unreadCount} new
-                    </span>
-                  )}
-                </div>
-                <div className="max-h-96 overflow-y-auto">
-                  {notifications.length === 0 ? (
-                    <div className="p-8 text-center text-slate-500 dark:text-slate-400 text-sm">
-                      No notifications yet
-                    </div>
-                  ) : (
-                    notifications.map(notif => (
-                      <div 
-                        key={notif.id} 
-                        onClick={() => !notif.read && markNotificationRead(notif.id)}
-                        className={`p-4 border-b border-slate-50 dark:border-slate-800/50 hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition-colors ${!notif.read ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <h4 className={`text-sm font-bold ${!notif.read ? 'text-slate-900 dark:text-white' : 'text-slate-700 dark:text-slate-300'}`}>
-                            {notif.title}
-                          </h4>
-                          {!notif.read && <span className="w-2 h-2 bg-blue-600 rounded-full mt-1.5"></span>}
-                        </div>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mb-2">{notif.message}</p>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                          {new Date(notif.timestamp).toLocaleDateString()} at {new Date(notif.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                        </p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
+          <button 
+            onClick={() => setShowNotifications(true)}
+            className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all relative"
+          >
+            <Bell className="w-5 h-5" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-black text-white">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
             )}
-          </div>
+          </button>
 
           <button
             onClick={toggleTheme}
@@ -824,7 +900,7 @@ export default function TeacherDashboard() {
               ))}
             </div>
 
-            {/* Middle Section — Course Management (Students) */}
+            {/* Middle Section — Department Management (Students) */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               <div className="lg:col-span-2 space-y-6">
                 <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-slate-800">
@@ -833,7 +909,7 @@ export default function TeacherDashboard() {
                       <ClipboardList className="w-7 h-7 text-blue-600" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Course Management</h2>
+                      <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Department Management</h2>
                       <p className="text-sm text-slate-500 dark:text-slate-400">Total {totalStudents} enrolled students</p>
                     </div>
                   </div>
@@ -884,25 +960,41 @@ export default function TeacherDashboard() {
                               <BookOpen className={`w-4 h-4 ${isActive ? 'text-white' : 'text-blue-600'}`} />
                             </div>
                             <div className="flex items-center gap-1">
-                              {deptObj && !isActive && (
-                                <button 
-                                  type="button"
-                                  onClick={(e) => { 
-                                    e.stopPropagation(); 
-                                    handleDeleteDepartment(deptObj.id, deptObj?.isDefault); 
-                                  }}
-                                  className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
-                                    deleteConfirmId === deptObj.id 
-                                      ? 'bg-red-500 text-white px-3 ring-4 ring-red-100 dark:ring-red-900/30 shadow-lg' 
-                                      : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                                  } cursor-pointer`}
-                                  title={deleteConfirmId === deptObj.id ? "Click again to confirm" : "Delete Department"}
-                                >
-                                  {deleteConfirmId === deptObj.id && (
-                                    <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Confirm?</span>
-                                  )}
-                                  <Trash2 className={`${deleteConfirmId === deptObj.id ? 'w-3 h-3' : 'w-3.5 h-3.5'}`} />
-                                </button>
+                              {!isActive && (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingDept(deptObj);
+                                      setNewDeptName(deptObj.name);
+                                      setNewDeptSemesters(String(deptObj.totalSemesters || 8));
+                                      setShowAddDeptModal(true);
+                                    }}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-all"
+                                    title="Edit Department"
+                                  >
+                                    <Edit2 className="w-3.5 h-3.5" />
+                                  </button>
+                                  <button 
+                                    type="button"
+                                    onClick={(e) => { 
+                                      e.stopPropagation(); 
+                                      handleDeleteDepartment(deptObj.id, deptObj?.isDefault); 
+                                    }}
+                                    className={`p-1.5 rounded-lg transition-all flex items-center gap-1.5 ${
+                                      deleteConfirmId === deptObj.id 
+                                        ? 'bg-red-500 text-white px-3 ring-4 ring-red-100 dark:ring-red-900/30 shadow-lg' 
+                                        : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
+                                    } cursor-pointer`}
+                                    title={deleteConfirmId === deptObj.id ? "Click again to confirm" : "Delete Department"}
+                                  >
+                                    {deleteConfirmId === deptObj.id && (
+                                      <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Confirm?</span>
+                                    )}
+                                    <Trash2 className={`${deleteConfirmId === deptObj.id ? 'w-3 h-3' : 'w-3.5 h-3.5'}`} />
+                                  </button>
+                                </div>
                               )}
                               {isActive ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
                             </div>
@@ -986,7 +1078,10 @@ export default function TeacherDashboard() {
                       recentAttendance.map((record) => (
                         <div key={record.id} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800">
                           <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center shadow-sm overflow-hidden">
+                            <div 
+                              onClick={() => record.studentAvatarUrl && setZoomedPhoto(record.studentAvatarUrl)}
+                              className={`w-10 h-10 bg-white dark:bg-slate-900 rounded-xl flex items-center justify-center shadow-sm overflow-hidden ${record.studentAvatarUrl ? 'cursor-zoom-in' : ''}`}
+                            >
                               {record.studentAvatarUrl ? (
                                 <img src={record.studentAvatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                               ) : (
@@ -1050,7 +1145,10 @@ export default function TeacherDashboard() {
                   {blacklistDocs.map((student: any) => (
                     <div key={student.id} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 rounded-2xl border transition-all bg-red-50/30 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 gap-4">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-red-100 dark:bg-red-900/20 overflow-hidden">
+                        <div 
+                          onClick={() => student.avatarUrl && setZoomedPhoto(student.avatarUrl)}
+                          className={`w-10 h-10 rounded-xl flex items-center justify-center bg-red-100 dark:bg-red-900/20 overflow-hidden ${student.avatarUrl ? 'cursor-zoom-in' : ''}`}
+                        >
                           {student.avatarUrl ? (
                             <img src={student.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                           ) : (
@@ -1177,13 +1275,31 @@ export default function TeacherDashboard() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {schedules.filter(s => s.date >= new Date().toISOString().split('T')[0]).slice(0, 6).map((item) => (
-                    <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 relative group">
-                      <button 
-                        onClick={() => handleDeleteSchedule(item.id)}
-                        className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                    <div key={item.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 relative group hover:border-blue-200 dark:hover:border-blue-800 transition-all">
+                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all z-10">
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            startEditSchedule(item);
+                          }}
+                          className="p-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-400 hover:text-blue-500 rounded-xl shadow-sm hover:scale-110 active:scale-95"
+                          title="Edit Schedule"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setScheduleToDelete(item.id);
+                          }}
+                          className="p-2 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 text-slate-400 hover:text-red-500 rounded-xl shadow-sm hover:scale-110 active:scale-95"
+                          title="Delete Schedule"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                       <div className="flex items-center gap-3 mb-2">
                         <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/40 rounded-lg flex items-center justify-center text-blue-600 font-bold text-xs">
                           {item.department.charAt(0)}
@@ -1215,92 +1331,215 @@ export default function TeacherDashboard() {
       {/* Schedule Modal */}
       {showScheduleModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Class Schedule</h3>
-              <button onClick={() => setShowScheduleModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="flex justify-between items-center mb-8">
+              <div>
+                <h3 className="text-2xl font-black text-slate-900 dark:text-white">Manage Schedules</h3>
+                <p className="text-sm text-slate-500">Plan and track your upcoming classes</p>
+              </div>
+              <button onClick={() => {
+                setShowScheduleModal(false);
+                setEditingScheduleId(null);
+                setScheduleForm({
+                  subject: '',
+                  department: 'BCA',
+                  semester: '1',
+                  startTime: '10:00',
+                  endTime: '11:00',
+                  date: new Date().toISOString().split('T')[0],
+                  requireGPS: true,
+                  gracePeriod: '15'
+                });
+              }} className="p-2 bg-slate-100 dark:bg-slate-800 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded-full transition-all">
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <form onSubmit={handleAddSchedule} className="space-y-4">
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Subject / Topic</label>
-                <input 
-                  type="text" 
-                  required
-                  placeholder="e.g. Advanced Java, Discrete Math"
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  value={scheduleForm.subject}
-                  onChange={(e) => setScheduleForm({...scheduleForm, subject: e.target.value})}
-                />
-              </div>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              {/* Form Side */}
+              <div className="lg:col-span-1 border-r border-slate-100 dark:border-slate-800 pr-0 lg:pr-8">
+                <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">
+                  {editingScheduleId ? 'Edit Schedule' : 'Create New'}
+                </h4>
+                <form onSubmit={handleAddSchedule} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-black text-slate-500 uppercase mb-2">Subject / Topic</label>
+                    <input 
+                      type="text" 
+                      required
+                      placeholder="e.g. Advanced Java"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      value={scheduleForm.subject}
+                      onChange={(e) => setScheduleForm({...scheduleForm, subject: e.target.value})}
+                    />
+                  </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Department</label>
-                  <select 
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    value={scheduleForm.department}
-                    onChange={(e) => setScheduleForm({...scheduleForm, department: e.target.value})}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-black text-slate-500 uppercase mb-2">Dept</label>
+                      <select 
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        value={scheduleForm.department}
+                        onChange={(e) => setScheduleForm({...scheduleForm, department: e.target.value})}
+                      >
+                        {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
+                        {departments.length === 0 && <option value="BCA">BCA</option>}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-slate-500 uppercase mb-2">Sem</label>
+                      <select 
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        value={scheduleForm.semester}
+                        onChange={(e) => setScheduleForm({...scheduleForm, semester: e.target.value})}
+                      >
+                        {(() => {
+                          const deptObj = departments.find(d => d.name === scheduleForm.department);
+                          const total = deptObj?.totalSemesters || 8;
+                          return Array.from({ length: total }, (_, i) => i + 1).map(s => (
+                            <option key={s} value={s.toString()}>Sem {s}</option>
+                          ));
+                        })()}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-black text-slate-500 uppercase mb-2">Date</label>
+                    <input 
+                      type="date" 
+                      required
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      value={scheduleForm.date}
+                      onChange={(e) => setScheduleForm({...scheduleForm, date: e.target.value})}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-black text-slate-500 uppercase mb-2">Start</label>
+                      <input 
+                        type="time" 
+                        required
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        value={scheduleForm.startTime}
+                        onChange={(e) => setScheduleForm({...scheduleForm, startTime: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-slate-500 uppercase mb-2">End</label>
+                      <input 
+                        type="time" 
+                        required
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        value={scheduleForm.endTime}
+                        onChange={(e) => setScheduleForm({...scheduleForm, endTime: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-black text-slate-500 uppercase mb-2">Grace Period</label>
+                      <select 
+                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                        value={scheduleForm.gracePeriod}
+                        onChange={(e) => setScheduleForm({...scheduleForm, gracePeriod: e.target.value})}
+                      >
+                        <option value="5">5 Mins</option>
+                        <option value="10">10 Mins</option>
+                        <option value="15">15 Mins</option>
+                        <option value="30">30 Mins</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-black text-slate-500 uppercase mb-2">Security</label>
+                      <button 
+                        type="button"
+                        onClick={() => setScheduleForm({...scheduleForm, requireGPS: !scheduleForm.requireGPS})}
+                        className={`w-full py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-2 ${scheduleForm.requireGPS ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-100 dark:shadow-none' : 'bg-slate-50 border-slate-100 text-slate-400 dark:bg-slate-800 dark:border-slate-700'}`}
+                      >
+                        <MapPin className="w-3 h-3" />
+                        GPS {scheduleForm.requireGPS ? 'ON' : 'OFF'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button 
+                    type="submit"
+                    disabled={isSavingSchedule}
+                    className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none flex items-center justify-center gap-2 mt-4"
                   >
-                    {departments.map(d => <option key={d.id} value={d.name}>{d.name}</option>)}
-                    {departments.length === 0 && <option value="BCA">BCA</option>}
-                  </select>
-                </div>
-                <div>
-                   <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Semester</label>
-                   <select 
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    value={scheduleForm.semester}
-                    onChange={(e) => setScheduleForm({...scheduleForm, semester: e.target.value})}
-                  >
-                    {[1,2,3,4,5,6].map(s => <option key={s} value={s.toString()}>Sem {s}</option>)}
-                  </select>
-                </div>
+                    {isSavingSchedule ? <Loader2 className="w-5 h-5 animate-spin" /> : editingScheduleId ? <><Save className="w-5 h-5" /> Update Schedule</> : <><Plus className="w-5 h-5" /> Add to Schedule</>}
+                  </button>
+                  {editingScheduleId && (
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        setEditingScheduleId(null);
+                        setScheduleForm({
+                          subject: '',
+                          department: 'BCA',
+                          semester: '1',
+                          startTime: '10:00',
+                          endTime: '11:00',
+                          date: new Date().toISOString().split('T')[0],
+                          requireGPS: true,
+                          gracePeriod: '15'
+                        });
+                      }}
+                      className="w-full py-2 text-slate-500 text-xs font-bold hover:underline"
+                    >
+                      Cancel Editing
+                    </button>
+                  )}
+                </form>
               </div>
 
-              <div>
-                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Date</label>
-                <input 
-                  type="date" 
-                  required
-                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                  value={scheduleForm.date}
-                  onChange={(e) => setScheduleForm({...scheduleForm, date: e.target.value})}
-                />
+              {/* List Side */}
+              <div className="lg:col-span-2">
+                <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-6">Existing Schedules</h4>
+                {schedules.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-slate-400 bg-slate-50 dark:bg-slate-800/30 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800">
+                    <Calendar className="w-12 h-12 mb-2 opacity-20" />
+                    <p className="text-sm font-bold">No schedules found</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {schedules.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 group hover:bg-white dark:hover:bg-slate-800 transition-all">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-xl flex items-center justify-center text-blue-600 font-bold text-[10px]">
+                            {item.department.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-bold text-slate-900 dark:text-white text-sm">{item.subject}</p>
+                            <p className="text-[10px] text-slate-500 font-black uppercase">{item.department} • Sem {item.semester} • {item.date}</p>
+                          </div>
+                        </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg">
+                              {item.startTime} - {item.endTime}
+                            </span>
+                            <button 
+                              onClick={() => startEditSchedule(item)}
+                              className="p-2 text-slate-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => setScheduleToDelete(item.id)}
+                              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Start Time</label>
-                  <input 
-                    type="time" 
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    value={scheduleForm.startTime}
-                    onChange={(e) => setScheduleForm({...scheduleForm, startTime: e.target.value})}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">End Time</label>
-                  <input 
-                    type="time" 
-                    required
-                    className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    value={scheduleForm.endTime}
-                    onChange={(e) => setScheduleForm({...scheduleForm, endTime: e.target.value})}
-                  />
-                </div>
-              </div>
-
-              <button 
-                type="submit"
-                disabled={isSavingSchedule}
-                className="w-full py-4 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none flex items-center justify-center gap-2 mt-4"
-              >
-                {isSavingSchedule ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Save Schedule'}
-              </button>
-            </form>
+            </div>
           </div>
         </div>
       )}
@@ -1329,9 +1568,13 @@ export default function TeacherDashboard() {
                     value={editSemester}
                     onChange={(e) => setEditSemester(e.target.value)}
                   >
-                    {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
-                      <option key={s} value={s}>Sem {s}</option>
-                    ))}
+                    {(() => {
+                      const deptObj = departments.find(d => d.name === editDepartment);
+                      const total = deptObj?.totalSemesters || 8;
+                      return Array.from({ length: total }, (_, i) => i + 1).map(s => (
+                        <option key={s} value={s}>Sem {s}</option>
+                      ));
+                    })()}
                   </select>
                 </div>
                 <div>
@@ -1370,13 +1613,106 @@ export default function TeacherDashboard() {
         </div>
       )}
 
-      {/* Add Department Modal */}
+      {/* Notifications Panel */}
+      <AnimatePresence>
+        {showNotifications && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-end sm:p-6 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ x: 300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 300, opacity: 0 }}
+              className="w-full sm:w-[400px] h-full sm:h-auto sm:max-h-[600px] bg-white dark:bg-slate-900 sm:rounded-[2.5rem] shadow-2xl flex flex-col"
+            >
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-blue-600 sm:rounded-t-[2.5rem] text-white">
+                <div className="flex items-center gap-3">
+                  <Bell className="w-5 h-5" />
+                  <h3 className="font-black tracking-tight">Notifications</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={handleClearNotifications}
+                    disabled={isClearingNotifs || notifications.length === 0}
+                    className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all text-[10px] font-black uppercase tracking-wider flex items-center gap-1 disabled:opacity-50"
+                  >
+                    {isClearingNotifs ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                    Clear
+                  </button>
+                  <button 
+                    onClick={() => setShowNotifications(false)}
+                    className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                {notifications.length === 0 ? (
+                  <div className="py-20 text-center space-y-4">
+                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto">
+                      <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                    </div>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">No alerts yet</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => (
+                    <div 
+                      key={notif.id} 
+                      onClick={async () => {
+                        if (!notif.read) {
+                          await updateDoc(doc(db, 'notifications', notif.id), { read: true });
+                        }
+                      }}
+                      className={`p-4 rounded-2xl border transition-all cursor-pointer group ${notif.read ? 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800' : 'bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900/30'}`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`p-2 rounded-xl mt-1 ${notif.type === 'schedule' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-600 dark:bg-slate-800'}`}>
+                          {notif.type === 'schedule' ? <Clock className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                        </div>
+                        <div className="flex-1">
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className="text-sm font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">{notif.title}</h4>
+                            {!notif.read && <span className="w-2 h-2 bg-blue-600 rounded-full mt-1.5" />}
+                          </div>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-2">{notif.message}</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                            {new Date(notif.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+                <button 
+                  onClick={() => setShowNotifications(false)}
+                  className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black rounded-2xl text-xs uppercase tracking-[0.2em] shadow-lg shadow-slate-200 dark:shadow-none active:scale-95 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       {showAddDeptModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Add Department</h3>
-              <button onClick={() => setShowAddDeptModal(false)} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
+                {editingDept ? 'Edit' : 'Add'} Department
+              </h3>
+              <button 
+                onClick={() => {
+                  setShowAddDeptModal(false);
+                  setEditingDept(null);
+                  setNewDeptName('');
+                  setNewDeptSemesters('8');
+                }} 
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
                 <X className="w-6 h-6" />
               </button>
             </div>
@@ -1392,10 +1728,30 @@ export default function TeacherDashboard() {
                   onChange={(e) => setNewDeptName(e.target.value)}
                 />
               </div>
+
+              <div>
+                <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-1.5">Total Semesters</label>
+                <input
+                  type="number"
+                  min="1"
+                  max="12"
+                  required
+                  placeholder="e.g. 8"
+                  className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  value={newDeptSemesters}
+                  onChange={(e) => setNewDeptSemesters(e.target.value)}
+                />
+              </div>
+
               <div className="flex gap-3 pt-2">
                 <button 
                   type="button"
-                  onClick={() => setShowAddDeptModal(false)}
+                  onClick={() => {
+                    setShowAddDeptModal(false);
+                    setEditingDept(null);
+                    setNewDeptName('');
+                    setNewDeptSemesters('8');
+                  }}
                   className="flex-1 py-3 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all"
                 >
                   Cancel
@@ -1405,7 +1761,7 @@ export default function TeacherDashboard() {
                   disabled={isAddingDept}
                   className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-2xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none flex items-center justify-center gap-2"
                 >
-                  {isAddingDept ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create'}
+                  {isAddingDept ? <Loader2 className="w-5 h-5 animate-spin" /> : editingDept ? 'Save' : 'Create'}
                 </button>
               </div>
             </form>
@@ -1480,6 +1836,7 @@ export default function TeacherDashboard() {
       )}
 
       {/* Mobile Bottom Nav */}
+      {!isEmbedded && (
       <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 px-6 py-3 flex justify-between items-center z-40 transition-colors">
         <button 
           onClick={() => navigate('/')}
@@ -1526,6 +1883,52 @@ export default function TeacherDashboard() {
           <span className="text-[10px] font-bold">Profile</span>
         </button>
       </div>
+      )}
+
+      {/* Photo Zoom Modal */}
+      {zoomedPhoto && (
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 z-[100] animate-in fade-in duration-300">
+          <button 
+            onClick={() => setZoomedPhoto(null)}
+            className="absolute top-8 right-8 p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors text-white"
+          >
+            <X className="w-8 h-8" />
+          </button>
+          <img 
+            src={zoomedPhoto} 
+            alt="Profile View" 
+            className="max-w-full max-h-[85vh] rounded-2xl shadow-2xl animate-in zoom-in-95 duration-300"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+      )}
+
+      {/* Schedule Delete Confirmation */}
+      {scheduleToDelete && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[110] animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] p-8 w-full max-w-sm shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800">
+            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-3xl flex items-center justify-center text-red-600 mb-6 mx-auto">
+              <Trash2 className="w-10 h-10" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white text-center mb-2">Delete Schedule?</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-center mb-8 font-medium">This action cannot be undone. Are you sure you want to remove this schedule from the calendar?</p>
+            <div className="grid grid-cols-2 gap-4">
+              <button 
+                onClick={() => setScheduleToDelete(null)}
+                className="py-4 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-black rounded-2xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+              >
+                Keep it
+              </button>
+              <button 
+                onClick={() => handleDeleteSchedule(scheduleToDelete)}
+                className="py-4 bg-red-600 text-white font-black rounded-2xl hover:bg-red-700 transition-all shadow-lg shadow-red-200 dark:shadow-none"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

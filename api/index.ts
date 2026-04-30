@@ -81,7 +81,7 @@ app.post("/api/admin/create-student", async (req, res) => {
         role: 'student',
         semester: semester.toString(),
         courseName: department,
-        courseId: department.toLowerCase(),
+        courseId: department.toUpperCase(),
         createdAt: new Date().toISOString(),
         profileComplete: true
       });

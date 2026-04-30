@@ -1,6 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, onSnapshot, orderBy, limit, doc, getDoc } from 'firebase/firestore';
+import { 
+  collection, 
+  query, 
+  where, 
+  onSnapshot, 
+  orderBy, 
+  limit, 
+  doc, 
+  getDoc,
+  writeBatch
+} from 'firebase/firestore';
 import { db, auth, logError } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -21,11 +31,15 @@ import {
   Moon,
   Sun,
   Mail,
-  Phone
+  Phone,
+  Trash2,
+  Loader2,
+  X
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
+import { motion, AnimatePresence } from 'motion/react';
 
-export default function StudentHome() {
+export default function StudentHome({ isEmbedded }: { isEmbedded?: boolean }) {
   const { user, profile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -44,15 +58,38 @@ export default function StudentHome() {
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
   const [teacherInfo, setTeacherInfo] = useState<{name: string, phone?: string, email?: string} | null>(null);
   const [loading, setLoading] = useState(true);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [isClearingNotifs, setIsClearingNotifs] = useState(false);
+
+  const handleClearNotifications = async () => {
+    if (notifications.length === 0) return;
+    if (!window.confirm("Are you sure you want to clear all your notifications?")) return;
+
+    setIsClearingNotifs(true);
+    try {
+      const batch = writeBatch(db);
+      notifications.forEach(notif => {
+        batch.delete(doc(db, 'notifications', notif.id));
+      });
+      await batch.commit();
+      setShowNotifications(false);
+    } catch (err) {
+      console.error("Error clearing notifications:", err);
+      alert("Failed to clear notifications");
+    } finally {
+      setIsClearingNotifs(false);
+    }
+  };
 
   useEffect(() => {
-    if (!user?.uid || !profile?.courseId) {
+    if (!user?.uid) {
       setLoading(false);
       return;
     }
 
-    const dept = (profile.courseId || profile.courseName || profile.department || '').toUpperCase();
-    const sem = String(profile.semester || '1');
+    const dept = (profile?.courseId || profile?.courseName || profile?.department || 'ALL').toUpperCase();
+    const sem = String(profile?.semester || 'ALL');
 
     // Fetch Teacher Info
     const fetchTeacherInfo = async () => {
@@ -169,6 +206,26 @@ export default function StudentHome() {
       }
     );
 
+    // 7. Notifications Listener
+    const unsubNotif = onSnapshot(
+      query(
+        collection(db, 'notifications'),
+        where('targetDept', 'in', [dept, 'ALL']),
+        limit(50)
+      ),
+      (snapshot) => {
+        const allNotifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Filter by semester and sort by timestamp DESC client-side to avoid index requirement
+        const filtered = allNotifs
+          .filter((n: any) => 
+            !n.targetSem || n.targetSem === 'ALL' || String(n.targetSem) === sem || sem === 'ALL'
+          )
+          .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+        
+        setNotifications(filtered.slice(0, 20));
+      }
+    );
+
     return () => {
       unsubAtt();
       unsubRecentAtt();
@@ -177,19 +234,46 @@ export default function StudentHome() {
       unsubFees();
       unsubSchedule();
       unsubActiveSchedules();
+      unsubNotif();
     };
   }, [user?.uid, profile?.courseId, profile?.courseName, profile?.semester, profile?.department]);
 
   useEffect(() => {
-    const attPercentage = sessionCount > 0 ? Math.round((attendanceCount / sessionCount) * 100) : 0;
-    
     // Calculate Fee Stats
-    const cleanStr = (str: string) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
-    const dept = cleanStr(profile?.courseId) || cleanStr(profile?.courseName) || cleanStr(profile?.department) || 'BCA';
+    const getExpectedFee = () => {
+      if (!feeStructure || Object.keys(feeStructure).length === 0) return 0;
+
+      const studentDept = (profile?.courseId || profile?.courseName || profile?.department || '').trim();
+      const currentSem = Number(profile?.semester) || 1;
+
+      // 1. Try exact match
+      if (feeStructure[studentDept] && feeStructure[studentDept][currentSem] !== undefined) {
+        return feeStructure[studentDept][currentSem];
+      }
+
+      // 2. Try uppercase match
+      const upperDept = studentDept.toUpperCase();
+      if (feeStructure[upperDept] && feeStructure[upperDept][currentSem] !== undefined) {
+        return feeStructure[upperDept][currentSem];
+      }
+
+      // 3. Try "cleaned" match (fallback for legacy)
+      const cleanStr = (str: string) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
+      const cleanedStudentDept = cleanStr(studentDept) || 'BCA';
+      
+      // Look for a key in feeStructure that, when cleaned, matches the cleaned student dept
+      const matchingKey = Object.keys(feeStructure).find(key => cleanStr(key) === cleanedStudentDept);
+      if (matchingKey && feeStructure[matchingKey][currentSem] !== undefined) {
+        return feeStructure[matchingKey][currentSem];
+      }
+
+      return 0;
+    };
+
+    const attPercentage = sessionCount > 0 ? Math.round((attendanceCount / sessionCount) * 100) : 0;
     const currentSem = Number(profile?.semester) || 1;
+    const expected = getExpectedFee();
     
-    // Calculate dues ONLY for the current semester
-    const expected = feeStructure[dept]?.[currentSem] || 0;
     const paid = studentFees
       .filter(f => f.status === 'confirmed' && Number(f.semester) === currentSem)
       .reduce((acc, f) => acc + Number(f.amount || 0), 0);
@@ -220,6 +304,80 @@ export default function StudentHome() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 transition-colors">
+      {/* Notifications Modal */}
+      <AnimatePresence>
+        {showNotifications && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-end sm:p-6 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ x: 300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 300, opacity: 0 }}
+              className="w-full sm:w-[400px] h-full sm:h-auto sm:max-h-[600px] bg-white dark:bg-slate-900 sm:rounded-[2.5rem] shadow-2xl flex flex-col"
+            >
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-blue-600 sm:rounded-t-[2.5rem] text-white">
+                <div className="flex items-center gap-3">
+                  <Bell className="w-5 h-5" />
+                  <h3 className="font-black tracking-tight">Notifications</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={handleClearNotifications}
+                    disabled={isClearingNotifs || notifications.length === 0}
+                    className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all text-[10px] font-black uppercase tracking-wider flex items-center gap-1 disabled:opacity-50"
+                  >
+                    {isClearingNotifs ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
+                    Clear
+                  </button>
+                  <button 
+                    onClick={() => setShowNotifications(false)}
+                    className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+                {notifications.length === 0 ? (
+                  <div className="py-20 text-center space-y-4">
+                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto">
+                      <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600" />
+                    </div>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">All caught up!</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => (
+                    <div key={notif.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-800 transition-all group">
+                      <div className="flex items-start gap-3">
+                        <div className={`p-2 rounded-xl mt-1 ${notif.type === 'schedule' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-600 dark:bg-slate-800'}`}>
+                          {notif.type === 'schedule' ? <Clock className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">{notif.title}</h4>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-2">{notif.message}</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                            {new Date(notif.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              
+              <div className="p-4 border-t border-slate-100 dark:border-slate-800">
+                <button 
+                  onClick={() => setShowNotifications(false)}
+                  className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black rounded-2xl text-xs uppercase tracking-[0.2em] shadow-lg shadow-slate-200 dark:shadow-none active:scale-95 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {/* Header */}
       <header className="bg-blue-600 text-white px-6 pt-12 pb-20 rounded-b-[40px] shadow-lg shadow-blue-100 dark:shadow-none relative overflow-hidden transition-all">
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
@@ -242,7 +400,7 @@ export default function StudentHome() {
               <h1 className="text-2xl font-black tracking-tight">{profile?.name}</h1>
               <div className="flex items-center gap-2 mt-0.5">
                 <span className="px-1.5 py-0.5 bg-white/20 rounded text-[9px] font-bold backdrop-blur-sm border border-white/10">Sem {profile?.semester}</span>
-                <span className="px-1.5 py-0.5 bg-white/20 rounded text-[9px] font-bold backdrop-blur-sm border border-white/10">{profile?.courseName}</span>
+                <span className="px-1.5 py-0.5 bg-white/20 rounded text-[9px] font-bold backdrop-blur-sm border border-white/10 uppercase">{profile?.courseName}</span>
               </div>
             </div>
           </div>
@@ -253,8 +411,16 @@ export default function StudentHome() {
             >
               {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </button>
-            <button className="p-2 bg-white/20 rounded-xl backdrop-blur-md">
+            <button 
+              onClick={() => setShowNotifications(true)}
+              className="p-2 bg-white/20 rounded-xl backdrop-blur-md relative hover:bg-white/30 transition-all"
+            >
               <Bell className="w-5 h-5" />
+              {notifications.length > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-blue-600 flex items-center justify-center text-[8px] font-black">
+                  {notifications.length > 9 ? '9+' : notifications.length}
+                </span>
+              )}
             </button>
             <button 
               onClick={() => signOut(auth)}
@@ -444,8 +610,8 @@ export default function StudentHome() {
           </>
         )}
       </main>
-
-      {/* Bottom Tab Bar (Mobile Style) */}
+      {!isEmbedded && (
+      /* Bottom Tab Bar (Mobile Style) */
       <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-8 py-4 flex justify-between items-center z-50 transition-colors">
         <button className="flex flex-col items-center gap-1 text-blue-600 dark:text-blue-400">
           <Calendar className="w-6 h-6" />
@@ -502,6 +668,7 @@ export default function StudentHome() {
           <span className="text-[10px] font-bold">Profile</span>
         </button>
       </div>
+      )}
     </div>
   );
 }

@@ -28,7 +28,7 @@ import {
   CartesianGrid 
 } from 'recharts';
 
-export default function StudentAnalytics() {
+export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean }) {
   const { profile } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -121,13 +121,15 @@ export default function StudentAnalytics() {
   const COLORS = ['#3b82f6', '#e2e8f0'];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24 transition-colors">
-      <button 
-        onClick={() => navigate('/')}
-        className="mb-8 flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-      >
-        <ArrowLeft className="w-5 h-5" /> Back to Home
-      </button>
+    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors ${isEmbedded ? '' : 'pb-24'}`}>
+      {!isEmbedded && (
+        <button 
+          onClick={() => navigate('/')}
+          className="mb-8 flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" /> Back to Home
+        </button>
+      )}
 
       <div className="max-w-5xl mx-auto space-y-8">
         <div>

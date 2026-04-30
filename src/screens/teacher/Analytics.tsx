@@ -30,7 +30,7 @@ import {
   Pie
 } from 'recharts';
 
-export default function TeacherAnalytics() {
+export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean }) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [departments, setDepartments] = useState<any[]>([]);
@@ -128,12 +128,14 @@ export default function TeacherAnalytics() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24">
-      <button 
-        onClick={() => navigate('/')}
-        className="mb-8 flex items-center gap-2 text-slate-600 font-semibold hover:text-blue-600 transition-colors"
-      >
-        <ArrowLeft className="w-5 h-5" /> Back to Dashboard
-      </button>
+      {!isEmbedded && (
+        <button 
+          onClick={() => navigate('/')}
+          className="mb-8 flex items-center gap-2 text-slate-600 font-semibold hover:text-blue-600 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" /> Back to Dashboard
+        </button>
+      )}
 
       <div className="max-w-6xl mx-auto space-y-8">
         <div>

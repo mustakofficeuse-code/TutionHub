@@ -73,7 +73,7 @@ export default function AuthGateway() {
                role: user.email === 'teacher@tutionhub.com' || user.email === 'admin@tutionhub.com' ? 'teacher' : 'student',
                semester: '1',
                courseName: 'BCA',
-               courseId: 'bca',
+               courseId: 'BCA',
                createdAt: new Date().toISOString(),
                profileComplete: true
              });
@@ -272,7 +272,7 @@ export default function AuthGateway() {
               role: 'student',
               semester: '1',
               courseName: 'BCA',
-              courseId: 'bca',
+              courseId: 'BCA',
               createdAt: new Date().toISOString(),
               profileComplete: true
             });
@@ -378,7 +378,7 @@ export default function AuthGateway() {
         role: 'student',
         semester,
         courseName: department,
-        courseId: department.toLowerCase(),
+        courseId: department.toUpperCase(),
         createdAt: new Date().toISOString(),
         profileComplete: true
       });
