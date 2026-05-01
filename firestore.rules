@@ -157,19 +157,6 @@ service cloud.firestore {
       allow update: if isAdmin();
     }
 
-    // Quizzes
-    match /quizzes/{quizId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
-    }
-
-    // Quiz Results
-    match /quiz_results/{resultId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAdmin();
-    }
-
     // Doubts
     match /doubts/{doubtId} {
       allow read: if isAuthenticated();

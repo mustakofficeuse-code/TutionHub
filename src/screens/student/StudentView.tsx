@@ -84,7 +84,10 @@ export default function StudentView() {
           >
             {(() => {
               const Component = TABS[activeTab].component;
-              return <Component isEmbedded />;
+              return <Component isEmbedded onTabChange={(id: string) => {
+                const index = TABS.findIndex(t => t.id === id);
+                if (index !== -1) changeTab(index);
+              }} />;
             })()}
           </motion.div>
         </AnimatePresence>

@@ -34,15 +34,38 @@ import {
   Phone,
   Trash2,
   Loader2,
-  X
+  X,
+  Search
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { motion, AnimatePresence } from 'motion/react';
 
-export default function StudentHome({ isEmbedded }: { isEmbedded?: boolean }) {
+export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: boolean, onTabChange?: (id: string) => void }) {
   const { user, profile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  const handleNav = (path: string, tabId?: string) => {
+    if (isEmbedded && tabId && onTabChange) {
+      onTabChange(tabId);
+    } else {
+      navigate(path);
+    }
+  };
+
+  const formatTime12h = (timeStr: string) => {
+    if (!timeStr) return '';
+    try {
+      const [hours, minutes] = timeStr.split(':');
+      let h = parseInt(hours);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12;
+      h = h ? h : 12;
+      return `${h}:${minutes} ${ampm}`;
+    } catch (e) {
+      return timeStr;
+    }
+  };
   const today = new Date().toISOString().split('T')[0];
 
   const [attendanceCount, setAttendanceCount] = useState(0);
@@ -61,6 +84,7 @@ export default function StudentHome({ isEmbedded }: { isEmbedded?: boolean }) {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isClearingNotifs, setIsClearingNotifs] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   const handleClearNotifications = async () => {
     if (notifications.length === 0) return;
@@ -120,9 +144,16 @@ export default function StudentHome({ isEmbedded }: { isEmbedded?: boolean }) {
 
     // 2. Recent Attendance Feed
     const unsubRecentAtt = onSnapshot(
-      query(collection(db, 'attendance'), where('studentId', '==', user.uid), orderBy('timestamp', 'desc'), limit(5)),
+      query(collection(db, 'attendance'), where('studentId', '==', user.uid)),
       (snapshot) => {
-        setRecentAttendance(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+        const sorted = snapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() }))
+          .sort((a: any, b: any) => {
+            const timeA = a.timestamp?.seconds ? a.timestamp.seconds * 1000 : new Date(a.timestamp).getTime();
+            const timeB = b.timestamp?.seconds ? b.timestamp.seconds * 1000 : new Date(b.timestamp).getTime();
+            return timeB - timeA;
+          });
+        setRecentAttendance(sorted.slice(0, 5));
       },
       (error) => logError("Error fetching recent attendance:", error)
     );
@@ -297,9 +328,9 @@ export default function StudentHome({ isEmbedded }: { isEmbedded?: boolean }) {
   }, [attendanceCount, sessionCount, feeStructure, studentFees, profile?.courseName, profile?.semester, profile?.courseId, profile?.department]);
 
   const quickStats = [
-    { label: 'Attendance', value: stats.attendance, icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50', link: '/student/analytics' },
-    { label: 'Payable Fee', value: stats.payableFee, icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/fees/history' },
-    { label: 'Status', value: stats.feesStatus, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', link: '/fees/history' },
+    { label: 'Attendance', value: stats.attendance, icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50', link: '/student/analytics', tabId: 'stats' },
+    { label: 'Payable Fee', value: stats.payableFee, icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/fees/history', tabId: 'fees' },
+    { label: 'Status', value: stats.feesStatus, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', link: '/fees/history', tabId: 'fees' },
   ];
 
   return (
@@ -383,19 +414,35 @@ export default function StudentHome({ isEmbedded }: { isEmbedded?: boolean }) {
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
         <div className="relative z-10 flex justify-between items-start">
           <div className="flex items-center gap-4">
-            <div 
-              onClick={() => navigate('/profile')}
-              className="w-14 h-14 bg-white/20 rounded-2xl p-1 backdrop-blur-md cursor-pointer hover:scale-105 transition-transform overflow-hidden"
+            <motion.div 
+              layoutId="profile-avatar"
+              onClick={() => profile?.avatarUrl && setZoomedImage(profile.avatarUrl)}
+              className="w-14 h-14 bg-white/20 rounded-2xl p-1 backdrop-blur-md cursor-pointer hover:scale-105 transition-transform overflow-hidden group relative"
+              title={profile?.avatarUrl ? "View Image" : ""}
             >
               <div className="w-full h-full bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-xl overflow-hidden">
                 {profile?.avatarUrl ? (
-                  <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  <>
+                    <motion.img 
+                      layoutId="zoomed-image"
+                      src={profile.avatarUrl} 
+                      alt="" 
+                      className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer" 
+                    />
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                      <Search className="w-4 h-4 text-white" />
+                    </div>
+                  </>
                 ) : (
                   profile?.name?.charAt(0) || 'S'
                 )}
               </div>
-            </div>
-            <div>
+            </motion.div>
+            <div 
+              onClick={() => handleNav('/profile', 'profile')}
+              className="cursor-pointer hover:opacity-80 transition-opacity"
+            >
               <p className="text-blue-100 text-[10px] font-black uppercase tracking-wider">Welcome back,</p>
               <h1 className="text-2xl font-black tracking-tight">{profile?.name}</h1>
               <div className="flex items-center gap-2 mt-0.5">
@@ -460,8 +507,8 @@ export default function StudentHome({ isEmbedded }: { isEmbedded?: boolean }) {
               {quickStats.map((stat, i) => (
                 <div 
                   key={i} 
-                  onClick={() => stat.link ? navigate(stat.link) : null}
-                  className={`bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center ${stat.link ? 'cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors' : ''}`}
+                  onClick={() => handleNav(stat.link, stat.tabId)}
+                  className={`bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors`}
                 >
                   <div className={`${stat.bg} dark:bg-slate-800 p-2 rounded-lg mb-2`}>
                     <stat.icon className={`${stat.color} w-5 h-5`} />
@@ -555,13 +602,18 @@ export default function StudentHome({ isEmbedded }: { isEmbedded?: boolean }) {
                           <Clock className="text-blue-600 dark:text-blue-400 w-6 h-6" />
                         </div>
                         <div>
-                          <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-0.5">{cls.type === 'active' ? 'Live Session' : 'Scheduled'}</p>
-                          <h4 className="font-bold text-slate-900 dark:text-white">{cls.subject || `${cls.department} Sem ${cls.semester}`}</h4>
+                          <p className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${cls.type === 'active' ? 'text-emerald-600' : 'text-blue-600'}`}>
+                            {cls.type === 'active' ? 'Live Session' : 'Scheduled'}
+                          </p>
+                          <h4 className="font-bold text-slate-900 dark:text-white">
+                            {cls.subject || `${cls.department} Sem ${cls.semester}`}
+                          </h4>
+                          {cls.topic && <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold italic mb-1">Topic: {cls.topic}</p>}
                           <p className="text-xs text-slate-500 dark:text-slate-400">{cls.teacherName || 'Teacher'} • {cls.date === today ? 'Today' : cls.date}</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{cls.startTime}</p>
+                        <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{formatTime12h(cls.startTime)}</p>
                         {cls.type === 'active' && (
                           <span className="inline-flex items-center gap-1 text-[8px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full uppercase mt-1">
                             <span className="w-1 h-1 bg-emerald-600 rounded-full animate-ping"></span>
@@ -592,9 +644,10 @@ export default function StudentHome({ isEmbedded }: { isEmbedded?: boolean }) {
                           <CheckCircle2 className="text-emerald-600 w-5 h-5" />
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white">Present</p>
+                          <p className="text-sm font-bold text-slate-900 dark:text-white">{record.subject || 'Present'}</p>
+                          {record.topic && <p className="text-[10px] text-blue-500 font-medium italic">Topic: {record.topic}</p>}
                           <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                            {new Date(record.timestamp).toLocaleDateString()} at {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {new Date(record.timestamp).toLocaleDateString()} at {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                           </p>
                         </div>
                       </div>
@@ -610,6 +663,40 @@ export default function StudentHome({ isEmbedded }: { isEmbedded?: boolean }) {
           </>
         )}
       </main>
+
+      {/* Profile Image Zoom Modal */}
+      <AnimatePresence>
+        {zoomedImage && (
+          <div 
+            className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-4 cursor-zoom-out"
+            onClick={() => setZoomedImage(null)}
+          >
+            <motion.div 
+              layoutId="profile-avatar"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              className="relative max-w-2xl w-full aspect-square rounded-3xl overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <motion.img 
+                layoutId="zoomed-image"
+                src={zoomedImage} 
+                alt="Zoomed DP" 
+                className="w-full h-full object-cover" 
+                referrerPolicy="no-referrer" 
+              />
+              <button 
+                onClick={() => setZoomedImage(null)}
+                className="absolute top-6 right-6 w-12 h-12 bg-white/20 hover:bg-white/40 backdrop-blur-xl rounded-full flex items-center justify-center text-white transition-all shadow-lg border border-white/20 group"
+              >
+                <X className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       {!isEmbedded && (
       /* Bottom Tab Bar (Mobile Style) */
       <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-8 py-4 flex justify-between items-center z-50 transition-colors">

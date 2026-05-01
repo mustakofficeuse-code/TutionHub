@@ -457,13 +457,14 @@ export default function FeeManagement({ isEmbedded }: { isEmbedded?: boolean }) 
                         </div>
                       </div>
                       <button
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setExpandedDepts((prev) =>
                             prev.filter((d) => d !== dept),
                           );
-                          setSearchQuery(""); // Clear search to allow closing when shown via search
+                          setSearchQuery(""); 
                         }}
-                        className="w-14 h-14 flex items-center justify-center bg-white dark:bg-slate-900 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-2xl transition-all text-red-500 shadow-sm border border-slate-100 dark:border-slate-800 hover:border-red-200 active:scale-95"
+                        className="w-14 h-14 flex items-center justify-center bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all text-rose-500 shadow-sm border border-slate-100 dark:border-slate-800 hover:border-rose-200 active:scale-90"
                       >
                         <X className="w-6 h-6" />
                       </button>
@@ -1187,7 +1188,7 @@ export default function FeeManagement({ isEmbedded }: { isEmbedded?: boolean }) 
                             Txn ID: {p.transactionId}
                           </p>
                           <p className="text-xs text-slate-400 mt-1">
-                            {new Date(p.date || p.timestamp).toLocaleString()}
+                            {new Date(p.date || p.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric', hour12: true })}
                           </p>
                         </div>
                         {p.status === "pending" && (

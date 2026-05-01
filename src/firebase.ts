@@ -35,9 +35,10 @@ export const logError = (prefix: string, error: any) => {
       error.message.includes('failed-precondition')
     ))
   )) {
-    // Only log as warning if it's an offline error, otherwise ignore
+    // Suppress offline errors if navigator says we are offline, or log as a quiet warning
     if (error.message && error.message.includes('offline')) {
-      console.warn(prefix, error.message);
+      if (typeof navigator !== 'undefined' && !navigator.onLine) return;
+      console.warn(`[Offline] ${prefix}`, "Connection lost. Retrying in background...");
     }
     return;
   }

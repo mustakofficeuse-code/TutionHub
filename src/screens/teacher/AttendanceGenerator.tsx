@@ -3,6 +3,7 @@ import { doc, getDoc, setDoc, deleteDoc, collection, query, orderBy, onSnapshot,
 import { db } from '../../firebase';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../../context/AuthContext';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   QrCode, 
   MapPin, 
@@ -34,13 +35,14 @@ const getTodayString = () => {
   return `${year}-${month}-${day}`;
 };
 
-export default function AttendanceGenerator() {
+export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boolean }) {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   
   const [tuitionLocation, setTuitionLocation] = useState<{lat: number, lng: number} | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [isClearingFeed, setIsClearingFeed] = useState(false);
   const [activeSchedules, setActiveSchedules] = useState<any[]>([]);
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
   const [indexError, setIndexError] = useState(false);
@@ -48,6 +50,8 @@ export default function AttendanceGenerator() {
   const [newSchedule, setNewSchedule] = useState({
     department: 'BCA',
     semester: '1',
+    subject: '',
+    topic: '',
     startTime: '',
     endTime: '',
     requireGPS: true,
@@ -265,53 +269,32 @@ export default function AttendanceGenerator() {
     }
   };
 
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{id: string, dept: string} | null>(null);
+  const [showClearFeedConfirm, setShowClearFeedConfirm] = useState(false);
 
   const deleteSchedule = async (id: string, dept: string) => {
-    console.log(`[Teacher] Attempting to delete schedule: id=${id}, dept=${dept}`);
-    
-    // Use multi-click confirmation instead of window.confirm for iframe reliability
-    if (deleteConfirmId !== id) {
-      setDeleteConfirmId(id);
-      // Reset confirmation after 3 seconds
-      setTimeout(() => setDeleteConfirmId(null), 3000);
-      return;
-    }
-    
-    setDeleteConfirmId(null);
     setSaving(true);
     setSaveStatus({ type: null, message: '' });
 
     try {
       await deleteDoc(doc(db, 'attendance_schedules', id));
-      console.log(`[Teacher] Schedule ${id} deleted successfully`);
       setSaveStatus({ type: 'success', message: `Attendance window for ${dept} removed.` });
-      // Clear status after 3s
       setTimeout(() => setSaveStatus({ type: null, message: '' }), 3000);
+      setShowDeleteConfirm(null);
     } catch (error) {
       console.error("[Teacher] Error deleting schedule:", error);
       setSaveStatus({ 
         type: 'error', 
-        message: "Failed to remove window. " + (error instanceof Error ? error.message : String(error)) 
+        message: "Failed to remove window."
       });
     } finally {
       setSaving(false);
     }
   };
 
-  const [isClearingFeed, setIsClearingFeed] = useState(false);
-  const [clearConfirmFeed, setClearConfirmFeed] = useState(false);
-
   const deleteAllAttendance = async () => {
     if (recentAttendance.length === 0) return;
     
-    if (!clearConfirmFeed) {
-      setClearConfirmFeed(true);
-      setTimeout(() => setClearConfirmFeed(false), 3000);
-      return;
-    }
-    
-    setClearConfirmFeed(false);
     setSaving(true);
     setIsClearingFeed(true);
     try {
@@ -322,6 +305,7 @@ export default function AttendanceGenerator() {
       await batch.commit();
       setSaveStatus({ type: 'success', message: "Attendance Feed cleared successfully." });
       setTimeout(() => setSaveStatus({ type: null, message: '' }), 3000);
+      setShowClearFeedConfirm(false);
     } catch (error) {
       console.error("Error clearing attendance:", error);
       setSaveStatus({ type: 'error', message: "Failed to clear records." });
@@ -412,12 +396,14 @@ export default function AttendanceGenerator() {
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 sm:p-6 transition-colors font-sans print:p-0 print:bg-white">
       <div className="max-w-7xl mx-auto print:max-w-none">
-        <button 
-          onClick={() => navigate('/')}
-          className="mb-6 sm:mb-8 flex items-center gap-2 text-slate-500 font-bold hover:text-blue-600 transition-all border-b-2 border-transparent hover:border-blue-600 pb-1 print:hidden"
-        >
-          <ArrowLeft className="w-5 h-5" /> Back to Dashboard
-        </button>
+        {!isEmbedded && (
+          <button 
+            onClick={() => navigate('/')}
+            className="mb-6 sm:mb-8 flex items-center gap-2 text-slate-500 font-bold hover:text-blue-600 transition-all border-b-2 border-transparent hover:border-blue-600 pb-1 print:hidden"
+          >
+            <ArrowLeft className="w-5 h-5" /> Back to Dashboard
+          </button>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8 items-start">
           
@@ -482,6 +468,29 @@ export default function AttendanceGenerator() {
               </h3>
               
               <div className="space-y-4 sm:space-y-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Subject Name</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. Computer Networks"
+                      value={newSchedule.subject}
+                      onChange={(e) => setNewSchedule({...newSchedule, subject: e.target.value})}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none md:text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Today's Topic</label>
+                    <input 
+                      type="text" 
+                      placeholder="e.g. OSI Model"
+                      value={newSchedule.topic}
+                      onChange={(e) => setNewSchedule({...newSchedule, topic: e.target.value})}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none md:text-sm"
+                    />
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Dept</label>
@@ -731,22 +740,12 @@ export default function AttendanceGenerator() {
                       </div>
                       <div className="flex items-center shrink-0">
                         <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteSchedule(sched.id, sched.department);
-                          }}
+                          onClick={() => setShowDeleteConfirm({id: sched.id, dept: sched.department})}
                           disabled={saving}
-                          className={`p-1.5 rounded-lg transition-all transform active:scale-95 flex items-center gap-1.5 ${
-                            deleteConfirmId === sched.id 
-                              ? 'bg-red-500 text-white px-3 ring-4 ring-red-100 dark:ring-red-900/30 shadow-lg' 
-                              : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20'
-                          } disabled:opacity-30`}
-                          title={deleteConfirmId === sched.id ? "Click again to confirm" : "Delete Window"}
+                          className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all"
+                          title="Delete Window"
                         >
-                          {deleteConfirmId === sched.id && (
-                            <span className="text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Confirm?</span>
-                          )}
-                          <Trash2 className={`${deleteConfirmId === sched.id ? 'w-3 h-3' : 'w-3.5 h-3.5'}`} />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </div>
@@ -761,16 +760,12 @@ export default function AttendanceGenerator() {
                 <div className="flex items-center gap-4">
                   <h3 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">Presence Feed</h3>
                   <button 
-                    onClick={deleteAllAttendance}
+                    onClick={() => setShowClearFeedConfirm(true)}
                     disabled={recentAttendance.length === 0 || saving || isClearingFeed}
-                    className={`flex items-center gap-1.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all px-3 py-2 rounded-xl h-fit ${
-                      clearConfirmFeed 
-                        ? 'bg-red-500 text-white shadow-lg ring-4 ring-red-100 animate-pulse' 
-                        : 'text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-900/20'
-                    } disabled:opacity-30`}
+                    className="flex items-center gap-1.5 text-[9px] sm:text-[10px] font-black uppercase tracking-widest transition-all px-3 py-2 rounded-xl h-fit text-red-500 hover:text-red-600 bg-red-50 dark:bg-red-900/20 disabled:opacity-30"
                   >
                     <Trash2 className="w-3 h-3" /> 
-                    {isClearingFeed ? 'Clearing...' : clearConfirmFeed ? 'Confirm Clear?' : 'Clear Feed'}
+                    {isClearingFeed ? 'Clearing...' : 'Clear Feed'}
                   </button>
                 </div>
                 <div className="px-3 py-1.5 sm:px-4 sm:py-2 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 rounded-xl sm:rounded-2xl text-[9px] sm:text-[10px] font-black uppercase tracking-widest flex items-center gap-2 self-start sm:self-center">
@@ -811,7 +806,7 @@ export default function AttendanceGenerator() {
                       </div>
                       <div className="text-right shrink-0 ml-4">
                         <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-white mb-1">
-                          {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                         </p>
                         <div className="hidden xs:flex items-center gap-1.5 text-[8px] sm:text-[9px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg sm:rounded-xl uppercase tracking-widest">
                           <CheckCircle className="w-2.5 h-2.5 sm:w-3 h-3" />
@@ -922,7 +917,7 @@ export default function AttendanceGenerator() {
                                     {new Date(student.lastTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}
                                   </p>
                                   <p className="text-[10px] opacity-50 uppercase tracking-wider">
-                                    {new Date(student.lastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {new Date(student.lastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                                   </p>
                                 </td>
                                 <td className="px-6 sm:px-8 py-5">
@@ -970,6 +965,93 @@ export default function AttendanceGenerator() {
           />
         </div>
       )}
+      {/* Delete Schedule Confirmation */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800">
+            <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+              <Trash2 className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white text-center mb-2">Delete Window?</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-center mb-8">
+              Are you sure you want to stop attendance for <span className="font-bold text-slate-900 dark:text-white">{showDeleteConfirm.dept}</span>? 
+              Students will no longer be able to mark attendance.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowDeleteConfirm(null)}
+                className="flex-1 py-3 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => deleteSchedule(showDeleteConfirm.id, showDeleteConfirm.dept)}
+                disabled={saving}
+                className="flex-1 py-3 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2"
+              >
+                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clear Feed Confirmation */}
+      {showClearFeedConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800">
+            <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mb-6 mx-auto">
+              <Trash2 className="w-8 h-8 text-red-600" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white text-center mb-2">Clear Live Feed?</h3>
+            <p className="text-slate-500 dark:text-slate-400 text-center mb-8">
+              This will clear the current session's live monitor feed. The master history records will remain safe.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setShowClearFeedConfirm(false)}
+                className="flex-1 py-3 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={deleteAllAttendance}
+                disabled={saving || isClearingFeed}
+                className="flex-1 py-3 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2"
+              >
+                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Clear All'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Photo Zoom Modal */}
+      <AnimatePresence>
+        {zoomedPhoto && (
+          <div 
+            className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[200] p-4"
+            onClick={() => setZoomedPhoto(null)}
+          >
+            <motion.div 
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              className="relative max-w-2xl w-full aspect-square rounded-3xl overflow-hidden shadow-2xl border border-white/10"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img src={zoomedPhoto} alt="Zoomed DP" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <button 
+                onClick={() => setZoomedPhoto(null)}
+                className="absolute top-6 right-6 w-12 h-12 bg-white/20 hover:bg-white/40 backdrop-blur-xl rounded-full flex items-center justify-center text-white transition-all shadow-lg border border-white/20 group"
+              >
+                <X className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }

@@ -38,7 +38,6 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
   const [overallStats, setOverallStats] = useState({
     totalStudents: 0,
     avgAttendance: 0,
-    avgQuizScore: 0,
     feeCollection: 0
   });
 
@@ -62,10 +61,6 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
       const attSnap = await getDocs(collection(db, 'attendance'));
       const attendance = attSnap.docs.map(doc => doc.data());
 
-      // 4. Fetch Quiz Results
-      const quizSnap = await getDocs(collection(db, 'quiz_results'));
-      const quizResults = quizSnap.docs.map(doc => doc.data());
-
       // 5. Fetch Fees (Payments)
       const feeSnap = await getDocs(collection(db, 'payments'));
       const fees = feeSnap.docs.map(doc => doc.data());
@@ -82,20 +77,13 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
            return aDept === dept.name.toUpperCase();
         });
         
-        const deptQuizzes = quizResults.filter((r: any) => deptStudents.some((s: any) => s.id === r.studentId));
-        
         const attPercent = deptAtt.length > 0 
           ? Math.round((deptAtt.filter(a => a.status === 'present').length / deptAtt.length) * 100) 
-          : 0;
-          
-        const quizAvg = deptQuizzes.length > 0
-          ? Math.round((deptQuizzes.reduce((acc, curr) => acc + (curr.score / curr.totalQuestions), 0) / deptQuizzes.length) * 100)
           : 0;
 
         return {
           name: dept.name,
           attendance: attPercent,
-          quizScore: quizAvg,
           students: deptStudents.length
         };
       });
@@ -106,16 +94,11 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
         ? Math.round((attendance.filter(a => a.status === 'present').length / attendance.length) * 100)
         : 0;
       
-      const totalQuizAvg = quizResults.length > 0
-        ? Math.round((quizResults.reduce((acc, curr) => acc + (curr.score / curr.totalQuestions), 0) / quizResults.length) * 100)
-        : 0;
-
       const totalCollected = fees.filter(f => f.status === 'paid').reduce((acc, curr) => acc + (curr.amount || 0), 0);
 
       setOverallStats({
         totalStudents: students.length,
         avgAttendance: totalAttPercent,
-        avgQuizScore: totalQuizAvg,
         feeCollection: totalCollected
       });
 
@@ -178,18 +161,6 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-yellow-50 rounded-xl text-yellow-600">
-                    <Trophy className="w-5 h-5" />
-                  </div>
-                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Avg Quiz Score</span>
-                </div>
-                <p className="text-3xl font-black text-slate-900 dark:text-white">{overallStats.avgQuizScore}%</p>
-                <div className="mt-2 h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                  <div className="h-full bg-yellow-500" style={{ width: `${overallStats.avgQuizScore}%` }} />
-                </div>
-              </div>
 
               <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3 mb-4">
@@ -204,7 +175,7 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 gap-8">
               {/* Course-wise Attendance */}
               <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
@@ -222,28 +193,6 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                         cursor={{ fill: '#f8fafc' }}
                       />
                       <Bar dataKey="attendance" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              {/* Course-wise Quiz Performance */}
-              <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                  <Trophy className="w-5 h-5 text-yellow-500" />
-                  Course-wise Quiz Scores (%)
-                </h3>
-                <div className="h-64 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={courseStats}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} domain={[0, 100]} />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                        cursor={{ fill: '#f8fafc' }}
-                      />
-                      <Bar dataKey="quizScore" fill="#eab308" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

@@ -11,6 +11,21 @@ const STATIC_QR_VALUE = "TUITIONHUB_WALL_QR_2026_SECURE";
 export default function AttendanceScanner() {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
+  
+  const formatTime12h = (timeStr: string) => {
+    if (!timeStr) return '';
+    try {
+      const [hours, minutes] = timeStr.split(':');
+      let h = parseInt(hours);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12;
+      h = h ? h : 12;
+      return `${h}:${minutes} ${ampm}`;
+    } catch (e) {
+      return timeStr;
+    }
+  };
+
   const [scanning, setScanning] = useState(true);
   const [status, setStatus] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
@@ -116,7 +131,7 @@ export default function AttendanceScanner() {
       }
 
       if (!matchingSchedule) {
-        throw new Error(`Schedule mismatch. Please ensure you are scanning at your scheduled time (${studentDept} Sem ${studentSem}). Current time: ${currentTimeStr}`);
+        throw new Error(`Schedule mismatch. Please ensure you are scanning at your scheduled time (${studentDept} Sem ${studentSem}). Current time: ${formatTime12h(currentTimeStr)}`);
       }
 
       // 4. Validate Location (ONLY if required by schedule)
@@ -161,6 +176,8 @@ export default function AttendanceScanner() {
         studentIdNum: profile?.studentId || 'N/A',
         department: studentDept,
         semester: studentSem,
+        subject: matchingSchedule.subject || 'General Class',
+        topic: matchingSchedule.topic || '',
         timestamp: new Date().toISOString(),
         date: todayString,
         status: 'present',
@@ -169,7 +186,8 @@ export default function AttendanceScanner() {
       });
 
       setStatus('success');
-      setMessage(`Knowledge is power! Your attendance for ${studentDept} Sem ${studentSem} has been recorded.`);
+      const sessionInfo = matchingSchedule.subject ? `for ${matchingSchedule.subject}${matchingSchedule.topic ? ` (${matchingSchedule.topic})` : ''}` : `for ${studentDept} Sem ${studentSem}`;
+      setMessage(`Knowledge is power! Your attendance ${sessionInfo} has been recorded.`);
       
     } catch (error: any) {
       logError("Attendance scanner error:", error);

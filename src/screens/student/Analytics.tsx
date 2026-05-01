@@ -34,11 +34,9 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>({
     attendance: 0,
-    quizAvg: 0,
     assignmentRate: 0,
     feeStatus: 'pending'
   });
-  const [quizData, setQuizData] = useState<any[]>([]);
 
   useEffect(() => {
     if (profile) fetchData();
@@ -54,19 +52,6 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
       const totalDays = attSnap.size;
       const presentDays = attSnap.docs.filter(d => d.data().status === 'present').length;
       const attPercent = totalDays > 0 ? Math.round((presentDays / totalDays) * 100) : 0;
-
-      // 2. Quizzes
-      const quizQuery = query(collection(db, 'quiz_results'), where('studentId', '==', uid));
-      const quizSnap = await getDocs(quizQuery);
-      const quizResults = quizSnap.docs.map(d => d.data());
-      const totalQuizScore = quizResults.reduce((acc, curr) => acc + (curr.score / curr.totalQuestions), 0);
-      const quizAvg = quizResults.length > 0 ? Math.round((totalQuizScore / quizResults.length) * 100) : 0;
-      
-      const chartData = quizResults.map((r, i) => ({
-        name: `Quiz ${i + 1}`,
-        score: Math.round((r.score / r.totalQuestions) * 100)
-      }));
-      setQuizData(chartData);
 
       // 3. Assignments
       let totalAssign = 0;
@@ -107,7 +92,6 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
 
       setStats({
         attendance: attPercent,
-        quizAvg,
         assignmentRate: assignRate,
         feeStatus: isFullyPaid ? 'Paid' : 'Pending'
       });
@@ -161,18 +145,6 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl text-yellow-600 dark:text-yellow-400">
-                    <Trophy className="w-5 h-5" />
-                  </div>
-                  <span className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Quiz Avg</span>
-                </div>
-                <p className="text-3xl font-black text-slate-900 dark:text-white">{stats.quizAvg}%</p>
-                <div className="mt-2 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div className="h-full bg-yellow-500" style={{ width: `${stats.quizAvg}%` }} />
-                </div>
-              </div>
 
               <div className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3 mb-4">
@@ -203,34 +175,6 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
 
             {/* Charts Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {/* Quiz Performance Chart */}
-              <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                  <BarChartIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                  Quiz Performance Trend
-                </h3>
-                <div className="h-64 w-full">
-                  {quizData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={quizData}>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} />
-                        <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#64748b' }} domain={[0, 100]} />
-                        <Tooltip 
-                          contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', backgroundColor: 'var(--tw-bg-opacity)' }}
-                          cursor={{ fill: '#f8fafc' }}
-                        />
-                        <Bar dataKey="score" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="h-full flex items-center justify-center text-slate-400 dark:text-slate-500 dark:text-slate-400 text-sm italic">
-                      No quiz data available yet.
-                    </div>
-                  )}
-                </div>
-              </div>
-
               {/* Attendance Distribution */}
               <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-6 flex items-center gap-2">

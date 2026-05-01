@@ -198,45 +198,6 @@
       },
       "required": ["assignmentId", "studentUid", "submissionUrl", "status"]
     },
-    "quizzes": {
-      "title": "Quiz",
-      "description": "Quizzes created by teachers",
-      "type": "object",
-      "properties": {
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "batchId": { "type": "string" },
-        "subject": { "type": "string" },
-        "timeLimit": { "type": "number", "description": "Time limit in minutes" },
-        "questions": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "question": { "type": "string" },
-              "options": { "type": "array", "items": { "type": "string" } },
-              "correctAnswerIndex": { "type": "number" }
-            }
-          }
-        },
-        "createdAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["title", "batchId", "subject", "questions"]
-    },
-    "quiz_results": {
-      "title": "Quiz Result",
-      "description": "Student performance in a quiz",
-      "type": "object",
-      "properties": {
-        "quizId": { "type": "string" },
-        "studentUid": { "type": "string" },
-        "score": { "type": "number" },
-        "totalQuestions": { "type": "number" },
-        "answers": { "type": "array", "items": { "type": "number" } },
-        "timestamp": { "type": "string", "format": "date-time" }
-      },
-      "required": ["quizId", "studentUid", "score", "totalQuestions"]
-    },
     "doubts": {
       "title": "Doubt",
       "description": "Questions posted by students",
@@ -338,14 +299,6 @@
     "/submissions/{submissionId}": {
       "schema": "submissions",
       "description": "Student assignment submissions"
-    },
-    "/quizzes/{quizId}": {
-      "schema": "quizzes",
-      "description": "Class quizzes and MCQs"
-    },
-    "/quiz_results/{resultId}": {
-      "schema": "quiz_results",
-      "description": "Student quiz performance records"
     },
     "/doubts/{doubtId}": {
       "schema": "doubts",

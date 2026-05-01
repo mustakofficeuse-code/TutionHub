@@ -317,7 +317,7 @@ export default function AssignmentManager() {
                   <div key={s.id} className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 dark:border-slate-700 rounded-2xl flex items-center justify-between">
                     <div>
                       <p className="font-bold text-slate-900 dark:text-white">Student ID: {s.studentId.substring(0, 8)}...</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(s.timestamp).toLocaleString()}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(s.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric', hour12: true })}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <a 

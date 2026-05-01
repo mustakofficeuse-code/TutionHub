@@ -42,11 +42,33 @@ import {
 import { signOut } from 'firebase/auth';
 import { motion, AnimatePresence } from 'motion/react';
 
-export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean }) {
+export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedded?: boolean, onTabChange?: (id: string) => void }) {
   const { profile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+
+  const handleNav = (path: string, tabId?: string) => {
+    if (isEmbedded && tabId && onTabChange) {
+      onTabChange(tabId);
+    } else {
+      navigate(path);
+    }
+  };
+
+  const formatTime12h = (timeStr: string) => {
+    if (!timeStr) return '';
+    try {
+      const [hours, minutes] = timeStr.split(':');
+      let h = parseInt(hours);
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12;
+      h = h ? h : 12;
+      return `${h}:${minutes} ${ampm}`;
+    } catch (e) {
+      return timeStr;
+    }
+  };
   
   // Notifications
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -91,14 +113,6 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
   const [editDepartment, setEditDepartment] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
   
-  // Block Confirmation State
-  const [studentToBlock, setStudentToBlock] = useState<any | null>(null);
-  const [isBlocking, setIsBlocking] = useState(false);
-  
-  // Permanent Delete State
-  const [studentToPermanentDelete, setStudentToPermanentDelete] = useState<any | null>(null);
-  const [isPermanentDeleting, setIsPermanentDeleting] = useState(false);
-  
   const [expandedDept, setExpandedDept] = useState<string | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [zoomedPhoto, setZoomedPhoto] = useState<string | null>(null);
@@ -140,7 +154,6 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
     const unsubFees = listenToPendingFees();
     const unsubRecent = listenToRecentAttendance();
     const unsubNotifs = listenToNotifications();
-    const unsubBlacklist = listenToBlacklist();
     const unsubDepts = listenToDepartments();
     const unsubSchedules = listenToSchedules();
 
@@ -150,7 +163,6 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
       unsubFees();
       unsubRecent();
       unsubNotifs();
-      unsubBlacklist();
       unsubDepts();
       unsubSchedules();
     };
@@ -241,13 +253,6 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
       console.error("Error deleting schedule:", err);
       alert("Failed to delete schedule");
     }
-  };
-
-  const listenToBlacklist = () => {
-    return onSnapshot(collection(db, 'blacklist'), (snapshot) => {
-      setBlacklistDocs(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setBlacklist(snapshot.docs.map(doc => doc.id));
-    });
   };
 
   const listenToDepartments = () => {
@@ -415,9 +420,7 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
   const [clearConfirm, setClearConfirm] = useState(false);
 
   const handleClearNotifications = async () => {
-    if (notifications.length === 0) return;
-    if (!window.confirm("Are you sure you want to clear all your notifications?")) return;
-
+    if (!notifications.length) return;
     setIsClearingNotifs(true);
     try {
       const batch = writeBatch(db);
@@ -425,25 +428,21 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
         batch.delete(doc(db, 'notifications', notif.id));
       });
       await batch.commit();
-      setShowNotifications(false);
     } catch (err) {
-      console.error("Error clearing notifications:", err);
-      alert("Failed to clear notifications");
+      console.error(err);
     } finally {
       setIsClearingNotifs(false);
     }
   };
 
   const clearAttendanceFeed = async () => {
-    if (recentAttendance.length === 0) return;
-    
+    if (!recentAttendance.length) return;
     if (!clearConfirm) {
       setClearConfirm(true);
-      setTimeout(() => setClearConfirm(null as any), 3000);
+      setTimeout(() => setClearConfirm(false), 3000);
       return;
     }
-    
-    setClearConfirm(false);
+
     setIsClearingFeed(true);
     try {
       const batch = writeBatch(db);
@@ -451,130 +450,20 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
         batch.delete(doc(db, 'attendance', record.id));
       });
       await batch.commit();
+      setClearConfirm(false);
     } catch (err) {
-      console.error("Error clearing feed:", err);
-      alert("Failed to clear feed");
+      console.error(err);
     } finally {
       setIsClearingFeed(false);
     }
   };
 
-  const overviewStats = [
-    { 
-      label: 'Total Students', 
-      value: isStatsLoading ? '...' : totalStudents.toString(), 
-      icon: Users, 
-      color: 'text-indigo-600', 
-      bg: 'bg-indigo-50' 
-    },
-    { 
-      label: 'Overall Attendance', 
-      value: isStatsLoading ? '...' : (totalStudents > 0 ? `${Math.round((todayAttendanceCount / totalStudents) * 100)}%` : '0%'), 
-      icon: CheckCircle, 
-      color: 'text-green-600', 
-      bg: 'bg-green-50' 
-    },
-    { 
-      label: 'Pending Fees', 
-      value: isStatsLoading ? '...' : `₹${pendingFeesSum.toLocaleString()}`, 
-      icon: AlertCircle, 
-      color: 'text-red-600', 
-      bg: 'bg-red-50' 
-    },
-  ];
-
-  const handleToggleBlock = async (student: any) => {
-    const emailToUse = student.email || student.id;
-    if (!emailToUse) return;
-    setIsBlocking(true);
-
-    const isCurrentlyBlocked = blacklist.includes(emailToUse);
-
-    try {
-      const batch = writeBatch(db);
-      if (isCurrentlyBlocked) {
-        // Unblock
-        batch.delete(doc(db, 'blacklist', emailToUse));
-        if (student.phoneNumber) batch.delete(doc(db, 'blacklist_phones', student.phoneNumber));
-        if (student.realEmail) batch.delete(doc(db, 'blacklist_emails', student.realEmail.toLowerCase()));
-      } else {
-        // Block
-        const blockData = {
-          email: emailToUse,
-          phoneNumber: student.phoneNumber || null,
-          realEmail: student.realEmail || null,
-          name: student.name || 'Unknown Student',
-          blockedAt: new Date().toISOString()
-        };
-        batch.set(doc(db, 'blacklist', emailToUse), blockData);
-        if (student.phoneNumber) batch.set(doc(db, 'blacklist_phones', student.phoneNumber), { blocked: true, studentId: student.id });
-        if (student.realEmail) batch.set(doc(db, 'blacklist_emails', student.realEmail.toLowerCase()), { blocked: true, studentId: student.id });
-      }
-      await batch.commit();
-      setStudentToBlock(null);
-    } catch (error) {
-      console.error("Error toggling block status:", error);
-      alert("Failed to update student access");
-    } finally {
-      setIsBlocking(false);
-    }
-  };
-
   const openEditModal = (student: any) => {
     setEditingStudent(student);
-    setEditName(student.name || '');
+    setEditSemester(student.semester || '1');
+    setEditDepartment(student.courseId || student.courseName || 'BCA');
     setEditPhoneNumber(student.phoneNumber || '');
     setEditRealEmail(student.realEmail || '');
-    setEditSemester(student.semester || '1');
-    setEditDepartment(student.courseName || 'BCA');
-  };
-
-  const handlePermanentDelete = async (student: any) => {
-    const emailToUse = student.email || student.id;
-    if (!emailToUse) return;
-    setIsPermanentDeleting(true);
-
-    try {
-      const batch = writeBatch(db);
-      
-      // Delete from users
-      const q = query(collection(db, 'users'), where('email', '==', emailToUse));
-      const snap = await getDocs(q);
-      snap.docs.forEach(d => batch.delete(doc(db, 'users', d.id)));
-
-      // Delete from blacklist system entirely
-      batch.delete(doc(db, 'blacklist', emailToUse));
-      if (student.phoneNumber) batch.delete(doc(db, 'blacklist_phones', student.phoneNumber));
-      if (student.realEmail) batch.delete(doc(db, 'blacklist_emails', student.realEmail.toLowerCase()));
-
-      await batch.commit();
-      setStudentToPermanentDelete(null);
-    } catch (error) {
-      console.error("Error permanently deleting student:", error);
-      alert("Failed to permanently delete student");
-    } finally {
-      setIsPermanentDeleting(false);
-    }
-  };
-
-  const handleRemoveFromBlacklist = async (id: string) => {
-    if (!window.confirm("Remove this record from the blocklist history?")) return;
-    try {
-      await deleteDoc(doc(db, 'blacklist', id));
-    } catch (error) {
-      console.error("Error removing from blacklist:", error);
-    }
-  };
-
-  const clearDeletedRecords = async () => {
-    if (!window.confirm("Clear all permanently deleted student records from the blocklist history?")) return;
-    const deletedOnes = blacklistDocs.filter(s => s.permanentlyDeleted);
-    try {
-      const promises = deletedOnes.map(s => deleteDoc(doc(db, 'blacklist', s.id)));
-      await Promise.all(promises);
-    } catch (error) {
-      console.error("Error clearing deleted records:", error);
-    }
   };
 
   const handleUpdateStudent = async (e: React.FormEvent) => {
@@ -724,15 +613,6 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
                             >
                               <Edit className="w-4.5 h-4.5" />
                             </button>
-                            {!isBlocked && (
-                              <button 
-                                onClick={() => setStudentToBlock(student)}
-                                className="p-3 text-slate-400 hover:text-red-600 hover:bg-white dark:hover:bg-slate-800 rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100 dark:hover:border-slate-700"
-                                title="Suspend Access"
-                              >
-                                <UserX className="w-4.5 h-4.5" />
-                              </button>
-                            )}
                           </div>
                         </td>
                       </tr>
@@ -748,6 +628,12 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
     );
   };
 
+  const overviewStats = [
+    { label: 'Total Students', value: totalStudents, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Today Attendance', value: todayAttendanceCount, icon: CheckCircle, color: 'text-emerald-600', bg: 'bg-emerald-50' },
+    { label: 'Pending Fees', value: `₹${pendingFeesSum}`, icon: CreditCard, color: 'text-orange-600', bg: 'bg-orange-50' },
+  ];
+
   const courseColors = [
     'border-blue-200 dark:border-blue-900 bg-blue-50/30',
     'border-purple-200 dark:border-purple-900 bg-purple-50/30',
@@ -759,52 +645,129 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
-      {/* Sidebar/Nav */}
-      <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-10 transition-colors">
-        <div className="flex items-center gap-2">
+      {/* Mobile Top Header (Student-like Profile Section) */}
+      <div className="sm:hidden">
+        <header className="bg-blue-600 text-white px-6 pt-6 pb-12 rounded-b-[32px] shadow-lg shadow-blue-100 dark:shadow-none relative overflow-hidden transition-all">
+          <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl"></div>
+          <div className="relative z-10 flex justify-between items-start">
+            <div className="flex items-center gap-3">
+              <motion.div 
+                layoutId="profile-avatar"
+                onClick={() => profile?.avatarUrl && setZoomedPhoto(profile.avatarUrl)}
+                className="w-12 h-12 bg-white/20 rounded-2xl p-1 backdrop-blur-md cursor-pointer hover:scale-105 transition-transform overflow-hidden group relative shrink-0"
+              >
+                <div className="w-full h-full bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-lg overflow-hidden">
+                  {profile?.avatarUrl ? (
+                    <img 
+                      src={profile.avatarUrl} 
+                      alt="" 
+                      className="w-full h-full object-cover" 
+                      referrerPolicy="no-referrer" 
+                    />
+                  ) : (
+                    profile?.name?.charAt(0) || 'T'
+                  )}
+                </div>
+              </motion.div>
+              <div className="flex flex-col gap-1.5">
+                <div 
+                  onClick={() => handleNav('/profile', 'profile')}
+                  className="cursor-pointer"
+                >
+                  <p className="text-blue-100 text-[10px] font-black uppercase tracking-wider">Teacher Account</p>
+                  <h1 className="text-xl font-black tracking-tight leading-tight">{profile?.name}</h1>
+                </div>
+                
+                {(profile?.role === 'admin' || profile?.role === 'teacher') && (
+                  <button 
+                    onClick={() => navigate('/admin')}
+                    className="flex items-center gap-1.5 bg-yellow-400 text-blue-900 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all w-fit"
+                  >
+                    <Shield className="w-3.5 h-3.5" />
+                    Admin Section
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                onClick={toggleTheme}
+                className="p-2.5 bg-white/20 rounded-xl backdrop-blur-md hover:bg-white/30 transition-all"
+                title="Toggle Theme"
+              >
+                {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+              </button>
+              
+              <button 
+                onClick={() => setShowNotifications(true)}
+                className="p-2.5 bg-white/20 rounded-xl backdrop-blur-md relative hover:bg-white/30 transition-all"
+                title="Notifications"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-blue-600 flex items-center justify-center text-[8px] font-black">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          </div>
+        </header>
+      </div>
+
+      {/* Desktop Sidebar/Nav (Hidden on Mobile) */}
+      <nav className="hidden sm:flex bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 justify-between items-center sticky top-0 z-10 transition-colors">
+        <div className="flex items-center gap-2 shrink-0">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-100 dark:shadow-none">
             <TrendingUp className="text-white w-6 h-6" />
           </div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">TuitionHub <span className="text-blue-600">Admin</span></h1>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white hidden xs:block">TuitionHub <span className="text-blue-600">Admin</span></h1>
         </div>
         <div className="flex items-center gap-4">
           <button 
-            onClick={() => navigate('/materials/manage')}
-            className="hidden sm:flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-4"
+            onClick={() => handleNav('/materials/manage', 'materials')}
+            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-2 sm:mr-4"
           >
-            <BookOpen className="w-5 h-5" /> Materials
+            <BookOpen className="w-5 h-5" />
+            <span className="hidden lg:inline">Materials</span>
           </button>
           <button 
-            onClick={() => navigate('/doubts')}
-            className="hidden sm:flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-4"
+            onClick={() => handleNav('/doubts', 'doubts')}
+            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-2 sm:mr-4"
           >
-            <MessageSquare className="w-5 h-5" /> Doubts
+            <MessageSquare className="w-5 h-5" />
+            <span className="hidden lg:inline">Doubts</span>
           </button>
           <button 
-            onClick={() => navigate('/teacher/analytics')}
-            className="hidden sm:flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-4"
+            onClick={() => handleNav('/teacher/analytics', 'stats')}
+            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-2 sm:mr-4"
           >
-            <TrendingUp className="w-5 h-5" /> Analytics
+            <TrendingUp className="w-5 h-5" />
+            <span className="hidden lg:inline">Analytics</span>
           </button>
           <button 
-            onClick={() => navigate('/attendance/generate')}
-            className="hidden sm:flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-4"
+            onClick={() => handleNav('/attendance/generate', 'attendance')}
+            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-2 sm:mr-4"
           >
-            <QrCode className="w-5 h-5" /> Attendance
+            <QrCode className="w-5 h-5" />
+            <span className="hidden lg:inline">Attendance</span>
           </button>
           <button 
-            onClick={() => navigate('/fees/manage')}
-            className="hidden sm:flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-4"
+            onClick={() => handleNav('/fees/manage', 'fees')}
+            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-2 sm:mr-4"
           >
-            <CreditCard className="w-5 h-5" /> Fees
+            <CreditCard className="w-5 h-5" />
+            <span className="hidden lg:inline">Fees</span>
           </button>
 
           {(profile?.role === 'admin' || profile?.role === 'teacher') && (
             <button 
               onClick={() => navigate('/admin')}
-              className="hidden sm:flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 dark:shadow-none mr-4"
+              className="flex items-center gap-2 bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 dark:shadow-none mr-2 sm:mr-4"
             >
-              <Shield className="w-4 h-4" /> Admin Section
+              <Shield className="w-4 h-4" />
+              <span className="hidden sm:inline">Admin Section</span>
             </button>
           )}
           
@@ -828,17 +791,17 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
           </button>
 
           <button 
-            onClick={() => navigate('/profile')}
-            className="text-right hidden sm:block hover:opacity-70 transition-opacity flex items-center gap-3"
+            onClick={() => handleNav('/profile', 'profile')}
+            className="flex items-center gap-3 hover:opacity-70 transition-opacity"
           >
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold overflow-hidden shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold overflow-hidden shadow-sm shrink-0">
               {profile?.avatarUrl ? (
                 <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
                 profile?.name?.charAt(0) || 'T'
               )}
             </div>
-            <div>
+            <div className="text-right hidden sm:block">
               <p className="text-sm font-bold text-slate-900 dark:text-white">{profile?.name}</p>
               <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-right">Teacher</p>
             </div>
@@ -871,7 +834,7 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
               </div>
             </div>
             <button 
-              onClick={() => navigate('/attendance/generate')}
+              onClick={() => handleNav('/attendance/generate', 'attendance')}
               className="px-4 py-2 bg-orange-600 text-white text-sm font-bold rounded-xl hover:bg-orange-700 transition-all whitespace-nowrap"
             >
               Set Location Now
@@ -886,7 +849,7 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
               {overviewStats.map((stat, i) => (
                 <div 
                   key={i} 
-                  onClick={stat.label === 'Pending Fees' ? () => navigate('/fees/manage') : undefined}
+                  onClick={stat.label === 'Pending Fees' ? () => handleNav('/fees/manage', 'fees') : undefined}
                   className={`bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4 ${stat.label === 'Pending Fees' ? 'cursor-pointer hover:border-blue-500 transition-all' : ''}`}
                 >
                   <div className={`${stat.bg} dark:bg-slate-800 p-3 rounded-xl`}>
@@ -1091,7 +1054,7 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
                             <div>
                               <h4 className="font-bold text-slate-900 dark:text-white text-sm">{record.studentName}</h4>
                               <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                                {record.department || record.courseName} • Sem {record.semester} • {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                {record.department || record.courseName} • Sem {record.semester} • {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                               </p>
                             </div>
                           </div>
@@ -1114,93 +1077,6 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
               </div>
             </div>
 
-            {/* Block List Section */}
-            <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center">
-                    <UserX className="w-6 h-6 text-red-600" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white">Block List</h3>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">Manage suspended student accounts</p>
-                  </div>
-                </div>
-                {blacklistDocs.some(s => s.permanentlyDeleted) && (
-                  <button 
-                    onClick={clearDeletedRecords}
-                    className="text-xs text-red-600 hover:underline font-bold px-3 py-1.5 bg-red-50 dark:bg-red-900/20 rounded-lg"
-                  >
-                    Clear Deleted History
-                  </button>
-                )}
-              </div>
-              
-              {blacklistDocs.length === 0 ? (
-                <div className="text-center py-8 text-slate-500 dark:text-slate-400 border-2 border-dashed border-slate-100 dark:border-slate-800 rounded-2xl">
-                  No blocked students.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {blacklistDocs.map((student: any) => (
-                    <div key={student.id} className="flex flex-col md:flex-row items-start md:items-center justify-between p-4 rounded-2xl border transition-all bg-red-50/30 dark:bg-red-900/10 border-red-100 dark:border-red-900/30 gap-4">
-                      <div className="flex items-center gap-4">
-                        <div 
-                          onClick={() => student.avatarUrl && setZoomedPhoto(student.avatarUrl)}
-                          className={`w-10 h-10 rounded-xl flex items-center justify-center bg-red-100 dark:bg-red-900/20 overflow-hidden ${student.avatarUrl ? 'cursor-zoom-in' : ''}`}
-                        >
-                          {student.avatarUrl ? (
-                            <img src={student.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                          ) : (
-                            <UserX className="w-5 h-5 text-red-500" />
-                          )}
-                        </div>
-                        <div>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-bold text-slate-900 dark:text-white text-sm">{student.name || 'Unknown Student'}</p>
-                            <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-800 uppercase tracking-widest">
-                              Login ID: {student.studentId || student.id?.substring(0, 8)}
-                            </span>
-                          </div>
-                          <div className="flex flex-col gap-0.5 mt-1">
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">Login Email: {student.email}</p>
-                            {student.realEmail && (
-                              <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold flex items-center gap-1">
-                                <Mail className="w-3 h-3" /> Real Email: {student.realEmail}
-                              </p>
-                            )}
-                            {student.phoneNumber && (
-                              <p className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
-                                <Phone className="w-3 h-3" /> Phone: {student.phoneNumber}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 w-full md:w-auto justify-end">
-                        {!student.permanentlyDeleted && (
-                          <>
-                            <button 
-                              onClick={() => setStudentToBlock(student)}
-                              className="px-4 py-2 bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 rounded-xl text-sm font-bold shadow-sm border border-slate-100 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all flex items-center gap-2"
-                            >
-                              <UserCheck className="w-4 h-4" /> Unblock
-                            </button>
-                            <button 
-                              onClick={() => setStudentToPermanentDelete(student)}
-                              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-bold shadow-sm transition-all flex items-center gap-2"
-                            >
-                              <Trash2 className="w-4 h-4" /> Delete Permanently
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-            
             {/* Quick Actions */}
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Quick Actions</h2>
@@ -1224,16 +1100,6 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
                   </div>
                   <p className="font-bold text-slate-900 dark:text-white">QR Attendance</p>
                   <p className="text-xs text-slate-500 dark:text-slate-400">Generate session QR</p>
-                </button>
-                <button 
-                  onClick={() => navigate('/admin/students/add')}
-                  className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500 transition-all text-left group"
-                >
-                  <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-900/20 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <Users className="w-6 h-6 text-indigo-600" />
-                  </div>
-                  <p className="font-bold text-slate-900 dark:text-white">New Student</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Enroll a student</p>
                 </button>
                 <button 
                   onClick={() => navigate('/fees/reminders')}
@@ -1519,7 +1385,7 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
                         </div>
                           <div className="flex items-center gap-3">
                             <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg">
-                              {item.startTime} - {item.endTime}
+                              {formatTime12h(item.startTime)} - {formatTime12h(item.endTime)}
                             </span>
                             <button 
                               onClick={() => startEditSchedule(item)}
@@ -1769,99 +1635,33 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
         </div>
       )}
 
-      {/* Permanent Delete Confirmation Modal */}
-      {studentToPermanentDelete && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800">
-            <div className="w-16 h-16 rounded-2xl flex items-center justify-center mb-6 mx-auto bg-red-50 dark:bg-red-900/20">
-              <Trash2 className="w-8 h-8 text-red-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white text-center mb-2">
-              Permanently Delete Student?
-            </h3>
-            <p className="text-slate-500 dark:text-slate-400 text-center mb-8">
-              Are you sure you want to permanently delete <span className="font-bold text-slate-900 dark:text-white">{studentToPermanentDelete.name || 'this student'}</span>? 
-              This will completely remove them and prevent them from ever enrolling in TuitionHub again. This action cannot be undone.
-            </p>
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setStudentToPermanentDelete(null)}
-                className="flex-1 py-3 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={() => handlePermanentDelete(studentToPermanentDelete)}
-                disabled={isPermanentDeleting}
-                className="flex-1 py-3 text-white font-bold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 shadow-red-100 dark:shadow-none"
-              >
-                {isPermanentDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Delete Permanently'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Block Confirmation Modal */}
-      {studentToBlock && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-slate-800">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-6 mx-auto ${blacklist.includes(studentToBlock.email || studentToBlock.id) ? 'bg-orange-50 dark:bg-orange-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
-              <Trash2 className={`w-8 h-8 ${blacklist.includes(studentToBlock.email || studentToBlock.id) ? 'text-orange-600' : 'text-red-600'}`} />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-white text-center mb-2">
-              {blacklist.includes(studentToBlock.email || studentToBlock.id) ? 'Unblock Student?' : 'Suspend Student?'}
-            </h3>
-            <p className="text-slate-500 dark:text-slate-400 text-center mb-8">
-              Are you sure you want to {blacklist.includes(studentToBlock.email || studentToBlock.id) ? 'unblock' : 'suspend'} <span className="font-bold text-slate-900 dark:text-white">{studentToBlock.name || 'this student'}</span>? 
-              {blacklist.includes(studentToBlock.email || studentToBlock.id) ? ' They will regain access to their account.' : ' They will be logged out and blocked from accessing their account.'}
-            </p>
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setStudentToBlock(null)}
-                className="flex-1 py-3 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl transition-all"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={() => handleToggleBlock(studentToBlock)}
-                disabled={isBlocking}
-                className={`flex-1 py-3 text-white font-bold rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 ${blacklist.includes(studentToBlock.email || studentToBlock.id) ? 'bg-orange-600 hover:bg-orange-700 shadow-orange-100 dark:shadow-none' : 'bg-red-600 hover:bg-red-700 shadow-red-100 dark:shadow-none'}`}
-              >
-                {isBlocking ? <Loader2 className="w-5 h-5 animate-spin" /> : (blacklist.includes(studentToBlock.email || studentToBlock.id) ? 'Unblock' : 'Suspend')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Mobile Bottom Nav */}
       {!isEmbedded && (
       <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-100 dark:border-slate-800 px-6 py-3 flex justify-between items-center z-40 transition-colors">
         <button 
-          onClick={() => navigate('/')}
+          onClick={() => handleNav('/', 'dashboard')}
           className="flex flex-col items-center gap-1 text-blue-600 dark:text-blue-400"
         >
           <Calendar className="w-6 h-6" />
           <span className="text-[10px] font-bold">Home</span>
         </button>
         <button 
-          onClick={() => navigate('/materials/manage')}
-          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 dark:text-slate-400"
+          onClick={() => handleNav('/materials/manage', 'materials')}
+          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500"
         >
           <BookOpen className="w-6 h-6" />
           <span className="text-[10px] font-bold">Materials</span>
         </button>
         <button 
-          onClick={() => navigate('/doubts')}
-          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 dark:text-slate-400"
+          onClick={() => handleNav('/doubts', 'doubts')}
+          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500"
         >
           <MessageSquare className="w-6 h-6" />
           <span className="text-[10px] font-bold">Doubts</span>
         </button>
         <button 
-          onClick={() => navigate('/teacher/analytics')}
-          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 dark:text-slate-400"
+          onClick={() => handleNav('/teacher/analytics', 'stats')}
+          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500"
         >
           <TrendingUp className="w-6 h-6" />
           <span className="text-[10px] font-bold">Stats</span>
@@ -1876,8 +1676,8 @@ export default function TeacherDashboard({ isEmbedded }: { isEmbedded?: boolean 
           </button>
         )}
         <button 
-          onClick={() => navigate('/profile')}
-          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 dark:text-slate-400"
+          onClick={() => handleNav('/profile', 'profile')}
+          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500"
         >
           <User className="w-6 h-6" />
           <span className="text-[10px] font-bold">Profile</span>

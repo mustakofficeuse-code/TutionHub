@@ -402,7 +402,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                             {r.userRole === 'teacher' && (
                               <span className="text-[8px] bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-1 rounded font-black uppercase">Teacher</span>
                             )}
-                            <span className="text-[8px] text-slate-400 dark:text-slate-500 dark:text-slate-400">{new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="text-[8px] text-slate-400 dark:text-slate-500 dark:text-slate-400">{new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
                           </div>
                           <div className={`p-3 rounded-2xl text-sm ${
                             r.userUid === profile?.uid 
