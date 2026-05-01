@@ -118,6 +118,13 @@ export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedd
   const [zoomedPhoto, setZoomedPhoto] = useState<string | null>(null);
   const [scheduleToDelete, setScheduleToDelete] = useState<string | null>(null);
   const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
+  
+  // Deletion Restriction Modal
+  const [deletionRestriction, setDeletionRestriction] = useState<{
+    show: boolean;
+    deptName: string;
+    studentCount: number;
+  }>({ show: false, deptName: '', studentCount: 0 });
 
   const startEditSchedule = (item: any) => {
     setEditingScheduleId(item.id);
@@ -312,6 +319,27 @@ export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedd
 
   const handleDeleteDepartment = async (id: string, isDefault?: boolean) => {
     console.log(`[Admin] Attempting to delete department: ${id}, isDefault: ${isDefault}`);
+    
+    // Check for enrolled students first
+    const deptObj = departments.find(d => d.id === id);
+    const deptName = deptObj?.name?.toUpperCase();
+    
+    if (deptName) {
+      const enrolledStudents = allStudents.filter(s => {
+        const d = String(s.courseId || s.courseName || s.department || '').toUpperCase();
+        const normalized = (d === 'GENERAL' || d === '' || d === 'OTHER') ? 'BCA' : d;
+        return normalized === deptName;
+      });
+
+      if (enrolledStudents.length > 0) {
+        setDeletionRestriction({
+          show: true,
+          deptName: deptName,
+          studentCount: enrolledStudents.length
+        });
+        return;
+      }
+    }
     
     if (deleteConfirmId !== id) {
       setDeleteConfirmId(id);
@@ -567,9 +595,9 @@ export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedd
                               )}
                             </div>
                             <div>
-                              <p className={`font-black text-base tracking-tight ${isBlocked ? 'text-red-900 dark:text-red-100' : 'text-slate-900 dark:text-white'}`}>{student.name}</p>
+                              <p className={`font-black text-sm sm:text-base tracking-tight ${isBlocked ? 'text-red-900 dark:text-red-100' : 'text-slate-900 dark:text-white'} truncate max-w-[100px] xs:max-w-[150px] sm:max-w-none`}>{student.name}</p>
                               <div className="flex items-center gap-2">
-                                <p className="text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider hidden sm:block">
+                                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider hidden sm:block truncate max-w-[200px]">
                                   {student.realEmail || student.email}
                                 </p>
                                 {student.phoneNumber && (
@@ -647,16 +675,16 @@ export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedd
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
       {/* Mobile Top Header (Student-like Profile Section) */}
       <div className="sm:hidden">
-        <header className="bg-blue-600 text-white px-6 pt-6 pb-12 rounded-b-[32px] shadow-lg shadow-blue-100 dark:shadow-none relative overflow-hidden transition-all">
+        <header className="bg-blue-600 text-white px-5 pt-4 pb-10 rounded-b-[32px] shadow-lg shadow-blue-100 dark:shadow-none relative overflow-hidden transition-all">
           <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full -mr-24 -mt-24 blur-3xl"></div>
-          <div className="relative z-10 flex justify-between items-start">
-            <div className="flex items-center gap-3">
+          <div className="relative z-10 flex justify-between items-center">
+            <div className="flex items-center gap-2.5">
               <motion.div 
                 layoutId="profile-avatar"
                 onClick={() => profile?.avatarUrl && setZoomedPhoto(profile.avatarUrl)}
-                className="w-12 h-12 bg-white/20 rounded-2xl p-1 backdrop-blur-md cursor-pointer hover:scale-105 transition-transform overflow-hidden group relative shrink-0"
+                className="w-11 h-11 bg-white/20 rounded-xl p-0.5 backdrop-blur-md cursor-pointer hover:scale-105 transition-transform overflow-hidden group relative shrink-0"
               >
-                <div className="w-full h-full bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-lg overflow-hidden">
+                <div className="w-full h-full bg-blue-500 rounded-lg flex items-center justify-center text-white font-bold text-base overflow-hidden">
                   {profile?.avatarUrl ? (
                     <img 
                       src={profile.avatarUrl} 
@@ -669,44 +697,44 @@ export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedd
                   )}
                 </div>
               </motion.div>
-              <div className="flex flex-col gap-1.5">
+              <div className="flex flex-col">
                 <div 
                   onClick={() => handleNav('/profile', 'profile')}
                   className="cursor-pointer"
                 >
-                  <p className="text-blue-100 text-[10px] font-black uppercase tracking-wider">Teacher Account</p>
-                  <h1 className="text-xl font-black tracking-tight leading-tight">{profile?.name}</h1>
+                  <p className="text-blue-100 text-[9px] font-black uppercase tracking-widest leading-none mb-0.5">Instructor</p>
+                  <h1 className="text-lg font-black tracking-tight leading-tight truncate max-w-[120px]">{profile?.name}</h1>
                 </div>
                 
                 {(profile?.role === 'admin' || profile?.role === 'teacher') && (
                   <button 
                     onClick={() => navigate('/admin')}
-                    className="flex items-center gap-1.5 bg-yellow-400 text-blue-900 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-lg active:scale-95 transition-all w-fit"
+                    className="flex items-center gap-1 bg-yellow-400 text-blue-900 px-2 py-0.5 mt-1 rounded-lg text-[8px] font-black uppercase tracking-wider shadow-md active:scale-95 transition-all w-fit"
                   >
-                    <Shield className="w-3.5 h-3.5" />
+                    <Shield className="w-2.5 h-2.5" />
                     Admin Section
                   </button>
                 )}
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex gap-1.5">
               <button
                 onClick={toggleTheme}
-                className="p-2.5 bg-white/20 rounded-xl backdrop-blur-md hover:bg-white/30 transition-all"
+                className="p-2.5 bg-white/10 rounded-xl backdrop-blur-md hover:bg-white/20 transition-all border border-white/10"
                 title="Toggle Theme"
               >
-                {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                {theme === 'light' ? <Moon className="w-4.5 h-4.5" /> : <Sun className="w-4.5 h-4.5" />}
               </button>
               
               <button 
                 onClick={() => setShowNotifications(true)}
-                className="p-2.5 bg-white/20 rounded-xl backdrop-blur-md relative hover:bg-white/30 transition-all"
+                className="p-2.5 bg-white/10 rounded-xl backdrop-blur-md relative hover:bg-white/20 transition-all border border-white/10"
                 title="Notifications"
               >
-                <Bell className="w-5 h-5" />
+                <Bell className="w-4.5 h-4.5" />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-blue-600 flex items-center justify-center text-[8px] font-black">
+                  <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-blue-600 flex items-center justify-center text-[7px] font-black">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
@@ -717,100 +745,105 @@ export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedd
       </div>
 
       {/* Desktop Sidebar/Nav (Hidden on Mobile) */}
-      <nav className="hidden sm:flex bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 justify-between items-center sticky top-0 z-10 transition-colors">
+      <nav className="hidden sm:flex bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-3.5 justify-between items-center sticky top-0 z-10 transition-colors">
         <div className="flex items-center gap-2 shrink-0">
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-100 dark:shadow-none">
             <TrendingUp className="text-white w-6 h-6" />
           </div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white hidden xs:block">TuitionHub <span className="text-blue-600">Admin</span></h1>
+          <h1 className="text-xl font-black text-slate-900 dark:text-white hidden lg:block tracking-tight">TuitionHub <span className="text-blue-600 text-[10px] font-black uppercase ml-1 align-top tracking-widest">Teacher</span></h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 lg:gap-3">
           <button 
             onClick={() => handleNav('/materials/manage', 'materials')}
-            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-2 sm:mr-4"
+            className="flex items-center gap-1.5 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold transition-all rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
           >
-            <BookOpen className="w-5 h-5" />
-            <span className="hidden lg:inline">Materials</span>
+            <BookOpen className="w-4.5 h-4.5" />
+            <span className="hidden xl:inline text-xs">Materials</span>
           </button>
           <button 
             onClick={() => handleNav('/doubts', 'doubts')}
-            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-2 sm:mr-4"
+            className="flex items-center gap-1.5 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold transition-all rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
           >
-            <MessageSquare className="w-5 h-5" />
-            <span className="hidden lg:inline">Doubts</span>
+            <MessageSquare className="w-4.5 h-4.5" />
+            <span className="hidden xl:inline text-xs">Doubts</span>
           </button>
           <button 
             onClick={() => handleNav('/teacher/analytics', 'stats')}
-            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-2 sm:mr-4"
+            className="flex items-center gap-1.5 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold transition-all rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
           >
-            <TrendingUp className="w-5 h-5" />
-            <span className="hidden lg:inline">Analytics</span>
+            <TrendingUp className="w-4.5 h-4.5" />
+            <span className="hidden xl:inline text-xs">Analytics</span>
           </button>
           <button 
             onClick={() => handleNav('/attendance/generate', 'attendance')}
-            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-2 sm:mr-4"
+            className="flex items-center gap-1.5 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold transition-all rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
           >
-            <QrCode className="w-5 h-5" />
-            <span className="hidden lg:inline">Attendance</span>
+            <QrCode className="w-4.5 h-4.5" />
+            <span className="hidden xl:inline text-xs">Attendance</span>
           </button>
           <button 
             onClick={() => handleNav('/fees/manage', 'fees')}
-            className="flex items-center gap-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-semibold transition-colors mr-2 sm:mr-4"
+            className="flex items-center gap-1.5 px-3 py-2 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 font-bold transition-all rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800"
           >
-            <CreditCard className="w-5 h-5" />
-            <span className="hidden lg:inline">Fees</span>
+            <CreditCard className="w-4.5 h-4.5" />
+            <span className="hidden xl:inline text-xs">Fees</span>
           </button>
 
           {(profile?.role === 'admin' || profile?.role === 'teacher') && (
             <button 
               onClick={() => navigate('/admin')}
-              className="flex items-center gap-2 bg-indigo-600 text-white px-3 sm:px-4 py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100 dark:shadow-none mr-2 sm:mr-4"
+              className="flex items-center gap-2 bg-indigo-600 text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-lg shadow-indigo-100 dark:shadow-none hover:bg-indigo-700 transition-all hover:scale-105 active:scale-95 uppercase tracking-widest ml-1"
             >
-              <Shield className="w-4 h-4" />
+              <Shield className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Admin Section</span>
             </button>
           )}
           
-          <button 
-            onClick={() => setShowNotifications(true)}
-            className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all relative"
-          >
-            <Bell className="w-5 h-5" />
-            {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center text-[8px] font-black text-white">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
+          <div className="h-6 w-px bg-slate-200 dark:bg-slate-800 mx-2 hidden md:block"></div>
 
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all"
-          >
-            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-          </button>
+          <div className="flex gap-1.5">
+            <button 
+              onClick={() => setShowNotifications(true)}
+              className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all relative border border-slate-100 dark:border-slate-700"
+            >
+              <Bell className="w-4.5 h-4.5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-900 flex items-center justify-center text-[7px] font-black text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
+
+            <button
+              onClick={toggleTheme}
+              className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all border border-slate-100 dark:border-slate-700"
+            >
+              {theme === 'light' ? <Moon className="w-4.5 h-4.5" /> : <Sun className="w-4.5 h-4.5" />}
+            </button>
+          </div>
 
           <button 
             onClick={() => handleNav('/profile', 'profile')}
-            className="flex items-center gap-3 hover:opacity-70 transition-opacity"
+            className="flex items-center gap-3 pl-2 border-l border-slate-200 dark:border-slate-800 hover:opacity-80 transition-opacity ml-1"
           >
-            <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold overflow-hidden shadow-sm shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white font-bold overflow-hidden shadow-sm shrink-0">
               {profile?.avatarUrl ? (
                 <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               ) : (
                 profile?.name?.charAt(0) || 'T'
               )}
             </div>
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-slate-900 dark:text-white">{profile?.name}</p>
-              <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest text-right">Teacher</p>
+            <div className="text-left hidden lg:block">
+              <p className="text-xs font-black text-slate-900 dark:text-white leading-none">{profile?.name}</p>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Instructor</p>
             </div>
           </button>
           <button 
             onClick={() => signOut(auth)}
-            className="p-2 text-slate-400 hover:text-red-600 transition-colors"
+            className="p-2 text-slate-400 hover:text-red-600 transition-colors ml-1"
+            title="Sign Out"
           >
-            <LogOut className="w-5 h-5" />
+            <LogOut className="w-4.5 h-4.5" />
           </button>
         </div>
       </nav>
@@ -845,19 +878,19 @@ export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedd
         {!loading && (
           <div className="space-y-8">
             {/* Top Section — Daily Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {overviewStats.map((stat, i) => (
                 <div 
                   key={i} 
                   onClick={stat.label === 'Pending Fees' ? () => handleNav('/fees/manage', 'fees') : undefined}
-                  className={`bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-4 ${stat.label === 'Pending Fees' ? 'cursor-pointer hover:border-blue-500 transition-all' : ''}`}
+                  className={`bg-white dark:bg-slate-900 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center gap-3 sm:gap-4 ${stat.label === 'Pending Fees' ? 'cursor-pointer hover:border-blue-500 transition-all' : ''}`}
                 >
-                  <div className={`${stat.bg} dark:bg-slate-800 p-3 rounded-xl`}>
-                    <stat.icon className={`${stat.color} w-6 h-6`} />
+                  <div className={`${stat.bg} dark:bg-slate-800 p-2 sm:p-3 rounded-xl shrink-0`}>
+                    <stat.icon className={`${stat.color} w-5 h-5 sm:w-6 sm:h-6`} />
                   </div>
-                  <div>
-                    <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{stat.label}</p>
-                    <p className="text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+                  <div className="min-w-0">
+                    <p className="text-[10px] sm:text-sm text-slate-500 dark:text-slate-400 font-medium truncate">{stat.label}</p>
+                    <p className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">{stat.value}</p>
                   </div>
                 </div>
               ))}
@@ -1080,7 +1113,7 @@ export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedd
             {/* Quick Actions */}
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-slate-900 dark:text-white">Quick Actions</h2>
-              <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <button 
                   onClick={() => navigate('/fees/manage')}
                   className="p-4 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 hover:border-blue-500 transition-all text-left group"
@@ -1088,8 +1121,8 @@ export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedd
                   <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <CreditCard className="w-6 h-6 text-blue-600" />
                   </div>
-                  <p className="font-bold text-slate-900 dark:text-white">Fee Structure</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Set semester fees</p>
+                  <p className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Fee Structure</p>
+                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Set semester fees</p>
                 </button>
                 <button 
                   onClick={() => navigate('/attendance/generate')}
@@ -1098,8 +1131,8 @@ export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedd
                   <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <QrCode className="w-6 h-6 text-emerald-600" />
                   </div>
-                  <p className="font-bold text-slate-900 dark:text-white">QR Attendance</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Generate session QR</p>
+                  <p className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">QR Attendance</p>
+                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Generate session QR</p>
                 </button>
                 <button 
                   onClick={() => navigate('/fees/reminders')}
@@ -1108,8 +1141,8 @@ export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedd
                   <div className="w-10 h-10 bg-red-50 dark:bg-red-900/20 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <AlertCircle className="w-6 h-6 text-red-600" />
                   </div>
-                  <p className="font-bold text-slate-900 dark:text-white">Fee Reminders</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Generate alerts</p>
+                  <p className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Fee Reminders</p>
+                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Generate alerts</p>
                 </button>
                 <button 
                   onClick={() => setShowScheduleModal(true)}
@@ -1118,8 +1151,8 @@ export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedd
                   <div className="w-10 h-10 bg-blue-50 dark:bg-blue-900/20 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
                     <Calendar className="w-6 h-6 text-blue-600" />
                   </div>
-                  <p className="font-bold text-slate-900 dark:text-white">Class Schedule</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Plan upcoming classes</p>
+                  <p className="font-bold text-slate-900 dark:text-white text-sm sm:text-base">Class Schedule</p>
+                  <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">Plan upcoming classes</p>
                 </button>
               </div>
             </div>
@@ -1702,6 +1735,47 @@ export default function TeacherDashboard({ isEmbedded, onTabChange }: { isEmbedd
           />
         </div>
       )}
+
+      {/* Deletion Restriction Modal */}
+      <AnimatePresence>
+        {deletionRestriction.show && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[120] bg-slate-900/60 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white dark:bg-slate-900 w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl border border-slate-100 dark:border-slate-800 text-center"
+            >
+              <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-3xl flex items-center justify-center mx-auto mb-6 shrink-0 rotate-3">
+                <AlertCircle className="w-10 h-10 text-red-600 dark:text-red-400" />
+              </div>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2 tracking-tight">Deletion Restricted</h3>
+              <p className="text-slate-500 dark:text-slate-400 mb-6 font-medium leading-relaxed">
+                Cannot delete the <span className="font-black text-slate-900 dark:text-white underline decoration-red-500 decoration-2 underline-offset-4 px-1">{deletionRestriction.deptName}</span> department.
+                <br />
+                It currently has <span className="font-black text-red-600 dark:text-red-400">{deletionRestriction.studentCount} student(s)</span> enrolled.
+              </p>
+              
+              <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl mb-8 border border-slate-100 dark:border-slate-700">
+                <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-1">How to fix?</p>
+                <p className="text-[11px] text-slate-600 dark:text-slate-300">Please reassign these students to a different department or remove them from the system before deleting this department.</p>
+              </div>
+
+              <button 
+                onClick={() => setDeletionRestriction(prev => ({ ...prev, show: false }))}
+                className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black rounded-2xl hover:opacity-90 active:scale-95 transition-all shadow-xl shadow-slate-200 dark:shadow-none"
+              >
+                Understood
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Schedule Delete Confirmation */}
       {scheduleToDelete && (

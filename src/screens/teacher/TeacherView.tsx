@@ -218,31 +218,32 @@ export default function TeacherView() {
       </div>
 
       {/* Static Footer Navigation */}
-      <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-2 py-3 flex justify-between items-center z-50 transition-colors safe-area-bottom shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
+      <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-1 xs:px-2 py-2 xs:py-3 flex justify-between items-center z-50 transition-colors safe-area-bottom shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
         {/* Desktop and Tablet: Show TABS + Admin button if role permits */}
-        <div className="flex w-full justify-between items-center px-4">
+        <div className="flex w-full justify-between items-center px-1 xs:px-4">
           {TABS.map((tab, index) => (
             <button
               key={tab.id}
               onClick={() => changeTab(index)}
-              className={`flex-1 flex flex-col items-center gap-1 transition-all duration-300 ${
+              className={`flex-1 flex flex-col items-center gap-0.5 xs:gap-1 transition-all duration-300 ${
                 activeTab === index 
                   ? 'text-blue-600 dark:text-blue-400 scale-105' 
                   : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
               }`}
             >
-              <tab.icon className={`w-5 h-5 ${activeTab === index ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-              <span className={`text-[10px] font-bold tracking-tight ${activeTab === index ? 'opacity-100' : 'opacity-70'}`}>{tab.label}</span>
+              <tab.icon className={`w-4.5 h-4.5 xs:w-5 xs:h-5 ${activeTab === index ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+              <span className={`text-[8px] xs:text-[10px] font-bold tracking-tight ${activeTab === index ? 'opacity-100' : 'opacity-70'} hidden xs:block`}>
+                {tab.label}
+              </span>
               {activeTab === index && (
                 <motion.div 
                   layoutId="nav-teacher-indicator"
-                  className="w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full"
+                  className="w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full mt-0.5"
                 />
               )}
             </button>
           ))}
           
-          {/* Hide this on small screens as requested, it's now in the Top Nav for mobile */}
           {(profile?.role === 'admin' || profile?.role === 'teacher') && (
             <button 
               onClick={() => window.location.href = '/admin'}
