@@ -26,19 +26,16 @@ export interface Notification {
   relatedId?: string;
   targetDept?: string;
   targetSem?: string;
+  isAnonymous?: boolean;
 }
 
 export const sendNotification = async (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
-  try {
-    await addDoc(collection(db, 'notifications'), {
-      ...notification,
-      read: false,
-      createdAt: serverTimestamp(),
-      timestamp: serverTimestamp(),
-    });
-  } catch (error) {
-    console.error('Error sending notification:', error);
-  }
+  await addDoc(collection(db, 'notifications'), {
+    ...notification,
+    read: false,
+    createdAt: serverTimestamp(),
+    timestamp: serverTimestamp(),
+  });
 };
 
 export const subscribeToNotifications = (userId: string, targetRole: string, callback: (notifications: Notification[]) => void) => {

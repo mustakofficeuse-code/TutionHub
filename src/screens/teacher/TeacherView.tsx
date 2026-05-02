@@ -180,9 +180,21 @@ export default function TeacherView() {
                   </div>
                 ) : (
                   notifications.map((notif) => (
-                    <div key={notif.id} className="p-3 bg-white dark:bg-[#202c33] rounded-lg shadow-sm border-b border-slate-100 dark:border-slate-800">
+                    <div 
+                      key={notif.id} 
+                      className="p-3 bg-white dark:bg-[#202c33] rounded-lg shadow-sm border-b border-slate-100 dark:border-slate-800 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#2a3942]"
+                      onClick={() => {
+                        markAsRead(notif.id!);
+                        setShowNotifications(false);
+                        if (['doubt_reply', 'doubt_raised'].includes(notif.type)) {
+                           changeTab(3);
+                        }
+                      }}
+                    >
                       <h4 className="text-sm font-bold text-slate-900 dark:text-white">{notif.title}</h4>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{notif.message}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                        {notif.isAnonymous ? notif.message.replace(notif.senderName, 'A student') : notif.message}
+                      </p>
                       <p className="text-[10px] text-slate-400 mt-2">{notif.createdAt?.toDate ? notif.createdAt.toDate().toLocaleTimeString() : new Date(notif.createdAt).toLocaleTimeString()}</p>
                     </div>
                   ))

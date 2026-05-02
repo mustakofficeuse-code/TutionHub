@@ -1,15 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { collection, query, where, addDoc, onSnapshot, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { sendNotification } from '../../services/notificationService';
 import { useAuth } from '../../context/AuthContext';
-import { 
-  MessageSquare, 
-  Plus, 
-  Search, 
-  Filter, 
-  CheckCircle2, 
-  Clock, 
+import { useDropzone } from 'react-dropzone';
+import {
+  MessageSquare,
+  Plus,
+  Search,
+  Filter,
+  CheckCircle2,
+  Check,
+  CheckCheck,
+  Clock,
   ArrowLeft,
   Loader2,
   User,
@@ -22,10 +25,12 @@ import {
   FileText,
   Image as ImageIcon,
   X as XIcon,
-  Shield
+  Shield,
+  GraduationCap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import ViewableImage from '../../components/ViewableImage';
 
 export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const { profile } = useAuth();
@@ -86,6 +91,18 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const [content, setContent] = useState('');
   const [subject, setSubject] = useState('');
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
+  const [isAnonymous, setIsAnonymous] = useState(false);
+
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      setSelectedFile(acceptedFiles[0]);
+    }
+  }, []);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    multiple: false
+  });
 
   useEffect(() => {
     if (!profile) return;
@@ -140,6 +157,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         title,
         content,
         visibility,
+        isAnonymous,
         attachmentUrl: fileUrl,
         attachmentName: selectedFile?.name || '',
         attachmentType: selectedFile?.type || '',
@@ -154,6 +172,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         senderId: profile.uid,
         senderName: profile.name,
         targetRole: 'teacher',
+        isAnonymous: isAnonymous,
       });
 
       setShowAdd(false);
@@ -161,6 +180,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       setContent('');
       setSubject('');
       setVisibility('public');
+      setIsAnonymous(false);
       setSelectedFile(null);
     } catch (error: any) {
       console.error("Error adding doubt:", error);
@@ -191,7 +211,8 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         attachmentUrl: fileUrl,
         attachmentName: replyFile?.name || '',
         attachmentType: replyFile?.type || '',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        status: 'sent'
       });
       
       if (profile.role === 'teacher') {
@@ -236,7 +257,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   };
 
   return (
-    <div className={`fixed inset-0 bg-[#f0f2f5] dark:bg-[#0b141a] transition-colors flex ${isEmbedded ? 'top-0' : 'top-16 pb-0'}`}>
+    <div className={`${isEmbedded ? 'absolute inset-0' : 'fixed inset-0'} bg-[#f0f2f5] dark:bg-[#0b141a] transition-colors flex ${!isEmbedded ? 'top-16 pb-0' : ''}`}>
       <div className="flex-1 flex max-w-[1600px] mx-auto w-full overflow-hidden">
         
         {/* Left Sidebar: Contacts/Doubts List */}
@@ -263,7 +284,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
              </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
             {loading ? (
                 <div className="flex justify-center py-12">
                   <Loader2 className="w-8 h-8 text-wa-teal animate-spin" />
@@ -283,7 +304,11 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                   >
                     <div className="relative shrink-0">
                        <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center text-slate-500 overflow-hidden">
-                          {d.studentAvatar ? <img src={d.studentAvatar} className="w-full h-full object-cover" /> : <User className="w-6 h-6" />}
+                          {d.isAnonymous ? (
+                            <User className="w-6 h-6" />
+                          ) : (
+                            d.studentAvatar ? <ViewableImage roundedFull={false} src={d.studentAvatar} alt={d.studentName} className="w-full h-full object-cover" /> : <User className="w-6 h-6" />
+                          )}
                        </div>
                        {d.status === 'resolved' && (
                          <div className="absolute -bottom-1 -right-1 bg-wa-green rounded-full p-0.5 ring-2 ring-white dark:ring-wa-header">
@@ -293,7 +318,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                     </div>
                     <div className="flex-1 min-w-0">
                        <div className="flex justify-between items-baseline mb-0.5">
-                          <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate text-base">{d.studentName}</h3>
+                          <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate text-base">
+                             {d.isAnonymous ? 'Anonymous Student' : d.studentName}
+                          </h3>
                           <span className="text-[10px] text-slate-500 shrink-0">{new Date(d.createdAt).toLocaleDateString()}</span>
                        </div>
                        <div className="flex justify-between items-center">
@@ -307,7 +334,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
           </div>
 
           {profile?.role === 'student' && (
-            <div className="p-4">
+            <div className="p-4 z-20 bg-white dark:bg-[#111b21] border-t border-slate-100 dark:border-white/5">
               <button 
                 onClick={() => setShowAdd(true)}
                 className="w-full bg-wa-teal hover:bg-wa-teal-dark text-white py-3 rounded-full font-bold flex items-center justify-center gap-2 shadow-lg transition-all"
@@ -323,7 +350,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
           {!selectedDoubt ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-[#f8f9fa] dark:bg-[#222e35] border-b-[6px] border-wa-teal">
               <div className="w-64 h-64 bg-slate-100 dark:bg-[#222e35] rounded-full flex items-center justify-center mb-8">
-                 <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-32 h-32 opacity-20 grayscale" alt="" />
+                 <GraduationCap className="w-32 h-32 text-slate-300 dark:text-slate-600" />
               </div>
               <h2 className="text-3xl font-light text-slate-800 dark:text-[#e9edef] mb-3">TutionHub Web</h2>
               <p className="text-[#8696a0] max-w-sm text-sm">
@@ -341,10 +368,16 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                    <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0">
-                  <User className="w-5 h-5 text-slate-500" />
+                  {selectedDoubt.isAnonymous ? (
+                    <User className="w-5 h-5 text-slate-500" />
+                  ) : (
+                    selectedDoubt.studentAvatar ? <ViewableImage roundedFull={false} src={selectedDoubt.studentAvatar} alt={selectedDoubt.studentName} className="w-full h-full object-cover rounded-full" /> : <User className="w-5 h-5 text-slate-500" />
+                  )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate">{selectedDoubt.studentName}</h3>
+                  <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate">
+                    {selectedDoubt.isAnonymous ? 'Anonymous Student' : selectedDoubt.studentName}
+                  </h3>
                   <p className="text-[10px] text-slate-500 dark:text-[#8696a0] truncate">
                      {selectedDoubt.subject} • {selectedDoubt.status === 'resolved' ? 'Resolved' : 'Active'}
                   </p>
@@ -354,11 +387,11 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                       <CheckCircle2 className="w-6 h-6" />
                    </button>
                    {(profile?.role === 'teacher' || profile?.uid === selectedDoubt.studentId) && (
-                      <button onClick={() => deleteDoubt(selectedDoubt.id)} className="hover:text-red-500">
+                      <button onClick={(e) => { e.stopPropagation(); deleteDoubt(selectedDoubt.id); }} className="hover:text-red-500">
                          <Trash2 className="w-6 h-6" />
                       </button>
                    )}
-                   <button><MoreVertical className="w-6 h-6" /></button>
+                   <button onClick={(e) => { e.stopPropagation(); alert('More options menu'); }}><MoreVertical className="w-6 h-6" /></button>
                 </div>
               </div>
 
@@ -447,7 +480,11 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
 
                             <div className="flex justify-end items-center gap-1 mt-1 opacity-50">
                                <span className="text-[9px] uppercase">{new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                               {isOwn && <CheckCircle2 className="w-2.5 h-2.5" />}
+                               {isOwn && (
+                                 r.status === 'read' ? <CheckCheck className="w-3 h-3 text-blue-500" /> :
+                                 r.status === 'delivered' ? <CheckCheck className="w-3 h-3 text-slate-500" /> :
+                                 <Check className="w-3 h-3 text-slate-500" />
+                               )}
                             </div>
                          </div>
                       </div>
@@ -566,6 +603,16 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                       </select>
                    </div>
                 </div>
+                <div className="flex items-center gap-2">
+                   <input 
+                     type="checkbox" 
+                     id="anonymous"
+                     className="w-4 h-4 accent-wa-teal"
+                     checked={isAnonymous}
+                     onChange={(e) => setIsAnonymous(e.target.checked)}
+                   />
+                   <label htmlFor="anonymous" className="text-xs text-slate-600 dark:text-slate-400">Hide personal details (name, profile picture)</label>
+                </div>
                 <div>
                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Title</label>
                    <input
@@ -590,13 +637,16 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                 </div>
                 <div>
                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Attachment</label>
-                   <label className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl cursor-pointer hover:bg-wa-teal/5 transition-all">
-                      <Paperclip className="w-5 h-5 text-wa-teal" />
+                   <div 
+                      {...getRootProps()} 
+                      className={`w-full flex flex-col items-center justify-center gap-2 px-4 py-6 bg-slate-50 dark:bg-[#111b21] border-2 border-dashed ${isDragActive ? 'border-wa-teal bg-wa-teal/5' : 'border-slate-200 dark:border-white/10'} rounded-xl cursor-pointer hover:border-wa-teal transition-all`}
+                   >
+                      <input {...getInputProps()} />
+                      <Paperclip className={`w-8 h-8 ${isDragActive ? 'text-wa-teal' : 'text-slate-400'}`} />
                       <span className="text-xs font-bold text-slate-500 truncate max-w-[200px]">
-                         {selectedFile ? selectedFile.name : "Attach a file"}
+                         {selectedFile ? selectedFile.name : "Drag & drop or click to attach"}
                       </span>
-                      <input type="file" className="hidden" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
-                   </label>
+                   </div>
                 </div>
                 
                 <button 

@@ -181,7 +181,7 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                   <PieChartIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                   Attendance Summary
                 </h3>
-                <div className="h-64 w-full flex items-center justify-center relative">
+                <div className="h-64 w-full min-h-64 flex items-center justify-center relative">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie

@@ -323,6 +323,19 @@ export default function TeacherDashboard({
     }
   };
 
+  const handleClearRecentAttendance = async () => {
+    if (!window.confirm("Are you sure you want to clear all activity in the feed? This action will delete these records.")) return;
+    try {
+      const batch = writeBatch(db);
+      recentAttendance.forEach((rec) => {
+        batch.delete(doc(db, "attendance", rec.id));
+      });
+      await batch.commit();
+    } catch (err) {
+      alert("Failed to clear activity feed");
+    }
+  };
+
   const handleAddDepartment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newDeptName.trim()) return;
@@ -758,9 +771,17 @@ export default function TeacherDashboard({
                   <h3 className="text-sm font-black text-slate-800 dark:text-[#e9edef] flex items-center gap-2">
                     <Clock className="w-4 h-4 text-wa-teal" /> Activity Feed
                   </h3>
-                  <span className="text-[9px] bg-wa-teal/10 text-wa-teal px-2 py-0.5 rounded-full font-black uppercase">
-                    Live
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button 
+                      onClick={handleClearRecentAttendance}
+                      className="text-[9px] bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full font-black uppercase hover:bg-red-500/20"
+                    >
+                      Clear All
+                    </button>
+                    <span className="text-[9px] bg-wa-teal/10 text-wa-teal px-2 py-0.5 rounded-full font-black uppercase">
+                      Live
+                    </span>
+                  </div>
                 </div>
                 <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
                   {recentAttendance.map((rec) => (

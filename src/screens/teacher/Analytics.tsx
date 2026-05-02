@@ -182,7 +182,7 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                   <BarChartIcon className="w-5 h-5 text-blue-600" />
                   Course-wise Attendance (%)
                 </h3>
-                <div className="h-64 w-full">
+                <div className="h-64 w-full min-h-64">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={courseStats}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
