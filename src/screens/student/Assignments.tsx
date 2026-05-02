@@ -14,9 +14,11 @@ import {
   QrCode,
   Link as LinkIcon,
   Send,
-  Plus
+  Plus,
+  X
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'motion/react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 
 export default function StudentAssignments() {
@@ -110,74 +112,99 @@ export default function StudentAssignments() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24 transition-colors">
+    <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-6 pb-24 pt-12 transition-colors font-sans">
       <button 
         onClick={() => navigate('/')}
-        className="mb-8 flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        className="mb-8 flex items-center gap-3 text-[#8696a0] font-black uppercase tracking-widest text-[10px] hover:text-wa-teal transition-all group"
       >
-        <ArrowLeft className="w-5 h-5" /> Back to Home
+        <div className="w-8 h-8 flex items-center justify-center bg-white dark:bg-[#202c33] rounded-xl shadow-sm border border-slate-100 dark:border-white/5 group-hover:scale-110 transition-transform">
+          <ArrowLeft className="w-4 h-4" />
+        </div>
+        Back to Dashboard
       </button>
 
-      <div className="max-w-4xl mx-auto space-y-8">
-        <div className="flex justify-between items-center">
+      <div className="max-w-4xl mx-auto space-y-10">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <ClipboardList className="text-blue-600 w-7 h-7" />
-              My Assignments
+            <h1 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] flex items-center gap-4 tracking-tight leading-none">
+              <div className="p-3 bg-wa-teal/10 rounded-2xl">
+                <ClipboardList className="text-wa-teal w-8 h-8" />
+              </div>
+              Project <span className="text-wa-teal">Center</span>
             </h1>
-            <p className="text-slate-500 dark:text-slate-400">Track and submit your class work</p>
+            <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest mt-3">Monitor and transmit system directives</p>
           </div>
           <button 
             onClick={startScanner}
-            className="bg-slate-900 dark:bg-slate-800 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg transition-all hover:bg-slate-800 dark:hover:bg-slate-700"
+            className="w-full sm:w-auto bg-wa-teal hover:bg-wa-teal-dark text-white px-8 py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 shadow-xl transition-all shadow-wa-teal/30 active:scale-95 group"
           >
-            <QrCode className="w-5 h-5" /> Scan to Submit
+            <QrCode className="w-5 h-5 group-hover:rotate-12 transition-transform" />
+            Scan Payload
           </button>
         </div>
 
         {/* Assignments List */}
-        <div className="space-y-4">
+        <div className="space-y-6">
           {loading ? (
-            <div className="py-20 text-center">
-              <Loader2 className="w-10 h-10 text-blue-600 dark:text-blue-400 animate-spin mx-auto" />
+            <div className="py-24 text-center">
+              <Loader2 className="w-12 h-12 text-wa-teal animate-spin mx-auto" />
+              <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] mt-6">Scanning database...</p>
             </div>
           ) : assignments.length === 0 ? (
-            <div className="py-20 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
-              <p className="text-slate-500 dark:text-slate-400">No assignments for your course yet.</p>
+            <div className="py-24 text-center bg-white dark:bg-[#202c33] rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-sm">
+              <AlertCircle className="w-12 h-12 text-[#8696a0]/30 mx-auto mb-6" />
+              <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em]">Zero pending directives found</p>
             </div>
           ) : (
             assignments.map((a) => {
               const submission = submissions.find(s => s.assignmentId === a.id);
               return (
-                <div key={a.id} className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4 group hover:border-blue-200 dark:hover:border-blue-900 transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${
-                      submission ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400' : 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  key={a.id} 
+                  className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] shadow-sm border border-slate-50 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-8 group hover:border-wa-teal transition-all relative overflow-hidden"
+                >
+                  <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
+                    <ClipboardList className="w-20 h-20 text-wa-teal" />
+                  </div>
+                  <div className="flex items-center gap-6 relative z-10">
+                    <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center transition-all ${
+                      submission ? 'bg-wa-green/10 text-wa-green' : 'bg-wa-teal/10 text-wa-teal'
                     }`}>
-                      <ClipboardList className="w-7 h-7" />
+                      {submission ? <CheckCircle2 className="w-8 h-8" /> : <ClipboardList className="w-8 h-8" />}
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-900 dark:text-white">{a.title}</h3>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
-                        {a.subject} • Due: {new Date(a.dueDate).toLocaleDateString()}
-                      </p>
+                      <h3 className="text-xl font-black text-slate-900 dark:text-[#e9edef] tracking-tight group-hover:text-wa-teal transition-colors">
+                        {a.title}
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-3 mt-2">
+                        <span className="px-3 py-1 rounded-full text-[9px] font-black bg-slate-100 dark:bg-slate-800 text-[#8696a0] uppercase tracking-widest border border-slate-50 dark:border-white/10">
+                          {a.subject}
+                        </span>
+                        <span className="flex items-center gap-1.5 text-[9px] font-black text-red-500 uppercase tracking-widest">
+                          <Calendar className="w-3 h-3" />
+                          EXP: {new Date(a.dueDate).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-4 relative z-10">
                     {submission ? (
-                      <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-4 py-2 rounded-xl text-sm font-bold">
-                        <CheckCircle2 className="w-4 h-4" /> Submitted
+                      <div className="flex items-center gap-3 bg-wa-green/10 text-wa-green px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-wa-green/10">
+                        <div className="w-2 h-2 bg-wa-green rounded-full animate-pulse" />
+                        Transmitted
                       </div>
                     ) : (
                       <button 
                         onClick={() => setSelectedAssignment(a)}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl text-sm font-bold transition-all shadow-lg shadow-blue-100 dark:shadow-none"
+                        className="w-full md:w-auto bg-wa-teal hover:bg-wa-teal-dark text-white px-10 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-wa-teal/20 active:scale-95"
                       >
-                        Submit Now
+                        Transmit Now
                       </button>
                     )}
                   </div>
-                </div>
+                </motion.div>
               );
             })
           )}
@@ -186,63 +213,73 @@ export default function StudentAssignments() {
 
       {/* Scanner Modal */}
       {scanning && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl relative border border-slate-100 dark:border-slate-800">
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-[#202c33] rounded-[3rem] p-10 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.4)] relative border border-white/5 text-center animate-in zoom-in-95 duration-200">
             <button 
               onClick={() => setScanning(false)}
-              className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-900 dark:text-white dark:hover:text-white transition-all"
+              className="absolute top-8 right-8 w-10 h-10 bg-[#f0f2f5] dark:bg-white/5 rounded-xl flex items-center justify-center text-[#8696a0] hover:bg-red-500 hover:text-white transition-all shadow-sm"
             >
-              <Plus className="w-6 h-6 rotate-45" />
+              <X className="w-5 h-5" />
             </button>
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6 text-center">Scan Assignment QR</h3>
-            <div id="reader" className="overflow-hidden rounded-2xl border-4 border-slate-100 dark:border-slate-800"></div>
-            <p className="text-center text-slate-500 dark:text-slate-400 mt-6 text-sm">Point your camera at the assignment QR code provided by your teacher.</p>
+            <div className="w-20 h-20 bg-wa-teal/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8">
+              <QrCode className="w-10 h-10 text-wa-teal" />
+            </div>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-[#e9edef] mb-3 tracking-tight leading-none">Sensor <span className="text-wa-teal">Scan</span></h3>
+            <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest mb-8">Align directive QR in terminal view</p>
+            
+            <div id="reader" className="overflow-hidden rounded-[2rem] border-8 border-slate-50 dark:border-white/5 bg-slate-900 shadow-inner group aspect-square"></div>
+            
+            <p className="text-[9px] font-black uppercase tracking-widest text-wa-teal mt-8 leading-relaxed opacity-60 italic">Scan QR provided in teaching sector</p>
           </div>
         </div>
       )}
 
       {/* Submission Modal */}
       {selectedAssignment && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-md shadow-2xl border border-slate-100 dark:border-slate-800">
-            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Submit Assignment</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">{selectedAssignment.title}</p>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-xl flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-[#202c33] rounded-[3rem] p-12 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] border border-white/10 animate-in zoom-in-95 duration-200 text-center">
+            <div className="w-20 h-20 bg-wa-teal/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
+               <ClipboardList className="text-wa-teal w-10 h-10" />
+            </div>
+            <h3 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] mb-3 tracking-tight leading-none">Final <span className="text-wa-teal">Transmit</span></h3>
+            <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest mb-10 leading-relaxed truncate px-4">{selectedAssignment.title}</p>
             
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-                  Submission Link (Google Drive / Dropbox)
-                </label>
-                <div className="relative">
-                  <LinkIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <form onSubmit={handleSubmit} className="space-y-8">
+              <div className="space-y-3">
+                <label className="block text-[10px] font-black text-[#8696a0] uppercase tracking-widest text-left ml-6">Directive Link</label>
+                <div className="relative group">
+                  <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-[#8696a0] w-5 h-5 group-focus-within:text-wa-teal transition-colors" />
                   <input
                     type="url"
                     required
                     placeholder="https://drive.google.com/..."
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    className="w-full pl-16 pr-6 py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-[2rem] text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all shadow-inner"
                     value={submissionUrl}
                     onChange={(e) => setSubmissionUrl(e.target.value)}
                   />
                 </div>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 dark:text-slate-400 mt-2 italic">
-                  Upload your work to Drive and paste the shared link here.
-                </p>
+                <p className="text-[9px] font-black text-[#8696a0] uppercase tracking-[0.2em] italic">Ensure sharing permissions are broad-phase enabled</p>
               </div>
 
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-4">
+                 <button 
+                  type="submit"
+                  disabled={!submissionUrl || submitting}
+                  className="w-full py-5 bg-wa-teal hover:bg-wa-teal-dark text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl transition-all shadow-xl shadow-wa-teal/30 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                >
+                  {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                    <>
+                      <Send className="w-5 h-5" />
+                      Initiate Transmission
+                    </>
+                  )}
+                </button>
                 <button 
                   type="button"
                   onClick={() => setSelectedAssignment(null)}
-                  className="flex-1 py-3 text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+                  className="w-full py-5 text-[#8696a0] font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all"
                 >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  disabled={!submissionUrl || submitting}
-                  className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none disabled:bg-slate-300 dark:disabled:bg-slate-700"
-                >
-                  {submitting ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Submit Work'}
+                  Cancel Uplink
                 </button>
               </div>
             </form>

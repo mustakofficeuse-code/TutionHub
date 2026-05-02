@@ -230,92 +230,109 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
   }
 
   return (
-    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors ${isEmbedded ? 'pb-24' : ''}`}>
+    <div className={`min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-6 transition-colors ${isEmbedded ? 'pb-24 pt-12' : 'pt-12'}`}>
       {!isEmbedded ? (
         <button 
           onClick={() => navigate('/')}
-          className="mb-8 flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          className="mb-8 flex items-center gap-2 text-[#8696a0] font-semibold hover:text-wa-teal transition-colors"
         >
-          <ArrowLeft className="w-5 h-5" /> Back to Home
+          <ArrowLeft className="w-5 h-5" /> Back to Dashboard
         </button>
       ) : (
         <button 
           onClick={() => { if(onTabChange) onTabChange('home'); }}
-          className="mb-8 flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+          className="mb-8 flex items-center gap-2 text-[#8696a0] font-semibold hover:text-wa-teal transition-colors"
         >
-          <ArrowLeft className="w-5 h-5" /> Back to Dashboard
+          <ArrowLeft className="w-5 h-5" /> Back to Home
         </button>
       )}
 
-      <div className="max-w-md mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-800">
-        <div className="bg-blue-600 p-8 text-center text-white">
-          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-md">
-            <Camera className="w-8 h-8" />
+      <div className="max-w-md mx-auto bg-white dark:bg-[#202c33] rounded-[3rem] shadow-2xl overflow-hidden border border-slate-50 dark:border-white/5 animate-in zoom-in-95 duration-500">
+        <div className="bg-wa-teal p-10 text-center text-white relative overflow-hidden">
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+          <div className="relative z-10">
+            <div className="w-20 h-20 bg-white/20 rounded-[2rem] flex items-center justify-center mx-auto mb-6 backdrop-blur-xl shadow-inner group">
+              <Camera className="w-10 h-10 group-hover:scale-110 transition-transform" />
+            </div>
+            <h1 className="text-3xl font-black tracking-tight mb-2">Biometric Scan</h1>
+            <p className="text-white/80 text-[10px] uppercase font-black tracking-[0.2em]">Locate the official Tuition Hub QR to verify</p>
           </div>
-          <h1 className="text-2xl font-bold">Attendance Scanner</h1>
-          <p className="text-blue-100 text-sm mt-2">Scan the official QR code attached to the tuition wall</p>
+          <div className="absolute -bottom-12 -right-12 w-32 h-32 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute -top-12 -left-12 w-32 h-32 bg-black/10 rounded-full blur-3xl" />
         </div>
 
-        <div className="p-8">
+        <div className="p-10">
           {status === 'idle' && (
-            <div className="space-y-6">
-              <div id="reader" className="overflow-hidden rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700"></div>
-              <div className="flex items-center gap-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl text-blue-700 dark:text-blue-400 text-sm">
-                <MapPin className="w-5 h-5 flex-shrink-0" />
-                <p>Ensure your GPS is turned on and you are at the tuition center.</p>
+            <div className="space-y-8">
+              <div id="reader" className="overflow-hidden rounded-[2rem] border-4 border-slate-50 dark:border-white/5 shadow-inner bg-[#f0f2f5] dark:bg-[#111b21] aspect-square flex items-center justify-center relative">
+                 <div className="absolute inset-0 pointer-events-none border-2 border-wa-teal/20 rounded-[2rem] animate-pulse" />
+              </div>
+              <div className="flex items-center gap-4 p-5 bg-wa-teal/5 dark:bg-wa-teal/10 rounded-[2rem] border border-wa-teal/10">
+                <div className="w-10 h-10 bg-wa-teal rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-wa-teal/20">
+                   <MapPin className="w-5 h-5 text-white" />
+                </div>
+                <p className="text-[10px] font-black text-wa-teal uppercase tracking-widest leading-relaxed">
+                  Encryption active: Ensure high-accuracy GPS permissions are granted for location verification.
+                </p>
               </div>
             </div>
           )}
 
           {status === 'verifying' && (
-            <div className="py-12 flex flex-col items-center text-center space-y-4">
-              <Loader2 className="w-12 h-12 text-blue-600 dark:text-blue-400 animate-spin" />
-              <p className="text-slate-600 dark:text-slate-400 font-medium">{message}</p>
+            <div className="py-20 flex flex-col items-center text-center space-y-6">
+              <div className="w-24 h-24 bg-wa-teal/10 rounded-full flex items-center justify-center relative">
+                 <Loader2 className="w-12 h-12 text-wa-teal animate-spin" />
+                 <div className="absolute inset-0 border-4 border-wa-teal/20 rounded-full animate-ping opacity-20" />
+              </div>
+              <p className="text-[#8696a0] font-black uppercase tracking-[0.2em] text-[10px]">{message}</p>
             </div>
           )}
 
           {status === 'success' && (
-            <div className="py-12 flex flex-col items-center text-center space-y-6">
+            <div className="py-12 flex flex-col items-center text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="relative">
-                <div className="w-24 h-24 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center overflow-hidden border-4 border-emerald-50 content-none">
+                <div className="w-28 h-28 bg-[#f0f2f5] dark:bg-wa-green/10 rounded-[2rem] flex items-center justify-center overflow-hidden border-4 border-white dark:border-wa-green/20 shadow-xl p-1">
                   {profile?.avatarUrl ? (
-                    <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover rounded-[1.75rem]" referrerPolicy="no-referrer" />
                   ) : (
-                    <CheckCircle className="w-12 h-12 text-emerald-600" />
+                    <CheckCircle className="w-16 h-16 text-wa-green" />
                   )}
                 </div>
-                <div className="absolute -bottom-2 -right-2 bg-emerald-600 text-white p-2 rounded-full shadow-lg">
-                  <CheckCircle className="w-5 h-5" />
+                <div className="absolute -bottom-3 -right-3 bg-wa-green text-white p-3 rounded-2xl shadow-xl shadow-wa-green/20 border-4 border-white dark:border-[#202c33]">
+                  <CheckCircle className="w-6 h-6" />
                 </div>
               </div>
-              <div>
-                <h3 className="text-xl font-black text-slate-900 dark:text-white mb-2">Success!</h3>
-                <p className="text-slate-600 dark:text-slate-400 font-medium px-4">{message}</p>
+              <div className="space-y-2">
+                <h3 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] tracking-tight">Verified!</h3>
+                <p className="text-[#8696a0] text-sm font-semibold px-6 leading-relaxed italic">"{message}"</p>
               </div>
               <button 
                 onClick={() => {
                   if (isEmbedded && onTabChange) onTabChange('home');
                   else navigate('/');
                 }}
-                className="mt-6 w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3 rounded-xl font-bold shadow-lg shadow-blue-100 dark:shadow-none transition-all"
+                className="w-full bg-wa-teal hover:bg-wa-teal/90 text-white py-4 rounded-2xl font-black uppercase tracking-[0.3em] text-xs transition-all shadow-xl shadow-wa-teal/20 active:scale-95"
               >
-                Done
+                Return to Dashboard
               </button>
             </div>
           )}
 
           {status === 'error' && (
-            <div className="py-12 flex flex-col items-center text-center space-y-4">
-              <div className="w-20 h-20 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-2">
-                <AlertCircle className="w-12 h-12 text-red-600 dark:text-red-400" />
+            <div className="py-12 flex flex-col items-center text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="w-24 h-24 bg-red-50 dark:bg-red-900/10 rounded-[2.5rem] flex items-center justify-center relative group">
+                <AlertCircle className="w-12 h-12 text-red-500 group-hover:scale-110 transition-transform" />
+                <div className="absolute inset-0 border-2 border-red-500/20 rounded-[2.5rem] animate-pulse" />
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Verification Failed</h2>
-              <p className="text-slate-600 dark:text-slate-400">{message}</p>
+              <div className="space-y-2">
+                <h2 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] tracking-tight">Scan Reset</h2>
+                <p className="text-[#8696a0] text-sm font-semibold px-6 leading-relaxed italic">{message}</p>
+              </div>
               <button 
                 onClick={() => { setStatus('idle'); setScanning(true); }}
-                className="mt-6 w-full bg-slate-900 dark:bg-slate-800 text-white py-3 rounded-xl font-bold"
+                className="w-full bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 text-white py-4 rounded-2xl font-black uppercase tracking-[0.3em] text-xs shadow-lg transition-all active:scale-95"
               >
-                Try Again
+                Retry Authorization
               </button>
             </div>
           )}

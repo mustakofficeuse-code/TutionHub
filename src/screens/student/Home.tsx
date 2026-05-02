@@ -328,167 +328,90 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
   }, [attendanceCount, sessionCount, feeStructure, studentFees, profile?.courseName, profile?.semester, profile?.courseId, profile?.department]);
 
   const quickStats = [
-    { label: 'Attendance', value: stats.attendance, icon: Calendar, color: 'text-blue-600', bg: 'bg-blue-50', link: '/student/analytics', tabId: 'stats' },
-    { label: 'Payable Fee', value: stats.payableFee, icon: CreditCard, color: 'text-indigo-600', bg: 'bg-indigo-50', link: '/fees/history', tabId: 'fees' },
-    { label: 'Status', value: stats.feesStatus, icon: CheckCircle2, color: 'text-green-600', bg: 'bg-green-50', link: '/fees/history', tabId: 'fees' },
+    { label: 'Attendance', value: stats.attendance, icon: Calendar, color: 'text-wa-teal', bg: 'bg-wa-teal/10', link: '/student/analytics', tabId: 'stats' },
+    { label: 'Payable Fee', value: stats.payableFee, icon: CreditCard, color: 'text-wa-teal', bg: 'bg-wa-teal/10', link: '/fees/history', tabId: 'fees' },
+    { label: 'Status', value: stats.feesStatus, icon: CheckCircle2, color: 'text-wa-green', bg: 'bg-wa-green/10', link: '/fees/history', tabId: 'fees' },
   ];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-24 transition-colors">
-      {/* Notifications Modal */}
+    <div className={`min-h-screen ${isEmbedded ? '' : 'bg-[#f0f2f5] dark:bg-[#111b21] pt-12'} pb-24 transition-colors font-sans`}>
+      {/* Shared Profile Image Zoom Modal */}
       <AnimatePresence>
-        {showNotifications && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-end sm:p-6 bg-slate-900/60 backdrop-blur-sm">
+        {zoomedImage && (
+          <div 
+            className="fixed inset-0 bg-black/95 backdrop-blur-xl flex items-center justify-center z-[200] p-4 cursor-zoom-out"
+            onClick={() => setZoomedImage(null)}
+          >
             <motion.div 
-              initial={{ x: 300, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 300, opacity: 0 }}
-              className="w-full sm:w-[400px] h-full sm:h-auto sm:max-h-[600px] bg-white dark:bg-slate-900 sm:rounded-[2.5rem] shadow-2xl flex flex-col"
+              layoutId="profile-avatar-zoom"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="relative max-w-xl w-full aspect-square rounded-[3rem] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10"
+              onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-blue-600 sm:rounded-t-[2.5rem] text-white">
-                <div className="flex items-center gap-3">
-                  <Bell className="w-5 h-5" />
-                  <h3 className="font-black tracking-tight">Notifications</h3>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={handleClearNotifications}
-                    disabled={isClearingNotifs || notifications.length === 0}
-                    className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all text-[10px] font-black uppercase tracking-wider flex items-center gap-1 disabled:opacity-50"
-                  >
-                    {isClearingNotifs ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                    Clear
-                  </button>
-                  <button 
-                    onClick={() => setShowNotifications(false)}
-                    className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-              </div>
-              
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                {notifications.length === 0 ? (
-                  <div className="py-20 text-center space-y-4">
-                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto">
-                      <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600" />
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">All caught up!</p>
-                  </div>
-                ) : (
-                  notifications.map((notif) => (
-                    <div key={notif.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-800 transition-all group">
-                      <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-xl mt-1 ${notif.type === 'schedule' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-600 dark:bg-slate-800'}`}>
-                          {notif.type === 'schedule' ? <Clock className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">{notif.title}</h4>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-2">{notif.message}</p>
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                            {new Date(notif.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-              
-              <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-                <button 
-                  onClick={() => setShowNotifications(false)}
-                  className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black rounded-2xl text-xs uppercase tracking-[0.2em] shadow-lg shadow-slate-200 dark:shadow-none active:scale-95 transition-all"
-                >
-                  Close
-                </button>
-              </div>
+              <img 
+                src={zoomedImage} 
+                alt="Zoomed DP" 
+                className="w-full h-full object-cover" 
+                referrerPolicy="no-referrer" 
+              />
+              <button 
+                onClick={() => setZoomedImage(null)}
+                className="absolute top-6 right-6 w-12 h-12 bg-black/50 hover:bg-wa-teal backdrop-blur-md rounded-2xl flex items-center justify-center text-white transition-all shadow-lg border border-white/10"
+              >
+                <X className="w-6 h-6" />
+              </button>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <header className="bg-blue-600 text-white px-6 pt-12 pb-20 rounded-b-[40px] shadow-lg shadow-blue-100 dark:shadow-none relative overflow-hidden transition-all">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl"></div>
-        <div className="relative z-10 flex justify-between items-start">
-          <div className="flex items-center gap-4">
-            <motion.div 
-              layoutId="profile-avatar"
-              onClick={() => profile?.avatarUrl && setZoomedImage(profile.avatarUrl)}
-              className="w-14 h-14 bg-white/20 rounded-2xl p-1 backdrop-blur-md cursor-pointer hover:scale-105 transition-transform overflow-hidden group relative"
-              title={profile?.avatarUrl ? "View Image" : ""}
-            >
-              <div className="w-full h-full bg-blue-500 rounded-xl flex items-center justify-center text-white font-bold text-xl overflow-hidden">
-                {profile?.avatarUrl ? (
-                  <>
-                    <motion.img 
-                      layoutId="zoomed-image"
-                      src={profile.avatarUrl} 
-                      alt="" 
-                      className="w-full h-full object-cover" 
-                      referrerPolicy="no-referrer" 
-                    />
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
-                      <Search className="w-4 h-4 text-white" />
-                    </div>
-                  </>
-                ) : (
-                  profile?.name?.charAt(0) || 'S'
-                )}
-              </div>
-            </motion.div>
+      <main className={`${isEmbedded ? 'p-4' : 'px-6 mt-8'} relative z-10 space-y-6 max-w-2xl mx-auto`}>
+        {/* Profile Card */}
+        <div className="bg-white dark:bg-[#202c33] p-8 rounded-[3rem] shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
+             <Shield className="w-16 h-16 text-wa-teal" />
+          </div>
+          <div className="flex items-center gap-6 relative z-10">
             <div 
-              onClick={() => handleNav('/profile', 'profile')}
-              className="cursor-pointer hover:opacity-80 transition-opacity"
+              onClick={() => profile?.avatarUrl && setZoomedImage(profile.avatarUrl)}
+              className="w-20 h-20 bg-[#f0f2f5] dark:bg-wa-teal/10 rounded-[2rem] p-1 overflow-hidden cursor-pointer hover:rotate-3 transition-all shadow-inner border-2 border-slate-50 dark:border-white/10"
             >
-              <p className="text-blue-100 text-[10px] font-black uppercase tracking-wider">Welcome back,</p>
-              <h1 className="text-2xl font-black tracking-tight">{profile?.name}</h1>
-              <div className="flex items-center gap-2 mt-0.5">
-                <span className="px-1.5 py-0.5 bg-white/20 rounded text-[9px] font-bold backdrop-blur-sm border border-white/10">Sem {profile?.semester}</span>
-                <span className="px-1.5 py-0.5 bg-white/20 rounded text-[9px] font-bold backdrop-blur-sm border border-white/10 uppercase">{profile?.courseName}</span>
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} className="w-full h-full object-cover rounded-[1.75rem]" referrerPolicy="no-referrer" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-wa-teal font-black text-3xl">
+                  {profile?.name?.charAt(0)}
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                 <span className="w-2 h-2 bg-wa-green rounded-full animate-pulse shadow-[0_0_10px_rgba(37,211,102,0.5)]"></span>
+                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-wa-teal">Authenticated</p>
+              </div>
+              <h2 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] truncate tracking-tight">{profile?.name}</h2>
+              <div className="flex items-center gap-2 mt-2">
+                <span className="px-3 py-1 bg-wa-teal/10 text-wa-teal rounded-full text-[10px] font-black uppercase tracking-widest border border-wa-teal/10">Sem {profile?.semester}</span>
+                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-[#8696a0] rounded-full text-[10px] font-black uppercase tracking-widest border border-transparent truncate max-w-[150px]">{profile?.courseName || profile?.department}</span>
               </div>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button
-              onClick={toggleTheme}
-              className="p-2 bg-white/20 rounded-xl backdrop-blur-md hover:bg-white/30 transition-all"
-            >
-              {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-            </button>
-            <button 
-              onClick={() => setShowNotifications(true)}
-              className="p-2 bg-white/20 rounded-xl backdrop-blur-md relative hover:bg-white/30 transition-all"
-            >
-              <Bell className="w-5 h-5" />
-              {notifications.length > 0 && (
-                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-blue-600 flex items-center justify-center text-[8px] font-black">
-                  {notifications.length > 9 ? '9+' : notifications.length}
-                </span>
-              )}
-            </button>
-            <button 
-              onClick={() => signOut(auth)}
-              className="p-2 bg-white/20 rounded-xl backdrop-blur-md"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
-          </div>
         </div>
-      </header>
 
-      <main className="px-6 -mt-12 relative z-10 space-y-8">
         {profile?.courseId === 'legacy' && (
-          <div className="bg-yellow-100 dark:bg-yellow-900/40 border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200 p-4 rounded-3xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-12">
-            <div>
-              <p className="font-bold text-sm">Account Migration</p>
-              <p className="text-xs mt-1">Please update your Department (e.g. BCA) and Semester in your profile so you can access your study materials.</p>
+          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 p-6 rounded-[2.5rem] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in slide-in-from-top-4">
+            <div className="flex items-start gap-4">
+              <Shield className="w-6 h-6 shrink-0 mt-1" />
+              <div>
+                <p className="font-black uppercase tracking-widest text-xs">Profile Audit Required</p>
+                <p className="text-sm font-semibold opacity-80 mt-1 leading-relaxed">Update your department and semester to sync your learning materials repository.</p>
+              </div>
             </div>
             <button 
               onClick={() => navigate('/profile')} 
-              className="px-4 py-2 bg-yellow-500 text-white font-bold text-xs rounded-xl shadow-sm hover:bg-yellow-600 transition-colors whitespace-nowrap"
+              className="px-6 py-3 bg-orange-500 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all whitespace-nowrap active:scale-95"
             >
               Update Profile
             </button>
@@ -496,129 +419,141 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
         )}
 
         {loading ? (
-          <div className="bg-white dark:bg-slate-900 p-12 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center justify-center">
-            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
-            <p className="text-slate-500 dark:text-slate-400 font-medium">Loading your dashboard...</p>
+          <div className="bg-white dark:bg-[#202c33] p-16 rounded-[3rem] shadow-sm border border-slate-50 dark:border-white/5 flex flex-col items-center justify-center">
+            <div className="w-12 h-12 border-4 border-wa-teal border-t-transparent rounded-full animate-spin mb-6"></div>
+            <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em]">Synchronizing Ledger...</p>
           </div>
         ) : (
-          <>
+          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-4">
               {quickStats.map((stat, i) => (
-                <div 
+                <button 
                   key={i} 
                   onClick={() => handleNav(stat.link, stat.tabId)}
-                  className={`bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col items-center text-center cursor-pointer hover:border-blue-300 dark:hover:border-blue-700 transition-colors`}
+                  className="bg-white dark:bg-[#202c33] p-5 rounded-[2rem] shadow-sm border border-slate-50 dark:border-white/5 flex flex-col items-center text-center group transition-all hover:bg-wa-teal/5 active:scale-95"
                 >
-                  <div className={`${stat.bg} dark:bg-slate-800 p-2 rounded-lg mb-2`}>
-                    <stat.icon className={`${stat.color} w-5 h-5`} />
+                  <div className="w-10 h-10 bg-[#f0f2f5] dark:bg-[#111b21] rounded-xl flex items-center justify-center mb-3 group-hover:bg-wa-teal group-hover:text-white transition-colors">
+                    <stat.icon className="w-5 h-5" />
                   </div>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">{stat.label}</p>
-                  <p className="text-sm font-bold text-slate-900 dark:text-white">{stat.value}</p>
-                </div>
+                  <p className="text-[9px] text-[#8696a0] font-black uppercase tracking-widest mb-1">{stat.label}</p>
+                  <p className="text-sm font-black text-slate-900 dark:text-[#e9edef] tracking-tight">{stat.value}</p>
+                </button>
               ))}
             </div>
 
-            {/* Teacher Contact Section */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800">
-               <div className="flex items-center justify-between mb-4">
-                 <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                   <User className="text-blue-600 w-5 h-5" />
-                   Your Teacher
-                 </h3>
-                 <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Available</span>
-               </div>
-               <div className="flex items-center justify-between">
-                 <div className="flex items-center gap-3">
-                   <div className="w-12 h-12 bg-blue-50 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center text-blue-600 overflow-hidden">
-                     {teacherInfo?.avatarUrl ? (
-                       <img src={teacherInfo.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                     ) : (
-                       <User className="w-6 h-6" />
-                     )}
-                   </div>
-                   <div>
-                     <p className="font-bold text-slate-900 dark:text-white text-sm">{teacherInfo?.name || 'Barun Maity'}</p>
-                     <p className="text-[10px] text-slate-500 dark:text-slate-400">Lead Instructor</p>
-                   </div>
-                 </div>
-                 <div className="flex items-center gap-2">
-                   {teacherInfo?.phone && (
-                     <a 
-                       href={`tel:${teacherInfo.phone}`}
-                       className="p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 rounded-xl hover:bg-emerald-100 transition-all border border-emerald-100 dark:border-emerald-800"
-                       title="Call Teacher"
-                     >
-                       <Phone className="w-5 h-5" />
-                     </a>
-                   )}
-                   {teacherInfo?.email && (
-                     <a 
-                       href={`mailto:${teacherInfo.email}`}
-                       className="p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-xl hover:bg-blue-100 transition-all border border-blue-100 dark:border-blue-800"
-                       title="Email Teacher"
-                     >
-                       <Mail className="w-5 h-5" />
-                     </a>
-                   )}
-                 </div>
-               </div>
-            </div>
+            {/* Attendance & Scanner Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Scan Attendance Card */}
+                <div 
+                  onClick={() => handleNav('/attendance/scan', 'scan')}
+                  className="bg-wa-teal p-8 rounded-[3rem] shadow-xl shadow-wa-teal/20 flex flex-col justify-between group cursor-pointer hover:bg-wa-teal/90 transition-all relative overflow-hidden active:scale-[0.98]"
+                >
+                  <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform">
+                     <QrCode className="w-24 h-24 text-white" />
+                  </div>
+                  <div className="relative z-10">
+                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-md border border-white/20">
+                      <QrCode className="text-white w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-white tracking-tight">Sync Presence</h3>
+                      <p className="text-white/70 text-[10px] font-black uppercase tracking-widest mt-1">Biometric Scanner</p>
+                    </div>
+                  </div>
+                </div>
 
-            {/* Scan Attendance Card */}
-            <div 
-              onClick={() => handleNav('/attendance/scan', 'scan')}
-              className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between group cursor-pointer hover:border-blue-200 dark:hover:border-blue-900 transition-all"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-100 dark:shadow-none">
-                  <QrCode className="text-white w-8 h-8" />
+                {/* Teacher Contact Section */}
+                <div className="bg-white dark:bg-[#202c33] p-8 rounded-[3rem] shadow-sm border border-slate-50 dark:border-white/5 flex flex-col justify-between">
+                   <div className="flex items-center justify-between mb-6">
+                     <h3 className="text-sm font-black text-[#8696a0] uppercase tracking-widest flex items-center gap-2">
+                       <Shield className="w-4 h-4" /> Mentor Unit
+                     </h3>
+                     <span className="text-[8px] font-black uppercase tracking-widest text-wa-green bg-wa-green/10 px-2 py-1 rounded-full">Encrypted</span>
+                   </div>
+                   <div className="flex items-center justify-between gap-4">
+                     <div className="flex items-center gap-4">
+                       <div 
+                         onClick={() => teacherInfo?.avatarUrl && setZoomedImage(teacherInfo.avatarUrl)}
+                         className="w-14 h-14 bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl flex items-center justify-center overflow-hidden cursor-pointer hover:border-wa-teal border-2 border-transparent transition-all shadow-inner"
+                       >
+                         {teacherInfo?.avatarUrl ? (
+                           <img src={teacherInfo.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                         ) : (
+                           <User className="w-8 h-8 text-wa-teal" />
+                         )}
+                       </div>
+                       <div className="min-w-0">
+                         <p className="font-black text-slate-900 dark:text-[#e9edef] text-base tracking-tight leading-none mb-1">{teacherInfo?.name || 'Barun Maity'}</p>
+                         <p className="text-[10px] font-bold text-wa-teal uppercase tracking-widest">Master Instructor</p>
+                       </div>
+                     </div>
+                     <div className="flex items-center gap-3">
+                       {teacherInfo?.phone && (
+                         <a 
+                           href={`tel:${teacherInfo.phone}`}
+                           className="w-10 h-10 bg-wa-green/10 text-wa-green rounded-xl hover:bg-wa-green hover:text-white transition-all flex items-center justify-center shadow-lg shadow-wa-green/10"
+                         >
+                           <Phone className="w-4 h-4" />
+                         </a>
+                       )}
+                       {teacherInfo?.email && (
+                         <a 
+                           href={`mailto:${teacherInfo.email}`}
+                           className="w-10 h-10 bg-wa-teal/10 text-wa-teal rounded-xl hover:bg-wa-teal hover:text-white transition-all flex items-center justify-center shadow-lg shadow-wa-teal/10"
+                         >
+                           <MessageSquare className="w-4 h-4" />
+                         </a>
+                       )}
+                     </div>
+                   </div>
                 </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 dark:text-white">Scan Attendance</h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">Mark your presence for today's class</p>
-                </div>
-              </div>
-              <ChevronRight className="text-slate-300 dark:text-slate-600 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors" />
             </div>
 
             {/* Upcoming Classes */}
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-bold text-slate-900 dark:text-white">Upcoming Classes</h2>
-                <button className="text-blue-600 dark:text-blue-400 text-sm font-bold">View All</button>
+              <div className="flex justify-between items-center px-4">
+                <h2 className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] flex items-center gap-2">
+                   <Clock className="w-4 h-4" /> Schedule Broadcast
+                </h2>
+                <button className="text-wa-teal text-[10px] font-black uppercase tracking-widest bg-wa-teal/5 px-4 py-1.5 rounded-full">Archive View</button>
               </div>
-              <div className="space-y-4">
+              <div className="space-y-4 px-2">
                 {upcomingClasses.length === 0 ? (
-                  <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center">
-                    <Calendar className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">No upcoming classes scheduled</p>
+                  <div className="bg-white dark:bg-[#202c33] p-12 rounded-[2.5rem] border border-dashed border-slate-100 dark:border-white/5 text-center">
+                    <Calendar className="w-10 h-10 text-slate-100 dark:text-slate-800 mx-auto mb-4" />
+                    <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest">No spectral schedules detected</p>
                   </div>
                 ) : (
                   upcomingClasses.map((cls, i) => (
-                    <div key={i} className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2 duration-300">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-slate-50 dark:bg-slate-800 rounded-xl flex items-center justify-center">
-                          <Clock className="text-blue-600 dark:text-blue-400 w-6 h-6" />
+                    <div key={i} className="bg-white dark:bg-[#202c33] p-6 rounded-[2rem] shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group transition-all hover:border-wa-teal/30">
+                      <div className="flex items-center gap-6">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner relative overflow-hidden ${cls.type === 'active' ? 'bg-wa-green/10' : 'bg-[#f0f2f5] dark:bg-[#111b21]'}`}>
+                           <Clock className={`w-6 h-6 ${cls.type === 'active' ? 'text-wa-green animate-pulse' : 'text-wa-teal'}`} />
+                           {cls.type === 'active' && <div className="absolute inset-0 border-2 border-wa-green/30 rounded-2xl animate-ping" />}
                         </div>
-                        <div>
-                          <p className={`text-[10px] font-black uppercase tracking-widest mb-0.5 ${cls.type === 'active' ? 'text-emerald-600' : 'text-blue-600'}`}>
-                            {cls.type === 'active' ? 'Live Session' : 'Scheduled'}
+                        <div className="min-w-0">
+                          <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${cls.type === 'active' ? 'text-wa-green' : 'text-wa-teal'}`}>
+                            {cls.type === 'active' ? 'Direct Communication' : 'Future Transmission'}
                           </p>
-                          <h4 className="font-bold text-slate-900 dark:text-white">
+                          <h4 className="font-black text-slate-900 dark:text-[#e9edef] text-lg tracking-tight leading-none mb-1">
                             {cls.subject || `${cls.department} Sem ${cls.semester}`}
                           </h4>
-                          {cls.topic && <p className="text-[10px] text-blue-600 dark:text-blue-400 font-bold italic mb-1">Topic: {cls.topic}</p>}
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{cls.teacherName || 'Teacher'} • {cls.date === today ? 'Today' : cls.date}</p>
+                          <div className="flex items-center gap-3">
+                             <p className="text-[10px] text-[#8696a0] font-bold">{cls.teacherName || 'Master Unit'} • {cls.date === today ? 'Today' : cls.date}</p>
+                             {cls.topic && <span className="text-[10px] text-wa-teal font-black uppercase tracking-widest px-2 py-0.5 bg-wa-teal/5 rounded-md truncate max-w-[150px]">{cls.topic}</span>}
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{formatTime12h(cls.startTime)}</p>
-                        {cls.type === 'active' && (
-                          <span className="inline-flex items-center gap-1 text-[8px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full uppercase mt-1">
-                            <span className="w-1 h-1 bg-emerald-600 rounded-full animate-ping"></span>
-                            Live
-                          </span>
+                      <div className="text-right shrink-0">
+                        <p className="text-xl font-black text-wa-teal tracking-tighter">{formatTime12h(cls.startTime)}</p>
+                        {cls.type === 'active' ? (
+                          <div className="flex items-center justify-end gap-1.5 mt-1.5">
+                             <span className="w-1.5 h-1.5 bg-wa-green rounded-full animate-pulse"></span>
+                             <span className="text-[9px] font-black text-wa-green uppercase tracking-widest">Active</span>
+                          </div>
+                        ) : (
+                           <p className="text-[9px] font-black text-[#8696a0]/40 uppercase tracking-widest mt-1.5">Standby</p>
                         )}
                       </div>
                     </div>
@@ -628,133 +563,112 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
             </div>
 
             {/* Recent Attendance */}
-            <div className="space-y-4 pb-4">
-              <h2 className="text-lg font-bold text-slate-900 dark:text-white">Recent Attendance</h2>
-              <div className="space-y-3">
+            <div className="space-y-4 pb-8">
+              <div className="flex items-center justify-between px-4">
+                <h2 className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" /> Presence Ledger
+                </h2>
+                {recentAttendance.length > 0 && (
+                  <button 
+                    onClick={async () => {
+                      if (!window.confirm("Are you sure you want to clear your recent attendance history?")) return;
+                      try {
+                        const { writeBatch, doc } = await import('firebase/firestore');
+                        const batch = writeBatch(db);
+                        recentAttendance.forEach(rec => {
+                          batch.delete(doc(db, 'attendance', rec.id));
+                        });
+                        await batch.commit();
+                      } catch (err) {
+                        console.error(err);
+                      }
+                    }}
+                    className="text-[9px] font-black uppercase text-red-500 hover:text-red-700 tracking-widest px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition-all border border-transparent hover:border-red-100"
+                  >
+                    Purge Records
+                  </button>
+                )}
+              </div>
+              <div className="space-y-3 px-2">
                 {recentAttendance.length === 0 ? (
-                  <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800 text-center">
-                    <CheckCircle2 className="w-8 h-8 text-slate-300 dark:text-slate-700 mx-auto mb-2" />
-                    <p className="text-slate-500 dark:text-slate-400 text-sm">No recent records found</p>
+                  <div className="bg-white dark:bg-[#202c33] p-12 rounded-[2.5rem] border border-dashed border-slate-100 dark:border-white/5 text-center">
+                    <CheckCircle2 className="w-10 h-10 text-slate-100 dark:text-slate-800 mx-auto mb-4" />
+                    <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest">No verification data located</p>
                   </div>
                 ) : (
                   recentAttendance.map((record, i) => (
-                    <div key={record.id || i} className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl flex items-center justify-center">
-                          <CheckCircle2 className="text-emerald-600 w-5 h-5" />
+                    <div key={record.id || i} className="bg-white dark:bg-[#202c33] p-5 rounded-[2rem] shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group hover:border-wa-green/30 transition-all">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="w-12 h-12 bg-wa-green/5 dark:bg-wa-green/10 rounded-2xl flex items-center justify-center shrink-0 border border-wa-green/10">
+                          <CheckCircle2 className="text-wa-green w-6 h-6" />
                         </div>
-                        <div>
-                          <p className="text-sm font-bold text-slate-900 dark:text-white">{record.subject || 'Present'}</p>
-                          {record.topic && <p className="text-[10px] text-blue-500 font-medium italic">Topic: {record.topic}</p>}
-                          <p className="text-[10px] text-slate-500 dark:text-slate-400">
-                            {new Date(record.timestamp).toLocaleDateString()} at {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
-                          </p>
+                        <div className="min-w-0">
+                          <p className="text-base font-black text-slate-900 dark:text-[#e9edef] truncate tracking-tight">{record.subject || 'Standard Session'}</p>
+                          <div className="flex items-center gap-2 mt-1">
+                             <p className="text-[10px] text-[#8696a0] font-bold">
+                               {new Date(record.timestamp).toLocaleDateString()}
+                             </p>
+                             <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                             <p className="text-[10px] text-wa-teal font-black uppercase tracking-widest italic">{new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest">{record.department}</p>
-                        <p className="text-[10px] text-slate-400 uppercase">Sem {record.semester}</p>
+                      <div className="text-right shrink-0">
+                        <p className="text-[10px] font-black text-wa-teal uppercase tracking-widest mb-1">{record.department}</p>
+                        <div className="inline-flex px-2 py-0.5 bg-wa-teal/5 text-wa-teal rounded-md text-[8px] font-black uppercase tracking-widest">Sem {record.semester}</div>
                       </div>
                     </div>
                   ))
                 )}
               </div>
             </div>
-          </>
+          </div>
         )}
       </main>
 
-      {/* Profile Image Zoom Modal */}
-      <AnimatePresence>
-        {zoomedImage && (
-          <div 
-            className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[100] p-4 cursor-zoom-out"
-            onClick={() => setZoomedImage(null)}
-          >
-            <motion.div 
-              layoutId="profile-avatar"
-              initial={{ scale: 0.5, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.5, opacity: 0 }}
-              className="relative max-w-2xl w-full aspect-square rounded-3xl overflow-hidden shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <motion.img 
-                layoutId="zoomed-image"
-                src={zoomedImage} 
-                alt="Zoomed DP" 
-                className="w-full h-full object-cover" 
-                referrerPolicy="no-referrer" 
-              />
-              <button 
-                onClick={() => setZoomedImage(null)}
-                className="absolute top-6 right-6 w-12 h-12 bg-white/20 hover:bg-white/40 backdrop-blur-xl rounded-full flex items-center justify-center text-white transition-all shadow-lg border border-white/20 group"
-              >
-                <X className="w-6 h-6 group-hover:scale-110 transition-transform" />
-              </button>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
+      {/* Bottom Navigation Ported from Global Hub Design */}
       {!isEmbedded && (
-      /* Bottom Tab Bar (Mobile Style) */
-      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-8 py-4 flex justify-between items-center z-50 transition-colors">
-        <button className="flex flex-col items-center gap-1 text-blue-600 dark:text-blue-400">
-          <Calendar className="w-6 h-6" />
-          <span className="text-[10px] font-bold">Home</span>
-        </button>
-        <button 
-          onClick={() => navigate('/materials/list')}
-          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 dark:text-slate-400"
-        >
-          <BookOpen className="w-6 h-6" />
-          <span className="text-[10px] font-bold">Materials</span>
-        </button>
-        <button 
-          onClick={() => navigate('/doubts')}
-          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 dark:text-slate-400"
-        >
-          <MessageSquare className="w-6 h-6" />
-          <span className="text-[10px] font-bold">Doubts</span>
-        </button>
-        <button 
-          onClick={() => navigate('/student/analytics')}
-          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 dark:text-slate-400"
-        >
-          <TrendingUp className="w-6 h-6" />
-          <span className="text-[10px] font-bold">Stats</span>
-        </button>
-        <button 
-          onClick={() => navigate('/fees/history')}
-          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 dark:text-slate-400"
-        >
-          <CreditCard className="w-6 h-6" />
-          <span className="text-[10px] font-bold">Fees</span>
-        </button>
-        {profile?.role === 'admin' && (
-          <button 
-            onClick={() => navigate('/admin')}
-            className="flex flex-col items-center gap-1 text-indigo-600 dark:text-indigo-400"
-          >
-            <Shield className="w-6 h-6" />
-            <span className="text-[10px] font-bold">Admin</span>
+        <nav className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-[#111b21]/80 backdrop-blur-2xl border-t border-slate-100 dark:border-white/5 px-6 pb-6 pt-3 flex justify-between items-center z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+          <button className="flex flex-col items-center gap-1.5 text-wa-teal relative group">
+             <div className="absolute -top-3 w-8 h-1 bg-wa-teal rounded-full" />
+             <div className="w-12 h-12 bg-wa-teal/10 rounded-2xl flex items-center justify-center transition-all group-active:scale-90">
+                <Calendar className="w-6 h-6" />
+             </div>
+             <span className="text-[9px] font-black uppercase tracking-widest">Portal</span>
           </button>
-        )}
-        <button 
-          onClick={() => navigate('/profile')}
-          className="flex flex-col items-center gap-1 text-slate-400 dark:text-slate-500 dark:text-slate-400 group"
-        >
-          <div className="w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center transition-all overflow-hidden border-2 border-transparent group-hover:border-blue-500">
-            {profile?.avatarUrl ? (
-              <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-            ) : (
-              <User className="w-4 h-4" />
-            )}
-          </div>
-          <span className="text-[10px] font-bold">Profile</span>
-        </button>
-      </div>
+          
+          <button onClick={() => navigate('/materials/list')} className="flex flex-col items-center gap-1.5 text-[#8696a0] group">
+             <div className="w-12 h-12 hover:bg-[#f0f2f5] dark:hover:bg-slate-800 rounded-2xl flex items-center justify-center transition-all group-active:scale-90">
+                <BookOpen className="w-6 h-6 group-hover:text-wa-teal transition-colors" />
+             </div>
+             <span className="text-[9px] font-black uppercase tracking-widest">Library</span>
+          </button>
+          
+          <button onClick={() => navigate('/doubts')} className="flex flex-col items-center gap-1.5 text-[#8696a0] group">
+             <div className="w-12 h-12 hover:bg-[#f0f2f5] dark:hover:bg-slate-800 rounded-2xl flex items-center justify-center transition-all group-active:scale-90">
+                <MessageSquare className="w-6 h-6 group-hover:text-wa-teal transition-colors" />
+             </div>
+             <span className="text-[9px] font-black uppercase tracking-widest">Inquiry</span>
+          </button>
+
+          <button onClick={() => navigate('/student/analytics')} className="flex flex-col items-center gap-1.5 text-[#8696a0] group">
+             <div className="w-12 h-12 hover:bg-[#f0f2f5] dark:hover:bg-slate-800 rounded-2xl flex items-center justify-center transition-all group-active:scale-90">
+                <TrendingUp className="w-6 h-6 group-hover:text-wa-teal transition-colors" />
+             </div>
+             <span className="text-[9px] font-black uppercase tracking-widest">Ledger</span>
+          </button>
+
+          <button onClick={() => navigate('/profile')} className="flex flex-col items-center gap-1.5 text-[#8696a0] group">
+             <div className="w-12 h-12 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-2xl flex items-center justify-center transition-all group-active:scale-90 overflow-hidden relative">
+                {profile?.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt="" className="w-7 h-7 object-cover rounded-full border border-slate-200" referrerPolicy="no-referrer" />
+                ) : (
+                  <User className="w-6 h-6 group-hover:text-wa-teal transition-colors" />
+                )}
+             </div>
+             <span className="text-[9px] font-black uppercase tracking-widest">Entity</span>
+          </button>
+        </nav>
       )}
     </div>
   );

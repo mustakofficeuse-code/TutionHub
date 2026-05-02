@@ -24,10 +24,12 @@ import {
   EyeOff,
   QrCode,
   Edit2,
-  X
+  X,
+  AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { motion, AnimatePresence } from 'motion/react';
 
 export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
   const { profile, refreshProfile } = useAuth();
@@ -42,6 +44,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
   const [idCopied, setIdCopied] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
   // Form state
   const [name, setName] = useState(profile?.name || '');
@@ -264,13 +267,44 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
   };
 
   return (
-    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors ${isEmbedded ? '' : 'pb-24'}`}>
+    <div className={`min-h-screen bg-wa-bg dark:bg-wa-bg-dark p-6 transition-colors ${isEmbedded ? '' : 'pb-24'}`}>
+      <AnimatePresence>
+        {zoomedImage && (
+          <div 
+            className="fixed inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-[200] p-4 cursor-zoom-out"
+            onClick={() => setZoomedImage(null)}
+          >
+            <motion.div 
+              layoutId="profile-avatar-zoom"
+              initial={{ scale: 0.5, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.5, opacity: 0 }}
+              className="relative max-w-2xl w-full aspect-square rounded-3xl overflow-hidden shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <img 
+                src={zoomedImage} 
+                alt="Zoomed DP" 
+                className="w-full h-full object-cover" 
+                referrerPolicy="no-referrer" 
+              />
+              <button 
+                onClick={() => setZoomedImage(null)}
+                className="absolute top-6 right-6 w-12 h-12 bg-white/20 hover:bg-white/40 backdrop-blur-xl rounded-full flex items-center justify-center text-white transition-all shadow-lg border border-white/20 group"
+              >
+                <X className="w-6 h-6 group-hover:scale-110 transition-transform" />
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           {!isEmbedded ? (
             <button 
               onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+              className="flex items-center gap-2 text-slate-600 dark:text-[#8696a0] font-semibold hover:text-wa-teal dark:hover:text-wa-green transition-colors"
             >
               <ArrowLeft className="w-5 h-5" /> Back
             </button>
@@ -280,7 +314,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
           <div className="flex items-center gap-4">
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-all"
+              className="p-2 rounded-xl bg-white dark:bg-[#202c33] border border-slate-200 dark:border-white/5 text-slate-600 dark:text-[#8696a0] hover:text-wa-teal dark:hover:text-wa-green transition-all"
             >
               {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
             </button>
@@ -293,11 +327,14 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
           </div>
         </div>
 
-        <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 overflow-hidden">
-          <div className="bg-blue-600 h-32 relative">
+        <div className="bg-white dark:bg-[#202c33] rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 overflow-hidden">
+          <div className="bg-wa-teal dark:bg-wa-header h-32 relative">
             <div className="absolute -bottom-12 left-8">
-              <div className="w-24 h-24 bg-white dark:bg-slate-900 rounded-3xl p-1 shadow-lg">
-                <div className="w-full h-full bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-500 relative group overflow-hidden">
+              <div className="w-24 h-24 bg-white dark:bg-[#202c33] rounded-3xl p-1 shadow-lg">
+                <div 
+                  onClick={() => avatarUrl && !isEditing && setZoomedImage(avatarUrl)}
+                  className={`w-full h-full bg-slate-100 dark:bg-[#111b21] rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-500 relative group overflow-hidden ${!isEditing && avatarUrl ? 'cursor-pointer hover:scale-[1.02] transition-transform' : ''}`}
+                >
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover rounded-2xl" referrerPolicy="no-referrer" />
                   ) : (
@@ -335,30 +372,30 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                   <button 
                     type="button"
                     onClick={triggerUpload}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-blue-100 dark:shadow-none hover:bg-blue-700 transition-all"
+                    className="px-4 py-2 bg-wa-teal text-white rounded-xl text-xs font-bold flex items-center gap-2 shadow-lg shadow-wa-teal/20 hover:bg-wa-teal-dark transition-all"
                   >
                     <Camera className="w-4 h-4" />
                     Upload Photo
                   </button>
-                  <div className="w-px h-8 bg-slate-100 dark:bg-slate-800 self-center mx-1"></div>
+                  <div className="w-px h-8 bg-slate-100 dark:bg-white/5 self-center mx-1"></div>
                   <button 
                     type="button"
                     onClick={() => randomizeAvatar('notionists')}
-                    className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-bold text-slate-600 dark:text-slate-400 hover:border-blue-500 transition-all flex items-center gap-2"
+                    className="px-3 py-2 bg-white dark:bg-[#111b21] border border-slate-200 dark:border-white/5 rounded-xl text-[10px] font-bold text-slate-600 dark:text-[#8696a0] hover:border-wa-teal transition-all flex items-center gap-2"
                   >
                     Minimalist
                   </button>
                   <button 
                     type="button"
                     onClick={() => randomizeAvatar('initials')}
-                    className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-bold text-slate-600 dark:text-slate-400 hover:border-blue-500 transition-all flex items-center gap-2"
+                    className="px-3 py-2 bg-white dark:bg-[#111b21] border border-slate-200 dark:border-white/5 rounded-xl text-[10px] font-bold text-slate-600 dark:text-[#8696a0] hover:border-wa-teal transition-all flex items-center gap-2"
                   >
                     Initials
                   </button>
                   <button 
                     type="button"
                     onClick={() => randomizeAvatar('shapes')}
-                    className="px-3 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-[10px] font-bold text-slate-600 dark:text-slate-400 hover:border-blue-500 transition-all flex items-center gap-2"
+                    className="px-3 py-2 bg-white dark:bg-[#111b21] border border-slate-200 dark:border-white/5 rounded-xl text-[10px] font-bold text-slate-600 dark:text-[#8696a0] hover:border-wa-teal transition-all flex items-center gap-2"
                   >
                     Geometric
                   </button>
@@ -366,7 +403,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                 <div className="flex gap-2">
                   <input 
                     type="text" 
-                    className="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                    className="flex-1 px-4 py-3 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-wa-teal outline-none transition-all"
                     placeholder="Or paste an image URL here..."
                     value={avatarUrl}
                     onChange={(e) => setAvatarUrl(e.target.value)}
@@ -412,18 +449,18 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                 {profile?.role === 'student' && (
                   <button 
                     onClick={() => navigate('/attendance/scan')}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-100 dark:shadow-none hover:bg-blue-700 transition-all"
+                    className="flex items-center gap-2 px-4 py-2 bg-wa-teal text-white rounded-xl font-bold text-sm shadow-lg shadow-wa-teal/20 hover:bg-wa-teal-dark transition-all"
                   >
                     <QrCode className="w-4 h-4" /> Scan Attendance
                   </button>
                 )}
                 {profile?.role === 'student' && profile?.studentId && (
-                  <div className="bg-blue-50 dark:bg-blue-900/20 px-4 py-2 rounded-xl border border-blue-100 dark:border-blue-800 flex items-center gap-3">
+                  <div className="bg-wa-teal/5 dark:bg-wa-teal/10 px-4 py-2 rounded-xl border border-wa-teal/10 flex items-center gap-3">
                     <div>
-                      <p className="text-[10px] uppercase font-bold text-blue-600 dark:text-blue-400">Student ID</p>
+                      <p className="text-[10px] uppercase font-bold text-wa-teal dark:text-wa-green">Student ID</p>
                       <p className="font-mono font-bold text-slate-900 dark:text-white">{profile.studentId}</p>
                     </div>
-                    <button onClick={copyStudentId} className="text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-800 p-1.5 rounded-lg transition-colors">
+                    <button onClick={copyStudentId} className="text-wa-teal dark:text-wa-green hover:bg-wa-teal/10 p-1.5 rounded-lg transition-colors">
                       {idCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                     </button>
                   </div>
@@ -503,51 +540,51 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                         <BookOpen className="w-4 h-4 text-slate-400" /> Semester
                       </label>
                       <select 
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                        value={semester}
-                        onChange={(e) => setSemester(e.target.value)}
-                        disabled={!isEditing || (profile?.role === 'student' && !!profile?.semester)}
-                      >
-                        <option value="">Select Semester</option>
-                        {[1,2,3,4,5,6].map(s => <option key={s} value={s}>{s}</option>)}
-                      </select>
-                      {profile?.role === 'student' && !!profile?.semester && (
-                        <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1 mt-1">
-                          <Lock className="w-3 h-3" /> Locked. Contact teacher to change.
-                        </p>
-                      )}
-                    </div>
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-wa-teal outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      value={semester}
+                      onChange={(e) => setSemester(e.target.value)}
+                      disabled={!isEditing || (profile?.role === 'student' && !!profile?.semester)}
+                    >
+                      <option value="">Select Semester</option>
+                      {[1,2,3,4,5,6].map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                    {profile?.role === 'student' && !!profile?.semester && (
+                      <p className="text-[10px] text-wa-teal dark:text-wa-green font-bold flex items-center gap-1 mt-1">
+                        <Lock className="w-3 h-3" /> Locked. Contact teacher to change.
+                      </p>
+                    )}
+                  </div>
 
-                    <div className="space-y-2">
-                      <label className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
-                        <CalendarIcon className="w-4 h-4 text-slate-400" /> Department
-                      </label>
-                      <input 
-                        type="text" 
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase"
-                        placeholder="e.g. BCA, MCA, B.Tech"
-                        value={courseId}
-                        onChange={(e) => setCourseId(e.target.value.toUpperCase())}
-                        disabled={!isEditing || (profile?.role === 'student' && (!!profile?.courseId || !!profile?.department || !!profile?.courseName))}
-                      />
-                      {profile?.role === 'student' && (!!profile?.courseId || !!profile?.department || !!profile?.courseName) ? (
-                        <p className="text-[10px] text-amber-600 dark:text-amber-400 font-bold flex items-center gap-1 mt-1">
-                          <Lock className="w-3 h-3" /> Locked. Contact teacher to change.
-                        </p>
-                      ) : (
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500">Update your Department (e.g. "bca") if it says "legacy"</p>
-                      )}
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-700 dark:text-[#8696a0] flex items-center gap-2">
+                      <CalendarIcon className="w-4 h-4 text-[#8696a0]" /> Department
+                    </label>
+                    <input 
+                      type="text" 
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-wa-teal outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+                      placeholder="e.g. BCA, MCA, B.Tech"
+                      value={courseId}
+                      onChange={(e) => setCourseId(e.target.value.toUpperCase())}
+                      disabled={!isEditing || (profile?.role === 'student' && (!!profile?.courseId || !!profile?.department || !!profile?.courseName))}
+                    />
+                    {profile?.role === 'student' && (!!profile?.courseId || !!profile?.department || !!profile?.courseName) ? (
+                      <p className="text-[10px] text-wa-teal dark:text-wa-green font-bold flex items-center gap-1 mt-1">
+                        <Lock className="w-3 h-3" /> Locked. Contact teacher to change.
+                      </p>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 dark:text-[#8696a0]">Update your Department (e.g. "bca") if it says "legacy"</p>
+                    )}
                     </div>
                   </>
                 )}
               </div>
 
               {isEditing && (
-                <div className="pt-6 border-t border-slate-100 dark:border-slate-800">
+                <div className="pt-6 border-t border-slate-100 dark:border-white/5">
                   <button 
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-2xl shadow-lg shadow-blue-100 dark:shadow-none transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                    className="w-full bg-wa-teal hover:bg-wa-teal-dark text-white font-bold py-4 rounded-2xl shadow-lg shadow-wa-teal/20 transition-all flex items-center justify-center gap-2 disabled:opacity-70"
                   >
                     {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <><Save className="w-5 h-5" /> Save Changes</>}
                   </button>
@@ -555,9 +592,9 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
               )}
             </form>
 
-            <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
+            <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/5">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                <Lock className="w-5 h-5 text-blue-600" /> Change Password
+                <Lock className="w-5 h-5 text-wa-teal" /> Change Password
               </h3>
               
               {passwordMessage.text && (
@@ -671,27 +708,6 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
       </div>
     </div>
   );
-}
-
-function AlertCircle(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <circle cx="12" cy="12" r="10" />
-      <line x1="12" y1="8" x2="12" y2="12" />
-      <line x1="12" y1="16" x2="12.01" y2="16" />
-    </svg>
-  )
 }
 
 function CalendarIcon(props: any) {

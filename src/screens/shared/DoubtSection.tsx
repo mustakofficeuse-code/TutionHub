@@ -102,7 +102,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     multiple: false
-  });
+  } as any);
 
   useEffect(() => {
     if (!profile) return;
@@ -165,12 +165,16 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         createdAt: new Date().toISOString()
       });
 
+      const notifMessage = isAnonymous 
+        ? `A student has raised a new doubt: "${title}".` 
+        : `${profile.name} has raised a new doubt: "${title}".`;
+
       await sendNotification({
         title: 'New Doubt Raised',
-        message: `${profile.name} has raised a new doubt: "${title}".`,
+        message: notifMessage,
         type: 'doubt_raised',
         senderId: profile.uid,
-        senderName: profile.name,
+        senderName: isAnonymous ? 'Anonymous Student' : profile.name,
         targetRole: 'teacher',
         isAnonymous: isAnonymous,
       });

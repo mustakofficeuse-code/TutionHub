@@ -145,13 +145,16 @@ export default function AddStudent() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 md:p-12 transition-colors">
+    <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-6 md:p-12 pt-12 transition-colors font-sans">
       <div className="max-w-xl mx-auto">
         <button 
           onClick={() => navigate('/')}
-          className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-bold hover:text-blue-600 dark:hover:text-blue-400 transition-colors mb-8"
+          className="flex items-center gap-3 text-[#8696a0] font-black uppercase tracking-widest text-[10px] hover:text-wa-teal transition-all mb-8 group"
         >
-          <ArrowLeft className="w-5 h-5" /> Back to Dashboard
+          <div className="w-8 h-8 rounded-xl bg-white dark:bg-[#202c33] flex items-center justify-center shadow-sm border border-slate-100 dark:border-white/5 group-hover:scale-110 transition-transform">
+            <ArrowLeft className="w-4 h-4" />
+          </div>
+          Back to Center
         </button>
 
         <AnimatePresence mode="wait">
@@ -160,34 +163,34 @@ export default function AddStudent() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="bg-white dark:bg-slate-900 rounded-3xl p-8 shadow-xl border border-slate-100 dark:border-slate-800"
+              className="bg-white dark:bg-[#202c33] rounded-[3rem] p-10 shadow-sm border border-slate-100 dark:border-white/5"
             >
-              <div className="flex items-center gap-4 mb-8">
-                <div className="w-14 h-14 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl flex items-center justify-center">
-                  <UserPlus className="w-7 h-7 text-indigo-600 dark:text-indigo-400" />
+              <div className="flex items-center gap-6 mb-10">
+                <div className="w-16 h-16 bg-wa-teal/10 rounded-[1.5rem] flex items-center justify-center shadow-inner">
+                  <UserPlus className="w-8 h-8 text-wa-teal" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Add New Student</h1>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">Enroll a student manually into the system</p>
+                  <h1 className="text-2xl font-black text-slate-900 dark:text-[#e9edef] tracking-tight leading-tight">Unit <span className="text-wa-teal">Enrollment</span></h1>
+                  <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest mt-1">Manual system registration</p>
                 </div>
               </div>
 
               {error && (
-                <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-100 dark:border-red-800 rounded-2xl flex items-center gap-3 text-red-600 dark:text-red-400 text-sm font-bold">
-                  <div className="w-2 h-2 bg-red-600 rounded-full animate-pulse" />
+                <div className="mb-8 p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800 rounded-[2rem] flex items-center gap-4 text-red-600 dark:text-red-400 text-xs font-black uppercase tracking-widest leading-relaxed shadow-inner">
+                  <div className="w-2.5 h-2.5 bg-red-600 rounded-full animate-ping shrink-0" />
                   {error}
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Student Full Name</label>
-                  <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+              <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="space-y-3">
+                  <label className="block text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] ml-4">Full Identity Name</label>
+                  <div className="relative group">
+                    <User className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8696a0] group-focus-within:text-wa-teal transition-colors" />
                     <input
                       type="text"
                       required
-                      className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      className="w-full pl-16 pr-6 py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-[2rem] text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all shadow-inner"
                       placeholder="e.g. John Doe"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
@@ -195,15 +198,15 @@ export default function AddStudent() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] ml-4">Comms Link</label>
+                    <div className="relative group">
+                      <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8696a0] group-focus-within:text-wa-teal transition-colors" />
                       <input
                         type="tel"
                         maxLength={10}
-                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                        className="w-full pl-16 pr-6 py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-[2rem] text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all shadow-inner"
                         placeholder="e.g. 9876543210"
                         value={phoneNumber}
                         onChange={(e) => {
@@ -213,13 +216,13 @@ export default function AddStudent() {
                       />
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Real Email (Gmail)</label>
-                    <div className="relative">
-                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] ml-4">Real-World Mail</label>
+                    <div className="relative group">
+                      <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8696a0] group-focus-within:text-wa-teal transition-colors" />
                       <input
                         type="email"
-                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                        className="w-full pl-16 pr-6 py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-[2rem] text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all shadow-inner"
                         placeholder="e.g. student@gmail.com"
                         value={realEmail}
                         onChange={(e) => setRealEmail(e.target.value)}
@@ -228,50 +231,50 @@ export default function AddStudent() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Department</label>
-                    <div className="relative">
-                      <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] ml-4">Sector</label>
+                    <div className="relative group">
+                      <GraduationCap className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8696a0] group-focus-within:text-wa-teal transition-colors" />
                       <select
                         required
-                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none transition-all"
+                        className="w-full pl-16 pr-8 py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-[2rem] text-sm font-bold text-slate-900 dark:text-white outline-none appearance-none transition-all shadow-inner uppercase tracking-wider"
                         value={department}
                         onChange={(e) => setDepartment(e.target.value)}
                       >
                         {departments.map(dept => (
-                          <option key={dept} value={dept}>{dept}</option>
+                          <option key={dept} value={dept} className="bg-white dark:bg-[#202c33]">{dept}</option>
                         ))}
                       </select>
                     </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Semester</label>
-                    <div className="relative">
-                      <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                  <div className="space-y-3">
+                    <label className="block text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] ml-4">Phase</label>
+                    <div className="relative group">
+                      <BookOpen className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8696a0] group-focus-within:text-wa-teal transition-colors" />
                       <select
                         required
-                        className="w-full pl-12 pr-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none appearance-none transition-all"
+                        className="w-full pl-16 pr-8 py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-[2rem] text-sm font-bold text-slate-900 dark:text-white outline-none appearance-none transition-all shadow-inner uppercase tracking-wider"
                         value={semester}
                         onChange={(e) => setSemester(e.target.value)}
                       >
                         {[1, 2, 3, 4, 5, 6, 7, 8].map(s => (
-                          <option key={s} value={s.toString()}>Semester {s}</option>
+                          <option key={s} value={s.toString()} className="bg-white dark:bg-[#202c33]">Level {s}</option>
                         ))}
                       </select>
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-slate-300 mb-2">Login Password</label>
-                  <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                <div className="space-y-3">
+                  <label className="block text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] ml-4">Access Secret</label>
+                  <div className="relative group">
+                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8696a0] group-focus-within:text-wa-teal transition-colors" />
                     <input
                       type={showPassword ? "text" : "password"}
                       required
                       minLength={6}
-                      className="w-full pl-12 pr-12 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                      className="w-full pl-16 pr-16 py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-[2rem] text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all shadow-inner"
                       placeholder="Min 6 characters"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -279,20 +282,25 @@ export default function AddStudent() {
                     <button 
                       type="button" 
                       onClick={() => setShowPassword(!showPassword)} 
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                      className="absolute right-6 top-1/2 -translate-y-1/2 text-[#8696a0] hover:text-wa-teal transition-all"
                     >
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
-                  <p className="mt-2 text-[10px] text-slate-400">This password will be used by the student to login with their ID.</p>
+                  <p className="mt-2 text-[9px] font-black uppercase tracking-widest text-[#8696a0] text-center italic">Primary authentication key for first sync</p>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl hover:bg-indigo-700 transition-all shadow-xl shadow-indigo-100 dark:shadow-none flex items-center justify-center gap-2"
+                  className="w-full py-5 bg-wa-teal hover:bg-wa-teal-dark text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-[2rem] transition-all shadow-xl shadow-wa-teal/30 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
                 >
-                  {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : 'Create Student Account'}
+                  {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
+                    <>
+                      <CheckCircle className="w-5 h-5" />
+                      Initialize Identity
+                    </>
+                  )}
                 </button>
               </form>
             </motion.div>
@@ -300,41 +308,44 @@ export default function AddStudent() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white dark:bg-slate-900 rounded-3xl p-10 shadow-2xl border border-slate-100 dark:border-slate-800 text-center"
+              className="bg-white dark:bg-[#202c33] rounded-[3rem] p-12 shadow-sm border border-slate-100 dark:border-white/5 text-center"
             >
-              <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
+              <div className="w-24 h-24 bg-wa-green/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
+                <CheckCircle className="w-12 h-12 text-wa-green" />
               </div>
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Student Enrolled!</h2>
-              <p className="text-slate-500 dark:text-slate-400 mb-8">The account has been successfully created.</p>
+              <h2 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] mb-3 tracking-tight">Sync <span className="text-wa-green">Success</span></h2>
+              <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest mb-10 leading-relaxed max-w-xs mx-auto">New entity established. Transmit following credentials securely.</p>
 
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 p-6 rounded-2xl border border-indigo-100 dark:border-indigo-800 mb-8 space-y-4">
+              <div className="bg-[#f0f2f5] dark:bg-[#111b21] p-10 rounded-[2.5rem] border border-slate-100 dark:border-white/5 mb-10 space-y-8 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-4 opacity-5 translate-x-4 -translate-y-4 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform">
+                    <Shield className="w-20 h-20 text-wa-teal" />
+                </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Unique Student ID</p>
-                  <div className="flex items-center justify-center gap-3">
-                    <span className="text-4xl font-black text-indigo-600 dark:text-indigo-400 tracking-wider">
+                  <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.3em] mb-4">Master Identity ID</p>
+                  <div className="flex items-center justify-center gap-4">
+                    <span className="text-5xl font-black text-wa-teal dark:text-wa-green tracking-tighter leading-none">
                       {success.studentId}
                     </span>
                     <button 
                       onClick={() => copyToClipboard(success.studentId)}
-                      className="p-2 bg-white dark:bg-slate-800 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+                      className="w-12 h-12 bg-white dark:bg-slate-800 rounded-2xl shadow-sm hover:scale-110 transition-all border border-slate-100 dark:border-white/10 flex items-center justify-center"
                     >
-                      {copiedId ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4 text-slate-400" />}
+                      {copiedId ? <Check className="w-5 h-5 text-wa-green" /> : <Copy className="w-5 h-5 text-[#8696a0]" />}
                     </button>
                   </div>
                 </div>
                 
-                <div className="pt-4 border-t border-indigo-100 dark:border-indigo-800/50">
-                  <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">Login Password</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">{password}</p>
+                <div className="pt-8 border-t border-slate-200 dark:border-white/5">
+                  <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.3em] mb-4">Passcode</p>
+                  <p className="text-2xl font-black text-slate-900 dark:text-[#e9edef] tracking-tight">{password}</p>
                 </div>
 
                 <div className="pt-2">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 italic">Share these credentials with the student.</p>
+                  <p className="text-[9px] font-black text-wa-teal uppercase tracking-[0.2em] leading-relaxed italic opacity-80">Credentials are ready for deployment</p>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-4">
                 <button
                   onClick={() => {
                     setSuccess(null);
@@ -343,15 +354,15 @@ export default function AddStudent() {
                     setRealEmail('');
                     setPassword('');
                   }}
-                  className="w-full py-4 bg-slate-900 dark:bg-white dark:text-slate-900 text-white font-bold rounded-2xl hover:opacity-90 transition-all"
+                  className="w-full py-5 bg-wa-teal hover:bg-wa-teal-dark text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl transition-all shadow-lg shadow-wa-teal/20 active:scale-95"
                 >
-                  Add Another Student
+                  Register Next Entity
                 </button>
                 <button
                   onClick={() => navigate('/')}
-                  className="w-full py-4 text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all"
+                  className="w-full py-5 text-[#8696a0] font-black text-[10px] uppercase tracking-widest hover:bg-[#f0f2f5] dark:hover:bg-slate-800 rounded-2xl transition-all"
                 >
-                  Back to Dashboard
+                  Return to Dashboard
                 </button>
               </div>
             </motion.div>

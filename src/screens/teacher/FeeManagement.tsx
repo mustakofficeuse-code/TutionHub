@@ -247,27 +247,29 @@ export default function FeeManagement({
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 pb-24">
-      {!isEmbedded && (
-        <button
-          onClick={() => navigate("/")}
-          className="mb-8 flex items-center gap-2 text-slate-600 font-semibold hover:text-blue-600 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" /> Back to Dashboard
-        </button>
-      )}
+    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#111b21] p-4 sm:p-10 pb-32">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-8 mb-12">
+          {!isEmbedded && (
+            <button
+              onClick={() => navigate("/")}
+              className="w-fit flex items-center gap-3 text-[11px] font-black text-slate-500 dark:text-slate-400 hover:text-wa-teal transition-all uppercase tracking-[0.3em] bg-white dark:bg-[#202c33] px-6 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4" /> REVERT TO TERMINAL
+            </button>
+          )}
 
-      <div className="max-w-6xl mx-auto space-y-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <CreditCard className="text-blue-600 w-7 h-7" />
-              Fee Management
+          <div className="flex-1">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-2 h-2 bg-wa-teal rounded-full animate-pulse" />
+              <span className="text-[11px] font-black text-wa-teal uppercase tracking-[0.4em]">Financial Ops Hub</span>
+            </div>
+            <h1 className="text-4xl sm:text-5xl font-black text-slate-800 dark:text-white tracking-tighter uppercase leading-none italic">
+              REVENUE TERMINAL
             </h1>
-            <p className="text-slate-500 dark:text-slate-400">
-              Track and manage student tuition fees seamlessly
-            </p>
+            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mt-4 ml-1">System-wide tuition tracking & remittance verification</p>
           </div>
+
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
@@ -278,65 +280,55 @@ export default function FeeManagement({
                 setIsManualPayment(true);
                 setShowPaymentModal(true);
               }}
-              className="px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-bold transition-all text-sm flex items-center gap-2"
+              className="w-full sm:w-auto px-8 py-5 bg-slate-900 dark:bg-wa-teal text-white rounded-[1.5rem] font-black uppercase tracking-[0.2em] text-xs shadow-xl hover:bg-slate-800 dark:hover:bg-wa-teal/90 transition-all flex items-center justify-center gap-3"
             >
-              + Receive Payment
-            </button>
-            <button
-              onClick={handleClearData}
-              className="px-4 py-3 border border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900/50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-2xl font-bold transition-all text-sm"
-            >
-              Wipe Test Data
+              <CreditCard className="w-4 h-4" /> RECEIVE REMITTANCE
             </button>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-4 border-b border-slate-200 dark:border-slate-800">
+        <div className="flex gap-2 bg-[#eeeeee] dark:bg-[#111b21] p-1.5 rounded-[1.8rem] mb-12 w-fit border border-slate-100 dark:border-white/5">
           <button
             onClick={() => setActiveTab("history")}
-            className={`pb-4 px-2 text-sm font-bold transition-all relative ${
+            className={`px-8 py-4 rounded-[1.4rem] text-[11px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${
               activeTab === "history"
-                ? "text-blue-600"
-                : "text-slate-400 hover:text-slate-600"
+                ? "bg-white dark:bg-[#202c33] text-slate-800 dark:text-white shadow-xl"
+                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
             }`}
           >
-            Student Dues Tracker
-            {activeTab === "history" && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>
-            )}
+            <Hash className="w-4 h-4" />
+            DUES TRACKER
           </button>
           <button
             onClick={() => setActiveTab("structure")}
-            className={`pb-4 px-2 text-sm font-bold transition-all relative ${
+            className={`px-8 py-4 rounded-[1.4rem] text-[11px] font-black uppercase tracking-[0.2em] transition-all flex items-center gap-2 ${
               activeTab === "structure"
-                ? "text-blue-600"
-                : "text-slate-400 hover:text-slate-600"
+                ? "bg-white dark:bg-[#202c33] text-slate-800 dark:text-white shadow-xl"
+                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
             }`}
           >
-            Fee Structure
-            {activeTab === "structure" && (
-              <div className="absolute bottom-0 left-0 right-0 h-1 bg-blue-600 rounded-t-full"></div>
-            )}
+            <Edit className="w-4 h-4" />
+            FEE CONFIG
           </button>
         </div>
 
         {activeTab === "history" ? (
-          <div className="space-y-8 animate-in fade-in duration-500">
+          <div className="space-y-12 animate-in fade-in duration-500">
             {/* Filters & Search */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col md:flex-row gap-6 items-center justify-between">
-              <div className="relative w-full md:w-96">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+            <div className="bg-white dark:bg-[#202c33] p-8 rounded-[3.5rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 flex flex-col lg:flex-row gap-8 items-center justify-between">
+              <div className="relative w-full lg:w-[500px]">
+                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="Quick search student name or ID..."
+                  placeholder="SCAN ENTITY ID OR NAME..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-4 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-3xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 outline-none text-slate-900 dark:text-white transition-all shadow-inner font-medium"
+                  className="w-full pl-16 pr-6 py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-[2rem] focus:outline-none focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal text-slate-800 dark:text-white transition-all font-black text-[11px] uppercase tracking-widest placeholder:text-slate-300"
                 />
               </div>
 
-              <div className="flex gap-4">
+              <div className="flex gap-4 w-full lg:w-auto">
                 <button
                   onClick={() =>
                     setExpandedDepts(
@@ -345,22 +337,22 @@ export default function FeeManagement({
                         : departments.map((d) => d.name),
                     )
                   }
-                  className="px-6 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-blue-600 text-slate-600 dark:text-slate-300 rounded-2xl font-bold transition-all text-sm flex items-center gap-2 shadow-sm"
+                  className="flex-1 lg:flex-none px-10 py-5 bg-white dark:bg-[#202c33] border border-slate-200 dark:border-white/10 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600 dark:text-slate-400 rounded-2xl hover:border-wa-teal hover:text-wa-teal transition-all shadow-sm flex items-center justify-center gap-3"
                 >
-                  {expandedDepts.length === departments.length ? (
-                    <Edit className="w-4 h-4" />
-                  ) : (
-                    <Filter className="w-4 h-4" />
-                  )}
-                  {expandedDepts.length === departments.length
-                    ? "Minimize All"
-                    : "Expand All"}
+                  {expandedDepts.length === departments.length ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />}
+                  {expandedDepts.length === departments.length ? "COLLAPSE ALL" : "EXPAND VECTORS"}
+                </button>
+                <button
+                  onClick={handleClearData}
+                  className="flex-1 lg:flex-none px-10 py-5 border border-rose-100 text-rose-500 dark:border-rose-900/30 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] transition-all"
+                >
+                  PURGE DATA
                 </button>
               </div>
             </div>
 
-            {/* Department Action Buttons */}
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Department Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {departments.map((deptObj) => {
                 const dept = deptObj.name;
                 const deptCount = students.filter((s) => {
@@ -384,53 +376,43 @@ export default function FeeManagement({
                           : [...prev, dept],
                       )
                     }
-                    className={`group relative p-8 rounded-[2.5rem] border-2 transition-all text-left flex flex-col gap-4 overflow-hidden h-44 ${
+                    className={`group relative p-8 rounded-[3.5rem] border transition-all text-left flex flex-col gap-4 overflow-hidden h-52 outline-none ${
                       isExpanded
-                        ? "bg-blue-600 border-blue-600 text-white shadow-2xl shadow-blue-200 dark:shadow-none translate-y-[-4px]"
+                        ? "bg-slate-900 dark:bg-slate-900 border-slate-900 text-white shadow-2xl scale-[1.02]"
                         : deptCount === 0
-                          ? "bg-slate-50/50 dark:bg-slate-900/50 border-slate-100 dark:border-slate-800/50 opacity-40 cursor-not-allowed"
-                          : "bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-blue-400 dark:hover:border-blue-600 hover:translate-y-[-4px] hover:shadow-xl hover:shadow-slate-200/50 dark:hover:shadow-none"
+                          ? "bg-slate-50/50 dark:bg-[#202c33]/50 border-slate-100 dark:border-white/5 opacity-40 cursor-not-allowed"
+                          : "bg-white dark:bg-[#202c33] border-slate-100 dark:border-white/5 hover:border-wa-teal dark:hover:border-wa-teal/50 hover:translate-y-[-4px] hover:shadow-2xl shadow-slate-200/50 dark:shadow-none"
                     }`}
                   >
-                    <div className="flex justify-between items-center relative z-10 w-full">
-                      <span
-                        className={`text-2xl font-black tracking-tight ${isExpanded ? "text-white" : "text-slate-900 dark:text-white"}`}
-                      >
+                    <div className="relative z-10 w-full mb-1">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className={`p-4 rounded-2xl transition-all duration-500 ${
+                          isExpanded
+                            ? "bg-wa-teal text-white rotate-12"
+                            : "bg-wa-teal/10 dark:bg-wa-teal/20 text-wa-teal group-hover:rotate-12"
+                        }`}>
+                          <BookOpen className="w-6 h-6" />
+                        </div>
+                        <span className={`text-[10px] font-black uppercase tracking-[0.2em] ${isExpanded ? "text-slate-400" : "text-slate-400"}`}>Sector Alpha</span>
+                      </div>
+                      <span className={`text-2xl font-black tracking-tight uppercase leading-none ${isExpanded ? "text-white" : "text-slate-800 dark:text-white"}`}>
                         {dept}
                       </span>
-                      <div
-                        className={`p-2.5 rounded-2xl transition-all duration-300 ${
-                          isExpanded
-                            ? "bg-blue-500 text-white rotate-12"
-                            : "bg-blue-50 dark:bg-blue-900/30 text-blue-600 group-hover:rotate-12"
-                        }`}
-                      >
-                        <BookOpen className="w-6 h-6" />
-                      </div>
-                    </div>
-                    <div className="relative z-10 mt-auto">
-                      <div className="flex items-baseline gap-1">
-                        <p
-                          className={`text-5xl font-black ${isExpanded ? "text-white" : "text-slate-900 dark:text-white"}`}
-                        >
-                          {deptCount}
-                        </p>
-                        <span
-                          className={`text-xs font-bold uppercase tracking-widest ${isExpanded ? "text-blue-100/70" : "text-slate-400"}`}
-                        >
-                          Students
-                        </span>
-                      </div>
                     </div>
 
-                    {/* Background Pattern */}
-                    <Hash
-                      className={`absolute -right-8 -bottom-8 w-40 h-40 transition-all duration-700 pointer-events-none ${
-                        isExpanded
-                          ? "text-white/10 rotate-12 scale-125"
-                          : "text-slate-50 dark:text-slate-800/30 group-hover:rotate-45"
-                      }`}
-                    />
+                    <div className="relative z-10 mt-auto flex items-end justify-between">
+                      <div className="flex items-baseline gap-2">
+                        <p className={`text-5xl font-black italic tracking-tighter ${isExpanded ? "text-white" : "text-slate-800 dark:text-white"}`}>
+                          {deptCount}
+                        </p>
+                        <span className={`text-[10px] font-black uppercase tracking-[0.3em] ${isExpanded ? "text-slate-400" : "text-slate-400"}`}>
+                          ENTITIES
+                        </span>
+                      </div>
+                      <div className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${isExpanded ? 'border-white/20' : 'border-slate-100 dark:border-white/10 group-hover:bg-wa-teal group-hover:border-wa-teal group-hover:text-white'}`}>
+                        {isExpanded ? <X className="w-4 h-4 text-white" /> : <Edit className="w-4 h-4 text-slate-400 group-hover:text-white" />}
+                      </div>
+                    </div>
                   </button>
                 );
               })}
@@ -485,24 +467,30 @@ export default function FeeManagement({
                 return (
                   <div
                     key={`registry-${dept}`}
-                    className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-xl shadow-slate-100 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden animate-in slide-in-from-bottom-8 duration-700"
+                    className="bg-white dark:bg-[#202c33] rounded-[4rem] shadow-2xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 overflow-hidden animate-in slide-in-from-bottom-8 duration-700 relative"
                   >
-                    <div className="px-10 py-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-slate-50/40 dark:bg-slate-800/20 backdrop-blur-sm">
-                      <div className="flex items-center gap-6">
-                        <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-[1.25rem] shadow-sm flex items-center justify-center text-blue-600 border border-slate-100 dark:border-slate-800 rotate-[-4deg] shrink-0">
-                          <User className="w-8 h-8" />
+                    <div className="absolute top-0 left-0 w-2 h-full bg-wa-teal/20" />
+                    
+                    <div className="px-10 py-10 border-b border-slate-100 dark:border-white/5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-8 bg-[#fdfdfe] dark:bg-[#202c33]/50 backdrop-blur-xl">
+                      <div className="flex items-center gap-8">
+                        <div className="w-20 h-20 bg-white dark:bg-[#111b21] rounded-[2rem] shadow-xl flex items-center justify-center text-wa-teal border border-slate-100 dark:border-white/5 rotate-[-6deg] shrink-0 transform group-hover:rotate-0 transition-transform">
+                          <User className="w-10 h-10" />
                         </div>
                         <div>
-                          <h3 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-                            {dept} Department Table
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className="w-2 h-2 bg-wa-teal rounded-full" />
+                            <span className="text-[10px] font-black text-wa-teal uppercase tracking-[0.4em]">Sector Registry</span>
+                          </div>
+                          <h3 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter uppercase italic">
+                            {dept} MASTER LOG
                           </h3>
-                          <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">
-                            {deptFilteredStudents.length} Students found
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">
+                             Verification status for {deptFilteredStudents.length} active entities
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+                      <div className="flex flex-col sm:flex-row gap-4 w-full xl:w-auto items-center">
                         <select
                           value={searchConfig.sem}
                           onChange={(e) =>
@@ -511,20 +499,20 @@ export default function FeeManagement({
                               [dept]: { ...searchConfig, sem: e.target.value },
                             }))
                           }
-                          className="w-full sm:w-auto px-4 py-3 bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-sm font-bold text-slate-900 dark:text-white"
+                          className="w-full sm:w-auto px-6 py-4 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 outline-none focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal text-[11px] font-black uppercase tracking-widest text-slate-800 dark:text-white appearance-none cursor-pointer"
                         >
-                          <option value="ALL">All Semesters</option>
+                          <option value="ALL">ALL INTERVALS</option>
                           {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
                             <option key={sem} value={String(sem)}>
-                              Semester {sem}
+                              PHASE {sem}
                             </option>
                           ))}
                         </select>
-                        <div className="relative w-full sm:w-64">
-                          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <div className="relative w-full sm:w-72">
+                          <Search className="w-4 h-4 absolute left-5 top-1/2 -translate-y-1/2 text-slate-400" />
                           <input
                             type="text"
-                            placeholder="Search student..."
+                            placeholder="SEARCH WITHIN SECTOR..."
                             value={searchConfig.name}
                             onChange={(e) =>
                               setDeptSearch((prev) => ({
@@ -535,7 +523,7 @@ export default function FeeManagement({
                                 },
                               }))
                             }
-                            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-sm font-bold text-slate-900 dark:text-white"
+                            className="w-full pl-14 pr-6 py-4 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 outline-none focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal text-[11px] font-black uppercase tracking-widest text-slate-800 dark:text-white"
                           />
                         </div>
                         <button
@@ -549,35 +537,22 @@ export default function FeeManagement({
                               [dept]: { sem: "ALL", name: "" },
                             }));
                           }}
-                          className="w-12 h-12 flex shrink-0 items-center justify-center bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all text-rose-500 shadow-sm border border-slate-100 dark:border-slate-800 hover:border-rose-200 active:scale-90"
+                          className="w-14 h-14 flex shrink-0 items-center justify-center bg-white dark:bg-[#111b21] hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-2xl transition-all text-rose-500 shadow-xl border border-slate-100 dark:border-white/5 active:scale-90"
                         >
                           <X className="w-5 h-5" />
                         </button>
                       </div>
                     </div>
 
-                    <div className="overflow-x-auto p-2">
-                      <table className="w-full text-left border-separate border-spacing-y-3 px-8">
+                    <div className="overflow-x-auto p-4 sm:p-10">
+                      <table className="w-full text-left border-separate border-spacing-y-4">
                         <thead>
-                          <tr className="text-slate-400">
-                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] opacity-60">
-                              Full Profile
-                            </th>
-                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] opacity-60">
-                              Status
-                            </th>
-                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] opacity-60">
-                              Fee (Sem)
-                            </th>
-                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] opacity-60">
-                              Amount Paid
-                            </th>
-                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] opacity-60">
-                              Latest Txn
-                            </th>
-                            <th className="px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] opacity-60 text-right">
-                              Actions
-                            </th>
+                          <tr>
+                            <th className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">ENTITY PROFILE</th>
+                            <th className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">VERIFICATION</th>
+                            <th className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 text-center">EXPECTED</th>
+                            <th className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 text-center">CONFIRMED</th>
+                            <th className="px-8 py-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 text-right">OPERATIONS</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -603,49 +578,32 @@ export default function FeeManagement({
                             );
 
                             let statusText = "Pending Dues";
-                            let statusColor =
-                              "bg-amber-100 text-amber-700 border-amber-200";
+                            let statusColor = "bg-amber-500/10 text-amber-500 border-amber-500/20";
 
                             if (totalExpected > 0 && amountDue <= 0) {
-                              statusText = "Fully Cleared";
-                              statusColor =
-                                "bg-emerald-100 text-emerald-700 border-emerald-200";
+                              statusText = "CLEARED";
+                              statusColor = "bg-wa-green/10 text-wa-green border-wa-green/20";
                             } else if (totalPaid > 0) {
-                              statusText = "Partially Paid";
-                              statusColor =
-                                "bg-blue-100 text-blue-700 border-blue-200";
+                              statusText = "Partial";
+                              statusColor = "bg-indigo-500/10 text-indigo-500 border-indigo-500/20";
                             } else if (totalExpected === 0) {
-                              statusText = "No Fee Plan";
-                              statusColor =
-                                "bg-slate-100 text-slate-500 border-slate-200";
+                              statusText = "No Config";
+                              statusColor = "bg-slate-500/10 text-slate-500 border-slate-500/20";
                             }
-
-                            const lastPayment = allStudentPayments
-                              .filter((p) => p.status === "confirmed")
-                              .sort(
-                                (a, b) =>
-                                  new Date(b.date || b.timestamp).getTime() -
-                                  new Date(a.date || a.timestamp).getTime(),
-                              )[0];
-                            const lastPaymentDate = lastPayment
-                              ? new Date(
-                                  lastPayment.date || lastPayment.timestamp,
-                                ).toLocaleDateString()
-                              : "Never";
 
                             return (
                               <tr
                                 key={studentId}
-                                className="group hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-all rounded-2xl overflow-hidden shadow-sm hover:shadow-md"
+                                className="group transition-all hover:-translate-y-1 duration-300"
                               >
-                                <td className="px-6 py-6 align-middle rounded-l-2xl border-y border-l border-slate-100/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/10">
+                                <td className="px-8 py-6 bg-[#fcfcfd] dark:bg-[#202c33]/30 rounded-l-[2rem] border-y border-l border-slate-100 dark:border-white/5">
                                   <div className="flex items-center gap-5">
                                     <div
                                       onClick={() =>
                                         student.avatarUrl &&
                                         setZoomedPhoto(student.avatarUrl)
                                       }
-                                      className={`w-14 h-14 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-2xl flex items-center justify-center text-slate-400 group-hover:text-blue-600 group-hover:border-blue-200 group-hover:bg-white transition-all shadow-inner overflow-hidden ${student.avatarUrl ? "cursor-zoom-in" : ""}`}
+                                      className="w-16 h-16 bg-white dark:bg-[#111b21] border border-slate-100 dark:border-white/10 rounded-2xl flex items-center justify-center overflow-hidden shadow-xl transition-transform group-hover:scale-105 shrink-0"
                                     >
                                       {student.avatarUrl ? (
                                         <img
@@ -655,44 +613,41 @@ export default function FeeManagement({
                                           referrerPolicy="no-referrer"
                                         />
                                       ) : (
-                                        <User className="w-7 h-7" />
+                                        <User className="w-8 h-8 text-slate-300" />
                                       )}
                                     </div>
                                     <div>
-                                      <p className="font-black text-slate-900 dark:text-white text-lg group-hover:text-blue-600 transition-colors">
+                                      <p className="font-black text-slate-800 dark:text-white text-lg sm:text-xl tracking-tight uppercase leading-tight italic">
                                         {student.name}
                                       </p>
-                                      <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
-                                        ID: {student.studentId || "NOT_SET"} •
-                                        SEM {currentSem}
+                                      <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest mt-1.5 flex items-center gap-2">
+                                        PRN {student.studentId || "0000"} <span className="text-slate-200 dark:text-slate-700">|</span> PHASE {currentSem}
                                       </p>
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-6 py-6 align-middle border-y border-slate-100/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/10">
+                                <td className="px-8 py-6 bg-[#fcfcfd] dark:bg-[#202c33]/30 border-y border-slate-100 dark:border-white/5">
                                   <div className="flex flex-col gap-2 items-start">
                                     <span
-                                      className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusColor}`}
+                                      className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-[0.2em] border ${statusColor}`}
                                     >
                                       {statusText}
                                     </span>
                                     {pendingPayments.length > 0 && (
-                                      <span className="px-3 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.15em] bg-rose-600 text-white animate-pulse">
-                                        Action Required
-                                      </span>
+                                      <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500 rounded-lg animate-pulse shadow-lg shadow-rose-500/20">
+                                        <div className="w-1.5 h-1.5 bg-white rounded-full" />
+                                        <span className="text-[9px] font-black text-white uppercase tracking-widest">Review Alert</span>
+                                      </div>
                                     )}
                                   </div>
                                 </td>
-                                <td className="px-6 py-6 align-middle border-y border-slate-100/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/10 font-black text-slate-900 dark:text-white text-lg tracking-tight">
-                                  ₹{totalExpected.toLocaleString()}
+                                <td className="px-8 py-6 bg-[#fcfcfd] dark:bg-[#202c33]/30 border-y border-slate-100 dark:border-white/5 text-center">
+                                   <p className="font-black text-lg text-slate-400 dark:text-slate-500 tracking-tighter">₹{totalExpected.toLocaleString()}</p>
                                 </td>
-                                <td className="px-6 py-6 align-middle border-y border-slate-100/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/10 font-black text-emerald-600 text-lg tracking-tight">
-                                  ₹{totalPaid.toLocaleString()}
+                                <td className="px-8 py-6 bg-[#fcfcfd] dark:bg-[#202c33]/30 border-y border-slate-100 dark:border-white/5 text-center">
+                                   <p className="font-black text-3xl text-wa-green tracking-tighter italic">₹{totalPaid.toLocaleString()}</p>
                                 </td>
-                                <td className="px-6 py-6 align-middle border-y border-slate-100/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/10 text-xs font-black text-slate-500 uppercase tracking-widest">
-                                  {lastPaymentDate}
-                                </td>
-                                <td className="px-6 py-6 align-middle text-right rounded-r-2xl border-y border-r border-slate-100/50 dark:border-slate-800/50 bg-white dark:bg-slate-900 group-hover:bg-blue-50/30 dark:group-hover:bg-blue-900/10">
+                                <td className="px-8 py-6 bg-[#fcfcfd] dark:bg-[#202c33]/30 rounded-r-[2rem] border-y border-r border-slate-100 dark:border-white/5 text-right">
                                   <button
                                     onClick={() =>
                                       setViewDetailsStudent({
@@ -703,9 +658,9 @@ export default function FeeManagement({
                                         semPayments: allStudentPayments,
                                       })
                                     }
-                                    className="px-6 py-3 bg-slate-950 hover:bg-blue-600 text-white rounded-2xl text-xs font-black transition-all shadow-lg hover:shadow-blue-500/20 active:scale-95"
+                                    className="px-8 py-4 bg-slate-900 hover:bg-slate-800 dark:bg-wa-teal dark:hover:bg-wa-teal/90 text-white rounded-xl text-[11px] font-black uppercase tracking-[0.2em] shadow-xl hover:shadow-wa-teal/20 active:scale-95 transition-all"
                                   >
-                                    Manage Dues
+                                    SYNC ACCOUNT
                                   </button>
                                 </td>
                               </tr>
@@ -747,14 +702,14 @@ export default function FeeManagement({
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 p-8 space-y-8">
-            <div className="flex justify-between items-center">
+          <div className="bg-white dark:bg-[#202c33] rounded-[4rem] border border-slate-100 dark:border-white/5 p-12 space-y-12 shadow-2xl">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
               <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  Semester-wise Fee Structure
+                <h2 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter uppercase italic">
+                  Fee Configuration Matrix
                 </h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  Set the default payable fee for each semester and department.
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-2">
+                  Define tuition parameters for all departmental vectors.
                 </p>
               </div>
               <button
@@ -764,61 +719,62 @@ export default function FeeManagement({
                     : () => setIsEditingStructure(true)
                 }
                 disabled={savingStructure}
-                className={`px-6 py-2 rounded-xl font-bold flex items-center gap-2 transition-all disabled:opacity-50 ${
+                className={`px-10 py-5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 transition-all shadow-xl disabled:opacity-50 ${
                   isEditingStructure
-                    ? "bg-green-600 hover:bg-green-700 text-white"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                    ? "bg-wa-green text-white hover:bg-wa-green/90"
+                    : "bg-slate-900 text-white hover:bg-slate-800"
                 }`}
               >
                 {savingStructure ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
                 ) : isEditingStructure ? (
                   <>
                     <Save className="w-4 h-4" />
-                    Save Structure
+                    COMMIT CHANGES
                   </>
                 ) : (
                   <>
                     <Edit className="w-4 h-4" />
-                    Change Structure
+                    MODIFY MATRIX
                   </>
                 )}
               </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
               {departments.map((deptObj) => {
                 const dept = deptObj.name;
                 const totalSemesters = Number(deptObj.totalSemesters) || 8;
                 return (
                   <div
                     key={dept}
-                    className="space-y-4 p-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800"
+                    className="space-y-6 p-10 bg-[#fcfcfd] dark:bg-[#111b21] rounded-[3rem] border border-slate-100 dark:border-white/5 relative overflow-hidden"
                   >
-                    <h3 className="text-lg font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                      <BookOpen className="w-5 h-5 text-blue-600" />
-                      {dept} Department
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-wa-teal/5 rounded-bl-[4rem]" />
+                    <h3 className="text-xl font-black text-slate-800 dark:text-white flex items-center gap-4 uppercase tracking-tight">
+                      <BookOpen className="w-6 h-6 text-wa-teal" />
+                      {dept} SECTOR
                     </h3>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-6 relative z-10">
                       {Array.from(
                         { length: totalSemesters },
                         (_, i) => i + 1,
                       ).map((sem) => (
-                        <div key={sem} className="space-y-1">
-                          <label className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase">
-                            Semester {sem}
+                        <div key={sem} className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">
+                            PHASE {sem}
                           </label>
-                          <div className="relative">
-                            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                          <div className="relative group">
+                            <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-black text-sm">
                               ₹
                             </span>
                             <input
                               type="number"
                               disabled={!isEditingStructure}
-                              className={`w-full pl-7 pr-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all ${
+                              className={`w-full pl-10 pr-6 py-4 bg-white dark:bg-[#202c33] border rounded-[1.2rem] text-sm font-black text-slate-800 dark:text-white shadow-sm transition-all focus:outline-none focus:ring-4 focus:ring-wa-teal/10 ${
                                 !isEditingStructure
-                                  ? "opacity-60 cursor-not-allowed bg-slate-50 dark:bg-slate-900/50"
-                                  : "hover:border-blue-300"
+                                  ? "opacity-50 cursor-not-allowed border-slate-100 dark:border-white/5"
+                                  : "border-slate-100 dark:border-white/10 hover:border-wa-teal focus:border-wa-teal"
                               }`}
                               value={
                                 feeStructure[dept]?.[sem] === undefined ||
@@ -844,98 +800,103 @@ export default function FeeManagement({
       </div>
 
       {showPaymentModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-sm shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                Record Cash Receipt
-              </h3>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 z-[120] animate-in fade-in duration-300">
+          <div className="bg-white dark:bg-[#202c33] rounded-[3rem] p-10 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-white/10">
+            <div className="flex justify-between items-center mb-10">
+              <div>
+                <h3 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic">
+                  Payment Interface
+                </h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Manual Remittance Verification</p>
+              </div>
               <button
                 onClick={() => {
                   setShowPaymentModal(false);
                   setStudentSearch("");
                   setPaymentStudent(null);
                 }}
-                className="text-slate-400 hover:text-slate-600"
+                className="w-12 h-12 bg-[#f8f9fa] dark:bg-[#111b21] hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-400 hover:text-rose-500 rounded-full flex items-center justify-center transition-all shadow-sm border border-slate-100 dark:border-white/5"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
             <form
               onSubmit={handleTeacherPaymentReceipt}
-              className="space-y-4 text-left"
+              className="space-y-6 text-left"
             >
               {isManualPayment ? (
                 <>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                      Department
-                    </label>
-                    <select
-                      required
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-sm mb-4"
-                      value={modalDepartment}
-                      onChange={(e) => {
-                        setModalDepartment(e.target.value);
-                        setPaymentStudent(null);
-                        setStudentSearch("");
-                      }}
-                    >
-                      <option value="" disabled>
-                        Select Department
-                      </option>
-                      {departments.map((d) => (
-                        <option key={d.id} value={d.name}>
-                          {d.name}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-1">
+                        Sector Vector
+                      </label>
+                      <select
+                        required
+                        className="w-full px-5 py-4 bg-[#f8f9fa] dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-2xl focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal outline-none text-[11px] font-black text-slate-800 dark:text-white transition-all uppercase tracking-widest appearance-none cursor-pointer"
+                        value={modalDepartment}
+                        onChange={(e) => {
+                          setModalDepartment(e.target.value);
+                          setPaymentStudent(null);
+                          setStudentSearch("");
+                        }}
+                      >
+                        <option value="" disabled>
+                          SELECT SECTOR
                         </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                      Semester
-                    </label>
-                    <select
-                      required
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-sm mb-4"
-                      value={paymentSemester}
-                      onChange={(e) => {
-                        setPaymentSemester(Number(e.target.value));
-                        setPaymentStudent(null);
-                        setStudentSearch("");
-                      }}
-                    >
-                      {(() => {
-                        const selectedDeptObj = departments.find(
-                          (d) => d.name === modalDepartment,
-                        );
-                        const totalSems = selectedDeptObj?.totalSemesters || 8;
-                        return Array.from(
-                          { length: totalSems },
-                          (_, i) => i + 1,
-                        ).map((sem) => (
-                          <option key={sem} value={sem}>
-                            Semester {sem}
+                        {departments.map((d) => (
+                          <option key={d.id} value={d.name}>
+                            {d.name}
                           </option>
-                        ));
-                      })()}
-                    </select>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-1">
+                        Interval Phase
+                      </label>
+                      <select
+                        required
+                        className="w-full px-5 py-4 bg-[#f8f9fa] dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-2xl focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal outline-none text-[11px] font-black text-slate-800 dark:text-white transition-all uppercase tracking-widest appearance-none cursor-pointer"
+                        value={paymentSemester}
+                        onChange={(e) => {
+                          setPaymentSemester(Number(e.target.value));
+                          setPaymentStudent(null);
+                          setStudentSearch("");
+                        }}
+                      >
+                        {(() => {
+                          const selectedDeptObj = departments.find(
+                            (d) => d.name === modalDepartment,
+                          );
+                          const totalSems = selectedDeptObj?.totalSemesters || 8;
+                          return Array.from(
+                            { length: totalSems },
+                            (_, i) => i + 1,
+                          ).map((sem) => (
+                            <option key={sem} value={sem}>
+                              PHASE {sem}
+                            </option>
+                          ));
+                        })()}
+                      </select>
+                    </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">
-                      Search Student
+                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mb-3 ml-1">
+                      Entity Search
                     </label>
                     <div className="relative">
                       <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                        <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                         <input
                           type="text"
                           placeholder={
                             !modalDepartment || !paymentSemester
-                              ? "Select Dept & Sem first"
-                              : "Search name or ID..."
+                              ? "Initialize Params First"
+                              : "SCAN NAME OR PRN..."
                           }
-                          className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-sm ${!modalDepartment || !paymentSemester ? "opacity-50 cursor-not-allowed" : ""}`}
+                          className={`w-full pl-14 pr-6 py-4 bg-[#f8f9fa] dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-2xl focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal outline-none text-[11px] font-black text-slate-800 dark:text-white transition-all uppercase tracking-widest ${!modalDepartment || !paymentSemester ? "opacity-50 cursor-not-allowed" : ""}`}
                           value={studentSearch}
                           onChange={(e) => {
                             setStudentSearch(e.target.value);
@@ -949,7 +910,7 @@ export default function FeeManagement({
                       {showSuggestions &&
                         modalDepartment &&
                         paymentSemester && (
-                          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 max-h-48 overflow-y-auto">
+                          <div className="absolute top-full left-0 right-0 mt-3 bg-white dark:bg-[#202c33] border border-slate-100 dark:border-white/10 rounded-[2rem] shadow-2xl z-50 max-h-64 overflow-y-auto animate-in slide-in-from-top-4 duration-300">
                             {(() => {
                               const filtered = students.filter((s) => {
                                 const cIdName =
@@ -975,8 +936,8 @@ export default function FeeManagement({
 
                               if (filtered.length === 0) {
                                 return (
-                                  <div className="p-4 text-xs text-slate-500 text-center">
-                                    No matching students found
+                                  <div className="p-8 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">
+                                    No Matching Entities
                                   </div>
                                 );
                               }
@@ -985,18 +946,18 @@ export default function FeeManagement({
                                 <button
                                   key={s.id || s.uid}
                                   type="button"
-                                  className="w-full text-left px-4 py-3 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-100 dark:border-slate-800 last:border-0 transition-colors"
+                                  className="w-full text-left px-8 py-5 hover:bg-[#f8f9fa] dark:hover:bg-[#111b21] border-b border-slate-50 dark:border-white/5 last:border-0 transition-colors"
                                   onClick={() => {
                                     setPaymentStudent(s);
                                     setStudentSearch(s.name);
                                     setShowSuggestions(false);
                                   }}
                                 >
-                                  <p className="font-bold text-sm text-slate-900 dark:text-white">
+                                  <p className="font-black text-slate-800 dark:text-white tracking-tight uppercase leading-none">
                                     {s.name}
                                   </p>
-                                  <p className="text-[10px] text-slate-500">
-                                    {s.studentId || "No ID"}
+                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">
+                                    PRN: {s.studentId || "0000"}
                                   </p>
                                 </button>
                               ));
@@ -1005,14 +966,14 @@ export default function FeeManagement({
                         )}
                     </div>
                     {paymentStudent && (
-                      <div className="mt-2 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-900/30 flex items-center gap-3 animate-in slide-in-from-top-2 duration-200">
-                        <CheckCircle className="w-4 h-4 text-blue-600" />
-                        <div>
-                          <p className="text-xs font-bold text-blue-700 dark:text-blue-400">
-                            Selected: {paymentStudent.name}
-                          </p>
-                          <p className="text-[10px] text-blue-600/70">
-                            {paymentStudent.studentId || "No ID"}
+                      <div className="mt-4 p-5 bg-wa-teal/10 dark:bg-wa-teal/20 rounded-2xl border border-wa-teal/20 flex items-center gap-4 animate-in slide-in-from-bottom-2 duration-300">
+                        <div className="w-10 h-10 bg-wa-teal rounded-full flex items-center justify-center text-white shadow-lg shadow-wa-teal/30">
+                          <CheckCircle className="w-5 h-5" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest leading-none">Verified Entity</p>
+                          <p className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight mt-1">
+                            {paymentStudent.name}
                           </p>
                         </div>
                         <button
@@ -1021,9 +982,9 @@ export default function FeeManagement({
                             setPaymentStudent(null);
                             setStudentSearch("");
                           }}
-                          className="ml-auto p-1 hover:bg-blue-100 dark:hover:bg-blue-900/40 rounded-full transition-colors"
+                          className="p-2 hover:bg-wa-teal/20 rounded-full transition-colors text-wa-teal"
                         >
-                          <X className="w-3 h-3 text-blue-600" />
+                          <X className="w-4 h-4" />
                         </button>
                       </div>
                     )}
@@ -1031,16 +992,20 @@ export default function FeeManagement({
                 </>
               ) : (
                 paymentStudent && (
-                  <div>
-                    <p className="text-sm font-bold text-slate-700 dark:text-slate-300">
-                      Student:{" "}
-                      <span className="text-blue-600">
-                        {paymentStudent.name}
-                      </span>
-                    </p>
-                    <p className="text-xs text-slate-500">
-                      Sem {paymentSemester}
-                    </p>
+                  <div className="p-6 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 mb-6">
+                    <div className="flex items-center gap-4">
+                       <div className="w-12 h-12 bg-indigo-500 rounded-full flex items-center justify-center text-white shadow-xl shadow-indigo-500/20">
+                          <User className="w-6 h-6" />
+                       </div>
+                       <div>
+                          <p className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-tight italic">
+                            {paymentStudent.name}
+                          </p>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                             PHASE {paymentSemester} • REVENUE CYCLE
+                          </p>
+                       </div>
+                    </div>
                   </div>
                 )
               )}
@@ -1073,33 +1038,38 @@ export default function FeeManagement({
 
                   return (
                     <div>
-                      <div className="flex justify-between items-end mb-2">
-                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Amount Received (₹)
+                      <div className="flex justify-between items-end mb-3">
+                        <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] ml-1">
+                          Remittance Amount (₹)
                         </label>
                         {targetSemFee > 0 && (
-                          <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-900/20 px-2 py-0.5 rounded-full animate-in zoom-in-50 duration-300">
-                            Max ₹{maxAllowed} Allowed
-                          </span>
+                          <div className="px-3 py-1 bg-wa-teal/10 rounded-full animate-in zoom-in-50 duration-500">
+                             <span className="text-[9px] font-black text-wa-teal uppercase tracking-widest leading-none">
+                              Cap: ₹{maxAllowed}
+                            </span>
+                          </div>
                         )}
                       </div>
-                      <input
-                        type="number"
-                        required
-                        autoFocus
-                        placeholder="e.g. 5000"
-                        max={targetSemFee > 0 ? maxAllowed : undefined}
-                        className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-slate-900 dark:text-white transition-all text-lg"
-                        value={paymentAmount}
-                        onChange={(e) => {
-                          const val = Number(e.target.value);
-                          if (targetSemFee > 0 && val > maxAllowed) {
-                            setPaymentAmount(maxAllowed.toString());
-                          } else {
-                            setPaymentAmount(e.target.value);
-                          }
-                        }}
-                      />
+                      <div className="relative group">
+                        <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-black text-xl">₹</span>
+                        <input
+                          type="number"
+                          required
+                          autoFocus
+                          placeholder="00.00"
+                          max={targetSemFee > 0 ? maxAllowed : undefined}
+                          className="w-full pl-12 pr-6 py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-[1.5rem] focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal outline-none text-slate-800 dark:text-white transition-all text-2xl font-black italic tracking-tighter"
+                          value={paymentAmount}
+                          onChange={(e) => {
+                            const val = Number(e.target.value);
+                            if (targetSemFee > 0 && val > maxAllowed) {
+                              setPaymentAmount(maxAllowed.toString());
+                            } else {
+                              setPaymentAmount(e.target.value);
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
                   );
                 })()}
@@ -1141,10 +1111,10 @@ export default function FeeManagement({
                             .reduce((sum, p) => sum + Number(p.amount), 0),
                       ))
                 }
-                className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none disabled:bg-slate-300 disabled:shadow-none mt-4 flex items-center justify-center gap-2"
+                className="w-full py-6 bg-slate-900 text-white font-black uppercase tracking-[0.3em] text-[10px] rounded-[1.5rem] hover:bg-slate-800 transition-all shadow-2xl shadow-slate-900/20 disabled:bg-slate-300 disabled:shadow-none mt-8 flex items-center justify-center gap-4"
               >
-                Confirm Receipt
-                <CheckCircle className="w-4 h-4" />
+                AUTHORIZE REMITTANCE
+                <CheckCircle className="w-5 h-5" />
               </button>
             </form>
           </div>
@@ -1153,173 +1123,173 @@ export default function FeeManagement({
 
       {/* Student Details Modal */}
       {viewDetailsStudent && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900 sticky top-0 z-10">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <User className="text-blue-600 w-6 h-6" />
-                Student Details
-              </h3>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 z-[120] animate-in fade-in duration-500">
+          <div className="bg-white dark:bg-[#202c33] rounded-[4rem] w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-white/10 relative">
+            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-wa-teal via-indigo-500 to-wa-green" />
+            
+            <div className="px-10 py-10 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-white dark:bg-[#202c33] shrink-0">
+              <div>
+                <h3 className="text-3xl font-black text-slate-800 dark:text-white flex items-center gap-4 uppercase tracking-tighter italic">
+                  <User className="text-wa-teal w-8 h-8" />
+                  Entity Dossier
+                </h3>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] mt-2 ml-10">Advanced revenue status diagnostics</p>
+              </div>
               <button
                 onClick={() => setViewDetailsStudent(null)}
-                className="p-2 hover:bg-slate-200 dark:hover:bg-slate-800 rounded-full transition-colors text-slate-500"
+                className="w-14 h-14 bg-[#f8f9fa] dark:bg-[#111b21] hover:bg-rose-50 dark:hover:bg-rose-900/20 text-slate-400 hover:text-rose-500 rounded-full flex items-center justify-center transition-all shadow-sm border border-slate-100 dark:border-white/5"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto flex-1">
+            <div className="p-10 overflow-y-auto flex-1 custom-scrollbar">
               {/* Profile Info */}
-              <div className="flex gap-4 items-center mb-8 border-b border-slate-100 dark:border-slate-800 pb-6">
+              <div className="flex flex-col sm:flex-row gap-8 items-center mb-12 bg-[#fcfcfd] dark:bg-[#111b21] p-10 rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-inner">
                 <div
                   onClick={() =>
                     viewDetailsStudent.avatarUrl &&
                     setZoomedPhoto(viewDetailsStudent.avatarUrl)
                   }
-                  className={`w-16 h-16 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center text-blue-600 overflow-hidden border-2 border-white dark:border-slate-800 ${viewDetailsStudent.avatarUrl ? "cursor-zoom-in" : ""}`}
+                  className="w-32 h-32 bg-white dark:bg-[#202c33] rounded-[2.5rem] flex items-center justify-center overflow-hidden border border-slate-100 dark:border-white/10 shadow-2xl group relative cursor-zoom-in shrink-0"
                 >
                   {viewDetailsStudent.avatarUrl ? (
                     <img
                       src={viewDetailsStudent.avatarUrl}
                       alt=""
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover transform scale-105 group-hover:scale-110 transition-transform duration-500"
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <User className="w-8 h-8" />
+                    <User className="w-12 h-12 text-slate-300" />
                   )}
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                     <Search className="text-white w-8 h-8" />
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
+                <div className="text-center sm:text-left">
+                  <h2 className="text-4xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic leading-none mb-3">
                     {viewDetailsStudent.name}
                   </h2>
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    ID:{" "}
-                    {viewDetailsStudent.studentId ||
-                      viewDetailsStudent.uid ||
-                      "N/A"}{" "}
-                    • Dept:{" "}
-                    {cleanStr(viewDetailsStudent.courseId) ||
-                      cleanStr(viewDetailsStudent.courseName) ||
-                      cleanStr(viewDetailsStudent.department) ||
-                      "N/A"}{" "}
-                    • Sem: {viewDetailsStudent.semester || 1}
-                  </p>
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-3">
+                    <span className="px-4 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest">PRN {viewDetailsStudent.studentId || "0000"}</span>
+                    <span className="px-4 py-2 bg-wa-teal/10 text-wa-teal border border-wa-teal/10 rounded-xl text-[10px] font-black uppercase tracking-widest">SECTOR {cleanStr(viewDetailsStudent.department) || "N/A"}</span>
+                    <span className="px-4 py-2 bg-indigo-500/10 text-indigo-500 border border-indigo-500/10 rounded-xl text-[10px] font-black uppercase tracking-widest">PHASE {viewDetailsStudent.semester || 1}</span>
+                  </div>
                 </div>
               </div>
 
               {/* Financial Status */}
-              <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
-                Financial Status (Semester {viewDetailsStudent.semester || 1})
-              </h4>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                <div className="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-                  <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">
-                    Sem Fee
-                  </p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">
-                    ₹{viewDetailsStudent.expectedAmount.toLocaleString()}
-                  </p>
+              <div className="mb-12">
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-2 h-2 bg-indigo-500 rounded-full" />
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Current Revenue Metrics</h4>
                 </div>
-                <div className="bg-green-50 dark:bg-green-900/10 p-4 rounded-2xl border border-green-100 dark:border-green-900/30">
-                  <p className="text-xs text-green-600 dark:text-green-500 font-bold uppercase tracking-wider mb-1">
-                    Sem Paid
-                  </p>
-                  <p className="text-xl font-bold text-green-700 dark:text-green-400">
-                    ₹{viewDetailsStudent.paidAmount.toLocaleString()}
-                  </p>
-                </div>
-                <div className="bg-orange-50 dark:bg-orange-900/10 p-4 rounded-2xl border border-orange-100 dark:border-orange-900/30">
-                  <p className="text-xs text-orange-600 dark:text-orange-500 font-bold uppercase tracking-wider mb-1">
-                    Sem Left
-                  </p>
-                  <p className="text-xl font-bold text-orange-700 dark:text-orange-400">
-                    ₹{viewDetailsStudent.amountDue.toLocaleString()}
-                  </p>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                  <div className="bg-white dark:bg-[#111b21] p-8 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-slate-500/5 rounded-bl-[3rem] -mr-6 -mt-6" />
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Total Obligation</p>
+                    <p className="text-4xl font-black text-slate-800 dark:text-white tracking-tighter italic">₹{viewDetailsStudent.expectedAmount.toLocaleString()}</p>
+                  </div>
+                  
+                  <div className="bg-wa-green/5 dark:bg-wa-green/10 p-8 rounded-[2.5rem] border border-wa-green/10 shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-wa-green/10 rounded-bl-[3rem] -mr-6 -mt-6" />
+                    <p className="text-[10px] font-black text-wa-green uppercase tracking-widest mb-4">Verified Remittance</p>
+                    <p className="text-4xl font-black text-wa-green tracking-tighter italic">₹{viewDetailsStudent.paidAmount.toLocaleString()}</p>
+                  </div>
+
+                  <div className="bg-rose-500/5 dark:bg-rose-500/10 p-8 rounded-[2.5rem] border border-rose-500/10 shadow-xl relative overflow-hidden group border-dashed border-2">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-rose-500/10 rounded-bl-[3rem] -mr-6 -mt-6" />
+                    <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-4">Outstanding Vector</p>
+                    <p className="text-4xl font-black text-rose-500 tracking-tighter italic">₹{viewDetailsStudent.amountDue.toLocaleString()}</p>
+                  </div>
                 </div>
               </div>
 
               {/* Payment History */}
-              <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">
-                Payment Transactions
-              </h4>
-              {viewDetailsStudent.semPayments.length === 0 ? (
-                <p className="text-slate-500 dark:text-slate-400 text-sm italic">
-                  No records found for this semester.
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {viewDetailsStudent.semPayments
-                    .sort(
-                      (a: any, b: any) =>
-                        new Date(b.date || b.timestamp).getTime() -
-                        new Date(a.date || a.timestamp).getTime(),
-                    )
-                    .map((p: any) => (
-                      <div
-                        key={p.id}
-                        className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl gap-4"
-                      >
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="font-bold text-slate-900 dark:text-white text-lg">
-                              ₹{Number(p.amount).toLocaleString()}
-                            </p>
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${p.status === "confirmed" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}
-                            >
-                              {p.status}
-                            </span>
-                          </div>
-                          <p className="text-xs text-slate-500 font-mono">
-                            Txn ID: {p.transactionId}
-                          </p>
-                          <p className="text-xs text-slate-400 mt-1">
-                            {new Date(p.date || p.timestamp).toLocaleString(
-                              [],
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                day: "2-digit",
-                                month: "2-digit",
-                                year: "numeric",
-                                hour12: true,
-                              },
-                            )}
-                          </p>
-                        </div>
-                        {p.status === "pending" && (
-                          <button
-                            onClick={() => {
-                              confirmPayment(
-                                p.id,
-                                p.studentId || viewDetailsStudent.id,
-                                p.amount,
-                              );
-                              setViewDetailsStudent((prev: any) => ({
-                                ...prev,
-                                semPayments: prev.semPayments.map((sp: any) =>
-                                  sp.id === p.id
-                                    ? { ...sp, status: "confirmed" }
-                                    : sp,
-                                ),
-                                paidAmount: prev.paidAmount + Number(p.amount),
-                                amountDue: Math.max(
-                                  0,
-                                  prev.expectedAmount -
-                                    (prev.paidAmount + Number(p.amount)),
-                                ),
-                              }));
-                            }}
-                            className="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm font-bold transition-colors shadow-sm whitespace-nowrap"
-                          >
-                            Verify Payment
-                          </button>
-                        )}
-                      </div>
-                    ))}
+              <div>
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-2 h-2 bg-wa-teal rounded-full" />
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Transaction Audit Log</h4>
                 </div>
-              )}
+                
+                {viewDetailsStudent.semPayments.length === 0 ? (
+                  <div className="p-12 bg-slate-50 dark:bg-[#111b21] rounded-[2.5rem] border border-dashed border-slate-200 dark:border-white/5 text-center">
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">No transaction records found in current phase.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {viewDetailsStudent.semPayments
+                      .sort(
+                        (a: any, b: any) =>
+                          new Date(b.date || b.timestamp).getTime() -
+                          new Date(a.date || a.timestamp).getTime(),
+                      )
+                      .map((p: any) => (
+                        <div
+                          key={p.id}
+                          className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-8 bg-white dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-[2rem] gap-6 hover:shadow-2xl transition-all group"
+                        >
+                          <div className="flex gap-6 items-center">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${p.status === "confirmed" ? "bg-wa-green/10 text-wa-green group-hover:bg-wa-green group-hover:text-white" : "bg-amber-500/10 text-amber-500 group-hover:bg-amber-500 group-hover:text-white"}`}>
+                               <CreditCard className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-4 mb-1">
+                                <p className="text-2xl font-black text-slate-800 dark:text-white tracking-tighter italic">
+                                  ₹{Number(p.amount).toLocaleString()}
+                                </p>
+                                <span
+                                  className={`px-3 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest border ${p.status === "confirmed" ? "bg-wa-green/10 text-wa-green border-wa-green/20" : "bg-amber-500/10 text-amber-500 border-amber-500/20"}`}
+                                >
+                                  {p.status}
+                                </span>
+                              </div>
+                              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">
+                                  TXID: #{p.transactionId}
+                                </p>
+                                <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">
+                                  {new Date(p.date || p.timestamp).toLocaleString([], { hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit", year: "numeric", hour12: true })}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                          
+                          {p.status === "pending" && (
+                            <button
+                              onClick={() => {
+                                confirmPayment(
+                                  p.id,
+                                  p.studentId || viewDetailsStudent.id,
+                                  p.amount,
+                                );
+                                setViewDetailsStudent((prev: any) => ({
+                                  ...prev,
+                                  semPayments: prev.semPayments.map((sp: any) =>
+                                    sp.id === p.id
+                                      ? { ...sp, status: "confirmed" }
+                                      : sp,
+                                  ),
+                                  paidAmount: prev.paidAmount + Number(p.amount),
+                                  amountDue: Math.max(
+                                    0,
+                                    prev.expectedAmount -
+                                      (prev.paidAmount + Number(p.amount)),
+                                  ),
+                                }));
+                              }}
+                              className="w-full sm:w-auto px-10 py-4 bg-wa-green text-white rounded-xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:shadow-wa-green/20 active:scale-95 transition-all"
+                            >
+                              VERIFY REMITTANCE
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

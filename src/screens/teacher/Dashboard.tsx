@@ -555,7 +555,7 @@ export default function TeacherDashboard({
                                 s.courseId || s.courseName || "BCA",
                               );
                             }}
-                            className="p-2 text-slate-400 hover:text-blue-500"
+                            className="p-2 text-slate-400 hover:text-wa-teal"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
@@ -576,15 +576,15 @@ export default function TeacherDashboard({
       label: "Total Students",
       value: totalStudents,
       icon: Users,
-      color: "text-blue-600",
-      bg: "bg-blue-50",
+      color: "text-wa-teal",
+      bg: "bg-wa-teal/10",
     },
     {
       label: "Today Attendance",
       value: todayAttendanceCount,
       icon: CheckCircle,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
+      color: "text-wa-green",
+      bg: "bg-wa-green/10",
     },
     {
       label: "Pending Fees",
@@ -596,231 +596,281 @@ export default function TeacherDashboard({
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto bg-wa-bg dark:bg-[#0b141a] p-4 space-y-6 custom-scrollbar pb-10">
+    <div className="flex-1 overflow-y-auto bg-[#f0f2f5] dark:bg-[#111b21] p-6 space-y-8 custom-scrollbar pb-24 font-sans">
       {loading && (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-10 h-10 text-wa-teal animate-spin" />
+        <div className="flex flex-col items-center justify-center py-32">
+          <Loader2 className="w-12 h-12 text-wa-teal animate-spin mb-6" />
+          <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.2em]">Synchronizing Uplink...</p>
         </div>
       )}
 
       {!loading && (
         <>
-          {/* Main Feed View */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left: Directory */}
-            <div className="lg:col-span-2 space-y-4">
-              <div className="bg-white dark:bg-[#202c33] p-4 rounded-2xl flex justify-between items-center shadow-sm border border-slate-100 dark:border-white/5 sticky top-0 z-20">
-                <h2 className="text-lg font-black text-slate-800 dark:text-[#e9edef] flex items-center gap-2">
-                  <Users className="w-5 h-5 text-wa-teal" /> Student Directory
-                </h2>
-                <button
-                  onClick={() => setShowAddDeptModal(true)}
-                  className="p-2 bg-slate-50 dark:bg-[#111b21] rounded-full text-wa-teal hover:bg-wa-teal hover:text-white transition-all"
-                >
-                  <Plus className="w-5 h-5" />
-                </button>
-              </div>
+          {/* Header Stats / Status */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+            <div>
+              <h1 className="text-4xl sm:text-5xl font-black text-slate-800 dark:text-[#e9edef] tracking-tighter leading-none italic uppercase">
+                Command <span className="text-wa-teal">Center</span>
+              </h1>
+              <p className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.3em] mt-4 ml-1">Faculty Operations Terminal</p>
+            </div>
+            <div className="flex items-center gap-3">
+               <div className="flex items-center gap-3 px-8 py-5 bg-white dark:bg-[#202c33] rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-sm">
+                  <div className="w-2.5 h-2.5 rounded-full bg-wa-green animate-pulse" />
+                  <span className="text-[11px] font-black text-slate-500 dark:text-slate-300 uppercase tracking-widest">System Online</span>
+               </div>
+            </div>
+          </div>
 
-              {/* Stats Cards Row */}
-              <div className="grid grid-cols-3 gap-3">
-                {overviewStats.map((s, i) => (
-                  <div
-                    key={i}
-                    className="bg-white dark:bg-[#202c33] p-3 rounded-2xl border border-slate-100 dark:border-white/5 flex flex-col items-center text-center"
-                  >
-                    <div
-                      className={`w-8 h-8 ${s.bg} ${s.color} rounded-full flex items-center justify-center mb-1`}
-                    >
-                      <s.icon className="w-4 h-4" />
-                    </div>
-                    <p className="text-[8px] font-black uppercase text-[#8696a0] tracking-wider mb-0.5">
-                      {s.label}
-                    </p>
-                    <p className="text-sm font-black text-slate-800 dark:text-[#e9edef]">
-                      {s.value}
-                    </p>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {overviewStats.map((s, i) => (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                key={i}
+                className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] border border-slate-50 dark:border-white/5 shadow-sm relative overflow-hidden group"
+              >
+                <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
+                  <s.icon className={`w-20 h-20 ${s.color}`} />
+                </div>
+                <div className={`w-14 h-14 ${s.bg} ${s.color} rounded-2xl flex items-center justify-center mb-6 shadow-inner`}>
+                  <s.icon className="w-7 h-7" />
+                </div>
+                <p className="text-[11px] font-black uppercase text-slate-500 dark:text-slate-400 tracking-[0.2em] mb-2">
+                  {s.label}
+                </p>
+                <p className="text-4xl font-black text-slate-800 dark:text-[#e9edef] tracking-tighter">
+                  {s.value}
+                </p>
+              </motion.div>
+            ))}
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            {/* Left: Directory & Departments */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white dark:bg-[#202c33] p-10 rounded-[3.5rem] shadow-sm border border-slate-50 dark:border-white/5">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 border-b border-slate-50 dark:border-white/5 pb-8 gap-6">
+                  <div>
+                    <h2 className="text-2xl font-black text-slate-800 dark:text-[#e9edef] flex items-center gap-4 tracking-tight uppercase italic">
+                      <Users className="w-7 h-7 text-wa-teal" /> Faculty Records
+                    </h2>
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest mt-2">Student Personnel Directory</p>
                   </div>
-                ))}
-              </div>
+                  <button
+                    onClick={() => setShowAddDeptModal(true)}
+                    className="w-14 h-14 bg-wa-teal hover:bg-wa-teal/90 text-white rounded-[1.25rem] flex items-center justify-center transition-all shadow-xl shadow-wa-teal/20 active:scale-95"
+                  >
+                    <Plus className="w-7 h-7" />
+                  </button>
+                </div>
 
-              {/* Departments Expansion */}
-              <div className="space-y-3">
-                {departments.map((d) => {
-                  const name = d.name.toUpperCase();
-                  const isActive = expandedDept === name;
-                  const count = allStudents.filter(
-                    (s) =>
-                      (s.courseId || s.courseName || "").toUpperCase() === name,
-                  ).length;
-                  return (
-                    <div key={d.id} className="space-y-2">
-                      <div
-                        onClick={() => setExpandedDept(isActive ? null : name)}
-                        className={`p-4 rounded-2xl border transition-all cursor-pointer flex justify-between items-center shadow-sm ${isActive ? "bg-wa-teal border-wa-teal text-white" : "bg-white dark:bg-[#202c33] border-slate-100 dark:border-white/5 text-slate-800 dark:text-[#e9edef]"}`}
+                {/* Departments Expansion */}
+                <div className="space-y-6">
+                  {departments.map((d, idx) => {
+                    const name = d.name.toUpperCase();
+                    const isActive = expandedDept === name;
+                    const count = allStudents.filter(
+                      (s) =>
+                        (s.courseId || s.courseName || "").toUpperCase() === name,
+                    ).length;
+                    return (
+                      <motion.div 
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        key={d.id} 
+                        className="space-y-4"
                       >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`w-10 h-10 rounded-xl flex items-center justify-center ${isActive ? "bg-white/20" : "bg-[#f0f2f5] dark:bg-slate-800"}`}
-                          >
-                            <BookOpen className="w-5 h-5" />
-                          </div>
-                          <div>
-                            <h3 className="font-black text-sm">{name}</h3>
-                            <p className="text-[10px] font-bold opacity-60 uppercase">
-                              {count} Students
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {!isActive && (
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingDept(d);
-                                  setNewDeptName(d.name);
-                                  setNewDeptSemesters(
-                                    String(d.totalSemesters || 8),
-                                  );
-                                  setShowAddDeptModal(true);
-                                }}
-                                className="p-1.5 text-slate-400 hover:text-blue-500"
-                              >
-                                <Edit2 className="w-3.5 h-3.5" />
-                              </button>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeleteDepartment(d.id);
-                                }}
-                                className="p-1.5 text-slate-400 hover:text-red-500"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                        <div
+                          onClick={() => setExpandedDept(isActive ? null : name)}
+                          className={`p-8 rounded-[2.5rem] border transition-all cursor-pointer flex justify-between items-center group relative overflow-hidden ${
+                            isActive 
+                              ? "bg-wa-teal border-wa-teal text-white shadow-xl shadow-wa-teal/20" 
+                              : "bg-[#f8f9fa] dark:bg-[#111b21] border-transparent hover:border-wa-teal/30 text-slate-800 dark:text-[#e9edef]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-6 relative z-10">
+                            <div className={`w-16 h-16 rounded-[1.25rem] flex items-center justify-center transition-colors ${
+                              isActive ? "bg-white/20" : "bg-white dark:bg-[#202c33] shadow-sm"
+                            }`}>
+                              <BookOpen className="w-7 h-7" />
                             </div>
-                          )}
-                          {isActive ? (
-                            <ChevronUp className="w-5 h-5" />
-                          ) : (
-                            <ChevronDown className="w-5 h-5" />
-                          )}
+                            <div>
+                              <h3 className="font-black text-xl tracking-tight uppercase italic">{name}</h3>
+                              <p className={`text-[10px] font-black uppercase tracking-[0.2em] mt-1.5 ${isActive ? "text-white/60" : "text-slate-400"}`}>
+                                {count} Active Units
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-4 relative z-10">
+                            {!isActive && (
+                              <div className="hidden sm:flex items-center gap-3">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingDept(d);
+                                    setNewDeptName(d.name);
+                                    setNewDeptSemesters(String(d.totalSemesters || 8));
+                                    setShowAddDeptModal(true);
+                                  }}
+                                  className="w-11 h-11 flex items-center justify-center bg-white dark:bg-[#202c33] text-slate-400 hover:text-wa-teal rounded-xl shadow-sm transition-all"
+                                >
+                                  <Edit2 className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteDepartment(d.id);
+                                  }}
+                                  className="w-11 h-11 flex items-center justify-center bg-white dark:bg-[#202c33] text-slate-400 hover:text-red-500 rounded-xl shadow-sm transition-all"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </button>
+                              </div>
+                            )}
+                            <div className={`w-11 h-11 flex items-center justify-center rounded-xl transition-all ${
+                              isActive ? "bg-white/20 rotate-180" : "bg-white dark:bg-[#202c33] shadow-sm rotate-0"
+                            }`}>
+                              <ChevronDown className="w-6 h-6" />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <AnimatePresence>
-                        {isActive && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            {renderStudentTable(name)}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  );
-                })}
+                        <AnimatePresence>
+                          {isActive && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden bg-white dark:bg-[#202c33] rounded-[3rem] border border-slate-50 dark:border-white/5 p-6 shadow-inner"
+                            >
+                              {renderStudentTable(name)}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
+                </div>
               </div>
             </div>
 
-            {/* Right: Feed & Quick Actions */}
-            <div className="space-y-6">
-              {/* Quick Tools */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <button
-                  onClick={() =>
-                    handleNav("/attendance/generate", "attendance")
-                  }
-                  className="p-5 bg-white dark:bg-[#202c33] rounded-3xl border border-slate-100 dark:border-white/5 flex flex-col items-center justify-center gap-3 hover:shadow-lg transition-all group"
-                >
-                  <div className="w-12 h-12 bg-emerald-100 dark:bg-emerald-900/20 text-wa-green rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <QrCode className="w-6 h-6" />
-                  </div>
-                  <span className="text-[10px] font-black uppercase text-[#8696a0] text-center">
-                    QR Attendance
-                  </span>
-                </button>
-                <button
-                  onClick={() => handleNav("/fees/manage", "fees")}
-                  className="p-5 bg-white dark:bg-[#202c33] rounded-3xl border border-slate-100 dark:border-white/5 flex flex-col items-center justify-center gap-3 hover:shadow-lg transition-all group"
-                >
-                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 text-blue-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <CreditCard className="w-6 h-6" />
-                  </div>
-                  <span className="text-[10px] font-black uppercase text-[#8696a0] text-center">
-                    Fees Management
-                  </span>
-                </button>
-                <button
-                  onClick={() => handleNav("/admin", "admin")}
-                  className="p-5 bg-white dark:bg-[#202c33] rounded-3xl border border-slate-100 dark:border-white/5 flex flex-col items-center justify-center gap-3 hover:shadow-lg transition-all group col-span-2 sm:col-span-1"
-                >
-                  <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 text-purple-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform">
-                    <Shield className="w-6 h-6" />
-                  </div>
-                  <span className="text-[10px] font-black uppercase text-[#8696a0] text-center">
-                    Admin Settings
-                  </span>
-                </button>
+            {/* Right: Operations & Feed */}
+            <div className="space-y-8">
+              {/* Quick Actions Terminal */}
+              <div className="bg-white dark:bg-[#202c33] p-8 rounded-[3rem] shadow-sm border border-slate-50 dark:border-white/5">
+                 <h2 className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                    <TrendingUp className="w-4 h-4" /> Operations Terminal
+                 </h2>
+                 <div className="grid grid-cols-1 gap-4">
+                  <button
+                    onClick={() => handleNav("/attendance/generate", "attendance")}
+                    className="flex items-center gap-6 p-6 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[2rem] border border-transparent hover:border-wa-teal/30 hover:bg-white dark:hover:bg-[#202c33] transition-all group"
+                  >
+                    <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/20 text-wa-green rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                      <QrCode className="w-7 h-7" />
+                    </div>
+                    <div className="text-left">
+                       <p className="text-sm font-black text-slate-800 dark:text-[#e9edef] tracking-tight">Attendance</p>
+                       <p className="text-[9px] font-black text-[#8696a0] uppercase tracking-[0.2em] mt-1">Uplink Generator</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleNav("/fees/manage", "fees")}
+                    className="flex items-center gap-6 p-6 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[2rem] border border-transparent hover:border-wa-teal/30 hover:bg-white dark:hover:bg-[#202c33] transition-all group"
+                  >
+                    <div className="w-14 h-14 bg-wa-teal/10 text-wa-teal rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                      <CreditCard className="w-7 h-7" />
+                    </div>
+                    <div className="text-left">
+                       <p className="text-sm font-black text-slate-800 dark:text-[#e9edef] tracking-tight">Finance</p>
+                       <p className="text-[9px] font-black text-[#8696a0] uppercase tracking-[0.2em] mt-1">Ledger Manager</p>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => handleNav("/admin", "admin")}
+                    className="flex items-center gap-6 p-6 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[2rem] border border-transparent hover:border-wa-teal/30 hover:bg-white dark:hover:bg-[#202c33] transition-all group"
+                  >
+                    <div className="w-14 h-14 bg-wa-teal text-white rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
+                      <Shield className="w-7 h-7" />
+                    </div>
+                    <div className="text-left">
+                       <p className="text-sm font-black text-slate-800 dark:text-[#e9edef] tracking-tight">Override</p>
+                       <p className="text-[9px] font-black text-[#8696a0] uppercase tracking-[0.2em] mt-1">System Admin</p>
+                    </div>
+                  </button>
+                </div>
               </div>
 
-              {/* Activity Feed */}
-              <div className="bg-white dark:bg-[#202c33] rounded-3xl border border-slate-100 dark:border-white/5 overflow-hidden flex flex-col h-[500px]">
-                <div className="p-4 bg-[#f0f2f5] dark:bg-[#111b21] flex justify-between items-center border-b border-white/5">
-                  <h3 className="text-sm font-black text-slate-800 dark:text-[#e9edef] flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-wa-teal" /> Activity Feed
-                  </h3>
-                  <div className="flex items-center gap-2">
+              {/* Activity Frequency Feed */}
+              <div className="bg-white dark:bg-[#202c33] rounded-[3rem] shadow-sm border border-slate-50 dark:border-white/5 overflow-hidden flex flex-col h-[550px]">
+                <div className="p-8 bg-[#f8f9fa] dark:bg-[#111b21] border-b border-slate-50 dark:border-white/10 flex justify-between items-center">
+                  <div>
+                    <h3 className="text-sm font-black text-slate-800 dark:text-[#e9edef] flex items-center gap-3 tracking-tight">
+                      <Clock className="w-4 h-4 text-wa-teal" /> Signal Feed
+                    </h3>
+                    <p className="text-[8px] font-black text-[#8696a0] uppercase tracking-widest mt-1">Live Telemetry</p>
+                  </div>
+                  <div className="flex items-center gap-3">
                     <button 
                       onClick={handleClearRecentAttendance}
-                      className="text-[9px] bg-red-500/10 text-red-500 px-2 py-0.5 rounded-full font-black uppercase hover:bg-red-500/20"
+                      className="w-10 h-10 flex items-center justify-center bg-red-500/10 text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                      title="Purge Signal"
                     >
-                      Clear All
+                      <Trash2 className="w-4 h-4" />
                     </button>
-                    <span className="text-[9px] bg-wa-teal/10 text-wa-teal px-2 py-0.5 rounded-full font-black uppercase">
+                    <div className="px-3 py-1 bg-wa-teal/10 text-wa-teal rounded-full font-black text-[8px] uppercase tracking-widest animate-pulse">
                       Live
-                    </span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
-                  {recentAttendance.map((rec) => (
-                    <div
-                      key={rec.id}
-                      className="flex items-center gap-3 p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] rounded-2xl transition-all"
-                    >
-                      <div className="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-900/10 text-wa-green flex items-center justify-center shrink-0">
-                        <UserCheck className="w-4 h-4" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-slate-800 dark:text-[#e9edef] truncate">
-                          {rec.studentName}
-                        </p>
-                        <p className="text-[10px] text-slate-500 truncate">
-                          {rec.courseId} • Sem {rec.semester}
-                        </p>
-                      </div>
-                      <span className="text-[9px] text-[#8696a0] font-bold">
-                        {new Date(rec.timestamp).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
+                <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar no-scrollbar">
+                  {recentAttendance.length === 0 ? (
+                    <div className="py-20 text-center opacity-40">
+                      <Clock className="w-12 h-12 mx-auto mb-4 text-[#8696a0]" />
+                      <p className="text-[9px] font-black uppercase tracking-[0.2em]">Void Frequency</p>
                     </div>
-                  ))}
-                  {recentAttendance.length === 0 && (
-                    <div className="p-10 text-center text-slate-400 text-xs italic">
-                      No check-ins yet.
-                    </div>
+                  ) : (
+                    recentAttendance.map((rec, idx) => (
+                      <motion.div
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                        key={rec.id}
+                        className="flex items-center gap-4 p-5 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[2rem] border border-transparent hover:border-wa-teal/20 transition-all group cursor-default"
+                      >
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/10 text-wa-green flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform">
+                          <UserCheck className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-black text-slate-800 dark:text-[#e9edef] truncate tracking-tight">
+                            {rec.studentName}
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                             <p className="text-[9px] font-black text-wa-teal uppercase tracking-widest truncate">
+                                {rec.courseId} • S{rec.semester}
+                             </p>
+                             <span className="w-1 h-1 bg-[#8696a0] rounded-full" />
+                             <p className="text-[9px] font-bold text-[#8696a0] uppercase flex items-center gap-1.5">
+                                <Clock className="w-3 h-3" />
+                                {new Date(rec.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                             </p>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
                   )}
                 </div>
               </div>
-
+              
               <button
                 onClick={() => setShowScheduleModal(true)}
-                className="w-full p-4 bg-slate-900 dark:bg-wa-teal text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
+                className="w-full p-6 bg-slate-900 dark:bg-wa-teal text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-wa-teal/20 flex items-center justify-center gap-3 active:scale-95 transition-all group"
               >
-                <Calendar className="w-4 h-4" /> Manage Class Schedule
+                <Calendar className="w-5 h-5 group-hover:rotate-12 transition-transform" /> 
+                Synchronize Schedule
               </button>
             </div>
           </div>

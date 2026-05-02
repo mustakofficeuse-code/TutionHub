@@ -83,24 +83,65 @@ export default function StudentView() {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-[#f0f2f5] dark:bg-[#111b21] overflow-hidden flex flex-col font-sans">
+      {/* WhatsApp Header */}
+      <header className="bg-wa-teal dark:bg-[#202c33] text-white pt-2 px-6 shadow-lg z-[60] border-b border-wa-teal/10">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center gap-4">
+            <div className="w-11 h-11 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shadow-inner border border-white/10 group">
+              <GraduationCap className="text-white w-6 h-6 group-hover:rotate-12 transition-transform" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-black tracking-tight leading-none">Tuition<span className="opacity-70">Hub</span></h1>
+              <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60 mt-1">Student Protocol</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setShowNotifications(true)}
+              className="relative w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-2xl transition-all active:scale-95 border border-white/5"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-wa-green text-[10px] font-black flex items-center justify-center rounded-full text-white ring-4 ring-wa-teal dark:ring-[#202c33] animate-bounce">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            <div className="w-11 h-11 rounded-2xl bg-white/10 overflow-hidden border border-white/20 shadow-inner group cursor-pointer hover:scale-105 transition-transform" onClick={() => changeTab(5)}>
+               {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover rounded-xl" referrerPolicy="no-referrer" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-white font-black text-lg">
+                  {profile?.name?.charAt(0) || 'S'}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </header>
 
       {/* Notifications Modal */}
       <AnimatePresence>
         {showNotifications && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-end sm:p-6 bg-slate-900/60 backdrop-blur-sm">
+          <div className="fixed inset-0 z-[100] flex items-center justify-end p-0 sm:p-6 bg-black/60 backdrop-blur-xl">
             <motion.div 
-              initial={{ x: 300, opacity: 0 }}
+              initial={{ x: 400, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
-              exit={{ x: 300, opacity: 0 }}
-              className="w-full sm:w-[400px] h-full sm:h-auto sm:max-h-[600px] bg-white dark:bg-slate-900 sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+              exit={{ x: 400, opacity: 0 }}
+              className="w-full sm:w-[450px] h-full sm:h-auto sm:max-h-[85vh] bg-[#f0f2f5] dark:bg-[#111b21] sm:rounded-[3rem] shadow-[0_0_50px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden border border-white/5"
             >
-              <div className="p-4 bg-blue-600 flex justify-between items-center text-white">
-                <div className="flex items-center gap-3">
-                  <Bell className="w-5 h-5" />
-                  <h3 className="font-bold">Notifications</h3>
+              <div className="p-8 bg-wa-teal dark:bg-[#202c33] flex justify-between items-center text-white border-b border-wa-teal/10">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
+                    <Bell className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black tracking-tight">Bulletin <span className="opacity-70">Feed</span></h3>
+                    <p className="text-[9px] font-black uppercase tracking-widest opacity-60">System Broadcasts</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                   <button 
                      onClick={async () => {
                         const batch = writeBatch(db);
@@ -110,29 +151,40 @@ export default function StudentView() {
                         await batch.commit();
                         setShowNotifications(false);
                      }}
-                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                    className="w-10 h-10 bg-white/10 hover:bg-white/20 rounded-xl transition-all flex items-center justify-center text-white"
+                    title="Purge All"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={() => setShowNotifications(false)}
-                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                    className="w-10 h-10 bg-white/10 hover:bg-red-500 rounded-xl transition-all flex items-center justify-center text-white"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-2 space-y-1 bg-slate-50 dark:bg-slate-950">
+              <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
                 {notifications.length === 0 ? (
-                  <div className="py-20 text-center">
-                    <p className="text-slate-500">No new notifications</p>
+                  <div className="py-24 text-center">
+                    <div className="w-20 h-20 bg-[#f0f2f5] dark:bg-slate-800/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                      <Bell className="w-10 h-10 text-[#8696a0]/30" />
+                    </div>
+                    <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em]">Void frequency detected</p>
                   </div>
                 ) : (
                   notifications.map((notif) => (
-                    <div 
+                    <motion.div 
+                      layout
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
                       key={notif.id} 
-                      className="p-3 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700"
+                      className={`p-6 rounded-[2rem] border transition-all cursor-pointer group ${
+                        !notif.read 
+                          ? 'bg-white dark:bg-[#202c33] border-wa-teal shadow-md' 
+                          : 'bg-white/50 dark:bg-slate-800/20 border-transparent hover:bg-white dark:hover:bg-[#202c33]'
+                      }`}
                       onClick={() => {
                         markAsRead(notif.id!);
                         setShowNotifications(false);
@@ -141,12 +193,21 @@ export default function StudentView() {
                         }
                       }}
                     >
-                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">{notif.title}</h4>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
+                      <div className="flex justify-between items-start mb-3">
+                        <h4 className="text-sm font-black text-slate-900 dark:text-[#e9edef] tracking-tight group-hover:text-wa-teal transition-colors">{notif.title}</h4>
+                        <div className="w-2 h-2 rounded-full bg-wa-teal" />
+                      </div>
+                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-relaxed">
                         {notif.isAnonymous ? notif.message.replace(notif.senderName, 'A student') : notif.message}
                       </p>
-                      <p className="text-[10px] text-slate-400 mt-2">{notif.createdAt?.toDate ? notif.createdAt.toDate().toLocaleTimeString() : new Date(notif.createdAt).toLocaleTimeString()}</p>
-                    </div>
+                      <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-50 dark:border-white/5">
+                        <p className="text-[9px] font-black text-wa-teal uppercase tracking-widest">{notif.type.replace('_', ' ')}</p>
+                        <p className="text-[9px] font-black text-[#8696a0] uppercase tracking-widest flex items-center gap-1.5">
+                          <Calendar className="w-3 h-3" />
+                          {notif.createdAt?.toDate ? notif.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                    </motion.div>
                   ))
                 )}
               </div>
@@ -156,7 +217,7 @@ export default function StudentView() {
       </AnimatePresence>
 
       {/* Content Area */}
-      <div className="flex-1 relative overflow-hidden">
+      <div className="flex-1 relative overflow-hidden bg-[#f0f2f5] dark:bg-[#111b21]">
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.div
             key={activeTab}
@@ -186,48 +247,42 @@ export default function StudentView() {
       </div>
 
       {/* Static Footer Navigation */}
-      <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 py-3 flex justify-center gap-4 sm:gap-8 items-center z-50 transition-colors safe-area-bottom shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
+      <footer className="bg-white dark:bg-[#202c33] border-t border-slate-100 dark:border-white/5 px-4 py-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-[60]">
+        <div className="max-w-md mx-auto flex justify-between items-center bg-[#f0f2f5] dark:bg-[#111b21] p-2 rounded-[2.5rem] border border-slate-100 dark:border-white/5">
         {TABS.filter(t => !t.hidden).map((tab) => {
           const index = TABS.findIndex(t => t.id === tab.id);
+          const isActive = activeTab === index;
           return (
           <button
             key={tab.id}
             onClick={() => changeTab(index)}
-            className={`flex flex-col items-center justify-center w-12 h-12 sm:w-14 sm:h-14 relative group rounded-2xl transition-all ${
-              activeTab === index 
-                ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
-                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
+            className={`flex flex-col items-center justify-center flex-1 h-14 relative group rounded-[2rem] transition-all duration-500 scale-90 ${
+              isActive 
+                ? 'bg-wa-teal dark:bg-wa-green text-white shadow-lg shadow-wa-teal/30 scale-100' 
+                : 'text-[#8696a0] hover:text-wa-teal hover:bg-wa-teal/5'
             }`}
           >
-            <tab.icon className={`w-6 h-6 sm:w-7 sm:h-7 ${activeTab === index ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+            <tab.icon className={`w-6 h-6 transition-all ${isActive ? 'scale-110' : 'scale-100'}`} />
             
-            {/* Tooltip on Hover */}
-            <span className="absolute -top-12 scale-0 group-hover:scale-100 transition-transform origin-bottom bg-slate-800 dark:bg-slate-700 text-white text-xs font-bold py-1.5 px-3 rounded-xl shadow-xl z-50 whitespace-nowrap pointer-events-none">
-              {tab.label}
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800 dark:bg-slate-700 rotate-45"></div>
-            </span>
+            {isActive && (
+              <motion.span 
+                layoutId="nav-label-student"
+                className="text-[9px] font-black uppercase tracking-widest mt-1"
+              >
+                {tab.label}
+              </motion.span>
+            )}
 
-            {activeTab === index && (
+            {isActive && (
               <motion.div 
                 layoutId="nav-indicator-student"
-                className="absolute -bottom-3 w-1.5 h-1.5 bg-blue-600 dark:bg-blue-400 rounded-full"
+                className="absolute -top-3 w-1 h-1 bg-wa-teal dark:bg-wa-green rounded-full"
               />
             )}
           </button>
         )})}
-        {profile?.role === 'admin' && (
-          <button 
-            onClick={() => window.location.href = '/admin'}
-            className="flex flex-col items-center justify-center w-12 h-12 sm:w-14 sm:h-14 relative group rounded-2xl transition-all text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
-          >
-            <Shield className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.5px]" />
-            <span className="absolute -top-12 scale-0 group-hover:scale-100 transition-transform origin-bottom bg-indigo-600 text-white text-xs font-bold py-1.5 px-3 rounded-xl shadow-xl z-50 whitespace-nowrap pointer-events-none">
-              Admin
-              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-indigo-600 rotate-45"></div>
-            </span>
-          </button>
-        )}
-      </nav>
+        </div>
+      </footer>
     </div>
   );
 }
