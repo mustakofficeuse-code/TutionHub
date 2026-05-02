@@ -13,6 +13,7 @@ import {
   X,
   Trash2
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 import { subscribeToNotifications, markAsRead, deleteNotification, Notification } from '../../services/notificationService';
 import { writeBatch, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
