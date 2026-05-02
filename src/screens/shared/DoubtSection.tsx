@@ -20,7 +20,8 @@ import {
   File,
   FileText,
   Image as ImageIcon,
-  X as XIcon
+  X as XIcon,
+  Shield
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -144,6 +145,15 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         status: 'open',
         createdAt: new Date().toISOString()
       });
+
+      await addDoc(collection(db, 'notifications'), {
+        title: 'New Doubt Raised',
+        message: `${profile.name} has raised a new doubt: "${title}".`,
+        targetRole: 'teacher',
+        timestamp: new Date().toISOString(),
+        read: false
+      });
+
       setShowAdd(false);
       setTitle('');
       setContent('');
@@ -181,6 +191,18 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         attachmentType: replyFile?.type || '',
         createdAt: new Date().toISOString()
       });
+      
+      if (profile.role === 'teacher') {
+        await addDoc(collection(db, 'notifications'), {
+          title: 'New Reply to Your Doubt',
+          message: `Teacher ${profile.name} has replied to your doubt "${selectedDoubt.title}".`,
+          targetRole: 'student',
+          targetId: selectedDoubt.studentId,
+          timestamp: new Date().toISOString(),
+          read: false
+        });
+      }
+      
       setReplyText('');
       setReplyFile(null);
     } catch (error: any) {
@@ -212,438 +234,376 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   };
 
   return (
-    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors ${isEmbedded ? '' : 'pb-24'}`}>
-      <div className="max-w-6xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
-          {!isEmbedded ? (
-            <button 
-              onClick={() => navigate(-1)}
-              className="flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-            >
-              <ArrowLeft className="w-5 h-5" /> Back
-            </button>
-          ) : (
-            <div></div>
-          )}
-          {profile?.role === 'student' && (
-            <button 
-              onClick={() => setShowAdd(true)}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-bold flex items-center gap-2 shadow-lg shadow-blue-100 dark:shadow-none transition-all"
-            >
-              <Plus className="w-5 h-5" /> Ask a Doubt
-            </button>
-          )}
-        </div>
+    <div className={`fixed inset-0 bg-[#f0f2f5] dark:bg-[#0b141a] transition-colors flex ${isEmbedded ? 'top-0' : 'top-16 pb-0'}`}>
+      <div className="flex-1 flex max-w-[1600px] mx-auto w-full overflow-hidden">
+        
+        {/* Left Sidebar: Contacts/Doubts List */}
+        <div className={`w-full md:w-[350px] lg:w-[400px] border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111b21] flex flex-col ${selectedDoubt ? 'hidden md:flex' : 'flex'}`}>
+          {/* Header */}
+          <div className="p-3 bg-[#f0f2f5] dark:bg-[#202c33] flex justify-between items-center sm:hidden">
+             <div className="w-10 h-10 bg-wa-teal rounded-full flex items-center justify-center text-white font-bold">
+                {profile?.name?.charAt(0)}
+             </div>
+             <div className="flex gap-4">
+                <button className="text-slate-500"><MessageCircle className="w-6 h-6" /></button>
+                <button className="text-slate-500"><MoreVertical className="w-6 h-6" /></button>
+             </div>
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Doubts List */}
-          <div className="lg:col-span-1 space-y-4">
-            <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-800 mb-6">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <div className="p-3">
+             <div className="relative bg-[#f0f2f5] dark:bg-[#202c33] rounded-xl flex items-center px-3 py-1.5 focus-within:bg-white dark:focus-within:bg-white/10 transition-all">
+                <Search className="text-slate-400 w-4 h-4 mr-3" />
                 <input 
                   type="text" 
-                  placeholder="Search doubts..."
-                  className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                  placeholder="Search or start new doubt"
+                  className="bg-transparent border-none outline-none text-sm w-full text-slate-900 dark:text-white"
                 />
-              </div>
-            </div>
+             </div>
+          </div>
 
-            <div className="space-y-4 max-h-[calc(100vh-250px)] overflow-y-auto pr-2 custom-scrollbar">
-              {loading ? (
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {loading ? (
                 <div className="flex justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-blue-600 dark:text-blue-400 animate-spin" />
+                  <Loader2 className="w-8 h-8 text-wa-teal animate-spin" />
                 </div>
               ) : doubts.length === 0 ? (
-                <div className="bg-white dark:bg-slate-900 p-8 rounded-3xl text-center border border-slate-100 dark:border-slate-800">
-                  <p className="text-slate-500 dark:text-slate-400 text-sm">No doubts posted yet.</p>
+                <div className="p-8 text-center">
+                  <p className="text-slate-500 text-sm">No doubts posted yet.</p>
                 </div>
               ) : (
                 doubts.map((d) => (
                   <button
                     key={d.id}
                     onClick={() => setSelectedDoubt(d)}
-                    className={`w-full text-left p-4 rounded-2xl border transition-all ${
-                      selectedDoubt?.id === d.id 
-                        ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 shadow-sm' 
-                        : 'bg-white dark:bg-slate-900 border-slate-100 dark:border-slate-800 hover:border-slate-200 dark:hover:border-slate-700'
+                    className={`w-full flex items-center gap-3 p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-all border-b border-slate-50 dark:border-white/5 ${
+                      selectedDoubt?.id === d.id ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : ''
                     }`}
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
-                        d.status === 'resolved' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400'
-                      }`}>
-                        {d.status}
-                      </span>
-                      {d.visibility === 'private' && (
-                        <span className="px-2 py-0.5 ml-2 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400">
-                          Private
-                        </span>
-                      )}
-                      <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase ml-auto">{d.subject} • Sem {d.semester || 'N/A'}</span>
+                    <div className="relative shrink-0">
+                       <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center text-slate-500 overflow-hidden">
+                          {d.studentAvatar ? <img src={d.studentAvatar} className="w-full h-full object-cover" /> : <User className="w-6 h-6" />}
+                       </div>
+                       {d.status === 'resolved' && (
+                         <div className="absolute -bottom-1 -right-1 bg-wa-green rounded-full p-0.5 ring-2 ring-white dark:ring-wa-header">
+                            <CheckCircle2 className="w-3 h-3 text-white" />
+                         </div>
+                       )}
                     </div>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-sm mb-1 line-clamp-1">{d.title}</h3>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-3">{d.content}</p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
-                          <User className="w-3 h-3 text-slate-400 dark:text-slate-500 dark:text-slate-400" />
-                        </div>
-                        <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">
-                          {d.studentName} {profile?.role === 'teacher' ? `(${d.department?.toUpperCase()})` : ''}
-                        </span>
-                      </div>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 dark:text-slate-400">{new Date(d.createdAt).toLocaleDateString()}</span>
+                    <div className="flex-1 min-w-0">
+                       <div className="flex justify-between items-baseline mb-0.5">
+                          <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate text-base">{d.studentName}</h3>
+                          <span className="text-[10px] text-slate-500 shrink-0">{new Date(d.createdAt).toLocaleDateString()}</span>
+                       </div>
+                       <div className="flex justify-between items-center">
+                          <p className="text-sm text-slate-500 dark:text-[#8696a0] truncate flex-1">{d.title}</p>
+                          {d.visibility === 'private' && <Shield className="w-3 h-3 text-purple-400 ml-1" />}
+                       </div>
                     </div>
                   </button>
                 ))
               )}
+          </div>
+
+          {profile?.role === 'student' && (
+            <div className="p-4">
+              <button 
+                onClick={() => setShowAdd(true)}
+                className="w-full bg-wa-teal hover:bg-wa-teal-dark text-white py-3 rounded-full font-bold flex items-center justify-center gap-2 shadow-lg transition-all"
+              >
+                <Plus className="w-5 h-5" /> New Doubt
+              </button>
             </div>
-          </div>
+          )}
+        </div>
 
-          {/* Discussion Area */}
-          <div className="lg:col-span-2">
-            {selectedDoubt ? (
-              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex flex-col h-[calc(100vh-200px)]">
-                {/* Doubt Header */}
-                <div className="p-6 border-b border-slate-50 dark:border-slate-800">
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className={`px-2 py-1 rounded-lg text-xs font-bold uppercase tracking-wider ${
-                          selectedDoubt.status === 'resolved' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400' : 'bg-orange-100 dark:bg-orange-900/20 text-orange-700 dark:text-orange-400'
-                        }`}>
-                          {selectedDoubt.status}
-                        </span>
-                        <span className="text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded-lg">
-                          {selectedDoubt.subject}
-                        </span>
-                      </div>
-                      <h2 className="text-xl font-bold text-slate-900 dark:text-white">{selectedDoubt.title}</h2>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {profile?.role === 'teacher' && (
-                        <button 
-                          onClick={() => toggleStatus(selectedDoubt.id, selectedDoubt.status)}
-                          className="p-2 text-slate-400 hover:text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-xl transition-all"
-                          title="Mark as Resolved"
-                        >
-                          <CheckCircle2 className="w-5 h-5" />
-                        </button>
-                      )}
-                      {(profile?.role === 'teacher' || profile?.uid === selectedDoubt.studentId) && (
-                        <button 
-                          onClick={() => deleteDoubt(selectedDoubt.id)}
-                          className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-xl transition-all"
-                        >
-                          <Trash2 className="w-5 h-5" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-slate-600 dark:text-slate-300 text-sm whitespace-pre-wrap">{selectedDoubt.content}</p>
-                  
-                  {selectedDoubt.attachmentUrl && (
-                    <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-2xl border border-slate-100 dark:border-slate-700 inline-block">
-                      {selectedDoubt.attachmentType.startsWith('image/') ? (
-                        <div className="space-y-2">
-                          <img 
-                            src={selectedDoubt.attachmentUrl} 
-                            alt="Attachment" 
-                            className="max-w-full h-auto rounded-xl max-h-64 object-contain shadow-sm cursor-pointer"
-                            onClick={() => setViewMaterial({ url: selectedDoubt.attachmentUrl, title: selectedDoubt.attachmentName, type: 'image' })}
-                          />
-                          <p className="text-[10px] text-slate-400 font-medium truncate max-w-[200px]">
-                            {selectedDoubt.attachmentName}
-                          </p>
-                        </div>
-                      ) : (
-                        <button 
-                          onClick={() => setViewMaterial({ url: selectedDoubt.attachmentUrl, title: selectedDoubt.attachmentName, type: 'pdf' })}
-                          className="flex items-center gap-3 text-blue-600 dark:text-blue-400 hover:underline"
-                        >
-                          <FileText className="w-5 h-5" />
-                          <span className="text-sm font-medium">{selectedDoubt.attachmentName || 'View Attachment'}</span>
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="mt-4 flex items-center gap-3 text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">
-                    <div className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
-                        <User className="w-3 h-3 text-slate-400 dark:text-slate-500 dark:text-slate-400" />
-                      </div>
-                      <span className="font-bold text-slate-600 dark:text-slate-400">{selectedDoubt.studentName}</span>
-                    </div>
-                    <span>•</span>
-                    <span>{new Date(selectedDoubt.createdAt).toLocaleString()}</span>
-                  </div>
+        {/* Right Area: Conversation */}
+        <div className={`flex-1 flex flex-col bg-[#efeae2] dark:bg-[#0b141a] relative ${!selectedDoubt ? 'hidden md:flex' : 'flex'}`}>
+          {!selectedDoubt ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-[#f8f9fa] dark:bg-[#222e35] border-b-[6px] border-wa-teal">
+              <div className="w-64 h-64 bg-slate-100 dark:bg-[#222e35] rounded-full flex items-center justify-center mb-8">
+                 <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" className="w-32 h-32 opacity-20 grayscale" alt="" />
+              </div>
+              <h2 className="text-3xl font-light text-slate-800 dark:text-[#e9edef] mb-3">TutionHub Web</h2>
+              <p className="text-[#8696a0] max-w-sm text-sm">
+                Send and receive messages to resolve doubts. Use the list to select a conversation.
+              </p>
+              <div className="mt-auto text-[#8696a0] flex items-center gap-1 text-xs">
+                <Shield className="w-3 h-3" /> End-to-end encrypted
+              </div>
+            </div>
+          ) : (
+            <>
+              {/* Chat Header */}
+              <div className="h-16 bg-[#f0f2f5] dark:bg-[#202c33] px-4 flex items-center gap-3 shrink-0 z-10 border-l border-slate-200 dark:border-slate-700">
+                <button onClick={() => setSelectedDoubt(null)} className="md:hidden text-slate-500">
+                   <ArrowLeft className="w-6 h-6" />
+                </button>
+                <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0">
+                  <User className="w-5 h-5 text-slate-500" />
                 </div>
-
-                {/* Replies Area */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50/30 dark:bg-slate-950/30">
-                  {replies.filter(r => r.doubtId === selectedDoubt.id).length === 0 ? (
-                    <div className="text-center py-12">
-                      <MessageCircle className="w-12 h-12 text-slate-200 dark:text-slate-800 mx-auto mb-3" />
-                      <p className="text-slate-400 dark:text-slate-500 dark:text-slate-400 text-sm">No replies yet. Start the discussion!</p>
-                    </div>
-                  ) : (
-                    replies.filter(r => r.doubtId === selectedDoubt.id).map((r) => (
-                      <div key={r.id} className={`flex gap-3 ${r.userUid === profile?.uid ? 'flex-row-reverse' : ''}`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          r.userRole === 'teacher' ? 'bg-blue-600 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
-                        }`}>
-                          <User className="w-4 h-4" />
-                        </div>
-                        <div className={`max-w-[80%] space-y-1 ${r.userUid === profile?.uid ? 'items-end' : ''}`}>
-                          <div className={`flex items-center gap-2 mb-1 ${r.userUid === profile?.uid ? 'flex-row-reverse' : ''}`}>
-                            <span className="text-[10px] font-bold text-slate-900 dark:text-white">{r.userName}</span>
-                            {r.userRole === 'teacher' && (
-                              <span className="text-[8px] bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 px-1 rounded font-black uppercase">Teacher</span>
-                            )}
-                            <span className="text-[8px] text-slate-400 dark:text-slate-500 dark:text-slate-400">{new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
-                          </div>
-                          <div className={`p-3 rounded-2xl text-sm ${
-                            r.userUid === profile?.uid 
-                              ? 'bg-blue-600 text-white rounded-tr-none' 
-                              : 'bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-800 dark:border-slate-700 text-slate-700 dark:text-slate-300 rounded-tl-none shadow-sm'
-                          }`}>
-                            {r.content}
-                            {r.attachmentUrl && (
-                              <div className={`mt-2 ${r.userUid === profile?.uid ? 'border-white/20' : 'border-slate-100 dark:border-slate-700'} border-t pt-2`}>
-                                {r.attachmentType.startsWith('image/') ? (
-                                  <img 
-                                    src={r.attachmentUrl} 
-                                    alt="Reply Attachment" 
-                                    className="max-w-full h-auto rounded-lg max-h-48 object-contain cursor-pointer"
-                                    onClick={() => setViewMaterial({ url: r.attachmentUrl, title: r.attachmentName, type: 'image' })}
-                                  />
-                                ) : (
-                                  <button 
-                                    onClick={() => setViewMaterial({ url: r.attachmentUrl, title: r.attachmentName, type: 'pdf' })}
-                                    className={`flex items-center gap-2 text-xs hover:underline ${r.userUid === profile?.uid ? 'text-blue-100' : 'text-blue-600 dark:text-blue-400'}`}
-                                  >
-                                    <Paperclip className="w-4 h-4" />
-                                    <span className="truncate max-w-[150px]">{r.attachmentName || 'Attachment'}</span>
-                                  </button>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  )}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate">{selectedDoubt.studentName}</h3>
+                  <p className="text-[10px] text-slate-500 dark:text-[#8696a0] truncate">
+                     {selectedDoubt.subject} • {selectedDoubt.status === 'resolved' ? 'Resolved' : 'Active'}
+                  </p>
                 </div>
-
-                {/* Reply Input */}
-                <div className="p-4 border-t border-slate-50 dark:border-slate-800">
-                  {replyFile && (
-                    <div className="mb-3 flex items-center justify-between bg-blue-50 dark:bg-blue-900/20 p-2 rounded-xl border border-blue-100 dark:border-blue-800">
-                      <div className="flex items-center gap-2 overflow-hidden text-blue-600 dark:text-blue-400">
-                        <Paperclip className="w-4 h-4 flex-shrink-0" />
-                        <span className="text-xs font-bold truncate">{replyFile.name}</span>
-                      </div>
-                      <button 
-                        onClick={() => setReplyFile(null)}
-                        className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-lg text-blue-600 dark:text-blue-400"
-                      >
-                        <XIcon className="w-4 h-4" />
+                <div className="flex gap-4 text-slate-500">
+                   <button onClick={() => toggleStatus(selectedDoubt.id, selectedDoubt.status)} className={`${selectedDoubt.status === 'resolved' ? 'text-wa-green' : ''}`}>
+                      <CheckCircle2 className="w-6 h-6" />
+                   </button>
+                   {(profile?.role === 'teacher' || profile?.uid === selectedDoubt.studentId) && (
+                      <button onClick={() => deleteDoubt(selectedDoubt.id)} className="hover:text-red-500">
+                         <Trash2 className="w-6 h-6" />
                       </button>
+                   )}
+                   <button><MoreVertical className="w-6 h-6" /></button>
+                </div>
+              </div>
+
+              {/* Chat Canvas */}
+              <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-4 custom-scrollbar bg-chat-pattern">
+                 {/* Original Doubt Message as a bubble */}
+                 <div className="flex justify-start mb-8">
+                    <div className="max-w-[85%] sm:max-w-[70%] bg-white dark:bg-[#202c33] p-4 rounded-xl rounded-tl-none shadow-sm relative">
+                       <div className="absolute -left-2 top-0 w-0 h-0 border-[10px] border-transparent border-t-white dark:border-t-[#202c33]"></div>
+                       <div className="flex items-center gap-2 mb-2">
+                          <span className="text-[10px] font-bold text-wa-teal dark:text-wa-green uppercase">{selectedDoubt.subject}</span>
+                       </div>
+                       <h4 className="font-bold text-slate-900 dark:text-white mb-2">{selectedDoubt.title}</h4>
+                       <p className="text-sm text-slate-700 dark:text-[#d1d7db] whitespace-pre-wrap leading-relaxed">{selectedDoubt.content}</p>
+                       
+                       {selectedDoubt.attachmentUrl && (
+                          <div className="mt-3 overflow-hidden rounded-lg bg-slate-100 dark:bg-[#111b21] p-1 border border-slate-200 dark:border-white/10">
+                             {selectedDoubt.attachmentType?.startsWith('image/') ? (
+                               <img 
+                                 src={selectedDoubt.attachmentUrl} 
+                                 alt="" 
+                                 className="w-full max-h-[300px] object-contain cursor-zoom-in"
+                                 onClick={() => setViewMaterial({ url: selectedDoubt.attachmentUrl, title: selectedDoubt.attachmentName, type: 'image' })}
+                               />
+                             ) : (
+                               <button 
+                                 onClick={() => setViewMaterial({ url: selectedDoubt.attachmentUrl, title: selectedDoubt.attachmentName, type: 'pdf' })}
+                                 className="p-3 w-full flex items-center gap-3 text-slate-700 dark:text-white hover:bg-slate-200 dark:hover:bg-white/5 transition-colors"
+                               >
+                                  <FileText className="w-8 h-8 text-wa-teal" />
+                                  <span className="text-xs truncate font-medium">{selectedDoubt.attachmentName}</span>
+                               </button>
+                             )}
+                          </div>
+                       )}
+
+                       <div className="flex justify-end mt-2">
+                          <span className="text-[10px] text-slate-400">{new Date(selectedDoubt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                       </div>
                     </div>
-                  )}
-                  <form onSubmit={handleAddReply} className="flex gap-2">
-                    <label className="p-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-all">
-                      <Paperclip className="w-5 h-5" />
-                      <input 
-                        type="file" 
-                        className="hidden" 
-                        onChange={(e) => setReplyFile(e.target.files?.[0] || null)}
-                      />
-                    </label>
-                    <input 
-                      type="text" 
-                      placeholder="Type your reply..."
-                      className="flex-1 px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                      value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
-                    />
-                    <button 
-                      type="submit"
-                      disabled={submitting || (!replyText && !replyFile)}
-                      className="p-3 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition-all disabled:opacity-50 disabled:bg-slate-300 dark:disabled:bg-slate-700"
-                    >
-                      <Send className="w-5 h-5" />
-                    </button>
-                  </form>
-                </div>
+                 </div>
+
+                 {/* Replies */}
+                 {replies.filter(r => r.doubtId === selectedDoubt.id).map((r) => {
+                    const isOwn = r.userUid === profile?.uid;
+                    return (
+                      <div key={r.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                         <div className={`max-w-[85%] sm:max-w-[70%] p-3 px-4 rounded-xl shadow-sm relative ${
+                           isOwn ? 'bg-[#dcf8c6] dark:bg-[#005c4b] rounded-tr-none' : 'bg-white dark:bg-[#202c33] rounded-tl-none'
+                         }`}>
+                            {/* Tail */}
+                            <div className={`absolute top-0 w-0 h-0 border-[10px] border-transparent ${
+                               isOwn 
+                                 ? '-right-2 border-t-[#dcf8c6] dark:border-t-[#005c4b]' 
+                                 : '-left-2 border-t-white dark:border-t-[#202c33]'
+                            }`}></div>
+
+                            {!isOwn && (
+                               <p className="text-[10px] font-black text-wa-teal dark:text-wa-green mb-1">{r.userName}</p>
+                            )}
+
+                            <p className={`text-sm leading-relaxed ${isOwn ? 'text-slate-900 dark:text-[#e9edef]' : 'text-slate-700 dark:text-[#d1d7db]'}`}>
+                               {r.content}
+                            </p>
+
+                            {r.attachmentUrl && (
+                               <div className="mt-2 rounded-lg bg-black/5 p-1">
+                                  {r.attachmentType.startsWith('image/') ? (
+                                    <img 
+                                      src={r.attachmentUrl} 
+                                      alt="" 
+                                      className="w-full max-h-48 object-contain rounded cursor-pointer"
+                                      onClick={() => setViewMaterial({ url: r.attachmentUrl, title: r.attachmentName, type: 'image' })}
+                                    />
+                                  ) : (
+                                    <button 
+                                      onClick={() => setViewMaterial({ url: r.attachmentUrl, title: r.attachmentName, type: 'pdf' })}
+                                      className="flex items-center gap-2 p-2 w-full text-left"
+                                    >
+                                       <Paperclip className="w-5 h-5 opacity-50" />
+                                       <span className="text-[10px] truncate">{r.attachmentName}</span>
+                                    </button>
+                                  )}
+                               </div>
+                            )}
+
+                            <div className="flex justify-end items-center gap-1 mt-1 opacity-50">
+                               <span className="text-[9px] uppercase">{new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                               {isOwn && <CheckCircle2 className="w-2.5 h-2.5" />}
+                            </div>
+                         </div>
+                      </div>
+                    );
+                 })}
               </div>
-            ) : (
-              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 h-[calc(100vh-200px)] flex flex-col items-center justify-center text-center p-12">
-                <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mb-6">
-                  <MessageSquare className="w-10 h-10 text-blue-600 dark:text-blue-400" />
-                </div>
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Select a Doubt</h2>
-                <p className="text-slate-500 dark:text-slate-400 max-w-sm">
-                  Choose a doubt from the list to view the discussion or provide a solution.
-                </p>
+
+              {/* Chat Input */}
+              <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-3 flex items-center gap-3 shrink-0">
+                 <button className="text-slate-500 hover:text-wa-teal transition-colors">
+                    <ImageIcon className="w-6 h-6" />
+                 </button>
+                 <label className="text-slate-500 hover:text-wa-teal transition-colors cursor-pointer">
+                    <Paperclip className="w-6 h-6" />
+                    <input type="file" className="hidden" onChange={(e) => setReplyFile(e.target.files?.[0] || null)} />
+                 </label>
+                 
+                 <div className="flex-1 relative">
+                    <form onSubmit={handleAddReply} className="flex gap-2">
+                       <div className="flex-1 relative group">
+                          {replyFile && (
+                             <div className="absolute -top-12 left-0 right-0 bg-white dark:bg-[#202c33] p-2 rounded-t-xl border-t border-x border-slate-200 dark:border-white/10 flex justify-between items-center shadow-lg">
+                                <div className="flex items-center gap-2 text-xs text-wa-teal truncate px-2">
+                                   <Paperclip className="w-3 h-3" /> {replyFile.name}
+                                </div>
+                                <button onClick={() => setReplyFile(null)} className="text-slate-400 hover:text-red-500"><XIcon className="w-4 h-4" /></button>
+                             </div>
+                          )}
+                          <input 
+                            type="text" 
+                            placeholder="Type a message"
+                            className="w-full py-2.5 px-4 bg-white dark:bg-[#2a3942] border-none rounded-full outline-none text-sm text-slate-800 dark:text-[#e9edef] placeholder:text-[#8696a0]"
+                            value={replyText}
+                            onChange={(e) => setReplyText(e.target.value)}
+                          />
+                       </div>
+                       <button 
+                         type="submit"
+                         disabled={submitting || (!replyText && !replyFile)}
+                         className={`w-11 h-11 flex items-center justify-center rounded-full transition-all shrink-0 ${
+                           (!replyText && !replyFile) ? 'text-slate-500' : 'bg-wa-teal text-white shadow-md active:scale-90'
+                         }`}
+                       >
+                         <Send className="w-5 h-5 ml-0.5" />
+                       </button>
+                    </form>
+                 </div>
               </div>
-            )}
-          </div>
+            </>
+          )}
         </div>
       </div>
 
       {/* Viewer Modal */}
       {viewMaterial && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 w-full max-w-5xl h-[90vh] rounded-3xl overflow-hidden flex flex-col relative">
-            <button 
-              onClick={() => setViewMaterial(null)}
-              className="absolute top-4 right-4 p-2 bg-black/10 hover:bg-black/20 dark:bg-white/10 dark:hover:bg-white/20 rounded-full transition-all z-10"
-            >
-              <XIcon className="w-6 h-6 text-slate-700 dark:text-slate-300" />
-            </button>
-            
-            <div className="p-6 border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white line-clamp-1">{viewMaterial.title || 'Attachment View'}</h2>
-            </div>
-
-            <div className="flex-1 bg-slate-100 dark:bg-slate-950 overflow-hidden flex items-center justify-center">
-              {viewMaterial.type === 'pdf' ? (
-                <iframe 
-                  src={viewMaterial.url} 
-                  className="w-full h-full border-none" 
-                  title="PDF Viewer"
-                />
-              ) : (
-                <img 
-                  src={viewMaterial.url} 
-                  alt="Full View" 
-                  className="max-w-full max-h-full object-contain"
-                />
-              )}
-            </div>
-            
-            <div className="p-4 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 text-right">
-              <a 
-                href={viewMaterial.url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none"
-              >
-                Open in New Tab
-              </a>
-            </div>
+        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center">
+          <div className="w-full h-full flex flex-col relative">
+             <div className="h-16 flex items-center justify-between px-6 bg-black/20 text-white">
+                <span className="font-bold truncate">{viewMaterial.title}</span>
+                <button 
+                  onClick={() => setViewMaterial(null)}
+                  className="p-2 hover:bg-white/10 rounded-full transition-all"
+                >
+                  <XIcon className="w-8 h-8" />
+                </button>
+             </div>
+             <div className="flex-1 flex items-center justify-center overflow-hidden p-4">
+                {viewMaterial.type === 'pdf' ? (
+                  <iframe src={viewMaterial.url} className="w-full max-w-5xl h-full border-none rounded-lg" />
+                ) : (
+                  <img src={viewMaterial.url} className="max-w-full max-h-full object-contain shadow-2xl" />
+                )}
+             </div>
           </div>
         </div>
       )}
 
-      {/* Add Doubt Modal */}
+      {/* Add Doubt Modal (Student only) */}
       <AnimatePresence>
         {showAdd && (
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[300]">
             <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="bg-white dark:bg-slate-900 rounded-3xl p-8 w-full max-w-lg shadow-2xl border border-slate-100 dark:border-slate-800"
+              initial={{ scale: 0.9, opacity: 0, y: 50 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 50 }}
+              className="bg-white dark:bg-[#202c33] rounded-3xl p-6 w-full max-w-lg shadow-2xl"
             >
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Ask a Doubt</h3>
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-bold text-wa-teal dark:text-wa-green">New Doubt</h3>
+                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-red-500 transition-colors">
+                  <XIcon className="w-6 h-6" />
+                </button>
+              </div>
               <form onSubmit={handleAddDoubt} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Subject</label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    placeholder="e.g. Java, Python, Math"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="col-span-1">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Subject</label>
+                      <input
+                        type="text"
+                        required
+                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-wa-teal transition-all"
+                        placeholder="e.g. Java"
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                      />
+                   </div>
+                   <div className="col-span-1">
+                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Visibility</label>
+                      <select 
+                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-wa-teal transition-all"
+                        value={visibility}
+                        onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
+                      >
+                        <option value="public">Public</option>
+                        <option value="private">Private</option>
+                      </select>
+                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Title</label>
-                  <input
-                    type="text"
-                    required
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    placeholder="Brief summary of your doubt"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                  />
+                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Title</label>
+                   <input
+                     type="text"
+                     required
+                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-wa-teal transition-all"
+                     placeholder="Summary of the issue"
+                     value={title}
+                     onChange={(e) => setTitle(e.target.value)}
+                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Description</label>
-                  <textarea
-                    rows={4}
-                    required
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none resize-none transition-all"
-                    placeholder="Explain your doubt in detail..."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                  />
+                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Explanation</label>
+                   <textarea
+                     rows={4}
+                     required
+                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-wa-teal transition-all resize-none"
+                     placeholder="Describe in detail..."
+                     value={content}
+                     onChange={(e) => setContent(e.target.value)}
+                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Who can see this?</label>
-                  <select 
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all font-medium"
-                    value={visibility}
-                    onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
-                  >
-                    <option value="public">Everyone (Students & Teacher can help)</option>
-                    <option value="private">Only Teacher (Private discussion)</option>
-                  </select>
+                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Attachment</label>
+                   <label className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl cursor-pointer hover:bg-wa-teal/5 transition-all">
+                      <Paperclip className="w-5 h-5 text-wa-teal" />
+                      <span className="text-xs font-bold text-slate-500 truncate max-w-[200px]">
+                         {selectedFile ? selectedFile.name : "Attach a file"}
+                      </span>
+                      <input type="file" className="hidden" onChange={(e) => setSelectedFile(e.target.files?.[0] || null)} />
+                   </label>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Attachment (Optional)</label>
-                  <label className="w-full flex items-center justify-center gap-3 px-4 py-4 bg-slate-50 dark:bg-slate-800 border-2 border-dashed border-slate-200 dark:border-slate-700 rounded-2xl cursor-pointer hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all group">
-                    {selectedFile ? (
-                      <div className="flex items-center gap-3 text-blue-600 dark:text-blue-400">
-                        {selectedFile.type.startsWith('image/') ? <ImageIcon className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
-                        <span className="text-sm font-bold truncate max-w-[200px]">{selectedFile.name}</span>
-                        <button 
-                          onClick={(e) => { e.preventDefault(); setSelectedFile(null); }}
-                          className="p-1 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-lg"
-                        >
-                          <XIcon className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <>
-                        <Paperclip className="w-6 h-6 text-slate-400 group-hover:text-blue-500 transition-colors" />
-                        <span className="text-sm font-medium text-slate-500 group-hover:text-blue-600 transition-colors">Attach Photo or Document</span>
-                      </>
-                    )}
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                    />
-                  </label>
-                  <p className="text-[10px] text-slate-400 mt-2">Max size: 10MB (PDF, PNG, JPG, JPEG)</p>
-                </div>
-                {uploadProgress && (
-                  <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 text-xs font-bold animate-pulse">
-                    <Loader2 className="w-3 h-3 animate-spin" /> {uploadProgress}
-                  </div>
-                )}
-                <div className="flex gap-3 pt-6">
-                  <button 
-                    type="button"
-                    onClick={() => setShowAdd(false)}
-                    className="flex-1 py-3 text-slate-600 dark:text-slate-400 font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    type="submit"
-                    disabled={submitting}
-                    className="flex-1 py-3 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 dark:shadow-none disabled:bg-slate-300 dark:disabled:bg-slate-700"
-                  >
-                    {submitting ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Post Doubt'}
-                  </button>
-                </div>
+                
+                <button 
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full py-4 bg-wa-teal text-white font-black rounded-2xl hover:bg-wa-teal-dark transition-all disabled:opacity-50 shadow-xl overflow-hidden relative"
+                >
+                  {submitting ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : 'Post to Tutor'}
+                </button>
               </form>
             </motion.div>
           </div>

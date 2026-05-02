@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  LayoutDashboard, 
+  Home, 
   BookOpen, 
   MessageSquare, 
   TrendingUp, 
@@ -15,7 +15,8 @@ import {
   X,
   Trash2,
   Loader2,
-  Clock
+  Clock,
+  GraduationCap
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -28,14 +29,16 @@ import TeacherAnalytics from './Analytics';
 import FeeManagement from './FeeManagement';
 import Profile from '../shared/Profile';
 import AttendanceGenerator from './AttendanceGenerator';
+import AdminDashboard from '../admin/AdminDashboard';
 
 const TABS = [
-  { id: 'dashboard', label: 'Home', icon: LayoutDashboard, component: TeacherDashboard },
+  { id: 'dashboard', label: 'Home', icon: Home, component: TeacherDashboard },
   { id: 'attendance', label: 'Attendance', icon: QrCode, component: AttendanceGenerator },
   { id: 'materials', label: 'Materials', icon: BookOpen, component: MaterialManager },
   { id: 'doubts', label: 'Doubts', icon: MessageSquare, component: DoubtSection },
   { id: 'stats', label: 'Stats', icon: TrendingUp, component: TeacherAnalytics },
   { id: 'fees', label: 'Fees', icon: CreditCard, component: FeeManagement },
+  { id: 'admin', label: 'Admin', icon: Shield, component: AdminDashboard },
   { id: 'profile', label: 'Profile', icon: User, component: Profile },
 ];
 
@@ -112,7 +115,40 @@ export default function TeacherView() {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-wa-bg dark:bg-wa-bg-dark overflow-hidden flex flex-col">
+      {/* WhatsApp Header */}
+      <header className="bg-wa-teal dark:bg-wa-header text-white pt-2 px-4 shadow-lg z-[60]">
+        <div className="flex justify-between items-center h-14">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-md">
+              <GraduationCap className="text-white w-6 h-6" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight">TuitionHub</h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-5">
+            <button 
+              onClick={() => setShowNotifications(true)}
+              className="relative hover:bg-white/10 p-2 rounded-full transition-colors"
+            >
+              <Bell className="w-5 h-5" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-wa-green text-[10px] font-bold flex items-center justify-center rounded-full text-white ring-2 ring-wa-teal dark:ring-wa-header">
+                  {unreadCount}
+                </span>
+              )}
+            </button>
+            <button 
+              onClick={toggleTheme}
+              className="hover:bg-white/10 p-2 rounded-full transition-colors"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+          </div>
+        </div>
+      </header>
+
       {/* Notifications Modal */}
       <AnimatePresence>
         {showNotifications && (
@@ -121,66 +157,44 @@ export default function TeacherView() {
               initial={{ x: 300, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 300, opacity: 0 }}
-              className="w-full sm:w-[400px] h-full sm:h-auto sm:max-h-[600px] bg-white dark:bg-slate-900 sm:rounded-[2.5rem] shadow-2xl flex flex-col"
+              className="w-full sm:w-[400px] h-full sm:h-auto sm:max-h-[600px] bg-white dark:bg-slate-900 sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
             >
-              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-blue-600 sm:rounded-t-[2.5rem] text-white">
+              <div className="p-4 bg-wa-teal dark:bg-wa-header flex justify-between items-center text-white">
                 <div className="flex items-center gap-3">
                   <Bell className="w-5 h-5" />
-                  <h3 className="font-black tracking-tight text-white">Notifications</h3>
+                  <h3 className="font-bold">Notifications</h3>
                 </div>
                 <div className="flex items-center gap-2">
                   <button 
                     onClick={handleClearNotifications}
-                    disabled={isClearingNotifs || notifications.length === 0}
-                    className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all text-[10px] font-black uppercase tracking-wider flex items-center gap-1 disabled:opacity-50"
+                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                    title="Clear all"
                   >
-                    {isClearingNotifs ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3" />}
-                    Clear
+                    <Trash2 className="w-5 h-5" />
                   </button>
                   <button 
                     onClick={() => setShowNotifications(false)}
-                    className="p-2 bg-white/20 hover:bg-white/30 rounded-xl transition-all"
+                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
                   >
                     <X className="w-5 h-5" />
                   </button>
                 </div>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
+              <div className="flex-1 overflow-y-auto p-2 space-y-1 bg-[#f0f2f5] dark:bg-[#0b141a]">
                 {notifications.length === 0 ? (
-                  <div className="py-20 text-center space-y-4">
-                    <div className="w-16 h-16 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto">
-                      <Bell className="w-8 h-8 text-slate-300 dark:text-slate-600" />
-                    </div>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">All caught up!</p>
+                  <div className="py-20 text-center">
+                    <p className="text-slate-500">No new notifications</p>
                   </div>
                 ) : (
                   notifications.map((notif) => (
-                    <div key={notif.id} className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-100 dark:border-slate-800 hover:border-blue-200 dark:hover:border-blue-800 transition-all group">
-                      <div className="flex items-start gap-3">
-                        <div className={`p-2 rounded-xl mt-1 ${notif.type === 'schedule' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30' : 'bg-slate-100 text-slate-600 dark:bg-slate-800'}`}>
-                          {notif.type === 'schedule' ? <Clock className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-sm font-bold text-slate-900 dark:text-white mb-1 group-hover:text-blue-600 transition-colors">{notif.title}</h4>
-                          <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed mb-2">{notif.message}</p>
-                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                            {new Date(notif.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
-                          </p>
-                        </div>
-                      </div>
+                    <div key={notif.id} className="p-3 bg-white dark:bg-[#202c33] rounded-lg shadow-sm border-b border-slate-100 dark:border-slate-800">
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">{notif.title}</h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{notif.message}</p>
+                      <p className="text-[10px] text-slate-400 mt-2">{new Date(notif.timestamp).toLocaleTimeString()}</p>
                     </div>
                   ))
                 )}
-              </div>
-              
-              <div className="p-4 border-t border-slate-100 dark:border-slate-800">
-                <button 
-                  onClick={() => setShowNotifications(false)}
-                  className="w-full py-4 bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black rounded-2xl text-xs uppercase tracking-[0.2em] shadow-lg shadow-slate-200 dark:shadow-none active:scale-95 transition-all"
-                >
-                  Close
-                </button>
               </div>
             </motion.div>
           </div>
@@ -188,7 +202,8 @@ export default function TeacherView() {
       </AnimatePresence>
 
       {/* Content Area */}
-      <div className="flex-1 relative overflow-hidden">
+      <main className="flex-1 relative bg-wa-bg dark:bg-wa-bg-dark">
+        {/* WhatsApp-style Floating Action Button if needed, but components handle their own UI */}
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.div
             key={activeTab}
@@ -204,7 +219,7 @@ export default function TeacherView() {
             drag="x"
             dragConstraints={{ left: 0, right: 0 }}
             onDragEnd={handleDragEnd}
-            className="absolute inset-0 overflow-y-auto no-scrollbar scroll-smooth"
+            className="absolute inset-0 overflow-y-auto no-scrollbar"
           >
             {(() => {
               const Component = TABS[activeTab].component;
@@ -215,46 +230,39 @@ export default function TeacherView() {
             })()}
           </motion.div>
         </AnimatePresence>
-      </div>
+      </main>
 
-      {/* Static Footer Navigation */}
-      <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-1 xs:px-2 py-2 xs:py-3 flex justify-between items-center z-50 transition-colors safe-area-bottom shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
-        {/* Desktop and Tablet: Show TABS + Admin button if role permits */}
-        <div className="flex w-full justify-between items-center px-1 xs:px-4">
+      {/* Bottom Nav for quick access */}
+      <footer className="bg-white dark:bg-wa-header border-t border-slate-200 dark:border-slate-800 px-6 py-3 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+        <div className="flex justify-center gap-4 sm:gap-8 items-center">
           {TABS.map((tab, index) => (
             <button
               key={tab.id}
               onClick={() => changeTab(index)}
-              className={`flex-1 flex flex-col items-center gap-0.5 xs:gap-1 transition-all duration-300 ${
+              className={`flex flex-col items-center justify-center w-12 h-12 sm:w-14 sm:h-14 relative group rounded-2xl transition-all ${
                 activeTab === index 
-                  ? 'text-blue-600 dark:text-blue-400 scale-105' 
-                  : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+                  ? 'text-wa-teal dark:text-wa-green bg-wa-teal/10 dark:bg-wa-green/10' 
+                  : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
               }`}
             >
-              <tab.icon className={`w-4.5 h-4.5 xs:w-5 xs:h-5 ${activeTab === index ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-              <span className={`text-[8px] xs:text-[10px] font-bold tracking-tight ${activeTab === index ? 'opacity-100' : 'opacity-70'} hidden xs:block`}>
+              <tab.icon className={`w-6 h-6 sm:w-7 sm:h-7 ${activeTab === index ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+              
+              {/* Tooltip on Hover */}
+              <span className="absolute -top-12 scale-0 group-hover:scale-100 transition-transform origin-bottom bg-slate-800 dark:bg-slate-700 text-white text-xs font-bold py-1.5 px-3 rounded-xl shadow-xl z-50 whitespace-nowrap pointer-events-none">
                 {tab.label}
+                <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800 dark:bg-slate-700 rotate-45"></div>
               </span>
+
               {activeTab === index && (
                 <motion.div 
-                  layoutId="nav-teacher-indicator"
-                  className="w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full mt-0.5"
+                  layoutId="nav-indicator-teacher"
+                  className="absolute -bottom-3 w-1.5 h-1.5 bg-wa-teal dark:bg-wa-green rounded-full"
                 />
               )}
             </button>
           ))}
-          
-          {(profile?.role === 'admin' || profile?.role === 'teacher') && (
-            <button 
-              onClick={() => window.location.href = '/admin'}
-              className="hidden sm:flex flex-1 flex-col items-center gap-1 text-indigo-600 dark:text-indigo-400"
-            >
-              <Shield className="w-5 h-5" />
-              <span className="text-[10px] font-bold tracking-tight">Admin</span>
-            </button>
-          )}
         </div>
-      </nav>
+      </footer>
     </div>
   );
 }

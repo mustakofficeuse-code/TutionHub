@@ -7,7 +7,8 @@ import {
   TrendingUp, 
   CreditCard, 
   User,
-  Shield
+  Shield,
+  GraduationCap
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Home from './Home';
@@ -16,14 +17,17 @@ import DoubtSection from '../shared/DoubtSection';
 import Analytics from './Analytics';
 import PaymentHistory from './PaymentHistory';
 import Profile from '../shared/Profile';
+import AttendanceScanner from './AttendanceScanner';
+import { QrCode } from 'lucide-react';
 
 const TABS = [
-  { id: 'home', label: 'Home', icon: Calendar, component: Home },
-  { id: 'materials', label: 'Materials', icon: BookOpen, component: Materials },
-  { id: 'doubts', label: 'Doubts', icon: MessageSquare, component: DoubtSection },
-  { id: 'stats', label: 'Stats', icon: TrendingUp, component: Analytics },
-  { id: 'fees', label: 'Fees', icon: CreditCard, component: PaymentHistory },
-  { id: 'profile', label: 'Profile', icon: User, component: Profile },
+  { id: 'home', label: 'Home', icon: Calendar, component: Home, hidden: false },
+  { id: 'materials', label: 'Materials', icon: BookOpen, component: Materials, hidden: false },
+  { id: 'doubts', label: 'Doubts', icon: MessageSquare, component: DoubtSection, hidden: false },
+  { id: 'stats', label: 'Stats', icon: TrendingUp, component: Analytics, hidden: false },
+  { id: 'fees', label: 'Fees', icon: CreditCard, component: PaymentHistory, hidden: false },
+  { id: 'profile', label: 'Profile', icon: User, component: Profile, hidden: false },
+  { id: 'scan', label: 'Scan', icon: QrCode, component: AttendanceScanner, hidden: true },
 ];
 
 export default function StudentView() {
@@ -63,6 +67,16 @@ export default function StudentView() {
 
   return (
     <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 overflow-hidden flex flex-col">
+      {/* Top Header */}
+      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center z-20 shrink-0 shadow-sm transition-colors">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-100 dark:shadow-none">
+            <GraduationCap className="text-white w-6 h-6" />
+          </div>
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Tuition<span className="text-blue-600">Hub</span></h1>
+        </div>
+      </header>
+
       {/* Content Area */}
       <div className="flex-1 relative overflow-hidden">
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
@@ -94,34 +108,45 @@ export default function StudentView() {
       </div>
 
       {/* Static Footer Navigation */}
-      <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-2 py-3 flex justify-between items-center z-50 transition-colors safe-area-bottom shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
-        {TABS.map((tab, index) => (
+      <nav className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 px-6 py-3 flex justify-center gap-4 sm:gap-8 items-center z-50 transition-colors safe-area-bottom shadow-[0_-4px_10px_-1px_rgba(0,0,0,0.05)]">
+        {TABS.filter(t => !t.hidden).map((tab) => {
+          const index = TABS.findIndex(t => t.id === tab.id);
+          return (
           <button
             key={tab.id}
             onClick={() => changeTab(index)}
-            className={`flex-1 flex flex-col items-center gap-1 transition-all duration-300 ${
+            className={`flex flex-col items-center justify-center w-12 h-12 sm:w-14 sm:h-14 relative group rounded-2xl transition-all ${
               activeTab === index 
-                ? 'text-blue-600 dark:text-blue-400 scale-105' 
-                : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300'
+                ? 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30' 
+                : 'text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800'
             }`}
           >
-            <tab.icon className={`w-5 h-5 ${activeTab === index ? 'stroke-[2.5px]' : 'stroke-2'}`} />
-            <span className={`text-[10px] font-bold tracking-tight ${activeTab === index ? 'opacity-100' : 'opacity-70'}`}>{tab.label}</span>
+            <tab.icon className={`w-6 h-6 sm:w-7 sm:h-7 ${activeTab === index ? 'stroke-[2.5px]' : 'stroke-2'}`} />
+            
+            {/* Tooltip on Hover */}
+            <span className="absolute -top-12 scale-0 group-hover:scale-100 transition-transform origin-bottom bg-slate-800 dark:bg-slate-700 text-white text-xs font-bold py-1.5 px-3 rounded-xl shadow-xl z-50 whitespace-nowrap pointer-events-none">
+              {tab.label}
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-slate-800 dark:bg-slate-700 rotate-45"></div>
+            </span>
+
             {activeTab === index && (
               <motion.div 
-                layoutId="nav-indicator"
-                className="w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full"
+                layoutId="nav-indicator-student"
+                className="absolute -bottom-3 w-1.5 h-1.5 bg-blue-600 dark:bg-blue-400 rounded-full"
               />
             )}
           </button>
-        ))}
+        )})}
         {profile?.role === 'admin' && (
           <button 
             onClick={() => window.location.href = '/admin'}
-            className="flex-1 flex flex-col items-center gap-1 text-indigo-600 dark:text-indigo-400"
+            className="flex flex-col items-center justify-center w-12 h-12 sm:w-14 sm:h-14 relative group rounded-2xl transition-all text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
           >
-            <Shield className="w-5 h-5" />
-            <span className="text-[10px] font-bold tracking-tight">Admin</span>
+            <Shield className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.5px]" />
+            <span className="absolute -top-12 scale-0 group-hover:scale-100 transition-transform origin-bottom bg-indigo-600 text-white text-xs font-bold py-1.5 px-3 rounded-xl shadow-xl z-50 whitespace-nowrap pointer-events-none">
+              Admin
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-indigo-600 rotate-45"></div>
+            </span>
           </button>
         )}
       </nav>

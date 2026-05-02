@@ -73,12 +73,21 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
     try {
       await addDoc(collection(db, 'payments'), {
         studentId: profile.uid,
+        studentName: profile.name,
         semester: selectedSemester,
         courseId: profile.courseId || profile.department || profile.courseName || '',
         amount: Number(paymentAmount),
         transactionId,
         status: 'pending',
         timestamp: new Date().toISOString()
+      });
+
+      await addDoc(collection(db, 'notifications'), {
+        title: 'New Fee Payment Submitted',
+        message: `${profile.name} has submitted a fee payment of ₹${paymentAmount} (Tx: ${transactionId}) for Sem ${selectedSemester}.`,
+        targetRole: 'teacher',
+        timestamp: new Date().toISOString(),
+        read: false
       });
 
       setSelectedSemester(null);

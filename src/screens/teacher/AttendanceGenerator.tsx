@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import { doc, getDoc, setDoc, deleteDoc, collection, query, orderBy, onSnapshot, limit, where, writeBatch } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { QRCodeSVG } from 'qrcode.react';
@@ -29,6 +29,15 @@ const STATIC_QR_VALUE = "TUITIONHUB_WALL_QR_2026_SECURE";
 
 const getTodayString = () => {
   const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const getTomorrowString = () => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -236,7 +245,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
     setSaving(true);
     try {
       const scheduleId = `SCHED_${Date.now()}`;
-      const scheduleDate = getTodayString();
+      const scheduleDate = newSchedule.date;
       const scheduleData = {
         ...newSchedule,
         department: newSchedule.department.toUpperCase(),
@@ -591,6 +600,28 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 gap-4">
+                  <div>
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Session Date</label>
+                    <div className="relative group">
+                      <input 
+                        type="date"
+                        value={newSchedule.date}
+                        onChange={(e) => setNewSchedule({...newSchedule, date: e.target.value})}
+                        className="w-full bg-slate-50 dark:bg-slate-800 border-2 border-transparent focus:border-blue-500 rounded-2xl py-3 px-4 text-sm font-bold transition-all outline-none md:text-sm pr-12"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setNewSchedule({...newSchedule, date: getTomorrowString()})}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                        title="Set to Tomorrow"
+                      >
+                        <Calendar className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Start Time</label>
@@ -877,8 +908,8 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                       </thead>
                       <tbody className="divide-y divide-slate-50 dark:divide-slate-800">
                         {Object.entries(getGroupedHistory()).sort(([a], [b]) => a.localeCompare(b)).map(([dept, students]) => (
-                          <>
-                            <tr key={dept} className="bg-slate-50/80 dark:bg-slate-800/80">
+                          <Fragment key={dept}>
+                            <tr className="bg-slate-50/80 dark:bg-slate-800/80">
                               <td colSpan={4} className="px-6 sm:px-8 py-3">
                                 <div className="flex items-center gap-2">
                                   <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
@@ -890,7 +921,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                               </td>
                             </tr>
                             {students.map((student, idx) => (
-                              <tr key={`${student.name}-${idx}`} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/20 transition-colors">
+                              <tr key={student.id || `${student.name}-${idx}`} className="hover:bg-slate-50/30 dark:hover:bg-slate-800/20 transition-colors">
                                 <td className="px-6 sm:px-8 py-5">
                                   <div className="flex items-center gap-3">
                                     <div 
@@ -930,7 +961,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                                 </td>
                               </tr>
                             ))}
-                          </>
+                          </Fragment>
                         ))}
                       </tbody>
                     </table>

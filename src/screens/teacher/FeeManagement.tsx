@@ -29,7 +29,11 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-export default function FeeManagement({ isEmbedded }: { isEmbedded?: boolean }) {
+export default function FeeManagement({
+  isEmbedded,
+}: {
+  isEmbedded?: boolean;
+}) {
   const navigate = useNavigate();
   const [students, setStudents] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
@@ -37,6 +41,9 @@ export default function FeeManagement({ isEmbedded }: { isEmbedded?: boolean }) 
   const [loading, setLoading] = useState(true);
   const [selectedCourse, setSelectedCourse] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [deptSearch, setDeptSearch] = useState<{
+    [key: string]: { sem: string; name: string };
+  }>({});
   const [expandedDepts, setExpandedDepts] = useState<string[]>([]);
 
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -141,9 +148,21 @@ export default function FeeManagement({ isEmbedded }: { isEmbedded?: boolean }) 
     }
   };
 
-  const confirmPayment = async (paymentId: string) => {
+  const confirmPayment = async (
+    paymentId: string,
+    studentId: string,
+    amount: number,
+  ) => {
     try {
       await updateDoc(doc(db, "payments", paymentId), { status: "confirmed" });
+      await addDoc(collection(db, "notifications"), {
+        title: "Fee Payment Confirmed",
+        message: `Your fee payment of ₹${amount} has been successfully confirmed.`,
+        targetRole: "student",
+        targetId: studentId,
+        timestamp: new Date().toISOString(),
+        read: false,
+      });
       fetchData();
     } catch (error) {
       console.error("Error confirming payment:", error);
@@ -421,8 +440,13 @@ export default function FeeManagement({ isEmbedded }: { isEmbedded?: boolean }) 
             <div className="space-y-12">
               {departments.map((deptObj) => {
                 const dept = deptObj.name;
+                const searchConfig = deptSearch[dept] || {
+                  sem: "ALL",
+                  name: "",
+                };
                 const isExpanded = expandedDepts.includes(dept);
-                const deptFilteredStudents = filteredStudents.filter((s) => {
+
+                let deptFilteredStudents = filteredStudents.filter((s) => {
                   const sDept =
                     cleanStr(s.courseId) ||
                     cleanStr(s.courseName) ||
@@ -430,11 +454,32 @@ export default function FeeManagement({ isEmbedded }: { isEmbedded?: boolean }) 
                   return sDept === dept;
                 });
 
-                // Auto-expand if search produces results in this dept
+                if (searchConfig.sem !== "ALL") {
+                  deptFilteredStudents = deptFilteredStudents.filter(
+                    (s) => (s.semester?.toString() || "1") === searchConfig.sem,
+                  );
+                }
+
+                if (searchConfig.name.trim()) {
+                  const q = searchConfig.name.toLowerCase();
+                  deptFilteredStudents = deptFilteredStudents.filter(
+                    (s) =>
+                      (s.name || "").toLowerCase().includes(q) ||
+                      (s.studentId || "").toLowerCase().includes(q),
+                  );
+                }
+
+                // Auto-expand if general search produces results in this dept
                 const shouldShow =
                   isExpanded ||
                   (searchQuery && deptFilteredStudents.length > 0);
-                if (!shouldShow || deptFilteredStudents.length === 0)
+                if (
+                  !shouldShow ||
+                  (deptFilteredStudents.length === 0 &&
+                    !searchConfig.name.trim() &&
+                    searchConfig.sem === "ALL" &&
+                    !searchQuery)
+                )
                   return null;
 
                 return (
@@ -442,9 +487,9 @@ export default function FeeManagement({ isEmbedded }: { isEmbedded?: boolean }) 
                     key={`registry-${dept}`}
                     className="bg-white dark:bg-slate-900 rounded-[3rem] shadow-xl shadow-slate-100 dark:shadow-none border border-slate-100 dark:border-slate-800 overflow-hidden animate-in slide-in-from-bottom-8 duration-700"
                   >
-                    <div className="px-10 py-8 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center bg-slate-50/40 dark:bg-slate-800/20 backdrop-blur-sm">
+                    <div className="px-10 py-8 border-b border-slate-100 dark:border-slate-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-slate-50/40 dark:bg-slate-800/20 backdrop-blur-sm">
                       <div className="flex items-center gap-6">
-                        <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-[1.25rem] shadow-sm flex items-center justify-center text-blue-600 border border-slate-100 dark:border-slate-800 rotate-[-4deg]">
+                        <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-[1.25rem] shadow-sm flex items-center justify-center text-blue-600 border border-slate-100 dark:border-slate-800 rotate-[-4deg] shrink-0">
                           <User className="w-8 h-8" />
                         </div>
                         <div>
@@ -456,18 +501,59 @@ export default function FeeManagement({ isEmbedded }: { isEmbedded?: boolean }) 
                           </p>
                         </div>
                       </div>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setExpandedDepts((prev) =>
-                            prev.filter((d) => d !== dept),
-                          );
-                          setSearchQuery(""); 
-                        }}
-                        className="w-14 h-14 flex items-center justify-center bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all text-rose-500 shadow-sm border border-slate-100 dark:border-slate-800 hover:border-rose-200 active:scale-90"
-                      >
-                        <X className="w-6 h-6" />
-                      </button>
+
+                      <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+                        <select
+                          value={searchConfig.sem}
+                          onChange={(e) =>
+                            setDeptSearch((prev) => ({
+                              ...prev,
+                              [dept]: { ...searchConfig, sem: e.target.value },
+                            }))
+                          }
+                          className="w-full sm:w-auto px-4 py-3 bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-sm font-bold text-slate-900 dark:text-white"
+                        >
+                          <option value="ALL">All Semesters</option>
+                          {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
+                            <option key={sem} value={String(sem)}>
+                              Semester {sem}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="relative w-full sm:w-64">
+                          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                          <input
+                            type="text"
+                            placeholder="Search student..."
+                            value={searchConfig.name}
+                            onChange={(e) =>
+                              setDeptSearch((prev) => ({
+                                ...prev,
+                                [dept]: {
+                                  ...searchConfig,
+                                  name: e.target.value,
+                                },
+                              }))
+                            }
+                            className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-700 outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 text-sm font-bold text-slate-900 dark:text-white"
+                          />
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedDepts((prev) =>
+                              prev.filter((d) => d !== dept),
+                            );
+                            setDeptSearch((prev) => ({
+                              ...prev,
+                              [dept]: { sem: "ALL", name: "" },
+                            }));
+                          }}
+                          className="w-12 h-12 flex shrink-0 items-center justify-center bg-white dark:bg-slate-900 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-2xl transition-all text-rose-500 shadow-sm border border-slate-100 dark:border-slate-800 hover:border-rose-200 active:scale-90"
+                        >
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
                     </div>
 
                     <div className="overflow-x-auto p-2">
@@ -824,13 +910,14 @@ export default function FeeManagement({ isEmbedded }: { isEmbedded?: boolean }) 
                           (d) => d.name === modalDepartment,
                         );
                         const totalSems = selectedDeptObj?.totalSemesters || 8;
-                        return Array.from({ length: totalSems }, (_, i) => i + 1).map(
-                          (sem) => (
-                            <option key={sem} value={sem}>
-                              Semester {sem}
-                            </option>
-                          ),
-                        );
+                        return Array.from(
+                          { length: totalSems },
+                          (_, i) => i + 1,
+                        ).map((sem) => (
+                          <option key={sem} value={sem}>
+                            Semester {sem}
+                          </option>
+                        ));
                       })()}
                     </select>
                   </div>
@@ -1188,13 +1275,27 @@ export default function FeeManagement({ isEmbedded }: { isEmbedded?: boolean }) 
                             Txn ID: {p.transactionId}
                           </p>
                           <p className="text-xs text-slate-400 mt-1">
-                            {new Date(p.date || p.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric', hour12: true })}
+                            {new Date(p.date || p.timestamp).toLocaleString(
+                              [],
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                                hour12: true,
+                              },
+                            )}
                           </p>
                         </div>
                         {p.status === "pending" && (
                           <button
                             onClick={() => {
-                              confirmPayment(p.id);
+                              confirmPayment(
+                                p.id,
+                                p.studentId || viewDetailsStudent.id,
+                                p.amount,
+                              );
                               setViewDetailsStudent((prev: any) => ({
                                 ...prev,
                                 semPayments: prev.semPayments.map((sp: any) =>

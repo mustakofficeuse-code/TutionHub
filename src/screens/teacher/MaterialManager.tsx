@@ -289,6 +289,21 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
       if (uploadTasks.length === 0) throw new Error("No items selected for upload.");
       
       await Promise.all(uploadTasks);
+      
+      try {
+        await addDoc(collection(db, 'notifications'), {
+          title: 'New Study Material',
+          message: `A new study material "${title}" has been uploaded for ${courseId} Sem ${semester}.`,
+          targetRole: 'student',
+          targetDept: courseId.toUpperCase(),
+          targetSem: semester,
+          timestamp: new Date().toISOString(),
+          read: false
+        });
+      } catch (err) {
+        console.warn("Failed to notify students:", err);
+      }
+
       setUploadStatus('Complete!');
 
       setShowAdd(false);

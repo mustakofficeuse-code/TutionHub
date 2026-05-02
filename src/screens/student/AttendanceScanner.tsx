@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 
 const STATIC_QR_VALUE = "TUITIONHUB_WALL_QR_2026_SECURE";
 
-export default function AttendanceScanner() {
+export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbedded?: boolean, onTabChange?: (id: string) => void }) {
   const { user, profile } = useAuth();
   const navigate = useNavigate();
   
@@ -230,13 +230,22 @@ export default function AttendanceScanner() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors">
-      <button 
-        onClick={() => navigate('/')}
-        className="mb-8 flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-      >
-        <ArrowLeft className="w-5 h-5" /> Back to Home
-      </button>
+    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 p-6 transition-colors ${isEmbedded ? 'pb-24' : ''}`}>
+      {!isEmbedded ? (
+        <button 
+          onClick={() => navigate('/')}
+          className="mb-8 flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" /> Back to Home
+        </button>
+      ) : (
+        <button 
+          onClick={() => { if(onTabChange) onTabChange('home'); }}
+          className="mb-8 flex items-center gap-2 text-slate-600 dark:text-slate-400 font-semibold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" /> Back to Dashboard
+        </button>
+      )}
 
       <div className="max-w-md mx-auto bg-white dark:bg-slate-900 rounded-3xl shadow-xl overflow-hidden border border-slate-100 dark:border-slate-800">
         <div className="bg-blue-600 p-8 text-center text-white">
@@ -284,7 +293,10 @@ export default function AttendanceScanner() {
                 <p className="text-slate-600 dark:text-slate-400 font-medium px-4">{message}</p>
               </div>
               <button 
-                onClick={() => navigate('/')}
+                onClick={() => {
+                  if (isEmbedded && onTabChange) onTabChange('home');
+                  else navigate('/');
+                }}
                 className="mt-6 w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 py-3 rounded-xl font-bold shadow-lg shadow-blue-100 dark:shadow-none transition-all"
               >
                 Done

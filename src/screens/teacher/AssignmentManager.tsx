@@ -58,6 +58,15 @@ export default function AssignmentManager() {
     setSubmissions(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
   };
 
+  const getTomorrowString = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -231,13 +240,24 @@ export default function AssignmentManager() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Due Date</label>
-                  <input
-                    type="date"
-                    required
-                    className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                  />
+                  <div className="relative group">
+                    <input
+                      type="date"
+                      required
+                      className="w-full px-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all pr-12"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setDueDate(getTomorrowString())}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                      title="Set to Tomorrow"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      <span className="sr-only">Tomorrow</span>
+                    </button>
+                  </div>
                 </div>
               </div>
 

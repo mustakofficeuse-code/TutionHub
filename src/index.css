@@ -2,8 +2,20 @@
 
 @custom-variant dark (&:is(.dark, .dark *));
 
+@theme {
+  --color-wa-teal: #075E54;
+  --color-wa-teal-dark: #128C7E;
+  --color-wa-green: #25D366;
+  --color-wa-green-dark: #128C7E;
+  --color-wa-bg: #F0F2F5;
+  --color-wa-bg-dark: #0B141A;
+  --color-wa-header: #1F2C34;
+  --color-wa-bubble-out: #DCF8C6;
+  --color-wa-bubble-in: #FFFFFF;
+}
+
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-white transition-colors duration-200;
+    @apply bg-wa-bg text-slate-900 dark:bg-wa-bg-dark dark:text-white transition-colors duration-200;
   }
 }

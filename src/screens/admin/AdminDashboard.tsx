@@ -26,7 +26,7 @@ import {
   X
 } from 'lucide-react';
 
-export default function AdminDashboard() {
+export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded?: boolean, onTabChange?: (id: string) => void }) {
   const { profile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
@@ -181,47 +181,52 @@ export default function AdminDashboard() {
   const blockedUsers = users.filter(u => blacklist.includes(u.email));
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors">
-      <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-10 transition-colors">
-        <div className="flex items-center gap-4">
-          <button 
-            onClick={() => navigate('/')}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100 dark:shadow-none">
-              <Shield className="text-white w-6 h-6" />
-            </div>
-            <h1 className="text-xl font-bold text-slate-900 dark:text-white">Admin <span className="text-indigo-600">Panel</span></h1>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
-          >
-            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-          </button>
-          <div className="flex items-center gap-3">
-            <div className="text-right hidden sm:block">
-              <p className="text-sm font-semibold text-slate-900 dark:text-white">{profile?.name}</p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">System Administrator</p>
-            </div>
-            <div 
-              onClick={() => navigate('/profile')}
-              className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold overflow-hidden cursor-pointer shadow-sm"
+    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors ${isEmbedded ? 'pb-24' : ''}`}>
+      {!isEmbedded && (
+        <nav className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center sticky top-0 z-10 transition-colors">
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => navigate('/')}
+              className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-colors"
             >
-              {profile?.avatarUrl ? (
-                <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-              ) : (
-                profile?.name?.charAt(0) || 'A'
-              )}
+              <ArrowLeft className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            </button>
+            <div className="flex items-center gap-2">
+              <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100 dark:shadow-none">
+                <Shield className="text-white w-6 h-6" />
+              </div>
+              <h1 className="text-xl font-bold text-slate-900 dark:text-white">Admin <span className="text-indigo-600">Panel</span></h1>
             </div>
           </div>
-        </div>
-      </nav>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-xl bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-all"
+            >
+              {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            </button>
+            <div className="flex items-center gap-3">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-semibold text-slate-900 dark:text-white">{profile?.name}</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">System Administrator</p>
+              </div>
+              <div 
+                onClick={() => {
+                  if (isEmbedded && onTabChange) onTabChange('profile');
+                  else navigate('/profile');
+                }}
+                className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold overflow-hidden cursor-pointer shadow-sm"
+              >
+                {profile?.avatarUrl ? (
+                  <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                ) : (
+                  profile?.name?.charAt(0) || 'A'
+                )}
+              </div>
+            </div>
+          </div>
+        </nav>
+      )}
 
       <main className="max-w-7xl mx-auto p-6 space-y-8">
         {/* Admin Stats */}

@@ -567,7 +567,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
 
             {/* Scan Attendance Card */}
             <div 
-              onClick={() => navigate('/attendance/scan')}
+              onClick={() => handleNav('/attendance/scan', 'scan')}
               className="bg-white dark:bg-slate-900 p-6 rounded-3xl shadow-sm border border-slate-100 dark:border-slate-800 flex items-center justify-between group cursor-pointer hover:border-blue-200 dark:hover:border-blue-900 transition-all"
             >
               <div className="flex items-center gap-4">
