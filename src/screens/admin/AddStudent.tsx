@@ -7,6 +7,7 @@ import { initializeApp, deleteApp } from 'firebase/app';
 import { getAuth, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
 import { doc, setDoc, collection, onSnapshot, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { sendNotification } from '../../services/notificationService';
 import firebaseConfig from '../../../firebase-applet-config.json';
 
 export default function AddStudent() {
@@ -88,13 +89,13 @@ export default function AddStudent() {
       });
 
       // Create notification for dashboard
-      const notifId = `enroll_admin_${user.uid}`;
-      await setDoc(doc(db, 'notifications', notifId), {
+      await sendNotification({
         title: 'New Student Added',
         message: `${name} has been enrolled by teacher.`,
-        timestamp: new Date().toISOString(),
-        read: false,
-        type: 'enrollment'
+        type: 'new_student',
+        senderId: profile?.uid || 'auto',
+        senderName: profile?.name || 'Teacher',
+        targetRole: 'teacher',
       });
 
       // Clean up secondary session

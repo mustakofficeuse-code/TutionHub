@@ -14,13 +14,12 @@ import {
   Sun,
   X,
   Trash2,
-  Loader2,
-  Clock,
   GraduationCap
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { collection, query, where, onSnapshot, limit, orderBy, writeBatch, doc } from 'firebase/firestore';
+import { subscribeToNotifications, markAsRead, deleteNotification, Notification } from '../../services/notificationService';
+import { writeBatch, doc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import TeacherDashboard from './Dashboard';
 import MaterialManager from './MaterialManager';
@@ -47,25 +46,18 @@ export default function TeacherView() {
   const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab ] = useState(0);
   const [direction, setDirection] = useState(0);
-  const [notifications, setNotifications] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const [isClearingNotifs, setIsClearingNotifs] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
 
   useEffect(() => {
-    const q = query(
-      collection(db, 'notifications'), 
-      where('targetRole', 'in', ['teacher', 'admin', 'ALL']), 
-      limit(50)
-    );
-    const unsub = onSnapshot(q, (snapshot) => {
-      const list = snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-      setNotifications(list.slice(0, 20));
+    if (!profile) return;
+    const unsub = subscribeToNotifications(profile.uid, 'teacher', (list) => {
+        setNotifications(list);
     });
-    return unsub;
-  }, []);
+    return () => unsub();
+  }, [profile]);
 
   const handleClearNotifications = async () => {
     if (!notifications.length) return;
@@ -73,7 +65,7 @@ export default function TeacherView() {
     try {
       const batch = writeBatch(db);
       notifications.forEach(notif => {
-        batch.delete(doc(db, 'notifications', notif.id));
+        if(notif.id) batch.delete(doc(db, 'notifications', notif.id));
       });
       await batch.commit();
       setShowNotifications(false);
@@ -191,7 +183,7 @@ export default function TeacherView() {
                     <div key={notif.id} className="p-3 bg-white dark:bg-[#202c33] rounded-lg shadow-sm border-b border-slate-100 dark:border-slate-800">
                       <h4 className="text-sm font-bold text-slate-900 dark:text-white">{notif.title}</h4>
                       <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{notif.message}</p>
-                      <p className="text-[10px] text-slate-400 mt-2">{new Date(notif.timestamp).toLocaleTimeString()}</p>
+                      <p className="text-[10px] text-slate-400 mt-2">{notif.createdAt?.toDate ? notif.createdAt.toDate().toLocaleTimeString() : new Date(notif.createdAt).toLocaleTimeString()}</p>
                     </div>
                   ))
                 )}

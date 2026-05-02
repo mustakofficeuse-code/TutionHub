@@ -18,6 +18,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { db, auth, logError } from "../../firebase";
+import { sendNotification } from "../../services/notificationService";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
 import {
@@ -270,14 +271,15 @@ export default function TeacherDashboard({
       };
       if (editingScheduleId) {
         await updateDoc(doc(db, "schedules", editingScheduleId), data);
-        await addDoc(collection(db, "notifications"), {
+        await sendNotification({
           title: "Schedule Updated",
           message: `Your class schedule for ${scheduleForm.subject} has been updated.`,
+          type: 'schedule_change',
+          senderId: auth.currentUser?.uid || 'auto',
+          senderName: 'Teacher',
           targetRole: "student",
           targetDept: scheduleForm.department.toUpperCase(),
           targetSem: scheduleForm.semester,
-          timestamp: new Date().toISOString(),
-          read: false,
         });
       } else {
         const dr = await addDoc(collection(db, "schedules"), {
@@ -290,14 +292,15 @@ export default function TeacherDashboard({
           id: attId,
           createdAt: serverTimestamp(),
         });
-        await addDoc(collection(db, "notifications"), {
+        await sendNotification({
           title: "New Class Scheduled",
           message: `A new class for ${scheduleForm.subject} has been scheduled on ${scheduleForm.date}.`,
+          type: 'schedule_change',
+          senderId: auth.currentUser?.uid || 'auto',
+          senderName: 'Teacher',
           targetRole: "student",
           targetDept: scheduleForm.department.toUpperCase(),
           targetSem: scheduleForm.semester,
-          timestamp: new Date().toISOString(),
-          read: false,
         });
       }
       setShowScheduleModal(false);
@@ -379,13 +382,13 @@ export default function TeacherDashboard({
         courseName: editDepartment,
         courseId: editDepartment.toUpperCase(),
       });
-      await addDoc(collection(db, "notifications"), {
+      await sendNotification({
         title: "Profile Updated",
         message: `Your profile has been updated by the teacher. You are now in Semester ${editSemester}, Dept ${editDepartment}.`,
-        targetRole: "student",
-        targetId: editingStudent.id,
-        timestamp: new Date().toISOString(),
-        read: false,
+        type: 'profile_update',
+        senderId: auth.currentUser?.uid || 'auto',
+        senderName: 'Teacher',
+        recipientId: editingStudent.id,
       });
       setEditingStudent(null);
     } catch (err) {

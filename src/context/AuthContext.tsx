@@ -72,6 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const checkBlock = (snap: any) => {
           if (snap.exists()) {
             console.log("User is blocked, signing out...");
+            sessionStorage.setItem("wasBlocked", "true");
             auth.signOut();
           }
         };

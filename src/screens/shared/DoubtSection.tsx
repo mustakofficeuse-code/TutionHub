@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { collection, query, where, addDoc, onSnapshot, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
+import { sendNotification } from '../../services/notificationService';
 import { useAuth } from '../../context/AuthContext';
 import { 
   MessageSquare, 
@@ -146,12 +147,13 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         createdAt: new Date().toISOString()
       });
 
-      await addDoc(collection(db, 'notifications'), {
+      await sendNotification({
         title: 'New Doubt Raised',
         message: `${profile.name} has raised a new doubt: "${title}".`,
+        type: 'doubt_raised',
+        senderId: profile.uid,
+        senderName: profile.name,
         targetRole: 'teacher',
-        timestamp: new Date().toISOString(),
-        read: false
       });
 
       setShowAdd(false);
@@ -193,13 +195,13 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       });
       
       if (profile.role === 'teacher') {
-        await addDoc(collection(db, 'notifications'), {
+        await sendNotification({
           title: 'New Reply to Your Doubt',
           message: `Teacher ${profile.name} has replied to your doubt "${selectedDoubt.title}".`,
-          targetRole: 'student',
-          targetId: selectedDoubt.studentId,
-          timestamp: new Date().toISOString(),
-          read: false
+          type: 'doubt_reply',
+          senderId: profile.uid,
+          senderName: profile.name,
+          recipientId: selectedDoubt.studentId,
         });
       }
       

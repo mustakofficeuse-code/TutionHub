@@ -149,7 +149,13 @@ export default function AuthGateway() {
         setTeacherPhone(data.teacherPhone || "");
         setTeacherEmail(data.teacherEmail || "");
         setInviteCode(data.inviteCode || "");
-        setView("student-login");
+
+        if (sessionStorage.getItem("wasBlocked") === "true") {
+          sessionStorage.removeItem("wasBlocked");
+          setView("student-blocked");
+        } else {
+          setView("student-login");
+        }
       } else {
         setView("teacher-setup");
       }
@@ -326,6 +332,17 @@ export default function AuthGateway() {
       // Remove duplicates
       emailsToTry = Array.from(new Set(emailsToTry));
 
+      // Quick blacklist check before authenticating (so wrong password doesn't hide the block)
+      for (const email of emailsToTry) {
+        const blacklistRef = doc(db, "blacklist", email);
+        const blacklistSnap = await getDoc(blacklistRef);
+        if (blacklistSnap.exists()) {
+          throw new Error(
+            "Your access has been revoked by the teacher. Please contact your teacher for permission.",
+          );
+        }
+      }
+
       let loginSuccess = false;
       let lastError = null;
 
@@ -338,10 +355,10 @@ export default function AuthGateway() {
           );
           const user = userCredential.user;
 
-          // Check if blacklisted ONLY AFTER successful authentication
-          const blacklistRef = doc(db, "blacklist", email);
-          const blacklistSnap = await getDoc(blacklistRef);
-          if (blacklistSnap.exists()) {
+          // Double check block status by user UID as well
+          const blacklistUidRef = doc(db, "blacklist", user.uid);
+          const blacklistUidSnap = await getDoc(blacklistUidRef);
+          if (blacklistUidSnap.exists()) {
             await auth.signOut();
             throw new Error(
               "Your access has been revoked by the teacher. Please contact your teacher for permission.",

@@ -241,6 +241,23 @@
       },
       "required": ["batchId", "date", "subject"]
     },
+    "notifications": {
+      "title": "Notification",
+      "description": "System and user notifications",
+      "type": "object",
+      "properties": {
+        "recipientId": { "type": "string", "description": "UID of recipient or 'teacher'" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "relatedId": { "type": "string" }
+      },
+      "required": ["recipientId", "title", "message", "type", "read", "createdAt"]
+    },
     "config": {
       "title": "Configuration",
       "description": "App-wide configuration settings",
@@ -311,6 +328,10 @@
     "/sessions/{sessionId}": {
       "schema": "sessions",
       "description": "Individual class sessions"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "notifications",
+      "description": "System notifications"
     },
     "/config/{configId}": {
       "schema": "config",

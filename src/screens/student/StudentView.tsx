@@ -8,9 +8,14 @@ import {
   CreditCard, 
   User,
   Shield,
-  GraduationCap
+  GraduationCap,
+  Bell,
+  X,
+  Trash2
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { subscribeToNotifications, markAsRead, deleteNotification, Notification } from '../../services/notificationService';
+import { writeBatch, doc } from 'firebase/firestore';
+import { db } from '../../firebase';
 import Home from './Home';
 import Materials from './Materials';
 import DoubtSection from '../shared/DoubtSection';
@@ -34,6 +39,17 @@ export default function StudentView() {
   const { profile } = useAuth();
   const [activeTab, setActiveTab ] = useState(0);
   const [direction, setDirection] = useState(0);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  useEffect(() => {
+    if (!profile) return;
+    const unsub = subscribeToNotifications(profile.uid, 'student', (list) => {
+        setNotifications(list);
+    });
+    return () => unsub();
+  }, [profile]);
 
   const changeTab = (newIndex: number) => {
     setDirection(newIndex > activeTab ? 1 : -1);
@@ -67,15 +83,64 @@ export default function StudentView() {
 
   return (
     <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 overflow-hidden flex flex-col">
-      {/* Top Header */}
-      <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-6 py-4 flex justify-between items-center z-20 shrink-0 shadow-sm transition-colors">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-100 dark:shadow-none">
-            <GraduationCap className="text-white w-6 h-6" />
+
+      {/* Notifications Modal */}
+      <AnimatePresence>
+        {showNotifications && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-end sm:p-6 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ x: 300, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: 300, opacity: 0 }}
+              className="w-full sm:w-[400px] h-full sm:h-auto sm:max-h-[600px] bg-white dark:bg-slate-900 sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden"
+            >
+              <div className="p-4 bg-blue-600 flex justify-between items-center text-white">
+                <div className="flex items-center gap-3">
+                  <Bell className="w-5 h-5" />
+                  <h3 className="font-bold">Notifications</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                     onClick={async () => {
+                        const batch = writeBatch(db);
+                        notifications.forEach(notif => {
+                          if(notif.id) batch.delete(doc(db, 'notifications', notif.id));
+                        });
+                        await batch.commit();
+                        setShowNotifications(false);
+                     }}
+                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={() => setShowNotifications(false)}
+                    className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto p-2 space-y-1 bg-slate-50 dark:bg-slate-950">
+                {notifications.length === 0 ? (
+                  <div className="py-20 text-center">
+                    <p className="text-slate-500">No new notifications</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => (
+                    <div key={notif.id} className="p-3 bg-white dark:bg-slate-800 rounded-lg shadow-sm border border-slate-100 dark:border-slate-700">
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">{notif.title}</h4>
+                      <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{notif.message}</p>
+                      <p className="text-[10px] text-slate-400 mt-2">{notif.createdAt?.toDate ? notif.createdAt.toDate().toLocaleTimeString() : new Date(notif.createdAt).toLocaleTimeString()}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </motion.div>
           </div>
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Tuition<span className="text-blue-600">Hub</span></h1>
-        </div>
-      </header>
+        )}
+      </AnimatePresence>
 
       {/* Content Area */}
       <div className="flex-1 relative overflow-hidden">
