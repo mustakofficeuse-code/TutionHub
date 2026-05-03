@@ -93,7 +93,7 @@ export default function StudentView() {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-normal leading-none">Tuition<span className="opacity-70">Hub</span></h1>
-              <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 opacity-60 mt-1">Student Protocol</p>
+              <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 opacity-60 mt-1">Student Account</p>
             </div>
           </div>
           <div className="flex items-center gap-4">

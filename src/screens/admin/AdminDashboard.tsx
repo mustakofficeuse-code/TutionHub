@@ -404,9 +404,9 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                   <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">User Name</th>
                   <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Role</th>
                   <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Department / Semester</th>
-                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Comms Channel</th>
-                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Sync Date</th>
-                  <th className="px-6 sm:px-10 py-4 sm:py-6 text-right border-b border-slate-50 dark:border-white/5 text-nowrap">Actions</th>
+                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Call</th>
+                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Joined date</th>
+                  <th className="px-6 sm:px-10 py-4 sm:py-6 text-right border-b border-slate-50 dark:border-white/5 text-nowrap sticky right-0 bg-[#f0f2f5]/30 dark:bg-[#111b21] z-10">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-white/5">
@@ -492,8 +492,8 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                       <td className="px-6 sm:px-10 py-4 sm:py-6 text-[11px] text-[#8696a0] font-bold  tracking-normal whitespace-nowrap">
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
-                      <td className="px-6 sm:px-10 py-4 sm:py-6 text-right whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-3 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
+                      <td className="px-6 sm:px-10 py-4 sm:py-6 text-right whitespace-nowrap sticky right-0 bg-white dark:bg-[#202c33] z-10 group-hover:bg-slate-50/50 dark:group-hover:bg-slate-800/10 shadow-[-10px_0_15px_-10px_rgba(0,0,0,0.05)]">
+                        <div className="flex items-center justify-end gap-3 transition-all">
                            <button
                             onClick={() => setUserToBlock(user)}
                             className="w-10 h-10 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-all flex items-center justify-center shadow-lg shadow-orange-500/20 active:scale-90"

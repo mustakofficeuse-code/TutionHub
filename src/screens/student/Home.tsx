@@ -516,7 +516,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                 <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal flex items-center gap-2">
                    <Clock className="w-4 h-4" /> Schedule Broadcast
                 </h2>
-                <button className="text-wa-teal text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 bg-wa-teal/5 px-4 py-1.5 rounded-full">Archive View</button>
+                <button className="text-wa-teal text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 bg-wa-teal/5 px-4 py-1.5 rounded-full">View All</button>
               </div>
               <div className="space-y-4 px-2">
                 {upcomingClasses.length === 0 ? (
@@ -534,7 +534,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                         </div>
                         <div className="min-w-0">
                           <p className={`text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 mb-1 ${cls.type === 'active' ? 'text-wa-green' : 'text-wa-teal'}`}>
-                            {cls.type === 'active' ? 'Direct Communication' : 'Future Transmission'}
+                            {cls.type === 'active' ? 'Live Now' : 'Upcoming Class'}
                           </p>
                           <h4 className="font-bold text-slate-900 dark:text-[#e9edef] text-lg tracking-normal leading-none mb-1">
                             {cls.subject || `${cls.department} Sem ${cls.semester}`}
@@ -666,7 +666,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                   <User className="w-6 h-6 group-hover:text-wa-teal transition-colors" />
                 )}
              </div>
-             <span className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Entity</span>
+             <span className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Student</span>
           </button>
         </nav>
       )}

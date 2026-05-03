@@ -270,7 +270,7 @@ export default function StudentAssignments() {
                   {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                     <>
                       <Send className="w-5 h-5" />
-                      Initiate Transmission
+                      Submit Assignment
                     </>
                   )}
                 </button>

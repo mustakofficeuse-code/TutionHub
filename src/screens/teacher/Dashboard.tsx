@@ -701,7 +701,7 @@ export default function TeacherDashboard({
                             <div>
                               <h3 className="font-bold text-lg tracking-normal  italic">{name}</h3>
                               <p className={`text-xs font-bold  tracking-normal mt-1.5 ${isActive ? "text-white/60" : "text-slate-400"}`}>
-                                {count} Active Units
+                                {count} Active Students
                               </p>
                             </div>
                           </div>

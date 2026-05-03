@@ -53,7 +53,7 @@ export default function NoticeBoard() {
             </div>
             Bulletin Archive
           </h1>
-          <p className="text-[#8696a0] font-semibold mt-1">Real-time transmissions from the tuition hub</p>
+          <p className="text-[#8696a0] font-semibold mt-1">Latest updates from the center</p>
         </div>
 
         {/* Notices List */}

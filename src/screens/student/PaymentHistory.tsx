@@ -288,7 +288,7 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                                     <p className="font-bold text-slate-900 dark:text-[#e9edef] text-xl tracking-normal">₹{expectedAmount.toLocaleString()}</p>
                                 </div>
                                 <div className="flex justify-between items-center p-4 bg-wa-green/5 rounded-2xl border border-wa-green/10">
-                                    <p className="text-xs font-bold text-wa-green  tracking-normal">Archive Total Paid</p>
+                                    <p className="text-xs font-bold text-wa-green  tracking-normal">Total Paid</p>
                                     <p className="font-bold text-wa-green text-xl tracking-normal">₹{paidAmount.toLocaleString()}</p>
                                 </div>
                                 {pendingAmount > 0 && (

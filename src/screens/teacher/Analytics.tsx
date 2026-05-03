@@ -168,7 +168,7 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                   <div className="w-14 h-14 bg-wa-green/10 dark:bg-wa-green/20 rounded-2xl flex items-center justify-center">
                     <Calendar className="w-7 h-7 text-wa-green" />
                   </div>
-                  <span className="text-xs font-bold text-slate-400  tracking-normal">Protocol Adherence</span>
+                  <span className="text-xs font-bold text-slate-400  tracking-normal">Overall Attendance</span>
                 </div>
                 <div className="relative z-10">
                   <div className="flex items-end gap-3">

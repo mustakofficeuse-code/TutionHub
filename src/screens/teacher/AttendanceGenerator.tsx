@@ -437,7 +437,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                   <QrCode className="text-white w-8 h-8" />
                 </div>
                 <h2 className="text-3xl font-bold text-slate-800 dark:text-[#e9edef] tracking-normal  italic leading-none">ATTENDANCE QR</h2>
-                <p className="text-xs font-bold text-wa-teal  tracking-normal mt-3 print:text-black">Scan to Login</p>
+                <p className="text-xs font-bold text-wa-teal  tracking-normal mt-3 print:text-black">Scan to Attend</p>
               </div>
               
               <div className="bg-[#f8f9fa] dark:bg-[#111b21] p-5 sm:p-5 sm:p-6 rounded-2xl inline-block border-2 border-slate-50 dark:border-white/5 mb-8 group-hover:border-wa-teal/30 transition-all print:border-slate-200 print:bg-white relative">
@@ -644,7 +644,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
               <div className="absolute top-0 right-0 w-48 h-48 bg-wa-teal/10 blur-3xl -mr-24 -mt-24 group-hover:bg-wa-teal/20 transition-all"></div>
               <div className="relative z-10">
                 <h3 className="font-bold mb-6 flex items-center gap-3 text-sm  tracking-normal text-wa-teal">
-                  <MapPin className="w-5 h-5" /> GPS Protocol
+                  <MapPin className="w-5 h-5" /> Require Location
                 </h3>
                 {tuitionLocation ? (
                   <div className="space-y-6">
@@ -717,7 +717,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                   activeSchedules.map(sched => (
                     <div key={sched.id} className="bg-[#f8f9fa] dark:bg-[#111b21] p-5 rounded-2xl border border-transparent hover:border-wa-teal/20 transition-all flex items-center gap-5 group">
                       <div className="w-12 h-12 bg-white dark:bg-[#202c33] rounded-2xl flex flex-col items-center justify-center shadow-inner shrink-0 group-hover:scale-110 transition-transform">
-                        <span className="text-[6px] font-bold text-slate-400  leading-none">PHASE</span>
+                        <span className="text-[6px] font-bold text-slate-400  leading-none">SEMESTER</span>
                         <span className="text-lg font-bold text-wa-teal leading-none">{sched.semester}</span>
                       </div>
                       <div className="min-w-0 flex-1">
@@ -827,8 +827,8 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                       <Search className="w-6 h-6 text-wa-teal" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-bold text-slate-800 dark:text-[#e9edef]  tracking-normal">ARCHIVE RETRIEVAL</h3>
-                      <p className="text-xs font-bold text-slate-400  tracking-normal">Deep Database Query</p>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-[#e9edef]  tracking-normal">Attendance</h3>
+                      <p className="text-xs font-bold text-slate-400  tracking-normal">View past records</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -858,7 +858,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                       className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-6 text-[13px] font-bold transition-all outline-none cursor-pointer text-slate-800 dark:text-[#e9edef]"
                     >
                       <option value="ALL">ALL LEVELS</option>
-                      {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={String(s)}>PHASE {s}</option>)}
+                      {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={String(s)}>SEMESTER {s}</option>)}
                     </select>
                   </div>
                 </div>
@@ -869,7 +869,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                       <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center">
                         <TrendingUp className="w-5 h-5 text-indigo-500" />
                       </div>
-                      <h3 className="text-xl font-bold text-slate-800 dark:text-[#e9edef]  tracking-normal">Attendance KPI</h3>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-[#e9edef]  tracking-normal">Attendance Stats</h3>
                     </div>
                     <span className="px-4 py-2 bg-white dark:bg-[#202c33] border border-slate-100 dark:border-white/5 rounded-full text-xs font-bold text-slate-400  tracking-normal">{getAggregatedHistory().length} Students Present</span>
                   </div>

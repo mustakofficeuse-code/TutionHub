@@ -117,7 +117,7 @@ export default function TeacherView() {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-normal leading-none  italic">Tuition<span className="text-wa-green">Hub</span></h1>
-              <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-white/60 mt-1.5 ml-0.5">Faculty Protocol</p>
+              <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-white/60 mt-1.5 ml-0.5">Faculty Account</p>
             </div>
           </div>
           <div className="flex items-center gap-4">

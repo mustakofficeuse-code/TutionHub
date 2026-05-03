@@ -404,7 +404,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
               <input 
                 type="text" 
-                placeholder="PROBE ARCHIVE BY TITLE, SUBJECT, OR TOPIC..."
+                placeholder="SEARCH MATERIALS BY TITLE, SUBJECT, OR TOPIC..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-16 pr-8 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 rounded-[1.5rem] text-[11px] font-bold  tracking-normal outline-none text-slate-800 dark:text-white transition-all shadow-inner placeholder:text-slate-400"
@@ -522,7 +522,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
 
                   {m.topic && (
                     <div className="bg-[#fcfcfd] dark:bg-[#111b21] p-5 rounded-2xl border border-slate-100 dark:border-white/5">
-                      <p className="text-xs font-bold text-slate-400  tracking-normal mb-1.5">PROBE CONTEXT:</p>
+                      <p className="text-xs font-bold text-slate-400  tracking-normal mb-1.5">DESCRIPTION:</p>
                       <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400 line-clamp-2 italic">{m.topic}</p>
                     </div>
                   )}
@@ -562,9 +562,9 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                 <div>
                   <h3 className="text-3xl font-bold text-slate-800 dark:text-white tracking-normal  italic leading-none">{viewMaterial.title}</h3>
                   <div className="flex gap-4 mt-3">
-                     <span className="text-xs font-bold text-wa-teal  tracking-normal">PROBE: {viewMaterial.subject}</span>
+                     <span className="text-xs font-bold text-wa-teal  tracking-normal">SUBJECT: {viewMaterial.subject}</span>
                      <span className="text-xs font-bold text-slate-300  tracking-normal">•</span>
-                     <span className="text-xs font-bold text-slate-400  tracking-normal">STATUS: VERIFIED_ASSET</span>
+                     <span className="text-xs font-bold text-slate-400  tracking-normal">Status: Uploaded</span>
                   </div>
                 </div>
               </div>
@@ -603,7 +603,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                   <div className="w-28 h-28 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl flex items-center justify-center mx-auto mb-6 sm:mb-10 shadow-inner group transition-transform hover:scale-110">
                     <LinkIcon className="w-12 h-12 text-wa-teal group-hover:rotate-12 transition-transform" />
                   </div>
-                  <h4 className="text-2xl font-bold text-slate-800 dark:text-white  tracking-normal italic mb-4">External Protocol Link</h4>
+                  <h4 className="text-2xl font-bold text-slate-800 dark:text-white  tracking-normal italic mb-4">External Link</h4>
                   <p className="text-[11px] font-bold text-slate-400 mb-8 sm:mb-12  tracking-normal leading-relaxed">
                     This asset resides in an external domain. <br/>Establish a secure handshake to view content.
                   </p>
@@ -641,7 +641,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
               <Trash2 className="w-10 h-10 text-red-600" />
             </div>
             <h3 className="text-2xl font-bold text-slate-800 dark:text-white tracking-normal mb-3 ">PURGE ARCHIVE?</h3>
-            <p className="text-sm font-bold text-slate-400  tracking-normal mb-6 sm:mb-10">This protocol is irreversible. Material will be deleted from the database.</p>
+            <p className="text-sm font-bold text-slate-400  tracking-normal mb-6 sm:mb-10">This action is irreversible. Material will be permanently deleted.</p>
             <div className="space-y-3">
               <button 
                 onClick={() => setDeleteConfirm(null)}

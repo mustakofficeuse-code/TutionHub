@@ -321,7 +321,7 @@ export default function FeeManagement({
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="SCAN ENTITY ID OR NAME..."
+                  placeholder="SEARCH STUDENT ID OR NAME..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-16 pr-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal text-slate-800 dark:text-white transition-all font-bold text-xs  tracking-normal placeholder:text-slate-300"
@@ -501,10 +501,10 @@ export default function FeeManagement({
                           }
                           className="w-full sm:w-auto px-6 py-4 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 outline-none focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-slate-800 dark:text-white appearance-none cursor-pointer"
                         >
-                          <option value="ALL">ALL INTERVALS</option>
+                          <option value="ALL">All Semesters</option>
                           {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
                             <option key={sem} value={String(sem)}>
-                              PHASE {sem}
+                              SEMESTER {sem}
                             </option>
                           ))}
                         </select>
@@ -764,7 +764,7 @@ export default function FeeManagement({
                       ).map((sem) => (
                         <div key={sem} className="space-y-2">
                           <label className="text-xs font-bold text-slate-400  tracking-normal pl-1">
-                            PHASE {sem}
+                            SEMESTER {sem}
                           </label>
                           <div className="relative group">
                             <span className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">
@@ -973,7 +973,7 @@ export default function FeeManagement({
                           <CheckCircle className="w-5 h-5" />
                         </div>
                         <div className="flex-1">
-                          <p className="text-xs font-bold text-[#8696a0]  tracking-normal leading-none">Verified Entity</p>
+                          <p className="text-xs font-bold text-[#8696a0]  tracking-normal leading-none">Verified Student</p>
                           <p className="text-sm font-bold text-slate-800 dark:text-white  tracking-normal mt-1">
                             {paymentStudent.name}
                           </p>
@@ -1133,7 +1133,7 @@ export default function FeeManagement({
               <div>
                 <h3 className="text-3xl font-bold text-slate-800 dark:text-white flex items-center gap-4  tracking-normal italic">
                   <User className="text-wa-teal w-8 h-8" />
-                  Entity Dossier
+                  Student Details
                 </h3>
                 <p className="text-xs font-bold text-slate-400  tracking-normal mt-2 ml-10">Advanced revenue status diagnostics</p>
               </div>
