@@ -117,7 +117,7 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
 
       <div className="max-w-5xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-tight">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-normal">
             <div className="w-12 h-12 bg-wa-teal/10 dark:bg-wa-teal/20 rounded-2xl flex items-center justify-center">
               <TrendingUp className="text-wa-teal w-7 h-7" />
             </div>
@@ -131,22 +131,22 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
             <div className="w-16 h-16 bg-wa-teal/10 rounded-full flex items-center justify-center mx-auto mb-4">
               <Loader2 className="w-8 h-8 text-wa-teal animate-spin" />
             </div>
-            <p className="text-[#8696a0] font-black uppercase tracking-[0.2em] text-[10px]">Analyzing Data...</p>
+            <p className="text-[#8696a0] font-bold  tracking-normal text-xs">Analyzing Data...</p>
           </div>
         ) : (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Stats Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+              <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-wa-teal/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700" />
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-10 h-10 bg-wa-teal/10 rounded-xl flex items-center justify-center text-wa-teal">
                     <Calendar className="w-5 h-5" />
                   </div>
-                  <span className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em]">Attendance Rate</span>
+                  <span className="text-xs font-bold text-[#8696a0]  tracking-normal">Attendance Rate</span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-4xl font-black text-slate-900 dark:text-[#e9edef]">{stats.attendance}</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef]">{stats.attendance}</p>
                   <span className="text-xl font-bold text-[#8696a0]">%</span>
                 </div>
                 <div className="mt-4 h-2 bg-[#f0f2f5] dark:bg-[#111b21] rounded-full overflow-hidden">
@@ -154,16 +154,16 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+              <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-wa-green/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700" />
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-10 h-10 bg-wa-green/10 rounded-xl text-wa-green">
                     <ClipboardList className="w-5 h-5" />
                   </div>
-                  <span className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em]">Assignments Hub</span>
+                  <span className="text-xs font-bold text-[#8696a0]  tracking-normal">Assignments Hub</span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-4xl font-black text-slate-900 dark:text-[#e9edef]">{stats.assignmentRate}</p>
+                  <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef]">{stats.assignmentRate}</p>
                   <span className="text-xl font-bold text-[#8696a0]">%</span>
                 </div>
                 <div className="mt-4 h-2 bg-[#f0f2f5] dark:bg-[#111b21] rounded-full overflow-hidden">
@@ -171,34 +171,34 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+              <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700" />
                 <div className="flex items-center gap-4 mb-6">
                   <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-xl text-purple-600">
                     <Trophy className="w-5 h-5" />
                   </div>
-                  <span className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em]">Fee Clearance</span>
+                  <span className="text-xs font-bold text-[#8696a0]  tracking-normal">Fee Clearance</span>
                 </div>
-                <p className={`text-4xl font-black tracking-tight ${stats.feeStatus === 'Paid' ? 'text-wa-green' : 'text-orange-500'}`}>
+                <p className={`text-3xl sm:text-4xl font-bold tracking-normal ${stats.feeStatus === 'Paid' ? 'text-wa-green' : 'text-orange-500'}`}>
                   {stats.feeStatus}
                 </p>
-                <p className="text-[10px] font-black text-[#8696a0] mt-3 uppercase tracking-widest">Sem {profile.semester} Status</p>
+                <p className="text-xs font-bold text-[#8696a0] mt-3  tracking-normal">Sem {profile.semester} Status</p>
               </div>
             </div>
 
             {/* Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-8">
               {/* Attendance Distribution */}
-              <div className="bg-white dark:bg-[#202c33] p-8 rounded-[3rem] shadow-sm border border-slate-50 dark:border-white/5">
+              <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5">
                 <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-lg font-black text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-tight">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-normal">
                     <PieChartIcon className="w-5 h-5 text-wa-teal" />
                     Attendance Summary
                   </h3>
-                  <span className="text-[10px] font-black text-[#8696a0] uppercase bg-[#f0f2f5] dark:bg-[#111b21] px-3 py-1 rounded-full">Overall</span>
+                  <span className="text-xs font-bold text-[#8696a0]  bg-[#f0f2f5] dark:bg-[#111b21] px-3 py-1 rounded-full">Overall</span>
                 </div>
-                <div className="h-64 w-full flex items-center justify-center relative">
-                  <ResponsiveContainer width="100%" height="100%">
+                <div className="h-64 w-full relative">
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                     <PieChart>
                       <Pie
                         data={[
@@ -227,30 +227,30 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                     </PieChart>
                   </ResponsiveContainer>
                   <div className="absolute flex flex-col items-center">
-                    <span className="text-3xl font-black text-slate-900 dark:text-[#e9edef] tracking-tighter">{stats.attendance}%</span>
-                    <span className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest">Present</span>
+                    <span className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">{stats.attendance}%</span>
+                    <span className="text-xs font-bold text-[#8696a0]  tracking-normal">Present</span>
                   </div>
                 </div>
-                <div className="flex justify-center gap-8 mt-6">
+                <div className="flex justify-center gap-5 sm:gap-8 mt-6">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-wa-teal" />
-                    <span className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest">Present</span>
+                    <span className="text-xs font-bold text-[#8696a0]  tracking-normal">Present</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full bg-[#f0f2f5] dark:bg-[#111b21]" />
-                    <span className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest">Absent</span>
+                    <span className="text-xs font-bold text-[#8696a0]  tracking-normal">Absent</span>
                   </div>
                 </div>
               </div>
 
               {/* Assignment Progress Placeholder or Bar Chart */}
-              <div className="bg-white dark:bg-[#202c33] p-8 rounded-[3rem] shadow-sm border border-slate-50 dark:border-white/5">
+              <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5">
                 <div className="flex items-center justify-between mb-8">
-                  <h3 className="text-lg font-black text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-tight">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-normal">
                     <BarChartIcon className="w-5 h-5 text-wa-green" />
                     Resource Tracking
                   </h3>
-                  <span className="text-[10px] font-black text-[#8696a0] uppercase bg-[#f0f2f5] dark:bg-[#111b21] px-3 py-1 rounded-full">Academic</span>
+                  <span className="text-xs font-bold text-[#8696a0]  bg-[#f0f2f5] dark:bg-[#111b21] px-3 py-1 rounded-full">Academic</span>
                 </div>
                 <div className="h-64 w-full flex items-center justify-center">
                    <div className="text-center space-y-4">
@@ -258,8 +258,8 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                          <BarChartIcon className="w-10 h-10 text-wa-green" />
                       </div>
                       <div>
-                        <p className="text-4xl font-black text-slate-900 dark:text-[#e9edef] tracking-tighter">{stats.assignmentRate}%</p>
-                        <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest mt-1">Content Mastery Rate</p>
+                        <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">{stats.assignmentRate}%</p>
+                        <p className="text-xs font-bold text-[#8696a0]  tracking-normal mt-1">Content Mastery Rate</p>
                       </div>
                    </div>
                 </div>

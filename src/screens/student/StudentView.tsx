@@ -92,8 +92,8 @@ export default function StudentView() {
               <GraduationCap className="text-white w-6 h-6 group-hover:rotate-12 transition-transform" />
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tight leading-none">Tuition<span className="opacity-70">Hub</span></h1>
-              <p className="text-[9px] font-black uppercase tracking-[0.2em] opacity-60 mt-1">Student Protocol</p>
+              <h1 className="text-2xl font-bold tracking-normal leading-none">Tuition<span className="opacity-70">Hub</span></h1>
+              <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 opacity-60 mt-1">Student Protocol</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -103,7 +103,7 @@ export default function StudentView() {
             >
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-wa-green text-[10px] font-black flex items-center justify-center rounded-full text-white ring-4 ring-wa-teal dark:ring-[#202c33] animate-bounce">
+                <span className="absolute -top-1 -right-1 w-5 h-5 bg-wa-green text-xs font-bold flex items-center justify-center rounded-full text-white ring-4 ring-wa-teal dark:ring-[#202c33] animate-bounce">
                   {unreadCount}
                 </span>
               )}
@@ -112,7 +112,7 @@ export default function StudentView() {
                {profile?.avatarUrl ? (
                 <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover rounded-xl" referrerPolicy="no-referrer" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-white font-black text-lg">
+                <div className="w-full h-full flex items-center justify-center text-white font-bold text-lg">
                   {profile?.name?.charAt(0) || 'S'}
                 </div>
               )}
@@ -129,16 +129,16 @@ export default function StudentView() {
               initial={{ x: 400, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: 400, opacity: 0 }}
-              className="w-full sm:w-[450px] h-full sm:h-auto sm:max-h-[85vh] bg-[#f0f2f5] dark:bg-[#111b21] sm:rounded-[3rem] shadow-[0_0_50px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden border border-white/5"
+              className="w-full sm:w-[450px] h-full sm:h-auto sm:max-h-[85vh] bg-[#f0f2f5] dark:bg-[#111b21] sm:rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden border border-white/5"
             >
-              <div className="p-8 bg-wa-teal dark:bg-[#202c33] flex justify-between items-center text-white border-b border-wa-teal/10">
+              <div className="p-5 sm:p-5 sm:p-6 bg-wa-teal dark:bg-[#202c33] flex justify-between items-center text-white border-b border-wa-teal/10">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
                     <Bell className="w-6 h-6" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-black tracking-tight">Bulletin <span className="opacity-70">Feed</span></h3>
-                    <p className="text-[9px] font-black uppercase tracking-widest opacity-60">System Broadcasts</p>
+                    <h3 className="text-xl font-bold tracking-normal">Bulletin <span className="opacity-70">Feed</span></h3>
+                    <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 opacity-60">System Broadcasts</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -168,10 +168,10 @@ export default function StudentView() {
               <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
                 {notifications.length === 0 ? (
                   <div className="py-24 text-center">
-                    <div className="w-20 h-20 bg-[#f0f2f5] dark:bg-slate-800/10 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+                    <div className="w-20 h-20 bg-[#f0f2f5] dark:bg-slate-800/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
                       <Bell className="w-10 h-10 text-[#8696a0]/30" />
                     </div>
-                    <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em]">Void frequency detected</p>
+                    <p className="text-xs font-bold text-[#8696a0]  tracking-normal">Void frequency detected</p>
                   </div>
                 ) : (
                   notifications.map((notif) => (
@@ -180,7 +180,7 @@ export default function StudentView() {
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       key={notif.id} 
-                      className={`p-6 rounded-[2rem] border transition-all cursor-pointer group ${
+                      className={`p-6 rounded-2xl border transition-all cursor-pointer group ${
                         !notif.read 
                           ? 'bg-white dark:bg-[#202c33] border-wa-teal shadow-md' 
                           : 'bg-white/50 dark:bg-slate-800/20 border-transparent hover:bg-white dark:hover:bg-[#202c33]'
@@ -194,15 +194,15 @@ export default function StudentView() {
                       }}
                     >
                       <div className="flex justify-between items-start mb-3">
-                        <h4 className="text-sm font-black text-slate-900 dark:text-[#e9edef] tracking-tight group-hover:text-wa-teal transition-colors">{notif.title}</h4>
+                        <h4 className="text-sm font-bold text-slate-900 dark:text-[#e9edef] tracking-normal group-hover:text-wa-teal transition-colors">{notif.title}</h4>
                         <div className="w-2 h-2 rounded-full bg-wa-teal" />
                       </div>
                       <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-relaxed">
                         {notif.isAnonymous ? notif.message.replace(notif.senderName, 'A student') : notif.message}
                       </p>
                       <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-50 dark:border-white/5">
-                        <p className="text-[9px] font-black text-wa-teal uppercase tracking-widest">{notif.type.replace('_', ' ')}</p>
-                        <p className="text-[9px] font-black text-[#8696a0] uppercase tracking-widest flex items-center gap-1.5">
+                        <p className="text-xs font-bold text-wa-teal  tracking-normal">{notif.type.replace('_', ' ')}</p>
+                        <p className="text-xs font-bold text-[#8696a0]  tracking-normal flex items-center gap-1.5">
                           <Calendar className="w-3 h-3" />
                           {notif.createdAt?.toDate ? notif.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
@@ -247,8 +247,8 @@ export default function StudentView() {
       </div>
 
       {/* Static Footer Navigation */}
-      <footer className="bg-white dark:bg-[#202c33] border-t border-slate-100 dark:border-white/5 px-4 py-4 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-[60]">
-        <div className="max-w-md mx-auto flex justify-between items-center bg-[#f0f2f5] dark:bg-[#111b21] p-2 rounded-[2.5rem] border border-slate-100 dark:border-white/5">
+      <footer className="bg-white dark:bg-[#202c33] border-t border-slate-200 dark:border-white/5 pb-2 pt-1 z-[60]">
+        <div className="w-full flex sm:justify-center bg-white dark:bg-[#202c33] overflow-x-auto no-scrollbar items-center px-2 gap-1 sm:gap-4">
         {TABS.filter(t => !t.hidden).map((tab) => {
           const index = TABS.findIndex(t => t.id === tab.id);
           const isActive = activeTab === index;
@@ -256,29 +256,19 @@ export default function StudentView() {
           <button
             key={tab.id}
             onClick={() => changeTab(index)}
-            className={`flex flex-col items-center justify-center flex-1 h-14 relative group rounded-[2rem] transition-all duration-500 scale-90 ${
+            className={`flex flex-col items-center justify-center min-w-[60px] sm:min-w-[80px] py-1 px-2 relative transition-all duration-300 rounded-xl ${
               isActive 
-                ? 'bg-wa-teal dark:bg-wa-green text-white shadow-lg shadow-wa-teal/30 scale-100' 
-                : 'text-[#8696a0] hover:text-wa-teal hover:bg-wa-teal/5'
+                ? 'text-wa-teal dark:text-wa-green bg-slate-50 dark:bg-slate-800/50' 
+                : 'text-slate-500 dark:text-[#8696a0] hover:text-wa-teal hover:bg-slate-50 dark:hover:bg-slate-800/50'
             }`}
           >
-            <tab.icon className={`w-6 h-6 transition-all ${isActive ? 'scale-110' : 'scale-100'}`} />
+            <tab.icon className={`w-6 h-6 mb-1 ${isActive ? 'fill-wa-teal/20 dark:fill-wa-green/20' : ''}`} />
             
-            {isActive && (
-              <motion.span 
-                layoutId="nav-label-student"
-                className="text-[9px] font-black uppercase tracking-widest mt-1"
-              >
-                {tab.label}
-              </motion.span>
-            )}
-
-            {isActive && (
-              <motion.div 
-                layoutId="nav-indicator-student"
-                className="absolute -top-3 w-1 h-1 bg-wa-teal dark:bg-wa-green rounded-full"
-              />
-            )}
+            <span 
+              className={`text-[10px] font-medium tracking-wide ${isActive ? 'text-wa-teal dark:text-wa-green font-bold' : 'text-slate-500 dark:text-slate-400'}`}
+            >
+              {tab.label}
+            </span>
           </button>
         )})}
         </div>

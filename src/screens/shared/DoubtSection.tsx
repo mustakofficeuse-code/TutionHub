@@ -294,7 +294,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                   <Loader2 className="w-8 h-8 text-wa-teal animate-spin" />
                 </div>
               ) : doubts.length === 0 ? (
-                <div className="p-8 text-center">
+                <div className="p-5 sm:p-5 sm:p-6 text-center">
                   <p className="text-slate-500 text-sm">No doubts posted yet.</p>
                 </div>
               ) : (
@@ -325,7 +325,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                           <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate text-base">
                              {d.isAnonymous ? 'Anonymous Student' : d.studentName}
                           </h3>
-                          <span className="text-[10px] text-slate-500 shrink-0">{new Date(d.createdAt).toLocaleDateString()}</span>
+                          <span className="text-xs text-slate-500 shrink-0">{new Date(d.createdAt).toLocaleDateString()}</span>
                        </div>
                        <div className="flex justify-between items-center">
                           <p className="text-sm text-slate-500 dark:text-[#8696a0] truncate flex-1">{d.title}</p>
@@ -352,7 +352,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         {/* Right Area: Conversation */}
         <div className={`flex-1 flex flex-col bg-[#efeae2] dark:bg-[#0b141a] relative ${!selectedDoubt ? 'hidden md:flex' : 'flex'}`}>
           {!selectedDoubt ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-12 bg-[#f8f9fa] dark:bg-[#222e35] border-b-[6px] border-wa-teal">
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 sm:p-6 sm:p-5 sm:p-6 bg-[#f8f9fa] dark:bg-[#222e35] border-b-[6px] border-wa-teal">
               <div className="w-64 h-64 bg-slate-100 dark:bg-[#222e35] rounded-full flex items-center justify-center mb-8">
                  <GraduationCap className="w-32 h-32 text-slate-300 dark:text-slate-600" />
               </div>
@@ -382,7 +382,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                   <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate">
                     {selectedDoubt.isAnonymous ? 'Anonymous Student' : selectedDoubt.studentName}
                   </h3>
-                  <p className="text-[10px] text-slate-500 dark:text-[#8696a0] truncate">
+                  <p className="text-xs text-slate-500 dark:text-[#8696a0] truncate">
                      {selectedDoubt.subject} • {selectedDoubt.status === 'resolved' ? 'Resolved' : 'Active'}
                   </p>
                 </div>
@@ -400,13 +400,13 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               </div>
 
               {/* Chat Canvas */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-4 custom-scrollbar bg-chat-pattern">
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 sm:p-10 space-y-4 custom-scrollbar bg-chat-pattern">
                  {/* Original Doubt Message as a bubble */}
                  <div className="flex justify-start mb-8">
                     <div className="max-w-[85%] sm:max-w-[70%] bg-white dark:bg-[#202c33] p-4 rounded-xl rounded-tl-none shadow-sm relative">
                        <div className="absolute -left-2 top-0 w-0 h-0 border-[10px] border-transparent border-t-white dark:border-t-[#202c33]"></div>
                        <div className="flex items-center gap-2 mb-2">
-                          <span className="text-[10px] font-bold text-wa-teal dark:text-wa-green uppercase">{selectedDoubt.subject}</span>
+                          <span className="text-xs font-bold text-wa-teal dark:text-wa-green ">{selectedDoubt.subject}</span>
                        </div>
                        <h4 className="font-bold text-slate-900 dark:text-white mb-2">{selectedDoubt.title}</h4>
                        <p className="text-sm text-slate-700 dark:text-[#d1d7db] whitespace-pre-wrap leading-relaxed">{selectedDoubt.content}</p>
@@ -433,7 +433,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                        )}
 
                        <div className="flex justify-end mt-2">
-                          <span className="text-[10px] text-slate-400">{new Date(selectedDoubt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          <span className="text-xs text-slate-400">{new Date(selectedDoubt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                        </div>
                     </div>
                  </div>
@@ -454,7 +454,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                             }`}></div>
 
                             {!isOwn && (
-                               <p className="text-[10px] font-black text-wa-teal dark:text-wa-green mb-1">{r.userName}</p>
+                               <p className="text-xs font-bold text-wa-teal dark:text-wa-green mb-1">{r.userName}</p>
                             )}
 
                             <p className={`text-sm leading-relaxed ${isOwn ? 'text-slate-900 dark:text-[#e9edef]' : 'text-slate-700 dark:text-[#d1d7db]'}`}>
@@ -476,14 +476,14 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                                       className="flex items-center gap-2 p-2 w-full text-left"
                                     >
                                        <Paperclip className="w-5 h-5 opacity-50" />
-                                       <span className="text-[10px] truncate">{r.attachmentName}</span>
+                                       <span className="text-xs truncate font-medium">{r.attachmentName}</span>
                                     </button>
                                   )}
                                </div>
                             )}
 
                             <div className="flex justify-end items-center gap-1 mt-1 opacity-50">
-                               <span className="text-[9px] uppercase">{new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                               <span className="text-xs ">{new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                {isOwn && (
                                  r.status === 'read' ? <CheckCheck className="w-3 h-3 text-blue-500" /> :
                                  r.status === 'delivered' ? <CheckCheck className="w-3 h-3 text-slate-500" /> :
@@ -585,7 +585,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               <form onSubmit={handleAddDoubt} className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                    <div className="col-span-1">
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Subject</label>
+                      <label className="block text-xs font-bold text-slate-400  tracking-normal mb-1 ml-1">Subject</label>
                       <input
                         type="text"
                         required
@@ -596,7 +596,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                       />
                    </div>
                    <div className="col-span-1">
-                      <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Visibility</label>
+                      <label className="block text-xs font-bold text-slate-400  tracking-normal mb-1 ml-1">Visibility</label>
                       <select 
                         className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-wa-teal transition-all"
                         value={visibility}
@@ -618,7 +618,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                    <label htmlFor="anonymous" className="text-xs text-slate-600 dark:text-slate-400">Hide personal details (name, profile picture)</label>
                 </div>
                 <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Title</label>
+                   <label className="block text-xs font-bold text-slate-400  tracking-normal mb-1 ml-1">Title</label>
                    <input
                      type="text"
                      required
@@ -629,7 +629,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                    />
                 </div>
                 <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Explanation</label>
+                   <label className="block text-xs font-bold text-slate-400  tracking-normal mb-1 ml-1">Explanation</label>
                    <textarea
                      rows={4}
                      required
@@ -640,10 +640,10 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                    />
                 </div>
                 <div>
-                   <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Attachment</label>
+                   <label className="block text-xs font-bold text-slate-400  tracking-normal mb-1 ml-1">Attachment</label>
                    <div 
                       {...getRootProps()} 
-                      className={`w-full flex flex-col items-center justify-center gap-2 px-4 py-6 bg-slate-50 dark:bg-[#111b21] border-2 border-dashed ${isDragActive ? 'border-wa-teal bg-wa-teal/5' : 'border-slate-200 dark:border-white/10'} rounded-xl cursor-pointer hover:border-wa-teal transition-all`}
+                      className={`w-full flex flex-col items-center justify-center gap-2 px-4 py-4 sm:py-6 bg-slate-50 dark:bg-[#111b21] border-2 border-dashed ${isDragActive ? 'border-wa-teal bg-wa-teal/5' : 'border-slate-200 dark:border-white/10'} rounded-xl cursor-pointer hover:border-wa-teal transition-all`}
                    >
                       <input {...getInputProps()} />
                       <Paperclip className={`w-8 h-8 ${isDragActive ? 'text-wa-teal' : 'text-slate-400'}`} />
@@ -656,7 +656,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                 <button 
                   type="submit"
                   disabled={submitting}
-                  className="w-full py-4 bg-wa-teal text-white font-black rounded-2xl hover:bg-wa-teal-dark transition-all disabled:opacity-50 shadow-xl overflow-hidden relative"
+                  className="w-full py-4 bg-wa-teal text-white font-bold rounded-2xl hover:bg-wa-teal-dark transition-all disabled:opacity-50 shadow-xl overflow-hidden relative"
                 >
                   {submitting ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : 'Post to Tutor'}
                 </button>

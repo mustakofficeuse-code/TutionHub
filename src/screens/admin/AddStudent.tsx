@@ -145,11 +145,11 @@ export default function AddStudent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-6 md:p-12 pt-12 transition-colors font-sans">
+    <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-6 md:p-6 sm:p-6 sm:p-5 sm:p-6 pt-12 transition-colors font-sans">
       <div className="max-w-xl mx-auto">
         <button 
           onClick={() => navigate('/')}
-          className="flex items-center gap-3 text-[#8696a0] font-black uppercase tracking-widest text-[10px] hover:text-wa-teal transition-all mb-8 group"
+          className="flex items-center gap-3 text-[#8696a0] font-bold  tracking-normal text-xs hover:text-wa-teal transition-all mb-8 group"
         >
           <div className="w-8 h-8 rounded-xl bg-white dark:bg-[#202c33] flex items-center justify-center shadow-sm border border-slate-100 dark:border-white/5 group-hover:scale-110 transition-transform">
             <ArrowLeft className="w-4 h-4" />
@@ -163,20 +163,20 @@ export default function AddStudent() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="bg-white dark:bg-[#202c33] rounded-[3rem] p-10 shadow-sm border border-slate-100 dark:border-white/5"
+              className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-100 dark:border-white/5"
             >
-              <div className="flex items-center gap-6 mb-10">
+              <div className="flex items-center gap-6 mb-6 sm:mb-10">
                 <div className="w-16 h-16 bg-wa-teal/10 rounded-[1.5rem] flex items-center justify-center shadow-inner">
                   <UserPlus className="w-8 h-8 text-wa-teal" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-black text-slate-900 dark:text-[#e9edef] tracking-tight leading-tight">Unit <span className="text-wa-teal">Enrollment</span></h1>
-                  <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest mt-1">Manual system registration</p>
+                  <h1 className="text-2xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal leading-tight">Student <span className="text-wa-teal">Enrollment</span></h1>
+                  <p className="text-xs font-bold text-[#8696a0]  tracking-normal mt-1">Add a new student to the system</p>
                 </div>
               </div>
 
               {error && (
-                <div className="mb-8 p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800 rounded-[2rem] flex items-center gap-4 text-red-600 dark:text-red-400 text-xs font-black uppercase tracking-widest leading-relaxed shadow-inner">
+                <div className="mb-8 p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800 rounded-2xl flex items-center gap-4 text-red-600 dark:text-red-400 text-xs font-bold  tracking-normal leading-relaxed shadow-inner">
                   <div className="w-2.5 h-2.5 bg-red-600 rounded-full animate-ping shrink-0" />
                   {error}
                 </div>
@@ -184,13 +184,13 @@ export default function AddStudent() {
 
               <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="space-y-3">
-                  <label className="block text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] ml-4">Full Identity Name</label>
+                  <label className="block text-xs font-bold text-[#8696a0]  tracking-normal ml-4">Full Name</label>
                   <div className="relative group">
                     <User className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8696a0] group-focus-within:text-wa-teal transition-colors" />
                     <input
                       type="text"
                       required
-                      className="w-full pl-16 pr-6 py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-[2rem] text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all shadow-inner"
+                      className="w-full pl-16 pr-6 py-3 sm:py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-2xl text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all shadow-inner"
                       placeholder="e.g. John Doe"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
@@ -200,13 +200,13 @@ export default function AddStudent() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <label className="block text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] ml-4">Comms Link</label>
+                    <label className="block text-xs font-bold text-[#8696a0]  tracking-normal ml-4">Phone Number</label>
                     <div className="relative group">
                       <Phone className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8696a0] group-focus-within:text-wa-teal transition-colors" />
                       <input
                         type="tel"
                         maxLength={10}
-                        className="w-full pl-16 pr-6 py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-[2rem] text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all shadow-inner"
+                        className="w-full pl-16 pr-6 py-3 sm:py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-2xl text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all shadow-inner"
                         placeholder="e.g. 9876543210"
                         value={phoneNumber}
                         onChange={(e) => {
@@ -217,12 +217,12 @@ export default function AddStudent() {
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <label className="block text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] ml-4">Real-World Mail</label>
+                    <label className="block text-xs font-bold text-[#8696a0]  tracking-normal ml-4">Personal Email</label>
                     <div className="relative group">
                       <Mail className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8696a0] group-focus-within:text-wa-teal transition-colors" />
                       <input
                         type="email"
-                        className="w-full pl-16 pr-6 py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-[2rem] text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all shadow-inner"
+                        className="w-full pl-16 pr-6 py-3 sm:py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-2xl text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all shadow-inner"
                         placeholder="e.g. student@gmail.com"
                         value={realEmail}
                         onChange={(e) => setRealEmail(e.target.value)}
@@ -233,12 +233,12 @@ export default function AddStudent() {
 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <label className="block text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] ml-4">Sector</label>
+                    <label className="block text-xs font-bold text-[#8696a0]  tracking-normal ml-4">Department</label>
                     <div className="relative group">
                       <GraduationCap className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8696a0] group-focus-within:text-wa-teal transition-colors" />
                       <select
                         required
-                        className="w-full pl-16 pr-8 py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-[2rem] text-sm font-bold text-slate-900 dark:text-white outline-none appearance-none transition-all shadow-inner uppercase tracking-wider"
+                        className="w-full pl-16 pr-8 py-3 sm:py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-2xl text-sm font-bold text-slate-900 dark:text-white outline-none appearance-none transition-all shadow-inner  tracking-normal"
                         value={department}
                         onChange={(e) => setDepartment(e.target.value)}
                       >
@@ -249,12 +249,12 @@ export default function AddStudent() {
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <label className="block text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] ml-4">Phase</label>
+                    <label className="block text-xs font-bold text-[#8696a0]  tracking-normal ml-4">Semester</label>
                     <div className="relative group">
                       <BookOpen className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8696a0] group-focus-within:text-wa-teal transition-colors" />
                       <select
                         required
-                        className="w-full pl-16 pr-8 py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-[2rem] text-sm font-bold text-slate-900 dark:text-white outline-none appearance-none transition-all shadow-inner uppercase tracking-wider"
+                        className="w-full pl-16 pr-8 py-3 sm:py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-2xl text-sm font-bold text-slate-900 dark:text-white outline-none appearance-none transition-all shadow-inner  tracking-normal"
                         value={semester}
                         onChange={(e) => setSemester(e.target.value)}
                       >
@@ -267,14 +267,14 @@ export default function AddStudent() {
                 </div>
 
                 <div className="space-y-3">
-                  <label className="block text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] ml-4">Access Secret</label>
+                  <label className="block text-xs font-bold text-[#8696a0]  tracking-normal ml-4">Password</label>
                   <div className="relative group">
                     <Lock className="absolute left-6 top-1/2 -translate-y-1/2 w-5 h-5 text-[#8696a0] group-focus-within:text-wa-teal transition-colors" />
                     <input
                       type={showPassword ? "text" : "password"}
                       required
                       minLength={6}
-                      className="w-full pl-16 pr-16 py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-[2rem] text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all shadow-inner"
+                      className="w-full pl-16 pr-16 py-3 sm:py-5 bg-[#f0f2f5] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/20 rounded-2xl text-sm font-semibold text-slate-900 dark:text-white outline-none transition-all shadow-inner"
                       placeholder="Min 6 characters"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -287,18 +287,18 @@ export default function AddStudent() {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
-                  <p className="mt-2 text-[9px] font-black uppercase tracking-widest text-[#8696a0] text-center italic">Primary authentication key for first sync</p>
+                  <p className="mt-2 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-[#8696a0] text-center italic">Default password for logging in</p>
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full py-5 bg-wa-teal hover:bg-wa-teal-dark text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-[2rem] transition-all shadow-xl shadow-wa-teal/30 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                  className="w-full py-3 sm:py-5 bg-wa-teal hover:bg-wa-teal-dark text-white font-bold text-xs  tracking-normal rounded-2xl transition-all shadow-xl shadow-wa-teal/30 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
                 >
                   {loading ? <Loader2 className="w-6 h-6 animate-spin" /> : (
                     <>
                       <CheckCircle className="w-5 h-5" />
-                      Initialize Identity
+                      Add Student
                     </>
                   )}
                 </button>
@@ -308,22 +308,22 @@ export default function AddStudent() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white dark:bg-[#202c33] rounded-[3rem] p-12 shadow-sm border border-slate-100 dark:border-white/5 text-center"
+              className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-6 sm:p-5 sm:p-6 shadow-sm border border-slate-100 dark:border-white/5 text-center"
             >
-              <div className="w-24 h-24 bg-wa-green/10 rounded-[2rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
+              <div className="w-24 h-24 bg-wa-green/10 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner">
                 <CheckCircle className="w-12 h-12 text-wa-green" />
               </div>
-              <h2 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] mb-3 tracking-tight">Sync <span className="text-wa-green">Success</span></h2>
-              <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest mb-10 leading-relaxed max-w-xs mx-auto">New entity established. Transmit following credentials securely.</p>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] mb-3 tracking-normal">Registration <span className="text-wa-green">Success</span></h2>
+              <p className="text-xs font-bold text-[#8696a0]  tracking-normal mb-6 sm:mb-10 leading-relaxed max-w-xs mx-auto">New student registered. Share these credentials securely.</p>
 
-              <div className="bg-[#f0f2f5] dark:bg-[#111b21] p-10 rounded-[2.5rem] border border-slate-100 dark:border-white/5 mb-10 space-y-8 relative overflow-hidden group">
+              <div className="bg-[#f0f2f5] dark:bg-[#111b21] p-6 sm:p-10 rounded-2xl border border-slate-100 dark:border-white/5 mb-6 sm:mb-10 space-y-8 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-5 translate-x-4 -translate-y-4 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform">
                     <Shield className="w-20 h-20 text-wa-teal" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.3em] mb-4">Master Identity ID</p>
+                  <p className="text-xs font-bold text-[#8696a0]  tracking-normal mb-4">Student ID</p>
                   <div className="flex items-center justify-center gap-4">
-                    <span className="text-5xl font-black text-wa-teal dark:text-wa-green tracking-tighter leading-none">
+                    <span className="text-3xl sm:text-4xl sm:text-5xl font-bold text-wa-teal dark:text-wa-green tracking-normal leading-none">
                       {success.studentId}
                     </span>
                     <button 
@@ -336,12 +336,12 @@ export default function AddStudent() {
                 </div>
                 
                 <div className="pt-8 border-t border-slate-200 dark:border-white/5">
-                  <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.3em] mb-4">Passcode</p>
-                  <p className="text-2xl font-black text-slate-900 dark:text-[#e9edef] tracking-tight">{password}</p>
+                  <p className="text-xs font-bold text-[#8696a0]  tracking-normal mb-4">Password</p>
+                  <p className="text-2xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">{password}</p>
                 </div>
 
                 <div className="pt-2">
-                  <p className="text-[9px] font-black text-wa-teal uppercase tracking-[0.2em] leading-relaxed italic opacity-80">Credentials are ready for deployment</p>
+                  <p className="text-xs font-bold text-wa-teal  tracking-normal leading-relaxed italic opacity-80">Credentials are ready to share</p>
                 </div>
               </div>
 
@@ -354,13 +354,13 @@ export default function AddStudent() {
                     setRealEmail('');
                     setPassword('');
                   }}
-                  className="w-full py-5 bg-wa-teal hover:bg-wa-teal-dark text-white font-black text-[10px] uppercase tracking-[0.2em] rounded-2xl transition-all shadow-lg shadow-wa-teal/20 active:scale-95"
+                  className="w-full py-3 sm:py-5 bg-wa-teal hover:bg-wa-teal-dark text-white font-bold text-xs  tracking-normal rounded-2xl transition-all shadow-lg shadow-wa-teal/20 active:scale-95"
                 >
-                  Register Next Entity
+                  Register Another Student
                 </button>
                 <button
                   onClick={() => navigate('/')}
-                  className="w-full py-5 text-[#8696a0] font-black text-[10px] uppercase tracking-widest hover:bg-[#f0f2f5] dark:hover:bg-slate-800 rounded-2xl transition-all"
+                  className="w-full py-3 sm:py-5 text-[#8696a0] font-bold text-xs  tracking-normal hover:bg-[#f0f2f5] dark:hover:bg-slate-800 rounded-2xl transition-all"
                 >
                   Return to Dashboard
                 </button>

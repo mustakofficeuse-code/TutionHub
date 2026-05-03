@@ -348,7 +348,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                         className="absolute inset-0 bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white"
                       >
                         <Camera className="w-6 h-6 mb-1" />
-                        <span className="text-[10px] font-bold">Upload Photo</span>
+                        <span className="text-xs font-bold">Upload Photo</span>
                       </button>
                       <input 
                         type="file"
@@ -364,10 +364,10 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
             </div>
           </div>
 
-          <div className="pt-16 p-8">
+          <div className="pt-16 p-5 sm:p-5 sm:p-6">
             {isEditing && (
               <div className="mb-0">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-3">Profile Picture Settings</label>
+                <label className="text-xs font-bold text-slate-400  tracking-normal block mb-3">Profile Picture Settings</label>
                 <div className="flex flex-wrap gap-2 mb-4">
                   <button 
                     type="button"
@@ -381,21 +381,21 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                   <button 
                     type="button"
                     onClick={() => randomizeAvatar('notionists')}
-                    className="px-3 py-2 bg-white dark:bg-[#111b21] border border-slate-200 dark:border-white/5 rounded-xl text-[10px] font-bold text-slate-600 dark:text-[#8696a0] hover:border-wa-teal transition-all flex items-center gap-2"
+                    className="px-3 py-2 bg-white dark:bg-[#111b21] border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold text-slate-600 dark:text-[#8696a0] hover:border-wa-teal transition-all flex items-center gap-2"
                   >
                     Minimalist
                   </button>
                   <button 
                     type="button"
                     onClick={() => randomizeAvatar('initials')}
-                    className="px-3 py-2 bg-white dark:bg-[#111b21] border border-slate-200 dark:border-white/5 rounded-xl text-[10px] font-bold text-slate-600 dark:text-[#8696a0] hover:border-wa-teal transition-all flex items-center gap-2"
+                    className="px-3 py-2 bg-white dark:bg-[#111b21] border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold text-slate-600 dark:text-[#8696a0] hover:border-wa-teal transition-all flex items-center gap-2"
                   >
                     Initials
                   </button>
                   <button 
                     type="button"
                     onClick={() => randomizeAvatar('shapes')}
-                    className="px-3 py-2 bg-white dark:bg-[#111b21] border border-slate-200 dark:border-white/5 rounded-xl text-[10px] font-bold text-slate-600 dark:text-[#8696a0] hover:border-wa-teal transition-all flex items-center gap-2"
+                    className="px-3 py-2 bg-white dark:bg-[#111b21] border border-slate-200 dark:border-white/5 rounded-xl text-xs font-bold text-slate-600 dark:text-[#8696a0] hover:border-wa-teal transition-all flex items-center gap-2"
                   >
                     Geometric
                   </button>
@@ -409,7 +409,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                     onChange={(e) => setAvatarUrl(e.target.value)}
                   />
                 </div>
-                <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500 italic">Pro-tip: PNG or JPG works best for profile photos.</p>
+                <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 italic">Pro-tip: PNG or JPG works best for profile photos.</p>
               </div>
             )}
 
@@ -457,7 +457,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                 {profile?.role === 'student' && profile?.studentId && (
                   <div className="bg-wa-teal/5 dark:bg-wa-teal/10 px-4 py-2 rounded-xl border border-wa-teal/10 flex items-center gap-3">
                     <div>
-                      <p className="text-[10px] uppercase font-bold text-wa-teal dark:text-wa-green">Student ID</p>
+                      <p className="text-xs  font-bold text-wa-teal dark:text-wa-green">Student ID</p>
                       <p className="font-mono font-bold text-slate-900 dark:text-white">{profile.studentId}</p>
                     </div>
                     <button onClick={copyStudentId} className="text-wa-teal dark:text-wa-green hover:bg-wa-teal/10 p-1.5 rounded-lg transition-colors">
@@ -511,7 +511,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                       if (val.length <= 10) setPhoneNumber(val);
                     }}
                   />
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">
                     {phoneNumber.length}/10 digits
                   </p>
                 </div>
@@ -528,7 +528,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                     value={realEmail}
                     onChange={(e) => setRealEmail(e.target.value)}
                   />
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                  <p className="text-xs text-slate-400 dark:text-slate-500">
                     This is your personal contact email.
                   </p>
                 </div>
@@ -549,7 +549,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                       {[1,2,3,4,5,6].map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                     {profile?.role === 'student' && !!profile?.semester && (
-                      <p className="text-[10px] text-wa-teal dark:text-wa-green font-bold flex items-center gap-1 mt-1">
+                      <p className="text-xs text-wa-teal dark:text-wa-green font-bold flex items-center gap-1 mt-1">
                         <Lock className="w-3 h-3" /> Locked. Contact teacher to change.
                       </p>
                     )}
@@ -561,18 +561,18 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                     </label>
                     <input 
                       type="text" 
-                      className="w-full px-4 py-3 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-wa-teal outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed uppercase"
+                      className="w-full px-4 py-3 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-wa-teal outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed "
                       placeholder="e.g. BCA, MCA, B.Tech"
                       value={courseId}
                       onChange={(e) => setCourseId(e.target.value.toUpperCase())}
                       disabled={!isEditing || (profile?.role === 'student' && (!!profile?.courseId || !!profile?.department || !!profile?.courseName))}
                     />
                     {profile?.role === 'student' && (!!profile?.courseId || !!profile?.department || !!profile?.courseName) ? (
-                      <p className="text-[10px] text-wa-teal dark:text-wa-green font-bold flex items-center gap-1 mt-1">
+                      <p className="text-xs text-wa-teal dark:text-wa-green font-bold flex items-center gap-1 mt-1">
                         <Lock className="w-3 h-3" /> Locked. Contact teacher to change.
                       </p>
                     ) : (
-                      <p className="text-[10px] text-slate-400 dark:text-[#8696a0]">Update your Department (e.g. "bca") if it says "legacy"</p>
+                      <p className="text-xs text-slate-400 dark:text-[#8696a0]">Update your Department (e.g. "bca") if it says "legacy"</p>
                     )}
                     </div>
                   </>
@@ -691,7 +691,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                   Share this code with your students so they can access TutionHub.
                 </p>
                 <div className="flex items-center gap-4">
-                  <div className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-lg font-mono font-bold text-slate-900 dark:text-white tracking-widest text-center">
+                  <div className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-lg font-mono font-bold text-slate-900 dark:text-white tracking-normal text-center">
                     {inviteCode || 'Loading...'}
                   </div>
                   <button

@@ -110,13 +110,13 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#111b21] p-4 sm:p-10 pb-32">
+    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#111b21] p-4 sm:p-6 sm:p-10 pb-32">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sm:mb-12">
           {!isEmbedded && (
             <button 
               onClick={() => navigate('/')}
-              className="w-fit flex items-center gap-3 text-[11px] font-black text-slate-500 dark:text-slate-400 hover:text-wa-teal transition-all uppercase tracking-[0.3em] bg-white dark:bg-[#202c33] px-6 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5"
+              className="w-fit flex items-center gap-3 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-wa-teal transition-all  tracking-normal bg-white dark:bg-[#202c33] px-6 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5"
             >
               <ArrowLeft className="w-4 h-4" /> REVERT TO TERMINAL
             </button>
@@ -125,12 +125,12 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
           <div className={`${isEmbedded ? '' : 'flex-1'}`}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-2 h-2 bg-wa-teal rounded-full animate-pulse" />
-              <span className="text-[11px] font-black text-wa-teal uppercase tracking-[0.4em]">Live Intelligence Feed</span>
+              <span className="text-xs font-bold text-wa-teal  tracking-normal">Live Intelligence Feed</span>
             </div>
-            <h1 className="text-4xl sm:text-5xl font-black text-slate-800 dark:text-white tracking-tighter uppercase leading-none italic">
+            <h1 className="text-3xl sm:text-4xl sm:text-3xl sm:text-4xl sm:text-5xl font-bold text-slate-800 dark:text-white tracking-normal  leading-none italic">
               OPS ANALYTICS
             </h1>
-            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em] mt-4 ml-1">Real-time performance metrics & system diagnostics</p>
+            <p className="text-xs font-bold text-slate-400  tracking-normal mt-4 ml-1">Real-time performance metrics & system diagnostics</p>
           </div>
         </div>
 
@@ -142,84 +142,84 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                 <div className="w-2 h-2 bg-wa-teal rounded-full animate-ping" />
               </div>
             </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] mt-8">Decrypting Data Stream...</p>
+            <p className="text-xs font-bold text-slate-400  tracking-[0.5em] mt-8">Decrypting Data Stream...</p>
           </div>
         ) : (
           <div className="space-y-10 animate-in fade-in slide-in-from-bottom-6 duration-700">
             {/* Stats Overview */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-white dark:bg-[#202c33] p-10 rounded-[3rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-wa-teal/5 rounded-bl-[5rem] -mr-10 -mt-10 transition-transform group-hover:scale-110" />
+              <div className="bg-white dark:bg-[#202c33] p-6 sm:p-10 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-wa-teal/5 rounded-bl-[5rem] -mr-10 -mt-6 sm:mt-10 transition-transform group-hover:scale-110" />
                 <div className="flex items-center gap-5 mb-8 relative z-10">
                   <div className="w-14 h-14 bg-wa-teal/10 dark:bg-wa-teal/20 rounded-2xl flex items-center justify-center">
                     <Users2 className="w-7 h-7 text-wa-teal" />
                   </div>
-                  <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.3em]">Population Matrix</span>
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal">Population Matrix</span>
                 </div>
                 <div className="relative z-10">
-                  <p className="text-6xl font-black text-slate-800 dark:text-white tracking-tighter italic leading-none">{overallStats.totalStudents}</p>
-                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mt-4">TOTAL ACTIVE ENTITIES</p>
+                  <p className="text-3xl sm:text-6xl font-bold text-slate-800 dark:text-white tracking-normal italic leading-none">{overallStats.totalStudents}</p>
+                  <p className="text-xs font-bold text-slate-400  tracking-normal mt-4">TOTAL STUDENTS</p>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-[#202c33] p-10 rounded-[3rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-wa-green/5 rounded-bl-[5rem] -mr-10 -mt-10 transition-transform group-hover:scale-110" />
+              <div className="bg-white dark:bg-[#202c33] p-6 sm:p-10 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-wa-green/5 rounded-bl-[5rem] -mr-10 -mt-6 sm:mt-10 transition-transform group-hover:scale-110" />
                 <div className="flex items-center gap-5 mb-8 relative z-10">
                   <div className="w-14 h-14 bg-wa-green/10 dark:bg-wa-green/20 rounded-2xl flex items-center justify-center">
                     <Calendar className="w-7 h-7 text-wa-green" />
                   </div>
-                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Protocol Adherence</span>
+                  <span className="text-xs font-bold text-slate-400  tracking-normal">Protocol Adherence</span>
                 </div>
                 <div className="relative z-10">
                   <div className="flex items-end gap-3">
-                    <p className="text-6xl font-black text-slate-800 dark:text-white tracking-tighter italic">{overallStats.avgAttendance}%</p>
+                    <p className="text-3xl sm:text-6xl font-bold text-slate-800 dark:text-white tracking-normal italic">{overallStats.avgAttendance}%</p>
                     <div className="mb-2 w-3 h-3 bg-wa-green rounded-full animate-pulse" />
                   </div>
                   <div className="mt-6 h-2 bg-slate-100 dark:bg-[#111b21] rounded-full overflow-hidden">
                     <div className="h-full bg-wa-green shadow-[0_0_15px_rgba(37,211,102,0.5)] transition-all duration-1000" style={{ width: `${overallStats.avgAttendance}%` }} />
                   </div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-5">SYSTEM ATTENDANCE VECTOR</p>
+                  <p className="text-xs font-bold text-slate-400  tracking-normal mt-5">SYSTEM ATTENDANCE VECTOR</p>
                 </div>
               </div>
 
-              <div className="bg-white dark:bg-[#202c33] p-10 rounded-[3rem] shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 relative overflow-hidden group">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-bl-[5rem] -mr-10 -mt-10 transition-transform group-hover:scale-110" />
+              <div className="bg-white dark:bg-[#202c33] p-6 sm:p-10 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-bl-[5rem] -mr-10 -mt-6 sm:mt-10 transition-transform group-hover:scale-110" />
                 <div className="flex items-center gap-5 mb-8 relative z-10">
                   <div className="w-14 h-14 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-2xl flex items-center justify-center">
                     <CreditCard className="w-7 h-7 text-indigo-500" />
                   </div>
-                  <span className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-[0.3em]">Revenue Stream</span>
+                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal">Revenue Stream</span>
                 </div>
                 <div className="relative z-10">
-                  <p className="text-6xl font-black text-slate-800 dark:text-white tracking-tighter italic leading-none">₹{overallStats.feeCollection.toLocaleString()}</p>
-                  <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] mt-4">TOTAL REVENUE OPTIMIZED</p>
+                  <p className="text-3xl sm:text-6xl font-bold text-slate-800 dark:text-white tracking-normal italic leading-none">₹{overallStats.feeCollection.toLocaleString()}</p>
+                  <p className="text-xs font-bold text-slate-400  tracking-normal mt-4">TOTAL REVENUE OPTIMIZED</p>
                 </div>
               </div>
             </div>
 
             {/* Charts Section */}
-            <div className="bg-white dark:bg-[#202c33] p-8 sm:p-12 rounded-[4rem] shadow-2xl shadow-slate-200/40 dark:shadow-none border border-slate-100 dark:border-white/5 relative overflow-hidden">
+            <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 sm:p-6 sm:p-6 sm:p-5 sm:p-6 rounded-3xl shadow-2xl shadow-slate-200/40 dark:shadow-none border border-slate-100 dark:border-white/5 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-wa-teal via-indigo-500 to-wa-green" />
               
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-12">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-8 sm:mb-12">
                 <div>
-                  <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight flex items-center gap-4 uppercase leading-none">
+                  <h3 className="text-2xl font-bold text-slate-800 dark:text-white tracking-normal flex items-center gap-4  leading-none">
                     <BarChartIcon className="w-6 h-6 text-wa-teal" />
-                    Sector-Wise Vectors
+                    Department Students
                   </h3>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-3 ml-1">Departmental performance distribution analytics</p>
+                  <p className="text-xs font-bold text-slate-400  tracking-normal mt-3 ml-1">Departmental performance distribution analytics</p>
                 </div>
                 
                 <div className="flex gap-2">
                   <div className="px-4 py-2 bg-[#f8f9fa] dark:bg-[#111b21] rounded-xl border border-slate-100 dark:border-white/5 flex items-center gap-2">
                     <div className="w-2 h-2 bg-wa-teal rounded-full" />
-                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">Attendance %</span>
+                    <span className="text-xs font-bold text-slate-400  tracking-normal leading-none">Attendance %</span>
                   </div>
                 </div>
               </div>
 
-              <div className="h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
+              <div className="h-[400px] w-full relative">
+                <ResponsiveContainer width="100%" height="100%" minWidth={0}>
                   <BarChart data={courseStats} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                     <defs>
                       <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
@@ -251,8 +251,8 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                         backgroundColor: '#111b21',
                         padding: '20px'
                       }}
-                      itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em' }}
-                      labelStyle={{ color: '#128c7e', fontSize: '10px', fontWeight: 900, marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.2em' }}
+                      itemStyle={{ color: '#fff', fontSize: '12px', fontWeight: 900, textTransform: '', letterSpacing: '0.1em' }}
+                      labelStyle={{ color: '#128c7e', fontSize: '10px', fontWeight: 900, marginBottom: '8px', textTransform: '', letterSpacing: '0.2em' }}
                     />
                     <Bar 
                       dataKey="attendance" 

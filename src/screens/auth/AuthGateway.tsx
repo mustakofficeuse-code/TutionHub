@@ -571,7 +571,7 @@ export default function AuthGateway() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-8 border border-slate-100 dark:border-slate-800">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-5 sm:p-5 sm:p-6 border border-slate-100 dark:border-slate-800">
         {view === "teacher-setup" && (
           <>
             <div className="text-center mb-8">
@@ -955,7 +955,7 @@ export default function AuthGateway() {
                   <input
                     type="text"
                     required
-                    className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none uppercase"
+                    className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none "
                     value={studentInviteCode}
                     onChange={(e) =>
                       setStudentInviteCode(e.target.value.toUpperCase())
@@ -1005,7 +1005,7 @@ export default function AuthGateway() {
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
                 Your unique Student ID is:
               </p>
-              <p className="text-4xl font-black text-blue-600 dark:text-blue-400 tracking-wider">
+              <p className="text-3xl sm:text-4xl font-bold text-blue-600 dark:text-blue-400 tracking-normal">
                 {generatedId}
               </p>
               <p className="text-xs text-red-500 font-bold mt-4">

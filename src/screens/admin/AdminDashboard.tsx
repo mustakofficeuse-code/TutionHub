@@ -196,8 +196,8 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                 <Shield className="text-white w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-2xl font-black text-slate-900 dark:text-[#e9edef] leading-tight tracking-tight">Access <span className="text-wa-teal">Control</span></h1>
-                <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest">Root Authority</p>
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-[#e9edef] leading-tight tracking-normal">Access <span className="text-wa-teal">Control</span></h1>
+                <p className="text-xs font-bold text-[#8696a0]  tracking-normal">Root Authority</p>
               </div>
             </div>
           </div>
@@ -210,8 +210,8 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
             </button>
             <div className="flex items-center gap-4 pl-4 border-l border-slate-100 dark:border-white/5">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-black text-slate-900 dark:text-[#e9edef] tracking-tight">{profile?.name}</p>
-                <p className="text-[9px] font-black text-wa-teal uppercase tracking-widest leading-none mt-1">System Core</p>
+                <p className="text-sm font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">{profile?.name}</p>
+                <p className="text-xs font-bold text-wa-teal  tracking-normal leading-none mt-1">System Core</p>
               </div>
               <div 
                 onClick={() => {
@@ -223,7 +223,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                 {profile?.avatarUrl ? (
                   <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover rounded-xl group-hover:rotate-3 transition-transform" referrerPolicy="no-referrer" />
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center text-wa-teal font-black text-xl">
+                  <div className="w-full h-full flex items-center justify-center text-wa-teal font-bold text-xl">
                     {profile?.name?.charAt(0) || 'A'}
                   </div>
                 )}
@@ -233,10 +233,10 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
         </nav>
       )}
 
-      <main className="max-w-7xl mx-auto p-8 space-y-8">
+      <main className="max-w-7xl mx-auto p-5 sm:p-5 sm:p-6 space-y-8">
         {/* Admin Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+          <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
               <Users className="w-16 h-16 text-wa-teal" />
             </div>
@@ -244,12 +244,12 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
               <div className="w-12 h-12 bg-wa-teal/10 rounded-2xl flex items-center justify-center text-wa-teal">
                 <Users className="w-6 h-6" />
               </div>
-              <h3 className="text-xs font-black text-[#8696a0] uppercase tracking-widest">Total Entities</h3>
+              <h3 className="text-xs font-bold text-[#8696a0]  tracking-normal">Total Students</h3>
             </div>
-            <p className="text-4xl font-black text-slate-900 dark:text-[#e9edef] tracking-tighter relative z-10">{users.length}</p>
+            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal relative z-10">{users.length}</p>
           </div>
           
-          <div className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+          <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
               <UserCheck className="w-16 h-16 text-wa-green" />
             </div>
@@ -257,14 +257,14 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
               <div className="w-12 h-12 bg-wa-green/10 rounded-2xl flex items-center justify-center text-wa-green">
                 <UserCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-xs font-black text-[#8696a0] uppercase tracking-widest">Master Units</h3>
+              <h3 className="text-xs font-bold text-[#8696a0]  tracking-normal">Teachers</h3>
             </div>
-            <p className="text-4xl font-black text-slate-900 dark:text-[#e9edef] tracking-tighter relative z-10">
+            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal relative z-10">
               {users.filter(u => u.role === 'teacher').length}
             </p>
           </div>
 
-          <div className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+          <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
              <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
               <UserX className="w-16 h-16 text-orange-500" />
             </div>
@@ -272,46 +272,46 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
               <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center text-orange-600 dark:text-orange-400">
                 <UserX className="w-6 h-6" />
               </div>
-              <h3 className="text-xs font-black text-[#8696a0] uppercase tracking-widest">Suspended</h3>
+              <h3 className="text-xs font-bold text-[#8696a0]  tracking-normal">Suspended</h3>
             </div>
-            <p className="text-4xl font-black text-slate-900 dark:text-[#e9edef] tracking-tighter relative z-10">{blacklistDocs.length}</p>
+            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal relative z-10">{blacklistDocs.length}</p>
           </div>
 
-          <div className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+          <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center text-red-600 dark:text-red-400">
                 <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="text-xs font-black text-[#8696a0] uppercase tracking-widest">Protocol Null</h3>
+              <h3 className="text-xs font-bold text-[#8696a0]  tracking-normal">Danger Zone</h3>
             </div>
             <button
               onClick={() => setShowResetConfirm(true)}
-              className="w-full py-4 bg-red-500 hover:bg-red-600 text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all shadow-lg shadow-red-500/20 active:scale-95"
+              className="w-full py-4 bg-red-500 hover:bg-red-600 text-white rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all shadow-lg shadow-red-500/20 active:scale-95"
             >
-              Factory Wipe
+              Factory Reset
             </button>
           </div>
         </div>
 
         {/* Blocks List Section - MOVED HERE */}
-        <div className="bg-white dark:bg-[#202c33] rounded-[3.5rem] shadow-sm border border-slate-50 dark:border-white/5 overflow-hidden">
-          <div className="p-10 border-b border-slate-50 dark:border-white/5 flex justify-between items-center bg-[#f0f2f5]/50 dark:bg-slate-800/10">
+        <div className="bg-white dark:bg-[#202c33] rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 overflow-hidden">
+          <div className="p-6 sm:p-10 border-b border-slate-50 dark:border-white/5 flex justify-between items-center bg-[#f0f2f5]/50 dark:bg-slate-800/10">
             <div>
-              <h2 className="text-xl font-black text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-tight">
-                <UserX className="w-6 h-6 text-red-500" /> Containment Sector
+              <h2 className="text-xl font-bold text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-normal">
+                <UserX className="w-6 h-6 text-red-500" /> Blacklist / Suspended
               </h2>
-              <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest mt-2">Active suspensions & perimeter blocks</p>
+              <p className="text-xs font-bold text-[#8696a0]  tracking-normal mt-2">Manage Suspended Users</p>
             </div>
           </div>
-          <div className="p-10">
+          <div className="p-6 sm:p-10">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {blacklistDocs.length === 0 ? (
-                <div className="col-span-full text-center py-20 border-2 border-dashed border-slate-50 dark:border-white/5 rounded-[3rem]">
-                  <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em]">Zero containment breaches detected</p>
+                <div className="col-span-full text-center py-20 border-2 border-dashed border-slate-50 dark:border-white/5 rounded-3xl">
+                  <p className="text-xs font-bold text-[#8696a0]  tracking-normal">No suspended users found</p>
                 </div>
               ) : (
                 blacklistDocs.map((user) => (
-                  <div key={user.id} className="group flex flex-col sm:flex-row items-center justify-between p-8 rounded-[2.5rem] border bg-red-50/10 dark:bg-red-900/5 border-red-100/50 dark:border-red-900/20 gap-6 transition-all hover:bg-red-50/20 dark:hover:bg-red-900/10">
+                  <div key={user.id} className="group flex flex-col sm:flex-row items-center justify-between p-5 sm:p-5 sm:p-6 rounded-2xl border bg-red-50/10 dark:bg-red-900/5 border-red-100/50 dark:border-red-900/20 gap-6 transition-all hover:bg-red-50/20 dark:hover:bg-red-900/10">
                     <div className="flex items-center gap-6">
                       <motion.button 
                         layoutId={`avatar-${user.id}`}
@@ -333,15 +333,15 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                       </motion.button>
                       <div>
                         <div className="flex flex-wrap items-center gap-3">
-                          <p className="text-lg font-black text-slate-900 dark:text-[#e9edef] tracking-tight">{user.name}</p>
-                          <span className="px-3 py-1 rounded-full text-[9px] font-black bg-white dark:bg-slate-800 text-[#8696a0] uppercase tracking-widest border border-slate-100 dark:border-white/10 shadow-sm">
+                          <p className="text-lg font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">{user.name}</p>
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-white dark:bg-slate-800 text-[#8696a0]  tracking-normal border border-slate-100 dark:border-white/10 shadow-sm">
                             {user.role}
                           </span>
                         </div>
                         <div className="mt-2 space-y-1">
-                          <p className="text-[10px] text-[#8696a0] font-black uppercase tracking-widest">ID: {user.email}</p>
+                          <p className="text-xs text-[#8696a0] font-bold  tracking-normal">ID: {user.email}</p>
                           {user.phoneNumber && (
-                            <div className="flex items-center gap-2 text-wa-teal font-black text-[10px] uppercase tracking-widest leading-none">
+                            <div className="flex items-center gap-2 text-wa-teal font-bold text-xs  tracking-normal leading-none">
                               <Phone className="w-3 h-3" /> {user.phoneNumber}
                             </div>
                           )}
@@ -352,14 +352,14 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                       <button 
                         onClick={() => setUserToUnblock(user)}
                         className="w-12 h-12 bg-wa-green/10 text-wa-green rounded-2xl border border-wa-green/20 hover:bg-wa-green hover:text-white transition-all flex items-center justify-center shadow-lg shadow-wa-green/10 active:scale-90"
-                        title="Restore Entity"
+                        title="Unblock User"
                       >
                         <UserCheck className="w-5 h-5" />
                       </button>
                       <button 
                         onClick={() => setUserToDelete(user)}
                         className="w-12 h-12 bg-red-500 text-white rounded-2xl hover:bg-red-600 transition-all flex items-center justify-center shadow-lg shadow-red-500/20 active:scale-90"
-                        title="Purge Remnant"
+                        title="Delete User"
                       >
                         <Trash2 className="w-5 h-5" />
                       </button>
@@ -372,25 +372,25 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
         </div>
 
         {/* User Management Table */}
-        <div className="bg-white dark:bg-[#202c33] rounded-[3.5rem] shadow-sm border border-slate-50 dark:border-white/5 overflow-hidden">
-          <div className="p-10 border-b border-slate-50 dark:border-white/5 flex flex-col lg:flex-row justify-between items-center gap-8 bg-[#f0f2f5]/50 dark:bg-slate-800/10">
+        <div className="bg-white dark:bg-[#202c33] rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 overflow-hidden">
+          <div className="p-6 sm:p-10 border-b border-slate-50 dark:border-white/5 flex flex-col lg:flex-row justify-between items-center gap-5 sm:gap-8 bg-[#f0f2f5]/50 dark:bg-slate-800/10">
             <div>
-              <h2 className="text-xl font-black text-slate-900 dark:text-[#e9edef] tracking-tight">Identity Register</h2>
-              <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest mt-2">All authenticated system entities</p>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">User Register</h2>
+              <p className="text-xs font-bold text-[#8696a0]  tracking-normal mt-2">All authenticated system users</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
               <button 
                 onClick={() => navigate('/admin/students/add')}
-                className="bg-wa-teal hover:bg-wa-teal-dark text-white px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all shadow-lg shadow-wa-teal/20 active:scale-95"
+                className="bg-wa-teal hover:bg-wa-teal-dark text-white px-5 sm:px-8 py-4 rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 flex items-center justify-center gap-3 transition-all shadow-lg shadow-wa-teal/20 active:scale-95"
               >
-                <UserPlus className="w-4 h-4" /> Enroll Unit
+                <UserPlus className="w-4 h-4" /> Add Student
               </button>
               <div className="relative w-full sm:w-80 group">
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-[#8696a0] w-4 h-4 group-focus-within:text-wa-teal transition-colors" />
                 <input 
                   type="text" 
-                  placeholder="SEARCH SYSTEM..."
-                  className="w-full pl-12 pr-6 py-4 bg-white dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest text-slate-900 dark:text-[#e9edef] focus:ring-2 focus:ring-wa-teal outline-none transition-all shadow-sm"
+                  placeholder="SEARCH..."
+                  className="w-full pl-12 pr-6 py-4 bg-white dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-slate-900 dark:text-[#e9edef] focus:ring-2 focus:ring-wa-teal outline-none transition-all shadow-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -398,35 +398,34 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
+          <div className="w-full overflow-x-auto"><table className="w-full min-w-max text-left">
               <thead>
-                <tr className="bg-[#f0f2f5]/30 dark:bg-slate-800/20 text-[#8696a0] text-[9px] font-black uppercase tracking-[0.3em]">
-                  <th className="px-10 py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Subject Entity</th>
-                  <th className="px-10 py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Classification</th>
-                  <th className="px-10 py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Sector / Phase</th>
-                  <th className="px-10 py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Comms Channel</th>
-                  <th className="px-10 py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Sync Date</th>
-                  <th className="px-10 py-6 text-right border-b border-slate-50 dark:border-white/5 text-nowrap">Actions</th>
+                <tr className="bg-[#f0f2f5]/30 dark:bg-slate-800/20 text-[#8696a0] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">
+                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">User Name</th>
+                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Role</th>
+                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Department / Semester</th>
+                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Comms Channel</th>
+                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Sync Date</th>
+                  <th className="px-6 sm:px-10 py-4 sm:py-6 text-right border-b border-slate-50 dark:border-white/5 text-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-white/5">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-10 py-20 text-center">
+                    <td colSpan={6} className="px-6 sm:px-10 py-20 text-center">
                       <Loader2 className="w-12 h-12 text-wa-teal animate-spin mx-auto" />
                     </td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-10 py-20 text-center">
-                      <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest leading-relaxed">No entities match your query parameters</p>
+                    <td colSpan={6} className="px-6 sm:px-10 py-20 text-center">
+                      <p className="text-xs font-bold text-[#8696a0]  tracking-normal leading-relaxed">No users match your query parameters</p>
                     </td>
                   </tr>
                 ) : (
                   filteredUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10 transition-colors group">
-                      <td className="px-10 py-6">
+                      <td className="px-6 sm:px-10 py-4 sm:py-6 whitespace-nowrap">
                         <div className="flex items-center gap-6">
                           <motion.button 
                             layoutId={`avatar-${user.id}`}
@@ -447,17 +446,17 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                             )}
                           </motion.button>
                           <div className="min-w-0">
-                            <p className="text-lg font-black text-slate-900 dark:text-[#e9edef] tracking-tight truncate leading-tight">
+                            <p className="text-lg font-bold text-slate-900 dark:text-[#e9edef] tracking-normal truncate leading-tight">
                               {user.name}
                             </p>
-                            <p className="text-[10px] font-black text-wa-teal uppercase tracking-widest truncate mt-0.5 opacity-80">
+                            <p className="text-xs font-bold text-wa-teal  tracking-normal truncate mt-0.5 opacity-80">
                               {user.realEmail || user.email}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-10 py-6">
-                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                      <td className="px-6 sm:px-10 py-4 sm:py-6 whitespace-nowrap">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 ${
                           user.role === 'admin' 
                             ? 'bg-wa-teal/10 text-wa-teal border border-wa-teal/20' 
                             : user.role === 'teacher'
@@ -467,45 +466,45 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                           {user.role}
                         </span>
                       </td>
-                      <td className="px-10 py-6 text-nowrap">
+                      <td className="px-6 sm:px-10 py-4 sm:py-6 text-nowrap">
                         {user.role === 'student' ? (
                           <div className="flex flex-col gap-0.5">
-                            <p className="text-sm font-black text-slate-700 dark:text-[#e9edef] uppercase tracking-tight">{user.department || user.courseName || user.courseId || '-'}</p>
-                            <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest">Sem {user.semester || '-'}</p>
+                            <p className="text-sm font-bold text-slate-700 dark:text-[#e9edef]  tracking-normal">{user.department || user.courseName || user.courseId || '-'}</p>
+                            <p className="text-xs font-bold text-[#8696a0]  tracking-normal">Sem {user.semester || '-'}</p>
                           </div>
                         ) : (
-                          <span className="text-slate-200 dark:text-slate-800 tracking-widest">---</span>
+                          <span className="text-slate-200 dark:text-slate-800 tracking-normal">---</span>
                         )}
                       </td>
-                      <td className="px-10 py-6 text-nowrap">
+                      <td className="px-6 sm:px-10 py-4 sm:py-6 text-nowrap">
                         {user.phoneNumber ? (
                           <a 
                             href={`tel:${user.phoneNumber}`}
-                            className="flex items-center gap-2 text-wa-teal dark:text-wa-green hover:underline font-black text-[11px] uppercase tracking-widest"
+                            className="flex items-center gap-2 text-wa-teal dark:text-wa-green hover:underline font-bold text-[11px]  tracking-normal"
                           >
                             <Phone className="w-3.5 h-3.5 shrink-0" />
                             {user.phoneNumber}
                           </a>
                         ) : (
-                          <p className="text-[#8696a0]/40 text-[9px] font-black uppercase tracking-widest">Offline</p>
+                          <p className="text-[#8696a0]/40 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Offline</p>
                         )}
                       </td>
-                      <td className="px-10 py-6 text-[11px] text-[#8696a0] font-black uppercase tracking-widest whitespace-nowrap">
+                      <td className="px-6 sm:px-10 py-4 sm:py-6 text-[11px] text-[#8696a0] font-bold  tracking-normal whitespace-nowrap">
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
-                      <td className="px-10 py-6 text-right whitespace-nowrap">
+                      <td className="px-6 sm:px-10 py-4 sm:py-6 text-right whitespace-nowrap">
                         <div className="flex items-center justify-end gap-3 translate-x-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition-all">
                            <button
                             onClick={() => setUserToBlock(user)}
                             className="w-10 h-10 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition-all flex items-center justify-center shadow-lg shadow-orange-500/20 active:scale-90"
-                            title="Suspend Entity"
+                            title="Suspend User"
                           >
                             <UserX className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => setUserToDelete(user)}
                             className="w-10 h-10 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all flex items-center justify-center shadow-lg shadow-red-500/20 active:scale-90"
-                            title="Total Removal"
+                            title="Delete User"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -515,8 +514,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                   ))
                 )}
               </tbody>
-            </table>
-          </div>
+            </table></div>
         </div>
 
       </main>
@@ -538,27 +536,27 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
       {/* Delete Confirmation Modal */}
       {userToDelete && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xl flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-[3rem] p-12 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
-            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-[2rem] flex items-center justify-center mb-8 mx-auto shadow-inner">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
+            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-inner">
               <Trash2 className="w-10 h-10 text-red-500" />
             </div>
-            <h3 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] tracking-tight mb-4">Purge Entity?</h3>
-            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-10">
-              Are you sure you want to permanently delete <span className="text-slate-900 dark:text-[#e9edef] font-black">{userToDelete.name}</span>? This action bypasses all recovery protocols.
+            <h3 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal mb-4">Delete User?</h3>
+            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-6 sm:mb-10">
+              Are you sure you want to permanently delete <span className="text-slate-900 dark:text-[#e9edef] font-bold">{userToDelete.name}</span>? This action cannot be undone.
             </p>
             <div className="flex flex-col gap-3">
               <button 
                 onClick={deleteUser}
                 disabled={isDeleting}
-                className="w-full py-4 bg-red-500 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                className="w-full py-4 bg-red-500 text-white font-bold  tracking-normal text-xs rounded-2xl hover:bg-red-600 transition-all shadow-lg shadow-red-500/20 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
               >
-                {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirm Deletion'}
+                {isDeleting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Delete User'}
               </button>
               <button 
                 onClick={() => setUserToDelete(null)}
-                className="w-full py-4 text-[#8696a0] font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all"
+                className="w-full py-4 text-[#8696a0] font-bold  tracking-normal text-xs hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all"
               >
-                Abort Protocol
+                Cancel
               </button>
             </div>
           </div>
@@ -568,13 +566,13 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
       {/* Block Confirmation Modal */}
       {userToBlock && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xl flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-[3rem] p-12 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
-            <div className="w-20 h-20 bg-orange-50 dark:bg-orange-900/20 rounded-[2rem] flex items-center justify-center mb-8 mx-auto shadow-inner">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
+            <div className="w-20 h-20 bg-orange-50 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-inner">
               <UserX className="w-10 h-10 text-orange-500" />
             </div>
-            <h3 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] tracking-tight mb-4">Suspend Access?</h3>
-            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-10">
-              Restrict <span className="text-slate-900 dark:text-[#e9edef] font-black">{userToBlock.name}</span> within the system boundaries? Authentication will be instantly revoked.
+            <h3 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal mb-4">Suspend User?</h3>
+            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-6 sm:mb-10">
+              Suspend <span className="text-slate-900 dark:text-[#e9edef] font-bold">{userToBlock.name}</span>? They will no longer be able to log in.
             </p>
             <div className="flex flex-col gap-3">
               <button
@@ -582,15 +580,15 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                   toggleBlock(userToBlock, false);
                   setUserToBlock(null);
                 }}
-                className="w-full py-4 bg-orange-500 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 active:scale-95"
+                className="w-full py-4 bg-orange-500 text-white font-bold  tracking-normal text-xs rounded-2xl hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20 active:scale-95"
               >
-                Initiate Suspension
+                Suspend User
               </button>
               <button
                 onClick={() => setUserToBlock(null)}
-                className="w-full py-4 text-[#8696a0] font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all"
+                className="w-full py-4 text-[#8696a0] font-bold  tracking-normal text-xs hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all"
               >
-                Revoke Command
+                Cancel
               </button>
             </div>
           </div>
@@ -600,13 +598,13 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
       {/* Unblock Confirmation Modal */}
       {userToUnblock && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xl flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-[3rem] p-12 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
-            <div className="w-20 h-20 bg-wa-green/10 rounded-[2rem] flex items-center justify-center mb-8 mx-auto shadow-inner">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
+            <div className="w-20 h-20 bg-wa-green/10 rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-inner">
               <UserCheck className="w-10 h-10 text-wa-green" />
             </div>
-            <h3 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] tracking-tight mb-4">Restore Presence?</h3>
-            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-10">
-              Lift the perimeter restrictions for <span className="text-slate-900 dark:text-[#e9edef] font-black">{userToUnblock.name}</span>? Authentication privilege will be reactivated.
+            <h3 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal mb-4">Unblock User?</h3>
+            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-6 sm:mb-10">
+              Unblock <span className="text-slate-900 dark:text-[#e9edef] font-bold">{userToUnblock.name}</span>? They will be able to log in again.
             </p>
             <div className="flex flex-col gap-3">
               <button
@@ -614,15 +612,15 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                   await toggleBlock(userToUnblock, true);
                   setUserToUnblock(null);
                 }}
-                className="w-full py-4 bg-wa-green text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl hover:bg-wa-green-dark transition-all shadow-lg shadow-wa-green/20 active:scale-95"
+                className="w-full py-4 bg-wa-green text-white font-bold  tracking-normal text-xs rounded-2xl hover:bg-wa-green-dark transition-all shadow-lg shadow-wa-green/20 active:scale-95"
               >
-                Permit Access
+                Unblock User
               </button>
               <button
                 onClick={() => setUserToUnblock(null)}
-                className="w-full py-4 text-[#8696a0] font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all"
+                className="w-full py-4 text-[#8696a0] font-bold  tracking-normal text-xs hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all"
               >
-                Keep Blocked
+                Cancel
               </button>
             </div>
           </div>
@@ -641,7 +639,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="relative max-w-xl w-full aspect-square rounded-[3rem] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10"
+              className="relative max-w-xl w-full aspect-square rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10"
               onClick={(e) => e.stopPropagation()}
             >
               <motion.img 
@@ -665,27 +663,27 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
       {/* Factory Reset Modal */}
       {showResetConfirm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xl flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-[3rem] p-12 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
-            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/40 rounded-[2rem] flex items-center justify-center mb-8 mx-auto shadow-inner">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
+            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/40 rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-inner">
               <Trash2 className="w-10 h-10 text-red-600" />
             </div>
-            <h3 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] tracking-tight mb-4">FACTORY RESET?</h3>
-            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-10">
-              WARNING: This will irreversibly delete ALL users, teachers, payments, assignments, and config from Firebase. The system will revert to zero state.
+            <h3 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal mb-4">FACTORY RESET?</h3>
+            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-6 sm:mb-10">
+              WARNING: This will irreversibly delete ALL users, teachers, payments, assignments, and config from Firebase. The system will be empty.
             </p>
             <div className="flex flex-col gap-3">
               <button 
                 onClick={handleFactoryReset}
                 disabled={isResetting}
-                className="w-full py-4 bg-red-600 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-2xl hover:bg-red-700 transition-all shadow-lg shadow-red-600/20 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
+                className="w-full py-4 bg-red-600 text-white font-bold  tracking-normal text-xs rounded-2xl hover:bg-red-700 transition-all shadow-lg shadow-red-600/20 flex items-center justify-center gap-3 active:scale-95 disabled:opacity-50"
               >
-                {isResetting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirm Total Wipe'}
+                {isResetting ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Confirm Reset'}
               </button>
               <button 
                 onClick={() => setShowResetConfirm(false)}
-                className="w-full py-4 text-[#8696a0] font-black uppercase tracking-widest text-[10px] hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all"
+                className="w-full py-4 text-[#8696a0] font-bold  tracking-normal text-xs hover:bg-slate-50 dark:hover:bg-slate-800 rounded-2xl transition-all"
               >
-                Abort Reset
+                Cancel
               </button>
             </div>
           </div>

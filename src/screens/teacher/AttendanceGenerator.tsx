@@ -404,28 +404,28 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
   };
 
   return (
-    <div className={`min-h-screen ${isEmbedded ? '' : 'bg-[#f0f2f5] dark:bg-[#111b21] p-4 sm:p-8'} transition-colors font-sans print:p-0 print:bg-white`}>
+    <div className={`min-h-screen ${isEmbedded ? '' : 'bg-[#f0f2f5] dark:bg-[#111b21] p-4 sm:p-5 sm:p-5 sm:p-6'} transition-colors font-sans print:p-0 print:bg-white`}>
       <div className="max-w-7xl mx-auto print:max-w-none">
         {!isEmbedded && (
           <button 
             onClick={() => navigate('/')}
-            className="mb-8 flex items-center gap-3 text-slate-500 dark:text-slate-400 font-black hover:text-wa-teal transition-all uppercase tracking-[0.2em] text-[11px] group"
+            className="mb-8 flex items-center gap-3 text-slate-500 dark:text-slate-400 font-bold hover:text-wa-teal transition-all  tracking-normal text-xs group"
           >
             <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#202c33] flex items-center justify-center shadow-sm group-hover:bg-wa-teal group-hover:text-white transition-all border border-slate-100 dark:border-white/5 shrink-0">
               <ArrowLeft className="w-4 h-4" />
             </div>
-            Back to Command Center
+            Back to Dashboard
           </button>
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-8 items-start">
           
           {/* LEFT: Scheduling & Static QR */}
           <div className="lg:col-span-4 space-y-8 print:col-span-12 print:space-y-0">
             
             {/* The Wall QR Code (Static) */}
             <div 
-              className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-white/5 text-center group cursor-pointer relative overflow-hidden print:shadow-none print:border-0 print:p-0" 
+              className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 text-center group cursor-pointer relative overflow-hidden print:shadow-none print:border-0 print:p-0" 
               onClick={handlePrint}
               role="button"
               tabIndex={0}
@@ -436,88 +436,88 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                 <div className="w-16 h-16 bg-wa-teal rounded-[1.25rem] flex items-center justify-center mb-5 shadow-lg shadow-wa-teal/20 dark:shadow-none animate-pulse print:hidden shrink-0">
                   <QrCode className="text-white w-8 h-8" />
                 </div>
-                <h2 className="text-3xl font-black text-slate-800 dark:text-[#e9edef] tracking-tight uppercase italic leading-none">STATION QR</h2>
-                <p className="text-[11px] font-black text-wa-teal uppercase tracking-[0.4em] mt-3 print:text-black">Permanent Access Node</p>
+                <h2 className="text-3xl font-bold text-slate-800 dark:text-[#e9edef] tracking-normal  italic leading-none">ATTENDANCE QR</h2>
+                <p className="text-xs font-bold text-wa-teal  tracking-normal mt-3 print:text-black">Scan to Login</p>
               </div>
               
-              <div className="bg-[#f8f9fa] dark:bg-[#111b21] p-8 rounded-[2rem] inline-block border-2 border-slate-50 dark:border-white/5 mb-8 group-hover:border-wa-teal/30 transition-all print:border-slate-200 print:bg-white relative">
+              <div className="bg-[#f8f9fa] dark:bg-[#111b21] p-5 sm:p-5 sm:p-6 rounded-2xl inline-block border-2 border-slate-50 dark:border-white/5 mb-8 group-hover:border-wa-teal/30 transition-all print:border-slate-200 print:bg-white relative">
                 <QRCodeSVG value={STATIC_QR_VALUE} size={240} level="H" includeMargin={true} className="mx-auto max-w-full h-auto" />
                 
                 {activeSchedules.filter(isScheduleActive).length > 0 && (
-                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-wa-green text-white px-8 py-2.5 rounded-full text-xs font-black uppercase tracking-widest shadow-xl shadow-wa-green/20 dark:shadow-none whitespace-nowrap animate-bounce">
-                     Uplink Active
+                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-wa-green text-white px-5 sm:px-8 py-2.5 rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 shadow-xl shadow-wa-green/20 dark:shadow-none whitespace-nowrap animate-bounce">
+                     LIVE
                   </div>
                 )}
               </div>
               
-              <div className="space-y-4 mb-10">
+              <div className="space-y-4 mb-6 sm:mb-10">
                 {activeSchedules.filter(isScheduleActive).length > 0 ? (
                   activeSchedules.filter(isScheduleActive).map(sched => (
                     <div key={sched.id} className="p-5 bg-wa-teal/5 dark:bg-wa-teal/10 rounded-[1.5rem] border border-wa-teal/10 animate-in fade-in duration-500">
-                      <p className="text-[10px] font-black text-wa-teal uppercase tracking-widest mb-1.5">Current Transmission</p>
-                      <p className="text-base font-black text-slate-800 dark:text-[#e9edef] leading-tight">{sched.subject || 'Standard Class'}</p>
-                      <p className="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-2">{sched.department} • LEVEL {sched.semester}</p>
+                      <p className="text-xs font-bold text-wa-teal  tracking-normal mb-1.5">Live Class</p>
+                      <p className="text-base font-bold text-slate-800 dark:text-[#e9edef] leading-tight">{sched.subject || 'Standard Class'}</p>
+                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mt-2">{sched.department} • SEMESTER {sched.semester}</p>
                     </div>
                   ))
                 ) : (
                   <div className="p-6 bg-slate-50 dark:bg-[#111b21] rounded-[1.5rem] border border-dashed border-slate-200 dark:border-white/5 opacity-60">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest leading-none">Standby Mode</p>
-                    <p className="text-[10px] font-bold text-slate-400 mt-2">Frequency Inactive</p>
+                    <p className="text-xs font-bold text-slate-400  tracking-normal leading-none">Standby</p>
+                    <p className="text-xs font-bold text-slate-400 mt-2">QR Code Inactive</p>
                   </div>
                 )}
               </div>
               
               <button 
                 onClick={handlePrint}
-                className="w-full text-xs font-black text-wa-teal hover:text-white transition-all uppercase tracking-[0.3em] flex items-center justify-center gap-3 print:hidden bg-wa-teal/10 py-5 rounded-[1.5rem] hover:bg-wa-teal shadow-inner"
+                className="w-full text-xs font-bold text-wa-teal hover:text-white transition-all  tracking-normal flex items-center justify-center gap-3 print:hidden bg-wa-teal/10 py-3 sm:py-5 rounded-[1.5rem] hover:bg-wa-teal shadow-inner"
               >
-                <RefreshCw className="w-4 h-4" /> Initialize Print Sequence
+                <RefreshCw className="w-4 h-4" /> Print Options
               </button>
             </div>
 
             {/* Set New Schedule */}
-            <div className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-white/5 print:hidden">
+            <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 print:hidden">
               <div className="flex items-center gap-4 mb-8">
                 <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center">
                   <Calendar className="text-indigo-500 w-6 h-6" />
                 </div>
                 <div>
-                   <h3 className="text-lg font-black text-slate-800 dark:text-[#e9edef] tracking-tight">Mission Brief</h3>
-                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Schedule Uplink</p>
+                   <h3 className="text-lg font-bold text-slate-800 dark:text-[#e9edef] tracking-normal">Set Schedule</h3>
+                   <p className="text-xs font-bold text-slate-400  tracking-normal">Create an attendance window</p>
                 </div>
               </div>
               
               <div className="space-y-6">
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2.5 ml-1">Subject / Objective</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal block mb-2.5 ml-1">Subject / Objective</label>
                     <input 
                       type="text" 
                       placeholder="e.g. Data Structures"
                       value={newSchedule.subject}
                       onChange={(e) => setNewSchedule({...newSchedule, subject: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl py-5 px-6 text-base font-black transition-all outline-none text-slate-800 dark:text-[#e9edef] uppercase tracking-wide placeholder:text-slate-300"
+                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl py-3 sm:py-5 px-6 text-base font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]  tracking-wide placeholder:text-slate-300"
                     />
                   </div>
                   <div>
-                    <label className="text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-widest block mb-2.5 ml-1">Current Topic</label>
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal block mb-2.5 ml-1">Current Topic</label>
                     <input 
                       type="text" 
                       placeholder="e.g. Hash Tables"
                       value={newSchedule.topic}
                       onChange={(e) => setNewSchedule({...newSchedule, topic: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl py-5 px-6 text-base font-black transition-all outline-none text-slate-800 dark:text-[#e9edef] uppercase tracking-wide placeholder:text-slate-300"
+                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl py-3 sm:py-5 px-6 text-base font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]  tracking-wide placeholder:text-slate-300"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Sector (Dept)</label>
+                    <label className="text-xs font-bold text-slate-400  tracking-normal block mb-2 ml-1">Department</label>
                     <select 
                       value={newSchedule.department}
                       onChange={(e) => setNewSchedule({...newSchedule, department: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-black transition-all outline-none text-slate-800 dark:text-[#e9edef]"
+                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]"
                     >
                       {departments.length > 0 ? (
                         departments.map(dept => (
@@ -530,13 +530,13 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                     </select>
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Level (Sem)</label>
+                    <label className="text-xs font-bold text-slate-400  tracking-normal block mb-2 ml-1">Semester</label>
                     <select 
                       value={newSchedule.semester}
                       onChange={(e) => setNewSchedule({...newSchedule, semester: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-black transition-all outline-none text-slate-800 dark:text-[#e9edef]"
+                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]"
                     >
-                      {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={String(s)}>Phase {s}</option>)}
+                      {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={String(s)}>SEMESTER {s}</option>)}
                       <option value="ALL">GLOBAL</option>
                     </select>
                   </div>
@@ -544,7 +544,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Window Size</label>
+                    <label className="text-xs font-bold text-slate-400  tracking-normal block mb-2 ml-1">Window Size</label>
                     <select 
                       onChange={(e) => {
                         const val = e.target.value;
@@ -555,7 +555,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                         const end = calculateEndTime(currentStart, parseInt(val));
                         setNewSchedule({...newSchedule, startTime: currentStart, endTime: end});
                       }}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-black transition-all outline-none text-slate-800 dark:text-[#e9edef]"
+                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]"
                     >
                       <option value="">MANUAL</option>
                       <option value="30">30 MINS</option>
@@ -569,7 +569,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                       <input 
                         type="number"
                         placeholder="MINS"
-                        className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-wa-teal/30 rounded-2xl py-4 px-5 text-sm font-black outline-none"
+                        className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-wa-teal/30 rounded-2xl py-4 px-5 text-sm font-bold outline-none"
                         onChange={(e) => {
                           const mins = e.target.value;
                           if (mins) {
@@ -585,39 +585,39 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">Start T-Minus</label>
+                    <label className="text-xs font-bold text-slate-400  tracking-normal block mb-2 ml-1">Start T-Minus</label>
                     <input 
                       type="time"
                       value={newSchedule.startTime}
                       onChange={(e) => setNewSchedule({...newSchedule, startTime: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-black transition-all outline-none text-slate-800 dark:text-[#e9edef]"
+                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 ml-1">End T-Plus</label>
+                    <label className="text-xs font-bold text-slate-400  tracking-normal block mb-2 ml-1">End T-Plus</label>
                     <input 
                       type="time"
                       value={newSchedule.endTime}
                       onChange={(e) => setNewSchedule({...newSchedule, endTime: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-black transition-all outline-none text-slate-800 dark:text-[#e9edef]"
+                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                   <button 
+                    <button 
                     onClick={() => setNewSchedule({...newSchedule, requireGPS: !newSchedule.requireGPS})}
-                    className={`h-14 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 border-2 ${newSchedule.requireGPS ? 'bg-wa-teal border-wa-teal text-white shadow-lg shadow-wa-teal/20' : 'bg-[#f8f9fa] border-slate-100 text-slate-400 dark:bg-[#111b21] dark:border-white/5'}`}
+                    className={`h-14 rounded-2xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all flex items-center justify-center gap-2 border-2 ${newSchedule.requireGPS ? 'bg-wa-teal border-wa-teal text-white shadow-lg shadow-wa-teal/20' : 'bg-[#f8f9fa] border-slate-100 text-slate-400 dark:bg-[#111b21] dark:border-white/5'}`}
                   >
                     <MapPin className="w-3.5 h-3.5" />
-                    GPS {newSchedule.requireGPS ? 'CONNECTED' : 'DISABLED'}
+                    GPS {newSchedule.requireGPS ? 'REQUIRED' : 'NOT REQUIRED'}
                   </button>
                   <div className="relative group">
                     <input 
                       type="date"
                       value={newSchedule.date}
                       onChange={(e) => setNewSchedule({...newSchedule, date: e.target.value})}
-                      className="w-full h-14 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent rounded-2xl px-5 text-sm font-black outline-none"
+                      className="w-full h-14 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent rounded-2xl px-5 text-sm font-bold outline-none"
                     />
                   </div>
                 </div>
@@ -625,45 +625,45 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                 {saveStatus.type && (
                   <div className={`p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${saveStatus.type === 'success' ? 'bg-wa-green/10 text-wa-green border border-wa-green/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
                     {saveStatus.type === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
-                    <p className="text-[10px] font-black uppercase leading-tight tracking-widest">{saveStatus.message}</p>
+                    <p className="text-xs font-bold  leading-tight tracking-normal">{saveStatus.message}</p>
                   </div>
                 )}
 
                 <button 
                   onClick={createSchedule}
                   disabled={saving}
-                  className="w-full py-5 bg-wa-teal hover:bg-wa-teal/90 text-white rounded-[1.5rem] font-black shadow-xl shadow-wa-teal/20 dark:shadow-none transition-all flex items-center justify-center gap-2 transform active:scale-95 group mt-2"
+                  className="w-full py-3 sm:py-5 bg-wa-teal hover:bg-wa-teal/90 text-white rounded-[1.5rem] font-bold shadow-xl shadow-wa-teal/20 dark:shadow-none transition-all flex items-center justify-center gap-2 transform active:scale-95 group mt-2"
                 >
-                  {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <div className="flex items-center gap-2"><Clock className="w-6 h-6 group-hover:rotate-12 transition-transform" /> START TRANSMISSION</div>}
+                  {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <div className="flex items-center gap-2"><Clock className="w-6 h-6 group-hover:rotate-12 transition-transform" /> Start Session</div>}
                 </button>
               </div>
             </div>
 
             {/* GPS Anchor */}
-            <div className="bg-[#111b21] text-white p-8 rounded-[2.5rem] shadow-xl overflow-hidden relative group print:hidden">
+            <div className="bg-[#111b21] text-white p-5 sm:p-5 sm:p-6 rounded-2xl shadow-xl overflow-hidden relative group print:hidden">
               <div className="absolute top-0 right-0 w-48 h-48 bg-wa-teal/10 blur-3xl -mr-24 -mt-24 group-hover:bg-wa-teal/20 transition-all"></div>
               <div className="relative z-10">
-                <h3 className="font-black mb-6 flex items-center gap-3 text-sm uppercase tracking-[0.2em] text-wa-teal">
+                <h3 className="font-bold mb-6 flex items-center gap-3 text-sm  tracking-normal text-wa-teal">
                   <MapPin className="w-5 h-5" /> GPS Protocol
                 </h3>
                 {tuitionLocation ? (
                   <div className="space-y-6">
                     <div className="p-5 bg-white/5 rounded-2xl backdrop-blur-md border border-white/5 space-y-2">
                        <div>
-                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">LATITUDE ACCURACY</p>
+                        <p className="text-[8px] font-bold text-slate-500  tracking-normal mb-1">LATITUDE ACCURACY</p>
                         <p className="text-xs font-mono text-wa-teal">{tuitionLocation.lat.toFixed(8)}</p>
                        </div>
                        <div>
-                        <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">LONGITUDE ACCURACY</p>
+                        <p className="text-[8px] font-bold text-slate-500  tracking-normal mb-1">LONGITUDE ACCURACY</p>
                         <p className="text-xs font-mono text-wa-teal">{tuitionLocation.lng.toFixed(8)}</p>
                        </div>
                     </div>
-                    <button onClick={updateLocation} className="w-full py-4 text-[10px] font-black text-wa-teal hover:text-white transition-all uppercase tracking-[0.3em] flex items-center justify-center gap-2 border border-wa-teal/20 rounded-xl hover:bg-wa-teal/10">
+                    <button onClick={updateLocation} className="w-full py-4 text-xs font-bold text-wa-teal hover:text-white transition-all  tracking-normal flex items-center justify-center gap-2 border border-wa-teal/20 rounded-xl hover:bg-wa-teal/10">
                       <RefreshCw className="w-3.5 h-3.5" /> Re-Calibrate Anchor
                     </button>
                   </div>
                 ) : (
-                  <button onClick={updateLocation} className="w-full py-4 bg-wa-teal text-white rounded-xl font-black text-xs uppercase tracking-widest">Initialize Node</button>
+                  <button onClick={updateLocation} className="w-full py-4 bg-wa-teal text-white rounded-xl font-bold text-xs  tracking-normal">Initialize Node</button>
                 )}
               </div>
             </div>
@@ -673,37 +673,37 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
           <div className="lg:col-span-8 space-y-8 print:hidden">
             
             {/* Tab Selection */}
-              <div className="flex bg-[#f8f9fa] dark:bg-[#111b21] p-2 rounded-[1.75rem] border border-slate-100 dark:border-white/5 shadow-inner relative z-20">
+              <div className="flex bg-[#f8f9fa] dark:bg-[#111b21] p-2 rounded-xl border border-slate-100 dark:border-white/5 shadow-inner relative z-20">
                 <button 
                   onClick={() => setActiveTab('monitor')}
-                  className={`flex-1 py-5 rounded-[1.25rem] text-[11px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${activeTab === 'monitor' ? 'bg-wa-teal text-white shadow-xl shadow-wa-teal/20 dark:shadow-none' : 'text-slate-500 dark:text-slate-400 hover:text-wa-teal'}`}
+                  className={`flex-1 py-3 sm:py-5 rounded-[1.25rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all flex items-center justify-center gap-3 ${activeTab === 'monitor' ? 'bg-wa-teal text-white shadow-xl shadow-wa-teal/20 dark:shadow-none' : 'text-slate-500 dark:text-slate-400 hover:text-wa-teal'}`}
                 >
                   <Activity className="w-4 h-4" /> LIVE MONITOR
                 </button>
                 <button 
                   onClick={() => setActiveTab('history')}
-                  className={`flex-1 py-5 rounded-[1.25rem] text-[11px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 ${activeTab === 'history' ? 'bg-wa-teal text-white shadow-xl shadow-wa-teal/20 dark:shadow-none' : 'text-slate-500 dark:text-slate-400 hover:text-wa-teal'}`}
+                  className={`flex-1 py-3 sm:py-5 rounded-[1.25rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all flex items-center justify-center gap-3 ${activeTab === 'history' ? 'bg-wa-teal text-white shadow-xl shadow-wa-teal/20 dark:shadow-none' : 'text-slate-500 dark:text-slate-400 hover:text-wa-teal'}`}
                 >
-                  <FileText className="w-4 h-4" /> MISSION LOGS
+                  <FileText className="w-4 h-4" /> History
                 </button>
               </div>
 
             {activeTab === 'monitor' ? (
               <div className="space-y-8">
                 {/* Active Schedules Ribbon */}
-                <div className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-white/5 relative overflow-hidden">
+                <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-wa-teal/5 blur-3xl -mr-16 -mt-16"></div>
                   <div className="flex items-center justify-between gap-4 mb-8">
                     <div>
-                      <h3 className="text-xl font-black text-slate-800 dark:text-[#e9edef] flex items-center gap-3 tracking-tight">
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-[#e9edef] flex items-center gap-3 tracking-normal">
                         <Users className="text-wa-teal w-6 h-6" />
-                        ACTIVE TRANSMISSIONS
+                        Active Sessions
                       </h3>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Live Operational Windows</p>
+                      <p className="text-xs font-bold text-slate-400  tracking-normal mt-1">Live Operational Windows</p>
                     </div>
                     {saveStatus.type && (
-                      <div className={`px-4 py-2 rounded-full text-[9px] font-black uppercase tracking-widest animate-in fade-in slide-in-from-right-2 duration-300 ${saveStatus.type === 'success' ? 'bg-wa-green/10 text-wa-green' : 'bg-red-500/10 text-red-500'}`}>
-                        {saveStatus.message.includes('successfully') || saveStatus.message.includes('removed') ? 'PROTOCOL UPDATED' : 'LINK ERROR'}
+                      <div className={`px-4 py-2 rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 animate-in fade-in slide-in-from-right-2 duration-300 ${saveStatus.type === 'success' ? 'bg-wa-green/10 text-wa-green' : 'bg-red-500/10 text-red-500'}`}>
+                        {saveStatus.message.includes('successfully') || saveStatus.message.includes('removed') ? 'Success' : 'Error'}
                       </div>
                     )}
                   </div>
@@ -711,22 +711,22 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {activeSchedules.length === 0 ? (
                   <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-100 dark:border-white/5 rounded-3xl">
-                     <p className="text-slate-400 font-black text-[10px] uppercase tracking-[0.2em]">Void Frequency • Awaiting Session Start</p>
+                     <p className="text-slate-400 font-bold text-xs  tracking-normal">Void Frequency • Awaiting Session Start</p>
                   </div>
                 ) : (
                   activeSchedules.map(sched => (
-                    <div key={sched.id} className="bg-[#f8f9fa] dark:bg-[#111b21] p-5 rounded-[2rem] border border-transparent hover:border-wa-teal/20 transition-all flex items-center gap-5 group">
+                    <div key={sched.id} className="bg-[#f8f9fa] dark:bg-[#111b21] p-5 rounded-2xl border border-transparent hover:border-wa-teal/20 transition-all flex items-center gap-5 group">
                       <div className="w-12 h-12 bg-white dark:bg-[#202c33] rounded-2xl flex flex-col items-center justify-center shadow-inner shrink-0 group-hover:scale-110 transition-transform">
-                        <span className="text-[6px] font-black text-slate-400 uppercase leading-none">PHASE</span>
-                        <span className="text-lg font-black text-wa-teal leading-none">{sched.semester}</span>
+                        <span className="text-[6px] font-bold text-slate-400  leading-none">PHASE</span>
+                        <span className="text-lg font-bold text-wa-teal leading-none">{sched.semester}</span>
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h4 className="font-black text-slate-800 dark:text-[#e9edef] text-sm truncate uppercase tracking-tight">{sched.department}</h4>
+                        <h4 className="font-bold text-slate-800 dark:text-[#e9edef] text-sm truncate  tracking-normal">{sched.department}</h4>
                         <div className="flex flex-wrap items-center gap-2 mt-1">
-                          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap bg-white dark:bg-[#202c33] px-2 py-1 rounded-lg">
+                          <p className="text-xs font-bold text-slate-400  tracking-normal whitespace-nowrap bg-white dark:bg-[#202c33] px-2 py-1 rounded-lg">
                             {sched.startTime}—{sched.endTime}
                           </p>
-                          <span className={`text-[8px] font-black px-2 py-1 rounded-lg uppercase tracking-widest shrink-0 ${sched.requireGPS ? 'bg-wa-teal/10 text-wa-teal' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
+                          <span className={`text-[8px] font-bold px-2 py-1 rounded-lg  tracking-normal shrink-0 ${sched.requireGPS ? 'bg-wa-teal/10 text-wa-teal' : 'bg-slate-200 dark:bg-slate-800 text-slate-400'}`}>
                             {sched.requireGPS ? 'GPS TRACE ON' : 'GPS BYPASS'}
                           </span>
                         </div>
@@ -748,21 +748,21 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
             </div>
 
             {/* Attendance reality feed */}
-            <div className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] sm:rounded-[3rem] shadow-sm border border-slate-100 dark:border-white/5 min-h-[500px]">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
+            <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 min-h-[500px]">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-6 sm:mb-10">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-wa-green/10 rounded-2xl flex items-center justify-center">
                     <Activity className="w-6 h-6 text-wa-green animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white tracking-tight">SIGNAL REALITY FEED</h3>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Live Telemetry Incoming</p>
+                    <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white tracking-normal">SIGNAL REALITY FEED</h3>
+                    <p className="text-xs font-bold text-slate-400  tracking-normal mt-1">Live Telemetry Incoming</p>
                   </div>
                 </div>
                 <button 
                   onClick={() => setShowClearFeedConfirm(true)}
                   disabled={recentAttendance.length === 0 || saving || isClearingFeed}
-                  className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] transition-all px-5 py-3 rounded-2xl text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 disabled:opacity-30"
+                  className="flex items-center gap-2 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all px-5 py-3 rounded-2xl text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 disabled:opacity-30"
                 >
                   <Trash2 className="w-3.5 h-3.5" /> 
                   {isClearingFeed ? 'PURGING...' : 'PURGE FEED'}
@@ -773,7 +773,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                 {getLiveAttendance().length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-24 text-slate-300 dark:text-slate-700 opacity-50">
                     <Activity className="w-20 h-20 mb-6 stroke-[1px] animate-pulse" />
-                    <p className="font-black uppercase tracking-[0.3em] text-[10px]">Frequency Silent</p>
+                    <p className="font-bold  tracking-normal text-xs">Frequency Silent</p>
                   </div>
                 ) : (
                   getLiveAttendance().map((record) => (
@@ -781,7 +781,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                       key={record.id} 
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="group flex items-center justify-between p-5 bg-[#f8f9fa] dark:bg-[#111b21] hover:bg-white dark:hover:bg-[#202c33] hover:shadow-xl rounded-[2rem] border border-transparent hover:border-wa-teal/20 transition-all duration-500"
+                      className="group flex items-center justify-between p-5 bg-[#f8f9fa] dark:bg-[#111b21] hover:bg-white dark:hover:bg-[#202c33] hover:shadow-xl rounded-2xl border border-transparent hover:border-wa-teal/20 transition-all duration-500"
                     >
                       <div className="flex items-center gap-5 min-w-0">
                         <div 
@@ -795,8 +795,8 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                           )}
                         </div>
                         <div className="min-w-0">
-                          <h4 className="font-black text-lg text-slate-800 dark:text-[#e9edef] tracking-tight truncate">{record.studentName}</h4>
-                          <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">
+                          <h4 className="font-bold text-lg text-slate-800 dark:text-[#e9edef] tracking-normal truncate">{record.studentName}</h4>
+                          <div className="flex items-center gap-3 text-xs font-bold text-slate-400  tracking-normal mt-1">
                             <span className="text-wa-teal">{record.department}</span>
                             <span className="w-1 h-1 bg-slate-200 rounded-full" />
                             <span>LEVEL {record.semester}</span>
@@ -804,10 +804,10 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                         </div>
                       </div>
                       <div className="text-right shrink-0 ml-4">
-                        <p className="text-sm font-black text-slate-800 dark:text-[#e9edef] mb-1">
+                        <p className="text-sm font-bold text-slate-800 dark:text-[#e9edef] mb-1">
                           {new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
                         </p>
-                        <div className="flex items-center justify-end gap-2 text-[10px] font-black text-wa-green uppercase tracking-widest">
+                        <div className="flex items-center justify-end gap-2 text-xs font-bold text-wa-green  tracking-normal">
                           <div className="w-1.5 h-1.5 bg-wa-green rounded-full animate-pulse" />
                           VERIFIED
                         </div>
@@ -821,14 +821,14 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
             ) : (
               /* HISTORY VIEW */
               <div className="space-y-8 animate-in fade-in duration-700">
-                <div className="bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-white/5 space-y-6">
+                <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 space-y-6">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-wa-teal/10 rounded-2xl flex items-center justify-center">
                       <Search className="w-6 h-6 text-wa-teal" />
                     </div>
                     <div>
-                      <h3 className="text-xl font-black text-slate-800 dark:text-[#e9edef] uppercase tracking-tight">ARCHIVE RETRIEVAL</h3>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Deep Database Query</p>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-[#e9edef]  tracking-normal">ARCHIVE RETRIEVAL</h3>
+                      <p className="text-xs font-bold text-slate-400  tracking-normal">Deep Database Query</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -839,13 +839,13 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                         placeholder="SEARCH OPERATIVE..."
                         value={searchQuery.name}
                         onChange={(e) => setSearchQuery({...searchQuery, name: e.target.value})}
-                        className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-6 pl-14 text-[13px] font-black transition-all outline-none text-slate-800 dark:text-[#e9edef]"
+                        className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-6 pl-14 text-[13px] font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]"
                       />
                     </div>
                     <select 
                       value={searchQuery.department}
                       onChange={(e) => setSearchQuery({...searchQuery, department: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-6 text-[13px] font-black transition-all outline-none cursor-pointer text-slate-800 dark:text-[#e9edef]"
+                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-6 text-[13px] font-bold transition-all outline-none cursor-pointer text-slate-800 dark:text-[#e9edef]"
                     >
                       <option value="ALL">ALL SECTORS</option>
                       {departments.map(dept => (
@@ -855,7 +855,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                     <select 
                       value={searchQuery.semester}
                       onChange={(e) => setSearchQuery({...searchQuery, semester: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-6 text-[13px] font-black transition-all outline-none cursor-pointer text-slate-800 dark:text-[#e9edef]"
+                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-6 text-[13px] font-bold transition-all outline-none cursor-pointer text-slate-800 dark:text-[#e9edef]"
                     >
                       <option value="ALL">ALL LEVELS</option>
                       {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={String(s)}>PHASE {s}</option>)}
@@ -863,48 +863,47 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-[#202c33] rounded-[2.5rem] border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm">
-                  <div className="p-8 border-b border-slate-50 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#f8f9fa] dark:bg-[#111b21]">
+                <div className="bg-white dark:bg-[#202c33] rounded-2xl border border-slate-100 dark:border-white/5 overflow-hidden shadow-sm">
+                  <div className="p-5 sm:p-5 sm:p-6 border-b border-slate-50 dark:border-white/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-[#f8f9fa] dark:bg-[#111b21]">
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 bg-indigo-500/10 rounded-xl flex items-center justify-center">
                         <TrendingUp className="w-5 h-5 text-indigo-500" />
                       </div>
-                      <h3 className="text-xl font-black text-slate-800 dark:text-[#e9edef] uppercase tracking-tight">OPERATIONAL KPI</h3>
+                      <h3 className="text-xl font-bold text-slate-800 dark:text-[#e9edef]  tracking-normal">Attendance KPI</h3>
                     </div>
-                    <span className="px-4 py-2 bg-white dark:bg-[#202c33] border border-slate-100 dark:border-white/5 rounded-full text-[10px] font-black text-slate-400 uppercase tracking-widest">{getAggregatedHistory().length} PROTOCOLS ENROLLED</span>
+                    <span className="px-4 py-2 bg-white dark:bg-[#202c33] border border-slate-100 dark:border-white/5 rounded-full text-xs font-bold text-slate-400  tracking-normal">{getAggregatedHistory().length} Students Present</span>
                   </div>
                   
-                  <div className="overflow-x-auto scrollbar-hide">
-                    <table className="w-full text-left border-collapse min-w-[700px]">
+                  <div className="w-full overflow-x-auto scrollbar-hide"><table className="w-full min-w-max text-left border-collapse min-w-max">
                       <thead>
                         <tr className="bg-[#f8f9fa] dark:bg-[#111b21]">
-                          <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Operative</th>
-                          <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Sector Code</th>
-                          <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest">Last Entry</th>
-                          <th className="px-8 py-6 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Score</th>
+                          <th className="px-5 sm:px-8 py-4 sm:py-6 text-xs font-bold text-slate-400  tracking-normal">Student</th>
+                          <th className="px-5 sm:px-8 py-4 sm:py-6 text-xs font-bold text-slate-400  tracking-normal">Department</th>
+                          <th className="px-5 sm:px-8 py-4 sm:py-6 text-xs font-bold text-slate-400  tracking-normal">Last Entry</th>
+                          <th className="px-5 sm:px-8 py-4 sm:py-6 text-xs font-bold text-slate-400  tracking-normal text-center">Score</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50 dark:divide-white/5 text-slate-900 dark:text-[#e9edef]">
                         {Object.entries(getGroupedHistory()).sort(([a], [b]) => a.localeCompare(b)).map(([dept, students]) => (
                           <Fragment key={dept}>
                             <tr className="bg-slate-50/50 dark:bg-[#111b21]/50">
-                              <td colSpan={4} className="px-8 py-4">
+                              <td colSpan={4} className="px-5 sm:px-8 py-4">
                                 <div className="flex items-center gap-3">
                                   <div className="w-2 h-2 bg-wa-teal rounded-full animate-pulse"></div>
-                                  <span className="text-[10px] font-black text-slate-800 dark:text-[#e9edef] uppercase tracking-[0.2em]">{dept} DIVISION</span>
-                                  <span className="text-[9px] font-black text-wa-teal bg-wa-teal/10 px-3 py-1 rounded-full border border-wa-teal/10 ml-3">
-                                    {students.length} ENROLLED
+                                  <span className="text-xs font-bold text-slate-800 dark:text-[#e9edef]  tracking-normal">{dept} DEPARTMENT</span>
+                                  <span className="text-xs font-bold text-wa-teal bg-wa-teal/10 px-3 py-1 rounded-full border border-wa-teal/10 ml-3">
+                                    {students.length} STUDENTS
                                   </span>
                                 </div>
                               </td>
                             </tr>
                             {students.map((student, idx) => (
                               <tr key={student.id || `${student.name}-${idx}`} className="hover:bg-slate-50 dark:hover:bg-[#202c33] transition-colors border-l-4 border-l-transparent hover:border-l-wa-teal">
-                                <td className="px-8 py-6">
+                                <td className="px-5 sm:px-8 py-4 sm:py-6 whitespace-nowrap">
                                   <div className="flex items-center gap-4">
                                     <div 
                                       onClick={() => student.avatarUrl && setZoomedPhoto(student.avatarUrl)}
-                                      className={`shrink-0 w-12 h-12 bg-white dark:bg-[#111b21] rounded-2xl flex items-center justify-center text-wa-teal font-black text-sm overflow-hidden border border-slate-100 dark:border-white/5 shadow-sm ${student.avatarUrl ? 'cursor-zoom-in group-hover:scale-110 transition-transform' : ''}`}
+                                      className={`shrink-0 w-12 h-12 bg-white dark:bg-[#111b21] rounded-2xl flex items-center justify-center text-wa-teal font-bold text-sm overflow-hidden border border-slate-100 dark:border-white/5 shadow-sm ${student.avatarUrl ? 'cursor-zoom-in group-hover:scale-110 transition-transform' : ''}`}
                                     >
                                       {student.avatarUrl ? (
                                         <img src={student.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -913,25 +912,25 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                                       )}
                                     </div>
                                     <div className="min-w-0">
-                                      <p className="font-black text-slate-800 dark:text-[#e9edef] text-sm truncate uppercase tracking-tight">{student.name}</p>
-                                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">ID: {student.id?.slice(-8) || "N/A"}</p>
+                                      <p className="font-bold text-slate-800 dark:text-[#e9edef] text-sm truncate  tracking-normal">{student.name}</p>
+                                      <p className="text-xs font-bold text-slate-400  tracking-normal mt-0.5">ID: {student.id?.slice(-8) || "N/A"}</p>
                                     </div>
                                   </div>
                                 </td>
-                                <td className="px-8 py-6">
-                                  <span className="px-3 py-1.5 bg-[#f8f9fa] dark:bg-[#111b21] text-slate-500 dark:text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-100 dark:border-white/5">PHASE {student.sem}</span>
+                                <td className="px-5 sm:px-8 py-4 sm:py-6 whitespace-nowrap">
+                                  <span className="px-3 py-1.5 bg-[#f8f9fa] dark:bg-[#111b21] text-slate-500 dark:text-slate-400 rounded-xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-white/5">SEMESTER {student.sem}</span>
                                 </td>
-                                <td className="px-8 py-6">
-                                  <p className="text-xs font-black text-slate-800 dark:text-[#e9edef]">
+                                <td className="px-5 sm:px-8 py-4 sm:py-6 whitespace-nowrap">
+                                  <p className="text-xs font-bold text-slate-800 dark:text-[#e9edef]">
                                     {new Date(student.lastTime).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                                   </p>
-                                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1 opacity-60">
+                                  <p className="text-xs font-bold text-slate-400  tracking-normal mt-1 opacity-60">
                                     {new Date(student.lastTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                   </p>
                                 </td>
-                                <td className="px-8 py-6">
+                                <td className="px-5 sm:px-8 py-4 sm:py-6 whitespace-nowrap">
                                   <div className="flex items-center justify-center gap-4">
-                                    <span className="text-lg font-black text-slate-800 dark:text-[#e9edef]">{student.count}</span>
+                                    <span className="text-lg font-bold text-slate-800 dark:text-[#e9edef]">{student.count}</span>
                                     <div className="hidden sm:block h-2 w-24 bg-[#f8f9fa] dark:bg-[#111b21] rounded-full overflow-hidden border border-slate-100 dark:border-white/5 shadow-inner">
                                       <motion.div 
                                         initial={{ width: 0 }}
@@ -946,15 +945,14 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                           </Fragment>
                         ))}
                       </tbody>
-                    </table>
-                  </div>
+                    </table></div>
 
                   {getAggregatedHistory().length === 0 && (
                     <div className="p-24 text-center">
-                      <div className="w-24 h-24 bg-slate-50 dark:bg-[#111b21] rounded-[2.5rem] flex items-center justify-center mx-auto mb-6">
+                      <div className="w-24 h-24 bg-slate-50 dark:bg-[#111b21] rounded-2xl flex items-center justify-center mx-auto mb-6">
                         <Search className="w-10 h-10 text-slate-200" />
                       </div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Query Matrix Empty</p>
+                      <p className="text-xs font-bold text-slate-400  tracking-normal">Query Matrix Empty</p>
                     </div>
                   )}
                 </div>
@@ -983,7 +981,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
       {/* Delete Schedule Confirmation */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
-          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/10">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-5 sm:p-5 sm:p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/10">
             <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mb-6 mx-auto">
               <Trash2 className="w-8 h-8 text-red-600" />
             </div>
@@ -1014,7 +1012,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
       {/* Clear Feed Confirmation */}
       {showClearFeedConfirm && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
-          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-8 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/10">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-5 sm:p-5 sm:p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/10">
             <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mb-6 mx-auto">
               <Trash2 className="w-8 h-8 text-red-600" />
             </div>

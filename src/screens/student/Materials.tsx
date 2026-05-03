@@ -70,7 +70,7 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
       <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex justify-between items-end">
           <div>
-            <h1 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-tight">
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-normal">
               <div className="w-12 h-12 bg-wa-teal/10 dark:bg-wa-teal/20 rounded-2xl flex items-center justify-center">
                 <BookOpen className="text-wa-teal w-7 h-7" />
               </div>
@@ -87,7 +87,7 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
             <input 
               type="text" 
               placeholder="Search by title, subject or topic..."
-              className="w-full pl-12 pr-4 py-4 bg-white dark:bg-[#202c33] border-2 border-transparent focus:border-wa-teal rounded-[2rem] shadow-sm outline-none transition-all text-slate-900 dark:text-[#e9edef] font-bold"
+              className="w-full pl-12 pr-4 py-4 bg-white dark:bg-[#202c33] border-2 border-transparent focus:border-wa-teal rounded-2xl shadow-sm outline-none transition-all text-slate-900 dark:text-[#e9edef] font-bold"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -97,8 +97,8 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
         {/* Materials List */}
         <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
-            <h2 className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em]">Latest Updates</h2>
-            <span className="text-[10px] font-black text-wa-teal bg-wa-teal/10 px-3 py-1 rounded-full uppercase tracking-widest">{filteredMaterials.length} Items</span>
+            <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal">Latest Updates</h2>
+            <span className="text-xs font-bold text-wa-teal bg-wa-teal/10 px-3 py-1 rounded-full  tracking-normal">{filteredMaterials.length} Items</span>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
@@ -107,18 +107,18 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
                 <div className="w-16 h-16 bg-wa-teal/10 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Loader2 className="w-8 h-8 text-wa-teal animate-spin" />
                 </div>
-                <p className="text-[#8696a0] font-black uppercase tracking-[0.2em] text-[10px]">Loading Hub...</p>
+                <p className="text-[#8696a0] font-bold  tracking-normal text-xs">Loading Hub...</p>
               </div>
             ) : filteredMaterials.length === 0 ? (
-              <div className="py-20 text-center bg-white dark:bg-[#202c33] rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-sm">
+              <div className="py-20 text-center bg-white dark:bg-[#202c33] rounded-2xl border border-slate-100 dark:border-white/5 shadow-sm">
                 <div className="w-20 h-20 bg-[#f0f2f5] dark:bg-[#111b21] rounded-full flex items-center justify-center mx-auto mb-4">
                    <BookOpen className="w-10 h-10 text-[#8696a0]/20" />
                 </div>
-                <p className="text-[#8696a0] font-black uppercase tracking-widest text-xs">No resources found matching your search</p>
+                <p className="text-[#8696a0] font-bold  tracking-normal text-xs">No resources found matching your search</p>
               </div>
             ) : (
               filteredMaterials.map((m) => (
-                <div key={m.id} className="bg-white dark:bg-[#202c33] p-5 rounded-[2.5rem] shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group hover:border-wa-teal/30 transition-all">
+                <div key={m.id} className="bg-white dark:bg-[#202c33] p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group hover:border-wa-teal/30 transition-all">
                   <div className="flex items-center gap-5">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 ${
                       m.type === 'pdf' ? 'bg-red-50 dark:bg-red-900/20 text-red-600' :
@@ -130,15 +130,15 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
                        <LinkIcon className="w-7 h-7" />}
                     </div>
                     <div>
-                      <h3 className="font-black text-slate-900 dark:text-[#e9edef] group-hover:text-wa-teal transition-colors tracking-tight text-lg">{m.title}</h3>
+                      <h3 className="font-bold text-slate-900 dark:text-[#e9edef] group-hover:text-wa-teal transition-colors tracking-normal text-lg">{m.title}</h3>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
-                        <span className="text-[10px] font-black text-wa-teal uppercase tracking-widest bg-wa-teal/10 px-2 py-0.5 rounded-md">{m.subject}</span>
+                        <span className="text-xs font-bold text-wa-teal  tracking-normal bg-wa-teal/10 px-2 py-0.5 rounded-md">{m.subject}</span>
                         <div className="w-1 h-1 rounded-full bg-[#8696a0]/30" />
-                        <span className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest">Unit {m.unit || 'N/A'}</span>
+                        <span className="text-xs font-bold text-[#8696a0]  tracking-normal">Unit {m.unit || 'N/A'}</span>
                         {m.topic && (
                           <>
                             <div className="w-1 h-1 rounded-full bg-[#8696a0]/30" />
-                            <span className="text-[10px] italic font-bold text-[#8696a0] tracking-wide truncate max-w-[150px]">{m.topic}</span>
+                            <span className="text-xs italic font-bold text-[#8696a0] tracking-wide truncate max-w-[150px]">{m.topic}</span>
                           </>
                         )}
                       </div>
@@ -172,17 +172,17 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
       {/* View Modal */}
       {viewMaterial && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[110] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-[2.5rem] w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/10 animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#202c33] rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/10 animate-in zoom-in-95 duration-200">
             <div className="p-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-white dark:bg-[#202c33]">
               <div className="flex items-center gap-4">
                  <div className="w-10 h-10 bg-wa-teal/10 dark:bg-wa-teal/20 rounded-xl flex items-center justify-center">
                     <BookOpen className="text-wa-teal w-6 h-6" />
                  </div>
                  <div>
-                    <h3 className="font-black text-slate-900 dark:text-[#e9edef] tracking-tight text-xl">{viewMaterial.title}</h3>
+                    <h3 className="font-bold text-slate-900 dark:text-[#e9edef] tracking-normal text-xl">{viewMaterial.title}</h3>
                     <div className="flex items-center gap-2">
-                       <span className="text-[10px] text-wa-teal font-black uppercase tracking-widest bg-wa-teal/10 px-2 py-0.5 rounded-md">{viewMaterial.subject}</span>
-                       <span className="text-[10px] text-[#8696a0] font-black uppercase tracking-widest">• Unit {viewMaterial.unit}</span>
+                       <span className="text-xs text-wa-teal font-bold  tracking-normal bg-wa-teal/10 px-2 py-0.5 rounded-md">{viewMaterial.subject}</span>
+                       <span className="text-xs text-[#8696a0] font-bold  tracking-normal">• Unit {viewMaterial.unit}</span>
                     </div>
                  </div>
               </div>
@@ -197,18 +197,18 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
               {viewMaterial.type === 'pdf' ? (
                 <iframe src={viewMaterial.url} className="w-full h-full border-none" title="Material View" />
               ) : (viewMaterial.type === 'image' || viewMaterial.type === 'camera') ? (
-                <img src={viewMaterial.url} alt="Material" className="max-w-full max-h-full object-contain p-8 shadow-2xl rounded-2xl" referrerPolicy="no-referrer" />
+                <img src={viewMaterial.url} alt="Material" className="max-w-full max-h-full object-contain p-5 sm:p-5 sm:p-6 shadow-2xl rounded-2xl" referrerPolicy="no-referrer" />
               ) : (
-                <div className="text-center p-12 bg-white dark:bg-[#202c33] rounded-[3rem] shadow-2xl max-w-md mx-4 border border-slate-100 dark:border-white/5">
+                <div className="text-center p-6 sm:p-6 sm:p-5 sm:p-6 bg-white dark:bg-[#202c33] rounded-3xl shadow-2xl max-w-md mx-4 border border-slate-100 dark:border-white/5">
                   <div className="w-24 h-24 bg-wa-teal/10 rounded-full flex items-center justify-center mx-auto mb-8">
                      <LinkIcon className="w-12 h-12 text-wa-teal" />
                   </div>
-                  <h4 className="text-[#8696a0] mb-8 font-black uppercase tracking-[0.2em] text-xs">External Resource Archive</h4>
+                  <h4 className="text-[#8696a0] mb-8 font-bold  tracking-normal text-xs">External Resource Archive</h4>
                   <a 
                     href={viewMaterial.url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="w-full py-5 bg-wa-teal text-white rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] shadow-xl shadow-wa-teal/30 hover:bg-wa-teal/90 transition-all flex items-center justify-center gap-3"
+                    className="w-full py-3 sm:py-5 bg-wa-teal text-white rounded-2xl font-bold  tracking-normal text-xs shadow-xl shadow-wa-teal/30 hover:bg-wa-teal/90 transition-all flex items-center justify-center gap-3"
                   >
                     Open Resource Hub <ExternalLink className="w-5 h-5" />
                   </a>

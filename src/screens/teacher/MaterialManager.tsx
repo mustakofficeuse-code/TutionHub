@@ -367,11 +367,11 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
   });
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#111b21] p-6 lg:p-12 selection:bg-wa-teal selection:text-white">
+    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#111b21] p-6 lg:p-6 sm:p-6 sm:p-5 sm:p-6 selection:bg-wa-teal selection:text-white">
       {!isEmbedded && (
         <button 
           onClick={() => navigate('/')}
-          className="mb-10 flex items-center gap-3 text-slate-500 dark:text-slate-400 font-black uppercase tracking-[0.2em] text-[11px] hover:text-wa-teal transition-all group"
+          className="mb-6 sm:mb-10 flex items-center gap-3 text-slate-400 font-bold  tracking-normal text-xs hover:text-wa-teal transition-all group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Terminal
         </button>
@@ -385,21 +385,21 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                 <BookOpen className="text-wa-teal w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-3xl sm:text-4xl font-black text-slate-800 dark:text-white tracking-tighter uppercase italic leading-none">STUDIO ARCHIVE</h1>
-                <p className="text-[11px] font-black text-wa-teal uppercase tracking-[0.4em] mt-3 ml-1">Asset Repository [VER 0.92]</p>
+                <h1 className="text-2xl sm:text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white tracking-normal  italic leading-none">Materials</h1>
+                <p className="text-xs font-bold text-wa-teal  tracking-normal mt-3 ml-1">Asset Repository [VER 0.92]</p>
               </div>
             </div>
           </div>
           <button 
             onClick={() => setShowAdd(true)}
-            className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 dark:bg-wa-teal dark:hover:bg-wa-teal/90 text-white px-10 py-5 rounded-[1.5rem] font-black flex items-center justify-center gap-4 shadow-2xl transition-all uppercase tracking-[0.2em] text-xs active:scale-95"
+            className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 dark:bg-wa-teal dark:hover:bg-wa-teal/90 text-white px-6 sm:px-10 py-3 sm:py-5 rounded-[1.5rem] font-bold flex items-center justify-center gap-4 shadow-2xl transition-all  tracking-normal text-xs active:scale-95"
           >
             <Plus className="w-5 h-5" /> INITIALIZE DEPLOYMENT
           </button>
         </div>
 
         {/* Filter Bar */}
-        <div className="bg-white dark:bg-[#202c33] p-6 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-2xl flex flex-col lg:flex-row gap-6 items-center">
+        <div className="bg-white dark:bg-[#202c33] p-6 rounded-2xl border border-slate-100 dark:border-white/5 shadow-2xl flex flex-col lg:flex-row gap-6 items-center">
            <div className="relative flex-1 w-full">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
               <input 
@@ -407,7 +407,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                 placeholder="PROBE ARCHIVE BY TITLE, SUBJECT, OR TOPIC..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-16 pr-8 py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 rounded-[1.5rem] text-xs font-black uppercase tracking-widest outline-none text-slate-800 dark:text-white transition-all shadow-inner placeholder:text-slate-400"
+                className="w-full pl-16 pr-8 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 rounded-[1.5rem] text-[11px] font-bold  tracking-normal outline-none text-slate-800 dark:text-white transition-all shadow-inner placeholder:text-slate-400"
               />
            </div>
            
@@ -415,7 +415,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
               <select 
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="flex-1 lg:w-48 px-6 py-5 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[1.5rem] border border-transparent focus:border-wa-teal/30 text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 outline-none cursor-pointer appearance-none text-center"
+                className="flex-1 lg:w-48 px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[1.5rem] border border-transparent focus:border-wa-teal/30 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 outline-none cursor-pointer appearance-none text-center"
               >
                 <option value="all">TYPE: ALL</option>
                 <option value="pdf">TYPE: PDF</option>
@@ -426,9 +426,9 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
               <select 
                 value={filterDept}
                 onChange={(e) => setFilterDept(e.target.value)}
-                className="flex-1 lg:w-60 px-6 py-5 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[1.5rem] border border-transparent focus:border-wa-teal/30 text-xs font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 outline-none cursor-pointer appearance-none text-center"
+                className="flex-1 lg:w-60 px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[1.5rem] border border-transparent focus:border-wa-teal/30 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 outline-none cursor-pointer appearance-none text-center"
               >
-                <option value="all">SECTOR: UNIVERSAL</option>
+                <option value="all">DEPARTMENT: ALL</option>
                 {departments.map(d => (
                   <option key={d.id} value={d.name}>{d.name.toUpperCase()}</option>
                 ))}
@@ -437,7 +437,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
         </div>
 
         {/* Materials Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-10">
           {loading ? (
             <div className="col-span-full py-40 text-center">
               <div className="relative inline-block">
@@ -446,23 +446,23 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                   <div className="w-2 h-2 bg-wa-teal rounded-full animate-pulse" />
                 </div>
               </div>
-              <p className="mt-6 text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">Establishing Neural Link...</p>
+              <p className="mt-6 text-xs font-bold text-slate-400  tracking-normal">Establishing Neural Link...</p>
             </div>
           ) : filteredMaterials.length === 0 ? (
-            <div className="col-span-full py-32 text-center bg-white dark:bg-[#202c33] rounded-[4rem] border border-slate-100 dark:border-white/5 shadow-2xl">
-              <div className="w-24 h-24 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-inner">
+            <div className="col-span-full py-32 text-center bg-white dark:bg-[#202c33] rounded-3xl border border-slate-100 dark:border-white/5 shadow-2xl">
+              <div className="w-24 h-24 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner">
                 <BookOpen className="w-10 h-10 text-slate-300 dark:text-slate-700 stroke-[1.5px]" />
               </div>
-              <p className="text-slate-400 font-black uppercase tracking-[0.4em] text-[10px]">Matrix Status: Void • No Matching Assets Found</p>
+              <p className="text-slate-400 font-bold  tracking-normal text-xs">Matrix Status: Void • No Matching Assets Found</p>
             </div>
           ) : (
             filteredMaterials.map((m) => (
-              <div key={m.id} className="bg-white dark:bg-[#202c33] rounded-[3rem] border border-slate-100 dark:border-white/5 overflow-hidden group hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] dark:hover:shadow-none hover:-translate-y-2 transition-all duration-700 relative">
+              <div key={m.id} className="bg-white dark:bg-[#202c33] rounded-3xl border border-slate-100 dark:border-white/5 overflow-hidden group hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.15)] dark:hover:shadow-none hover:-translate-y-2 transition-all duration-700 relative">
                 <div className="absolute top-0 left-0 w-full h-[6px] bg-slate-100 dark:bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity">
                    <div className="h-full bg-wa-teal w-1/3 animate-progress" />
                 </div>
                 
-                <div className="p-10 space-y-8">
+                <div className="p-6 sm:p-10 space-y-8">
                   <div className="flex justify-between items-start">
                     <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center shadow-xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-[6deg] ${
                       m.type === 'pdf' ? 'bg-rose-500/10 text-rose-500' :
@@ -497,23 +497,23 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
 
                   <div>
                     <div className="flex items-center gap-3 mb-4">
-                       <span className="text-[11px] font-black text-wa-teal uppercase tracking-widest bg-wa-teal/10 px-3 py-1.5 rounded-lg border border-wa-teal/10">
+                       <span className="text-xs font-bold text-wa-teal  tracking-normal bg-wa-teal/10 px-3 py-1.5 rounded-lg border border-wa-teal/10">
                         {m.type === 'camera' ? 'SCANNED' : m.type.toUpperCase()}
                        </span>
-                       <span className="text-[11px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest italic font-mono truncate max-w-[120px]">
+                       <span className="text-xs font-bold text-slate-400 dark:text-slate-500  tracking-normal italic font-mono truncate max-w-[120px]">
                         ID_{m.id.substring(0, 8).toUpperCase()}
                        </span>
                     </div>
-                    <h3 className="font-black text-slate-800 dark:text-white text-2xl tracking-tighter line-clamp-2 uppercase leading-tight italic">{m.title}</h3>
+                    <h3 className="font-bold text-slate-800 dark:text-white text-2xl tracking-normal line-clamp-2  leading-tight italic">{m.title}</h3>
                     
                     <div className="flex flex-wrap gap-3 mt-6 pt-6 border-t border-slate-100 dark:border-white/5">
                        <div className="flex items-center gap-2">
                           <div className="w-1.5 h-1.5 bg-wa-teal rounded-full" />
-                          <span className="text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest">{m.subject}</span>
+                          <span className="text-xs font-bold text-slate-600 dark:text-slate-400  tracking-normal">{m.subject}</span>
                        </div>
                        <div className="flex items-center gap-2">
                           <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full" />
-                          <span className="text-[11px] font-black text-slate-600 dark:text-slate-400 uppercase tracking-widest">
+                          <span className="text-xs font-bold text-slate-600 dark:text-slate-400  tracking-normal">
                             {departments.find(d => d.id === m.courseId || d.name === m.courseId)?.name || (m.courseId === 'all' ? 'GLOBAL' : m.courseId?.toUpperCase())}
                           </span>
                        </div>
@@ -522,21 +522,21 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
 
                   {m.topic && (
                     <div className="bg-[#fcfcfd] dark:bg-[#111b21] p-5 rounded-2xl border border-slate-100 dark:border-white/5">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1.5">PROBE CONTEXT:</p>
-                      <p className="text-[12px] font-medium text-slate-600 dark:text-slate-400 line-clamp-2 italic">{m.topic}</p>
+                      <p className="text-xs font-bold text-slate-400  tracking-normal mb-1.5">PROBE CONTEXT:</p>
+                      <p className="text-[11px] font-medium text-slate-600 dark:text-slate-400 line-clamp-2 italic">{m.topic}</p>
                     </div>
                   )}
 
                   <div className="flex items-center justify-between pt-4">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Deployment Phase</span>
-                      <span className="text-base font-black text-slate-800 dark:text-white">STAGE_{m.unit || 'X'}</span>
+                      <span className="text-xs font-bold text-slate-400  tracking-normal">Semester</span>
+                      <span className="text-sm font-bold text-slate-800 dark:text-white">UNIT {m.unit || 'X'}</span>
                     </div>
                     <a 
                       href={m.url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="px-8 py-4 bg-slate-900 dark:bg-wa-teal dark:hover:bg-wa-teal/90 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-wa-teal transition-all shadow-xl shadow-slate-900/10 flex items-center gap-3"
+                      className="px-5 sm:px-8 py-4 bg-slate-900 dark:bg-wa-teal dark:hover:bg-wa-teal/90 text-white text-xs font-bold  tracking-normal rounded-2xl hover:bg-wa-teal transition-all shadow-xl shadow-slate-900/10 flex items-center gap-3"
                     >
                       ACCESS <ExternalLink className="w-4 h-4" />
                     </a>
@@ -550,21 +550,21 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
 
       {/* View Modal */}
       {viewMaterial && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4 lg:p-12 z-[140] animate-in fade-in duration-700">
-          <div className="bg-white dark:bg-[#202c33] rounded-[4rem] w-full max-w-6xl h-full max-h-[90vh] overflow-hidden flex flex-col shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] border border-white/10 relative">
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4 lg:p-6 sm:p-6 sm:p-5 sm:p-6 z-[140] animate-in fade-in duration-700">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl w-full max-w-6xl h-full max-h-[90vh] overflow-hidden flex flex-col shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] border border-white/10 relative">
             <div className="absolute top-0 left-0 w-full h-[8px] bg-gradient-to-r from-wa-teal via-indigo-500 to-wa-green" />
             
-            <div className="p-10 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-[#fcfcfd] dark:bg-[#202c33] shrink-0">
-              <div className="flex items-center gap-8">
+            <div className="p-6 sm:p-10 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-[#fcfcfd] dark:bg-[#202c33] shrink-0">
+              <div className="flex items-center gap-5 sm:gap-8">
                 <div className="w-16 h-16 bg-wa-teal/10 dark:bg-wa-teal/20 rounded-[1.5rem] flex items-center justify-center shadow-xl">
                   <Eye className="text-wa-teal w-8 h-8" />
                 </div>
                 <div>
-                  <h3 className="text-3xl font-black text-slate-800 dark:text-white tracking-tighter uppercase italic leading-none">{viewMaterial.title}</h3>
+                  <h3 className="text-3xl font-bold text-slate-800 dark:text-white tracking-normal  italic leading-none">{viewMaterial.title}</h3>
                   <div className="flex gap-4 mt-3">
-                     <span className="text-[10px] font-black text-wa-teal uppercase tracking-[0.3em]">PROBE: {viewMaterial.subject}</span>
-                     <span className="text-[10px] font-black text-slate-300 uppercase tracking-[0.3em]">•</span>
-                     <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">STATUS: VERIFIED_ASSET</span>
+                     <span className="text-xs font-bold text-wa-teal  tracking-normal">PROBE: {viewMaterial.subject}</span>
+                     <span className="text-xs font-bold text-slate-300  tracking-normal">•</span>
+                     <span className="text-xs font-bold text-slate-400  tracking-normal">STATUS: VERIFIED_ASSET</span>
                   </div>
                 </div>
               </div>
@@ -576,13 +576,13 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
               </button>
             </div>
 
-            <div className="flex-1 bg-[#111b21] overflow-hidden flex items-center justify-center relative p-8">
+            <div className="flex-1 bg-[#111b21] overflow-hidden flex items-center justify-center relative p-5 sm:p-5 sm:p-6">
               <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
                  <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-wa-teal via-transparent to-transparent scale-150" />
               </div>
 
               {viewMaterial.type === 'pdf' ? (
-                <div className="w-full h-full rounded-[2rem] overflow-hidden shadow-2xl bg-white border-8 border-slate-800/50">
+                <div className="w-full h-full rounded-2xl overflow-hidden shadow-2xl bg-white border-8 border-slate-800/50">
                   <iframe src={viewMaterial.url} className="w-full h-full border-none" title="Material View" />
                 </div>
               ) : (viewMaterial.type === 'image' || viewMaterial.type === 'camera') ? (
@@ -594,24 +594,24 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                     referrerPolicy="no-referrer" 
                   />
                   <div className="absolute bottom-6 right-6 p-4 bg-black/60 backdrop-blur-xl rounded-2xl border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <p className="text-[10px] font-black text-white uppercase tracking-widest">ASSET_SCAN_RENDER_V1</p>
+                     <p className="text-xs font-bold text-white  tracking-normal">ASSET_SCAN_RENDER_V1</p>
                   </div>
                 </div>
               ) : (
-                <div className="text-center p-20 bg-white dark:bg-[#202c33] rounded-[4rem] shadow-2xl max-w-xl border border-white/10 mx-4 relative overflow-hidden">
+                <div className="text-center p-20 bg-white dark:bg-[#202c33] rounded-3xl shadow-2xl max-w-xl border border-white/10 mx-4 relative overflow-hidden">
                   <div className="absolute top-0 left-0 w-full h-2 bg-wa-teal" />
-                  <div className="w-28 h-28 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-inner group transition-transform hover:scale-110">
+                  <div className="w-28 h-28 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl flex items-center justify-center mx-auto mb-6 sm:mb-10 shadow-inner group transition-transform hover:scale-110">
                     <LinkIcon className="w-12 h-12 text-wa-teal group-hover:rotate-12 transition-transform" />
                   </div>
-                  <h4 className="text-2xl font-black text-slate-800 dark:text-white uppercase tracking-tighter italic mb-4">External Protocol Link</h4>
-                  <p className="text-[11px] font-black text-slate-400 mb-12 uppercase tracking-[0.4em] leading-relaxed">
+                  <h4 className="text-2xl font-bold text-slate-800 dark:text-white  tracking-normal italic mb-4">External Protocol Link</h4>
+                  <p className="text-[11px] font-bold text-slate-400 mb-8 sm:mb-12  tracking-normal leading-relaxed">
                     This asset resides in an external domain. <br/>Establish a secure handshake to view content.
                   </p>
                   <a 
                     href={viewMaterial.url} 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-[10px] shadow-2xl shadow-slate-900/30 hover:bg-wa-teal transition-all flex items-center justify-center gap-4 group"
+                    className="w-full py-4 sm:py-6 bg-slate-900 text-white rounded-2xl font-bold  tracking-normal text-xs shadow-2xl shadow-slate-900/30 hover:bg-wa-teal transition-all flex items-center justify-center gap-4 group"
                   >
                     ESTABLISH CONNECTION <ExternalLink className="w-5 h-5 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
                   </a>
@@ -619,14 +619,14 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
               )}
             </div>
             
-            <div className="p-8 bg-[#fcfcfd] dark:bg-[#111b21] border-t border-slate-100 dark:border-white/5 flex flex-wrap gap-6 items-center shrink-0">
+            <div className="p-5 sm:p-5 sm:p-6 bg-[#fcfcfd] dark:bg-[#111b21] border-t border-slate-100 dark:border-white/5 flex flex-wrap gap-6 items-center shrink-0">
                <div className="flex-1">
-                  <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest mb-1">METADATA_HEADER</p>
-                  <p className="text-[11px] font-black text-slate-500 uppercase tracking-widest truncate">{viewMaterial.topic || 'NO TOPIC DEFINED'}</p>
+                  <p className="text-xs font-bold text-slate-300  tracking-normal mb-1">METADATA_HEADER</p>
+                  <p className="text-[11px] font-bold text-slate-500  tracking-normal truncate">{viewMaterial.topic || 'NO TOPIC DEFINED'}</p>
                </div>
                <div className="flex gap-4">
-                  <span className="px-4 py-2 bg-white dark:bg-[#202c33] rounded-xl text-[9px] font-black text-slate-400 border border-slate-100 dark:border-white/5 uppercase tracking-widest italic font-mono">SECTOR_{viewMaterial.courseId.toUpperCase()}</span>
-                  <span className="px-4 py-2 bg-white dark:bg-[#202c33] rounded-xl text-[9px] font-black text-slate-400 border border-slate-100 dark:border-white/5 uppercase tracking-widest italic font-mono">PHASE_{viewMaterial.semester}</span>
+                  <span className="px-4 py-2 bg-white dark:bg-[#202c33] rounded-xl text-xs font-bold text-slate-400 border border-slate-100 dark:border-white/5  tracking-normal italic font-mono">DEPT_{viewMaterial.courseId.toUpperCase()}</span>
+                  <span className="px-4 py-2 bg-white dark:bg-[#202c33] rounded-xl text-xs font-bold text-slate-400 border border-slate-100 dark:border-white/5  tracking-normal italic font-mono">SEMESTER_{viewMaterial.semester}</span>
                </div>
             </div>
           </div>
@@ -636,22 +636,22 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
       {/* Delete Confirmation */}
       {deleteConfirm && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 z-[110] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-[3rem] p-10 w-full max-w-sm shadow-2xl text-center border border-slate-100 dark:border-white/10 animate-in zoom-in-95 duration-200">
-            <div className="w-20 h-20 bg-red-500/10 rounded-[2rem] flex items-center justify-center mb-8 mx-auto">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-10 w-full max-w-sm shadow-2xl text-center border border-slate-100 dark:border-white/10 animate-in zoom-in-95 duration-200">
+            <div className="w-20 h-20 bg-red-500/10 rounded-2xl flex items-center justify-center mb-8 mx-auto">
               <Trash2 className="w-10 h-10 text-red-600" />
             </div>
-            <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight mb-3 uppercase">PURGE ARCHIVE?</h3>
-            <p className="text-sm font-black text-slate-400 uppercase tracking-widest mb-10">This protocol is irreversible. Material will be deleted from the database.</p>
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white tracking-normal mb-3 ">PURGE ARCHIVE?</h3>
+            <p className="text-sm font-bold text-slate-400  tracking-normal mb-6 sm:mb-10">This protocol is irreversible. Material will be deleted from the database.</p>
             <div className="space-y-3">
               <button 
                 onClick={() => setDeleteConfirm(null)}
-                className="w-full py-5 bg-[#f8f9fa] dark:bg-[#111b21] text-slate-400 font-black uppercase tracking-[0.2em] text-[10px] rounded-[1.5rem] border border-slate-100 dark:border-white/5 hover:text-wa-teal/70 transition-all"
+                className="w-full py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] text-slate-400 font-bold  tracking-normal text-xs rounded-[1.5rem] border border-slate-100 dark:border-white/5 hover:text-wa-teal/70 transition-all"
               >
-                ABORT MISSION
+                Cancel
               </button>
               <button 
                 onClick={() => deleteMaterial(deleteConfirm)}
-                className="w-full py-5 bg-red-600 text-white font-black uppercase tracking-[0.2em] text-[10px] rounded-[1.5rem] shadow-xl shadow-red-500/20 hover:bg-red-700 transition-all"
+                className="w-full py-3 sm:py-5 bg-red-600 text-white font-bold  tracking-normal text-xs rounded-[1.5rem] shadow-xl shadow-red-500/20 hover:bg-red-700 transition-all"
               >
                 CONFIRM PURGE
               </button>
@@ -662,19 +662,19 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
 
       {/* Add Modal */}
       {showAdd && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4 lg:p-12 z-[150] animate-in fade-in duration-700">
-          <div className="bg-white dark:bg-[#202c33] rounded-[4rem] p-4 sm:p-12 w-full max-w-4xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] max-h-full overflow-y-auto border border-white/10 relative scrollbar-hide">
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-3xl flex items-center justify-center p-4 lg:p-6 sm:p-6 sm:p-5 sm:p-6 z-[150] animate-in fade-in duration-700">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-4xl shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] max-h-full overflow-y-auto border border-white/10 relative scrollbar-hide">
             <div className="absolute top-0 left-0 w-full h-[10px] bg-slate-900 dark:bg-white/5" />
             
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-12 gap-8">
-              <div className="flex items-center gap-8">
-                <div className="w-20 h-20 bg-slate-900 dark:bg-slate-800 rounded-[2rem] flex items-center justify-center shadow-2xl relative overflow-hidden group">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 sm:mb-12 gap-5 sm:gap-8">
+              <div className="flex items-center gap-5 sm:gap-8">
+                <div className="w-20 h-20 bg-slate-900 dark:bg-slate-800 rounded-2xl flex items-center justify-center shadow-2xl relative overflow-hidden group">
                   <div className="absolute inset-0 bg-wa-teal opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                   <Plus className="text-white w-10 h-10 relative z-10" />
                 </div>
                 <div>
-                  <h3 className="text-4xl font-black text-slate-800 dark:text-white tracking-tighter uppercase italic leading-none">DEPLOY RESOURCE</h3>
-                  <p className="text-[10px] font-black text-wa-teal uppercase tracking-[0.4em] mt-3 ml-1">Asset Injection Protocol • SECTOR_READY</p>
+                  <h3 className="text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white tracking-normal  italic leading-none">Add Material</h3>
+                  <p className="text-xs font-bold text-wa-teal  tracking-normal mt-3 ml-1">Upload Material • READY</p>
                 </div>
               </div>
               <button 
@@ -686,26 +686,26 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
             </div>
             
             <form onSubmit={handleAdd} className="space-y-12">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
                 <div className="space-y-10">
                   <div className="group">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] block mb-4 ml-3 group-focus-within:text-wa-teal transition-colors">Material Designation</label>
+                    <label className="text-xs font-bold text-slate-400  tracking-normal block mb-4 ml-3 group-focus-within:text-wa-teal transition-colors">Material Designation</label>
                     <input
                       type="text"
                       required
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-[2rem] py-6 px-8 text-base font-black transition-all outline-none text-slate-800 dark:text-white uppercase tracking-widest placeholder:text-slate-300"
+                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-2xl py-4 sm:py-6 px-5 sm:px-8 text-base font-bold transition-all outline-none text-slate-800 dark:text-white  tracking-normal placeholder:text-slate-300"
                       placeholder="ENTER RESOURCE CODE_NAME..."
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
                     />
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-8">
+                  <div className="grid grid-cols-2 gap-5 sm:gap-8">
                     <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] block mb-4 ml-3">Target Sector</label>
+                      <label className="text-xs font-bold text-slate-400  tracking-normal block mb-4 ml-3">Department</label>
                       <select
                         required
-                        className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-[2rem] py-6 px-8 text-[11px] font-black transition-all outline-none cursor-pointer text-slate-800 dark:text-white uppercase tracking-[0.2em] appearance-none"
+                        className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-2xl py-4 sm:py-6 px-5 sm:px-8 text-[11px] font-bold transition-all outline-none cursor-pointer text-slate-800 dark:text-white  tracking-normal appearance-none"
                         value={courseId}
                         onChange={(e) => setCourseId(e.target.value)}
                       >
@@ -717,49 +717,49 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                       </select>
                     </div>
                     <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] block mb-4 ml-3">Phase level</label>
+                      <label className="text-xs font-bold text-slate-400  tracking-normal block mb-4 ml-3">Semester</label>
                       <select
                         required
-                        className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-[2rem] py-6 px-8 text-[11px] font-black transition-all outline-none cursor-pointer text-slate-800 dark:text-white uppercase tracking-[0.2em] appearance-none text-center"
+                        className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-2xl py-4 sm:py-6 px-5 sm:px-8 text-[11px] font-bold transition-all outline-none cursor-pointer text-slate-800 dark:text-white  tracking-normal appearance-none text-center"
                         value={semester}
                         onChange={(e) => setSemester(e.target.value)}
                       >
                         <option value="">SEMESTER</option>
-                        {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s} value={s.toString()}>PHASE_{s}</option>)}
+                        {[1, 2, 3, 4, 5, 6, 7, 8].map(s => <option key={s} value={s.toString()}>SEMESTER {s}</option>)}
                       </select>
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-8">
+                  <div className="grid grid-cols-2 gap-5 sm:gap-8">
                     <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] block mb-4 ml-3">Subject ID</label>
+                      <label className="text-xs font-bold text-slate-400  tracking-normal block mb-4 ml-3">Subject ID</label>
                       <input
                         type="text"
                         required
-                        className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-[2rem] py-6 px-8 text-base font-black transition-all outline-none text-slate-800 dark:text-white uppercase tracking-widest placeholder:text-slate-300"
+                        className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-2xl py-4 sm:py-6 px-5 sm:px-8 text-base font-bold transition-all outline-none text-slate-800 dark:text-white  tracking-normal placeholder:text-slate-300"
                         placeholder="E.G. CS-402"
                         value={subject}
                         onChange={(e) => setSubject(e.target.value)}
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] block mb-4 ml-3">Unit Tag</label>
+                      <label className="text-xs font-bold text-slate-400  tracking-normal block mb-4 ml-3">Unit Tag</label>
                       <select
-                        className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-[2rem] py-6 px-8 text-[11px] font-black transition-all outline-none cursor-pointer text-slate-800 dark:text-white uppercase tracking-[0.2em] appearance-none text-center"
+                        className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-2xl py-4 sm:py-6 px-5 sm:px-8 text-[11px] font-bold transition-all outline-none cursor-pointer text-slate-800 dark:text-white  tracking-normal appearance-none text-center"
                         value={unit}
                         onChange={(e) => setUnit(e.target.value)}
                       >
-                        <option value="">UNIT_X</option>
-                        {ROMAN_UNITS.map(u => <option key={u} value={u}>UNIT_{u}</option>)}
+                        <option value="">Select Unit</option>
+                        {ROMAN_UNITS.map(u => <option key={u} value={u}>Unit {u}</option>)}
                       </select>
                     </div>
                   </div>
 
                   <div>
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em] block mb-4 ml-3">Context Matrix (Topic)</label>
+                    <label className="text-xs font-bold text-slate-400  tracking-normal block mb-4 ml-3">Context Matrix (Topic)</label>
                     <input
                       type="text"
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-[2rem] py-6 px-8 text-base font-black transition-all outline-none text-slate-800 dark:text-white uppercase tracking-widest placeholder:text-slate-300"
+                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-2xl py-4 sm:py-6 px-5 sm:px-8 text-base font-bold transition-all outline-none text-slate-800 dark:text-white  tracking-normal placeholder:text-slate-300"
                       placeholder="ASSET_TOPIC_IDENTIFIER..."
                       value={topic}
                       onChange={(e) => setTopic(e.target.value)}
@@ -769,13 +769,13 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
 
                 <div className="space-y-10">
                   {/* Type Selection Tabs */}
-                  <div className="grid grid-cols-2 gap-4 p-4 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[3rem] border border-slate-100 dark:border-white/5 shadow-inner">
+                  <div className="grid grid-cols-2 gap-4 p-4 bg-[#f8f9fa] dark:bg-[#111b21] rounded-3xl border border-slate-100 dark:border-white/5 shadow-inner">
                     {(['pdf', 'image', 'camera', 'link'] as const).map(t => (
                       <button
                         key={t}
                         type="button"
                         onClick={() => { setType(t); if(t !== 'camera') stopCamera(); }}
-                        className={`py-6 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all flex flex-col items-center justify-center gap-3 border shadow-sm ${
+                        className={`py-4 sm:py-6 rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all flex flex-col items-center justify-center gap-3 border shadow-sm ${
                           type === t 
                           ? 'bg-wa-teal text-white border-wa-teal shadow-2xl shadow-wa-teal/20 scale-105 active:scale-100' 
                           : 'bg-white dark:bg-[#202c33] text-slate-400 border-slate-100 dark:border-white/5 hover:border-wa-teal/30 hover:text-wa-teal'
@@ -798,18 +798,18 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                           <button 
                             type="button"
                             onClick={startCamera}
-                            className="w-full py-24 border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[3rem] flex flex-col items-center justify-center gap-6 text-slate-300 hover:text-wa-teal hover:border-wa-teal/30 hover:bg-wa-teal/5 transition-all group relative overflow-hidden shadow-inner"
+                            className="w-full py-24 border-4 border-dashed border-slate-100 dark:border-white/5 rounded-3xl flex flex-col items-center justify-center gap-6 text-slate-300 hover:text-wa-teal hover:border-wa-teal/30 hover:bg-wa-teal/5 transition-all group relative overflow-hidden shadow-inner"
                           >
-                            <div className="w-24 h-24 bg-white dark:bg-[#111b21] rounded-[2.5rem] flex items-center justify-center group-hover:scale-110 group-hover:rotate-[10deg] transition-all shadow-2xl border border-slate-100 dark:border-white/10">
+                            <div className="w-24 h-24 bg-white dark:bg-[#111b21] rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-[10deg] transition-all shadow-2xl border border-slate-100 dark:border-white/10">
                               <Camera className="w-10 h-10" />
                             </div>
-                            <span className="font-black text-[11px] uppercase tracking-[0.4em]">ACTIVATE OPTICAL_SCAN</span>
+                            <span className="font-bold text-[11px]  tracking-normal">ACTIVATE OPTICAL_SCAN</span>
                           </button>
                         ) : (
-                          <div className="relative rounded-[3rem] overflow-hidden bg-slate-900 aspect-square sm:aspect-video border-[8px] border-slate-800 dark:border-[#111b21] shadow-2xl ring-8 ring-wa-teal/10">
+                          <div className="relative rounded-3xl overflow-hidden bg-slate-900 aspect-square sm:aspect-video border-[8px] border-slate-800 dark:border-[#111b21] shadow-2xl ring-8 ring-wa-teal/10">
                             <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
                             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_transparent_40%,_rgba(0,0,0,0.4)_100%)] pointer-events-none" />
-                            <div className="absolute inset-x-0 bottom-10 flex justify-center gap-10">
+                            <div className="absolute inset-x-0 bottom-10 flex justify-center gap-6 sm:gap-10">
                               <button 
                                 type="button"
                                 onClick={capturePhoto}
@@ -833,7 +833,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                         {captures.length > 0 && (
                           <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide px-2">
                             {captures.map((cap, i) => (
-                              <div key={i} className="relative w-32 h-32 rounded-[2rem] overflow-hidden group border-4 border-wa-teal/30 shrink-0 shadow-2xl transform hover:rotate-3 transition-transform">
+                              <div key={i} className="relative w-32 h-32 rounded-2xl overflow-hidden group border-4 border-wa-teal/30 shrink-0 shadow-2xl transform hover:rotate-3 transition-transform">
                                 <img src={cap} alt="Capture" className="w-full h-full object-cover" />
                                 <button 
                                   type="button" 
@@ -851,15 +851,15 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
 
                     {(type === 'pdf' || type === 'image') && (
                       <div className="h-full">
-                        <label className="flex flex-col items-center justify-center w-full h-72 border-4 border-dashed border-slate-100 dark:border-white/5 rounded-[4rem] cursor-pointer hover:bg-wa-teal/5 transition-all border-wa-teal/10 group relative overflow-hidden bg-[#fcfcfd] dark:bg-[#111b21] shadow-inner mb-6">
+                        <label className="flex flex-col items-center justify-center w-full h-72 border-4 border-dashed border-slate-100 dark:border-white/5 rounded-3xl cursor-pointer hover:bg-wa-teal/5 transition-all border-wa-teal/10 group relative overflow-hidden bg-[#fcfcfd] dark:bg-[#111b21] shadow-inner mb-6">
                           <div className="flex flex-col items-center justify-center py-10 relative z-10 text-center">
-                            <div className="w-20 h-20 bg-white dark:bg-[#202c33] rounded-[2rem] flex items-center justify-center mb-6 group-hover:scale-110 group-hover:-translate-y-2 transition-all shadow-2xl border border-slate-100 dark:border-white/10 text-slate-300 group-hover:text-wa-teal">
+                            <div className="w-20 h-20 bg-white dark:bg-[#202c33] rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 group-hover:-translate-y-2 transition-all shadow-2xl border border-slate-100 dark:border-white/10 text-slate-300 group-hover:text-wa-teal">
                               <Upload className="w-10 h-10" />
                             </div>
-                            <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] px-8 group-hover:text-wa-teal transition-colors">
+                            <p className="text-[11px] font-bold text-slate-400  tracking-normal px-5 sm:px-8 group-hover:text-wa-teal transition-colors">
                               {files.length > 0 ? `${files.length} ASSETS_CACHED` : 'UPLOAD SOURCE_STREAM'}
                             </p>
-                            <p className="text-[9px] font-medium text-slate-300 mt-2">DRAG & DROP SYSTEM_READY</p>
+                            <p className="text-xs font-medium text-slate-300 mt-2">DRAG & DROP SYSTEM_READY</p>
                           </div>
                           <input 
                             type="file" 
@@ -872,7 +872,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                         {files.length > 0 && (
                           <div className="flex flex-wrap gap-3">
                             {files.map((f, i) => (
-                              <div key={i} className="px-5 py-3 bg-white dark:bg-[#111b21] rounded-[1.2rem] border border-slate-100 dark:border-white/5 text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-3 shadow-sm animate-in zoom-in-50 duration-300">
+                              <div key={i} className="px-5 py-3 bg-white dark:bg-[#111b21] rounded-[1.2rem] border border-slate-100 dark:border-white/5 text-xs font-bold text-slate-500  tracking-normal flex items-center gap-3 shadow-sm animate-in zoom-in-50 duration-300">
                                  <FileText className="w-4 h-4 text-wa-teal" />
                                  <span className="truncate max-w-[150px]">{f.name}</span>
                               </div>
@@ -886,7 +886,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                       <div className="space-y-6">
                         <div className="flex items-center gap-3 mb-2 ml-2">
                            <div className="w-1.5 h-1.5 bg-wa-teal rounded-full animate-pulse" />
-                           <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.4em]">LINK_STREAMS</label>
+                           <label className="text-xs font-bold text-slate-400  tracking-normal">LINK_STREAMS</label>
                         </div>
                         {links.map((lnk, idx) => (
                           <div key={idx} className="flex gap-4 group animate-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
@@ -894,8 +894,8 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                                <LinkIcon className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300 group-hover:text-wa-teal transition-colors w-4 h-4" />
                                <input
                                 type="url"
-                                className="w-full bg-[#fcfcfd] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-[1.5rem] py-5 pl-14 pr-6 text-[11px] font-black transition-all outline-none text-slate-800 dark:text-white uppercase tracking-widest shadow-inner placeholder:text-slate-200"
-                                placeholder="PROTOCOL://RESOURCE_LOCATOR..."
+                                className="w-full bg-[#fcfcfd] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-8 focus:ring-wa-teal/5 rounded-[1.5rem] py-3 sm:py-5 pl-14 pr-6 text-[11px] font-bold transition-all outline-none text-slate-800 dark:text-white  tracking-normal shadow-inner placeholder:text-slate-200"
+                                placeholder="https://..."
                                 value={lnk}
                                 onChange={(e) => updateLink(idx, e.target.value)}
                               />
@@ -914,7 +914,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                         <button 
                           type="button"
                           onClick={addLinkField}
-                          className="w-full py-5 bg-white dark:bg-[#111b21] text-wa-teal text-[10px] font-black uppercase tracking-[0.3em] rounded-[1.5rem] border-2 border-dashed border-wa-teal/30 hover:bg-wa-teal/5 transition-all flex items-center justify-center gap-4 group"
+                          className="w-full py-3 sm:py-5 bg-white dark:bg-[#111b21] text-wa-teal text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 rounded-[1.5rem] border-2 border-dashed border-wa-teal/30 hover:bg-wa-teal/5 transition-all flex items-center justify-center gap-4 group"
                         >
                           <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" /> ADD_STUB_FIELD
                         </button>
@@ -928,20 +928,20 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                 <button 
                   type="button"
                   onClick={() => { setShowAdd(false); stopCamera(); }}
-                  className="flex-1 py-6 bg-[#fcfcfd] dark:bg-[#111b21] text-slate-400 font-black uppercase tracking-[0.3em] text-[10px] rounded-[2.2rem] border border-slate-100 dark:border-white/10 hover:text-wa-teal/70 hover:bg-white transition-all shadow-inner"
+                  className="flex-1 py-4 sm:py-6 bg-[#fcfcfd] dark:bg-[#111b21] text-slate-400 font-bold  tracking-normal text-xs rounded-[2.2rem] border border-slate-100 dark:border-white/10 hover:text-wa-teal/70 hover:bg-white transition-all shadow-inner"
                 >
                   ABORT OPERATION
                 </button>
                 <button 
                   type="submit"
                   disabled={uploading}
-                  className="flex-[2] py-6 bg-slate-900 text-white font-black uppercase tracking-[0.3em] text-[10px] rounded-[2.2rem] shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] hover:bg-wa-teal transition-all disabled:bg-slate-200 disabled:shadow-none flex items-center justify-center relative overflow-hidden group"
+                  className="flex-[2] py-4 sm:py-6 bg-slate-900 text-white font-bold  tracking-normal text-xs rounded-[2.2rem] shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)] hover:bg-wa-teal transition-all disabled:bg-slate-200 disabled:shadow-none flex items-center justify-center relative overflow-hidden group"
                 >
                   <div className="absolute inset-x-0 bottom-0 h-1 bg-white/20 transform scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-1000" />
                   {uploading ? (
                     <div className="flex items-center gap-4 animate-in fade-in duration-500">
                       <Loader2 className="w-5 h-5 animate-spin" />
-                      <span className="text-[10px] uppercase tracking-[0.3em] italic">{uploadStatus || 'INJECTING...'}</span>
+                      <span className="text-xs  tracking-normal italic">{uploadStatus || 'INJECTING...'}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-4">
@@ -959,13 +959,13 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
       {/* QR Modal */}
       {selectedMaterial && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4 z-[130] animate-in fade-in duration-500">
-          <div className="bg-white dark:bg-[#202c33] rounded-[4rem] p-12 w-full max-w-sm shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] text-center border border-white/10 relative overflow-hidden">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-sm shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] text-center border border-white/10 relative overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-[6px] bg-wa-teal" />
             
-            <div className="flex justify-between items-center mb-10">
+            <div className="flex justify-between items-center mb-6 sm:mb-10">
               <div className="text-left">
-                <h3 className="text-2xl font-black text-slate-800 dark:text-white tracking-tighter uppercase italic">RESOURCE SYNC</h3>
-                <p className="text-[10px] font-black text-wa-teal uppercase tracking-[0.3em] mt-1">Cross-Link Initiated</p>
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-white tracking-normal  italic">RESOURCE SYNC</h3>
+                <p className="text-xs font-bold text-wa-teal  tracking-normal mt-1">Cross-Link Initiated</p>
               </div>
               <button 
                 onClick={() => setSelectedMaterial(null)}
@@ -975,8 +975,8 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
               </button>
             </div>
 
-            <div className="bg-white p-10 rounded-[3rem] shadow-2xl mb-10 inline-block border-[10px] border-[#f8f9fa] dark:border-[#111b21]/50 relative group">
-              <div className="absolute -inset-2 bg-gradient-to-tr from-wa-teal/20 via-transparent to-wa-teal/20 rounded-[3.5rem] opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+            <div className="bg-white p-6 sm:p-10 rounded-3xl shadow-2xl mb-6 sm:mb-10 inline-block border-[10px] border-[#f8f9fa] dark:border-[#111b21]/50 relative group">
+              <div className="absolute -inset-2 bg-gradient-to-tr from-wa-teal/20 via-transparent to-wa-teal/20 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
               <QRCodeSVG 
                 value={`https://${window.location.hostname}/m/${selectedMaterial.id}`}
                 size={220}
@@ -986,8 +986,8 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
               />
             </div>
 
-            <div className="bg-[#fcfcfd] dark:bg-[#111b21] p-6 rounded-[2rem] border border-slate-100 dark:border-white/5 mb-10">
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">
+            <div className="bg-[#fcfcfd] dark:bg-[#111b21] p-6 rounded-2xl border border-slate-100 dark:border-white/5 mb-6 sm:mb-10">
+               <p className="text-xs font-bold text-slate-400  tracking-normal leading-relaxed">
                   Scan to establish secure connection to <br/>
                   <span className="text-wa-teal">ASSET_VECTOR_{selectedMaterial.id.substring(0,8).toUpperCase()}</span>
                </p>
@@ -995,7 +995,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
 
             <button 
               onClick={() => setSelectedMaterial(null)}
-              className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black uppercase tracking-[0.3em] text-[10px] shadow-2xl shadow-slate-900/30 hover:bg-slate-800 transition-all active:scale-95"
+              className="w-full py-4 sm:py-6 bg-slate-900 text-white rounded-2xl font-bold  tracking-normal text-xs shadow-2xl shadow-slate-900/30 hover:bg-slate-800 transition-all active:scale-95"
             >
               DISCONNECT TERMINAL
             </button>

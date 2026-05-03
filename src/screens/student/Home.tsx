@@ -282,7 +282,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
         return feeStructure[studentDept][currentSem];
       }
 
-      // 2. Try uppercase match
+      // 2. Try  match
       const upperDept = studentDept.toUpperCase();
       if (feeStructure[upperDept] && feeStructure[upperDept][currentSem] !== undefined) {
         return feeStructure[upperDept][currentSem];
@@ -347,7 +347,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
-              className="relative max-w-xl w-full aspect-square rounded-[3rem] overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10"
+              className="relative max-w-xl w-full aspect-square rounded-3xl overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10"
               onClick={(e) => e.stopPropagation()}
             >
               <img 
@@ -369,19 +369,19 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
 
       <main className={`${isEmbedded ? 'p-4' : 'px-6 mt-8'} relative z-10 space-y-6 max-w-2xl mx-auto`}>
         {/* Profile Card */}
-        <div className="bg-white dark:bg-[#202c33] p-8 rounded-[3rem] shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+        <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
              <Shield className="w-16 h-16 text-wa-teal" />
           </div>
           <div className="flex items-center gap-6 relative z-10">
             <div 
               onClick={() => profile?.avatarUrl && setZoomedImage(profile.avatarUrl)}
-              className="w-20 h-20 bg-[#f0f2f5] dark:bg-wa-teal/10 rounded-[2rem] p-1 overflow-hidden cursor-pointer hover:rotate-3 transition-all shadow-inner border-2 border-slate-50 dark:border-white/10"
+              className="w-20 h-20 bg-[#f0f2f5] dark:bg-wa-teal/10 rounded-2xl p-1 overflow-hidden cursor-pointer hover:rotate-3 transition-all shadow-inner border-2 border-slate-50 dark:border-white/10"
             >
               {profile?.avatarUrl ? (
-                <img src={profile.avatarUrl} className="w-full h-full object-cover rounded-[1.75rem]" referrerPolicy="no-referrer" />
+                <img src={profile.avatarUrl} className="w-full h-full object-cover rounded-xl" referrerPolicy="no-referrer" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-wa-teal font-black text-3xl">
+                <div className="w-full h-full flex items-center justify-center text-wa-teal font-bold text-3xl">
                   {profile?.name?.charAt(0)}
                 </div>
               )}
@@ -389,29 +389,29 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                  <span className="w-2 h-2 bg-wa-green rounded-full animate-pulse shadow-[0_0_10px_rgba(37,211,102,0.5)]"></span>
-                 <p className="text-[10px] font-black uppercase tracking-[0.3em] text-wa-teal">Authenticated</p>
+                 <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-wa-teal">Authenticated</p>
               </div>
-              <h2 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] truncate tracking-tight">{profile?.name}</h2>
+              <h2 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] truncate tracking-normal">{profile?.name}</h2>
               <div className="flex items-center gap-2 mt-2">
-                <span className="px-3 py-1 bg-wa-teal/10 text-wa-teal rounded-full text-[10px] font-black uppercase tracking-widest border border-wa-teal/10">Sem {profile?.semester}</span>
-                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-[#8696a0] rounded-full text-[10px] font-black uppercase tracking-widest border border-transparent truncate max-w-[150px]">{profile?.courseName || profile?.department}</span>
+                <span className="px-3 py-1 bg-wa-teal/10 text-wa-teal rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 border border-wa-teal/10">Sem {profile?.semester}</span>
+                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-[#8696a0] rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 border border-transparent truncate max-w-[150px]">{profile?.courseName || profile?.department}</span>
               </div>
             </div>
           </div>
         </div>
 
         {profile?.courseId === 'legacy' && (
-          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 p-6 rounded-[2.5rem] shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in slide-in-from-top-4">
+          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in slide-in-from-top-4">
             <div className="flex items-start gap-4">
               <Shield className="w-6 h-6 shrink-0 mt-1" />
               <div>
-                <p className="font-black uppercase tracking-widest text-xs">Profile Audit Required</p>
+                <p className="font-bold  tracking-normal text-xs">Profile Audit Required</p>
                 <p className="text-sm font-semibold opacity-80 mt-1 leading-relaxed">Update your department and semester to sync your learning materials repository.</p>
               </div>
             </div>
             <button 
               onClick={() => navigate('/profile')} 
-              className="px-6 py-3 bg-orange-500 text-white font-black uppercase tracking-widest text-[10px] rounded-2xl shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all whitespace-nowrap active:scale-95"
+              className="px-6 py-3 bg-orange-500 text-white font-bold  tracking-normal text-xs rounded-2xl shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all whitespace-nowrap active:scale-95"
             >
               Update Profile
             </button>
@@ -419,9 +419,9 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
         )}
 
         {loading ? (
-          <div className="bg-white dark:bg-[#202c33] p-16 rounded-[3rem] shadow-sm border border-slate-50 dark:border-white/5 flex flex-col items-center justify-center">
+          <div className="bg-white dark:bg-[#202c33] p-6 sm:p-10 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col items-center justify-center">
             <div className="w-12 h-12 border-4 border-wa-teal border-t-transparent rounded-full animate-spin mb-6"></div>
-            <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em]">Synchronizing Ledger...</p>
+            <p className="text-xs font-bold text-[#8696a0]  tracking-normal">Synchronizing Ledger...</p>
           </div>
         ) : (
           <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -431,13 +431,13 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                 <button 
                   key={i} 
                   onClick={() => handleNav(stat.link, stat.tabId)}
-                  className="bg-white dark:bg-[#202c33] p-5 rounded-[2rem] shadow-sm border border-slate-50 dark:border-white/5 flex flex-col items-center text-center group transition-all hover:bg-wa-teal/5 active:scale-95"
+                  className="bg-white dark:bg-[#202c33] p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col items-center text-center group transition-all hover:bg-wa-teal/5 active:scale-95"
                 >
                   <div className="w-10 h-10 bg-[#f0f2f5] dark:bg-[#111b21] rounded-xl flex items-center justify-center mb-3 group-hover:bg-wa-teal group-hover:text-white transition-colors">
                     <stat.icon className="w-5 h-5" />
                   </div>
-                  <p className="text-[9px] text-[#8696a0] font-black uppercase tracking-widest mb-1">{stat.label}</p>
-                  <p className="text-sm font-black text-slate-900 dark:text-[#e9edef] tracking-tight">{stat.value}</p>
+                  <p className="text-xs text-[#8696a0] font-bold  tracking-normal mb-1">{stat.label}</p>
+                  <p className="text-sm font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">{stat.value}</p>
                 </button>
               ))}
             </div>
@@ -447,9 +447,9 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                 {/* Scan Attendance Card */}
                 <div 
                   onClick={() => handleNav('/attendance/scan', 'scan')}
-                  className="bg-wa-teal p-8 rounded-[3rem] shadow-xl shadow-wa-teal/20 flex flex-col justify-between group cursor-pointer hover:bg-wa-teal/90 transition-all relative overflow-hidden active:scale-[0.98]"
+                  className="bg-wa-teal p-5 sm:p-5 sm:p-6 rounded-3xl shadow-xl shadow-wa-teal/20 flex flex-col justify-between group cursor-pointer hover:bg-wa-teal/90 transition-all relative overflow-hidden active:scale-[0.98]"
                 >
-                  <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform">
+                  <div className="absolute top-0 right-0 p-5 sm:p-5 sm:p-6 opacity-10 group-hover:rotate-12 transition-transform">
                      <QrCode className="w-24 h-24 text-white" />
                   </div>
                   <div className="relative z-10">
@@ -457,19 +457,19 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                       <QrCode className="text-white w-6 h-6" />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black text-white tracking-tight">Sync Presence</h3>
-                      <p className="text-white/70 text-[10px] font-black uppercase tracking-widest mt-1">Biometric Scanner</p>
+                      <h3 className="text-2xl font-bold text-white tracking-normal">Sync Presence</h3>
+                      <p className="text-white/70 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 mt-1">Biometric Scanner</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Teacher Contact Section */}
-                <div className="bg-white dark:bg-[#202c33] p-8 rounded-[3rem] shadow-sm border border-slate-50 dark:border-white/5 flex flex-col justify-between">
+                <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col justify-between">
                    <div className="flex items-center justify-between mb-6">
-                     <h3 className="text-sm font-black text-[#8696a0] uppercase tracking-widest flex items-center gap-2">
+                     <h3 className="text-sm font-bold text-[#8696a0]  tracking-normal flex items-center gap-2">
                        <Shield className="w-4 h-4" /> Mentor Unit
                      </h3>
-                     <span className="text-[8px] font-black uppercase tracking-widest text-wa-green bg-wa-green/10 px-2 py-1 rounded-full">Encrypted</span>
+                     <span className="text-[8px] font-bold  tracking-normal text-wa-green bg-wa-green/10 px-2 py-1 rounded-full">Encrypted</span>
                    </div>
                    <div className="flex items-center justify-between gap-4">
                      <div className="flex items-center gap-4">
@@ -484,8 +484,8 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                          )}
                        </div>
                        <div className="min-w-0">
-                         <p className="font-black text-slate-900 dark:text-[#e9edef] text-base tracking-tight leading-none mb-1">{teacherInfo?.name || 'Barun Maity'}</p>
-                         <p className="text-[10px] font-bold text-wa-teal uppercase tracking-widest">Master Instructor</p>
+                         <p className="font-bold text-slate-900 dark:text-[#e9edef] text-base tracking-normal leading-none mb-1">{teacherInfo?.name || 'Barun Maity'}</p>
+                         <p className="text-xs font-bold text-wa-teal  tracking-normal">Master Instructor</p>
                        </div>
                      </div>
                      <div className="flex items-center gap-3">
@@ -513,47 +513,47 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
             {/* Upcoming Classes */}
             <div className="space-y-4">
               <div className="flex justify-between items-center px-4">
-                <h2 className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] flex items-center gap-2">
+                <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal flex items-center gap-2">
                    <Clock className="w-4 h-4" /> Schedule Broadcast
                 </h2>
-                <button className="text-wa-teal text-[10px] font-black uppercase tracking-widest bg-wa-teal/5 px-4 py-1.5 rounded-full">Archive View</button>
+                <button className="text-wa-teal text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 bg-wa-teal/5 px-4 py-1.5 rounded-full">Archive View</button>
               </div>
               <div className="space-y-4 px-2">
                 {upcomingClasses.length === 0 ? (
-                  <div className="bg-white dark:bg-[#202c33] p-12 rounded-[2.5rem] border border-dashed border-slate-100 dark:border-white/5 text-center">
+                  <div className="bg-white dark:bg-[#202c33] p-6 sm:p-6 sm:p-5 sm:p-6 rounded-2xl border border-dashed border-slate-100 dark:border-white/5 text-center">
                     <Calendar className="w-10 h-10 text-slate-100 dark:text-slate-800 mx-auto mb-4" />
-                    <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest">No spectral schedules detected</p>
+                    <p className="text-xs font-bold text-[#8696a0]  tracking-normal">No spectral schedules detected</p>
                   </div>
                 ) : (
                   upcomingClasses.map((cls, i) => (
-                    <div key={i} className="bg-white dark:bg-[#202c33] p-6 rounded-[2rem] shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group transition-all hover:border-wa-teal/30">
+                    <div key={i} className="bg-white dark:bg-[#202c33] p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group transition-all hover:border-wa-teal/30">
                       <div className="flex items-center gap-6">
                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner relative overflow-hidden ${cls.type === 'active' ? 'bg-wa-green/10' : 'bg-[#f0f2f5] dark:bg-[#111b21]'}`}>
                            <Clock className={`w-6 h-6 ${cls.type === 'active' ? 'text-wa-green animate-pulse' : 'text-wa-teal'}`} />
                            {cls.type === 'active' && <div className="absolute inset-0 border-2 border-wa-green/30 rounded-2xl animate-ping" />}
                         </div>
                         <div className="min-w-0">
-                          <p className={`text-[9px] font-black uppercase tracking-widest mb-1 ${cls.type === 'active' ? 'text-wa-green' : 'text-wa-teal'}`}>
+                          <p className={`text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 mb-1 ${cls.type === 'active' ? 'text-wa-green' : 'text-wa-teal'}`}>
                             {cls.type === 'active' ? 'Direct Communication' : 'Future Transmission'}
                           </p>
-                          <h4 className="font-black text-slate-900 dark:text-[#e9edef] text-lg tracking-tight leading-none mb-1">
+                          <h4 className="font-bold text-slate-900 dark:text-[#e9edef] text-lg tracking-normal leading-none mb-1">
                             {cls.subject || `${cls.department} Sem ${cls.semester}`}
                           </h4>
                           <div className="flex items-center gap-3">
-                             <p className="text-[10px] text-[#8696a0] font-bold">{cls.teacherName || 'Master Unit'} • {cls.date === today ? 'Today' : cls.date}</p>
-                             {cls.topic && <span className="text-[10px] text-wa-teal font-black uppercase tracking-widest px-2 py-0.5 bg-wa-teal/5 rounded-md truncate max-w-[150px]">{cls.topic}</span>}
+                             <p className="text-xs text-[#8696a0] font-bold">{cls.teacherName || 'Teacher'} • {cls.date === today ? 'Today' : cls.date}</p>
+                             {cls.topic && <span className="text-xs text-wa-teal font-bold  tracking-normal px-2 py-0.5 bg-wa-teal/5 rounded-md truncate max-w-[150px]">{cls.topic}</span>}
                           </div>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-xl font-black text-wa-teal tracking-tighter">{formatTime12h(cls.startTime)}</p>
+                        <p className="text-xl font-bold text-wa-teal tracking-normal">{formatTime12h(cls.startTime)}</p>
                         {cls.type === 'active' ? (
                           <div className="flex items-center justify-end gap-1.5 mt-1.5">
                              <span className="w-1.5 h-1.5 bg-wa-green rounded-full animate-pulse"></span>
-                             <span className="text-[9px] font-black text-wa-green uppercase tracking-widest">Active</span>
+                             <span className="text-xs font-bold text-wa-green  tracking-normal">Active</span>
                           </div>
                         ) : (
-                           <p className="text-[9px] font-black text-[#8696a0]/40 uppercase tracking-widest mt-1.5">Standby</p>
+                           <p className="text-xs font-bold text-[#8696a0]/40  tracking-normal mt-1.5">Standby</p>
                         )}
                       </div>
                     </div>
@@ -565,7 +565,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
             {/* Recent Attendance */}
             <div className="space-y-4 pb-8">
               <div className="flex items-center justify-between px-4">
-                <h2 className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em] flex items-center gap-2">
+                <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" /> Presence Ledger
                 </h2>
                 {recentAttendance.length > 0 && (
@@ -583,7 +583,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                         console.error(err);
                       }
                     }}
-                    className="text-[9px] font-black uppercase text-red-500 hover:text-red-700 tracking-widest px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition-all border border-transparent hover:border-red-100"
+                    className="text-xs font-bold  text-red-500 hover:text-red-700 tracking-normal px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition-all border border-transparent hover:border-red-100"
                   >
                     Purge Records
                   </button>
@@ -591,31 +591,31 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
               </div>
               <div className="space-y-3 px-2">
                 {recentAttendance.length === 0 ? (
-                  <div className="bg-white dark:bg-[#202c33] p-12 rounded-[2.5rem] border border-dashed border-slate-100 dark:border-white/5 text-center">
+                  <div className="bg-white dark:bg-[#202c33] p-6 sm:p-6 sm:p-5 sm:p-6 rounded-2xl border border-dashed border-slate-100 dark:border-white/5 text-center">
                     <CheckCircle2 className="w-10 h-10 text-slate-100 dark:text-slate-800 mx-auto mb-4" />
-                    <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest">No verification data located</p>
+                    <p className="text-xs font-bold text-[#8696a0]  tracking-normal">No verification data located</p>
                   </div>
                 ) : (
                   recentAttendance.map((record, i) => (
-                    <div key={record.id || i} className="bg-white dark:bg-[#202c33] p-5 rounded-[2rem] shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group hover:border-wa-green/30 transition-all">
+                    <div key={record.id || i} className="bg-white dark:bg-[#202c33] p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group hover:border-wa-green/30 transition-all">
                       <div className="flex items-center gap-4 min-w-0">
                         <div className="w-12 h-12 bg-wa-green/5 dark:bg-wa-green/10 rounded-2xl flex items-center justify-center shrink-0 border border-wa-green/10">
                           <CheckCircle2 className="text-wa-green w-6 h-6" />
                         </div>
                         <div className="min-w-0">
-                          <p className="text-base font-black text-slate-900 dark:text-[#e9edef] truncate tracking-tight">{record.subject || 'Standard Session'}</p>
+                          <p className="text-base font-bold text-slate-900 dark:text-[#e9edef] truncate tracking-normal">{record.subject || 'Standard Session'}</p>
                           <div className="flex items-center gap-2 mt-1">
-                             <p className="text-[10px] text-[#8696a0] font-bold">
+                             <p className="text-xs text-[#8696a0] font-bold">
                                {new Date(record.timestamp).toLocaleDateString()}
                              </p>
                              <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                             <p className="text-[10px] text-wa-teal font-black uppercase tracking-widest italic">{new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
+                             <p className="text-xs text-wa-teal font-bold  tracking-normal italic">{new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
                           </div>
                         </div>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-[10px] font-black text-wa-teal uppercase tracking-widest mb-1">{record.department}</p>
-                        <div className="inline-flex px-2 py-0.5 bg-wa-teal/5 text-wa-teal rounded-md text-[8px] font-black uppercase tracking-widest">Sem {record.semester}</div>
+                        <p className="text-xs font-bold text-wa-teal  tracking-normal mb-1">{record.department}</p>
+                        <div className="inline-flex px-2 py-0.5 bg-wa-teal/5 text-wa-teal rounded-md text-[8px] font-bold  tracking-normal">Sem {record.semester}</div>
                       </div>
                     </div>
                   ))
@@ -634,28 +634,28 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
              <div className="w-12 h-12 bg-wa-teal/10 rounded-2xl flex items-center justify-center transition-all group-active:scale-90">
                 <Calendar className="w-6 h-6" />
              </div>
-             <span className="text-[9px] font-black uppercase tracking-widest">Portal</span>
+             <span className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Portal</span>
           </button>
           
           <button onClick={() => navigate('/materials/list')} className="flex flex-col items-center gap-1.5 text-[#8696a0] group">
              <div className="w-12 h-12 hover:bg-[#f0f2f5] dark:hover:bg-slate-800 rounded-2xl flex items-center justify-center transition-all group-active:scale-90">
                 <BookOpen className="w-6 h-6 group-hover:text-wa-teal transition-colors" />
              </div>
-             <span className="text-[9px] font-black uppercase tracking-widest">Library</span>
+             <span className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Library</span>
           </button>
           
           <button onClick={() => navigate('/doubts')} className="flex flex-col items-center gap-1.5 text-[#8696a0] group">
              <div className="w-12 h-12 hover:bg-[#f0f2f5] dark:hover:bg-slate-800 rounded-2xl flex items-center justify-center transition-all group-active:scale-90">
                 <MessageSquare className="w-6 h-6 group-hover:text-wa-teal transition-colors" />
              </div>
-             <span className="text-[9px] font-black uppercase tracking-widest">Inquiry</span>
+             <span className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Inquiry</span>
           </button>
 
           <button onClick={() => navigate('/student/analytics')} className="flex flex-col items-center gap-1.5 text-[#8696a0] group">
              <div className="w-12 h-12 hover:bg-[#f0f2f5] dark:hover:bg-slate-800 rounded-2xl flex items-center justify-center transition-all group-active:scale-90">
                 <TrendingUp className="w-6 h-6 group-hover:text-wa-teal transition-colors" />
              </div>
-             <span className="text-[9px] font-black uppercase tracking-widest">Ledger</span>
+             <span className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Ledger</span>
           </button>
 
           <button onClick={() => navigate('/profile')} className="flex flex-col items-center gap-1.5 text-[#8696a0] group">
@@ -666,7 +666,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                   <User className="w-6 h-6 group-hover:text-wa-teal transition-colors" />
                 )}
              </div>
-             <span className="text-[9px] font-black uppercase tracking-widest">Entity</span>
+             <span className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Entity</span>
           </button>
         </nav>
       )}

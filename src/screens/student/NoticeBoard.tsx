@@ -47,7 +47,7 @@ export default function NoticeBoard() {
 
       <div className="max-w-3xl mx-auto space-y-8">
         <div>
-          <h1 className="text-3xl font-black text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-tight">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-normal">
             <div className="w-12 h-12 bg-wa-teal/10 dark:bg-wa-teal/20 rounded-2xl flex items-center justify-center">
               <Megaphone className="text-wa-teal w-7 h-7" />
             </div>
@@ -63,25 +63,25 @@ export default function NoticeBoard() {
               <div className="w-16 h-16 bg-wa-teal/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Loader2 className="w-10 h-10 text-wa-teal animate-spin" />
               </div>
-              <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-[0.2em]">Intercepting Frequencies...</p>
+              <p className="text-xs font-bold text-[#8696a0]  tracking-normal">Intercepting Frequencies...</p>
             </div>
           ) : announcements.length === 0 ? (
-            <div className="py-20 text-center bg-white dark:bg-[#202c33] rounded-[3rem] border border-slate-50 dark:border-white/5 shadow-sm">
+            <div className="py-20 text-center bg-white dark:bg-[#202c33] rounded-3xl border border-slate-50 dark:border-white/5 shadow-sm">
               <Info className="w-12 h-12 text-[#8696a0]/20 mx-auto mb-4" />
-              <p className="text-[10px] font-black text-[#8696a0] uppercase tracking-widest leading-relaxed">No bulletins detected for your designated sector</p>
+              <p className="text-xs font-bold text-[#8696a0]  tracking-normal leading-relaxed">No notices detected for your designated department</p>
             </div>
           ) : (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {announcements.map((a) => (
                 <div 
                   key={a.id} 
-                  className={`bg-white dark:bg-[#202c33] p-8 rounded-[2.5rem] shadow-sm border-l-8 transition-all hover:shadow-md hover:-translate-y-1 group ${
+                  className={`bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border-l-8 transition-all hover:shadow-md hover:-translate-y-1 group ${
                     a.type === 'urgent' ? 'border-l-red-500' :
                     a.type === 'holiday' ? 'border-l-orange-500' :
                     'border-l-wa-teal'
                   } border-slate-50 dark:border-white/5 relative overflow-hidden`}
                 >
-                  <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
+                  <div className="absolute top-0 right-0 p-5 sm:p-5 sm:p-6 opacity-5 group-hover:scale-110 transition-transform">
                      {a.type === 'urgent' ? <AlertTriangle className="w-24 h-24" /> :
                       a.type === 'holiday' ? <Palmtree className="w-24 h-24" /> :
                       <Megaphone className="w-24 h-24" />}
@@ -99,10 +99,10 @@ export default function NoticeBoard() {
                          <Info className="w-6 h-6" />}
                       </div>
                       <div>
-                        <h3 className="font-black text-slate-900 dark:text-[#e9edef] text-xl tracking-tight mb-0.5">{a.title}</h3>
+                        <h3 className="font-bold text-slate-900 dark:text-[#e9edef] text-xl tracking-normal mb-0.5">{a.title}</h3>
                         <div className="flex items-center gap-2">
                            <Clock className="w-3 h-3 text-[#8696a0]" />
-                           <p className="text-[10px] text-[#8696a0] font-black uppercase tracking-widest">
+                           <p className="text-xs text-[#8696a0] font-bold  tracking-normal">
                             {new Date(a.createdAt).toLocaleDateString('en-US', { 
                               day: 'numeric', 
                               month: 'short', 
@@ -113,7 +113,7 @@ export default function NoticeBoard() {
                       </div>
                     </div>
                     {a.type === 'urgent' && (
-                      <span className="bg-red-500 text-white text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-full animate-pulse shadow-lg shadow-red-500/20">
+                      <span className="bg-red-500 text-white text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 px-3 py-1 rounded-full animate-pulse shadow-lg shadow-red-500/20">
                         Critical
                       </span>
                     )}
