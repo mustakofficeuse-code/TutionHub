@@ -230,28 +230,28 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
   }
 
   return (
-    <div className={`min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-6 transition-colors ${isEmbedded ? 'pb-24 pt-12' : 'pt-12'}`}>
+    <div className={`min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-4 sm:p-6 transition-colors ${isEmbedded ? 'pb-24 pt-12' : 'pt-12'}`}>
       {!isEmbedded ? (
         <button 
           onClick={() => navigate('/')}
-          className="mb-8 flex items-center gap-2 text-[#8696a0] font-semibold hover:text-wa-teal transition-colors"
+          className="mb-4 sm:mb-8 flex items-center gap-2 text-[#8696a0] font-semibold hover:text-wa-teal transition-colors"
         >
           <ArrowLeft className="w-5 h-5" /> Back to Dashboard
         </button>
       ) : (
         <button 
           onClick={() => { if(onTabChange) onTabChange('home'); }}
-          className="mb-8 flex items-center gap-2 text-[#8696a0] font-semibold hover:text-wa-teal transition-colors"
+          className="mb-4 sm:mb-8 flex items-center gap-2 text-[#8696a0] font-semibold hover:text-wa-teal transition-colors"
         >
           <ArrowLeft className="w-5 h-5" /> Back to Home
         </button>
       )}
 
       <div className="max-w-md mx-auto bg-white dark:bg-[#202c33] rounded-3xl shadow-2xl overflow-hidden border border-slate-50 dark:border-white/5 animate-in zoom-in-95 duration-500">
-        <div className="bg-wa-teal p-6 sm:p-10 text-center text-white relative overflow-hidden">
+        <div className="bg-wa-teal p-4 sm:p-6 sm:p-10 text-center text-white relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
           <div className="relative z-10">
-            <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-xl shadow-inner group">
+            <div className="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6 backdrop-blur-xl shadow-inner group">
               <Camera className="w-10 h-10 group-hover:scale-110 transition-transform" />
             </div>
             <h1 className="text-3xl font-bold tracking-normal mb-2">Biometric Scan</h1>
@@ -261,13 +261,13 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
           <div className="absolute -top-12 -left-12 w-32 h-32 bg-black/10 rounded-full blur-3xl" />
         </div>
 
-        <div className="p-6 sm:p-10">
+        <div className="p-4 sm:p-6 sm:p-10">
           {status === 'idle' && (
-            <div className="space-y-8">
+            <div className="space-y-2 sm:space-y-4 sm:space-y-8">
               <div id="reader" className="overflow-hidden rounded-2xl border-4 border-slate-50 dark:border-white/5 shadow-inner bg-[#f0f2f5] dark:bg-[#111b21] aspect-square flex items-center justify-center relative">
                  <div className="absolute inset-0 pointer-events-none border-2 border-wa-teal/20 rounded-2xl animate-pulse" />
               </div>
-              <div className="flex items-center gap-4 p-5 bg-wa-teal/5 dark:bg-wa-teal/10 rounded-2xl border border-wa-teal/10">
+              <div className="flex items-center gap-4 p-4 sm:p-5 bg-wa-teal/5 dark:bg-wa-teal/10 rounded-2xl border border-wa-teal/10">
                 <div className="w-10 h-10 bg-wa-teal rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-wa-teal/20">
                    <MapPin className="w-5 h-5 text-white" />
                 </div>
@@ -279,7 +279,7 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
           )}
 
           {status === 'verifying' && (
-            <div className="py-20 flex flex-col items-center text-center space-y-6">
+            <div className="py-20 flex flex-col items-center text-center space-y-3 sm:space-y-6">
               <div className="w-24 h-24 bg-wa-teal/10 rounded-full flex items-center justify-center relative">
                  <Loader2 className="w-12 h-12 text-wa-teal animate-spin" />
                  <div className="absolute inset-0 border-4 border-wa-teal/20 rounded-full animate-ping opacity-20" />
@@ -289,7 +289,7 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
           )}
 
           {status === 'success' && (
-            <div className="py-12 flex flex-col items-center text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="py-12 flex flex-col items-center text-center space-y-2 sm:space-y-4 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="relative">
                 <div className="w-28 h-28 bg-[#f0f2f5] dark:bg-wa-green/10 rounded-2xl flex items-center justify-center overflow-hidden border-4 border-white dark:border-wa-green/20 shadow-xl p-1">
                   {profile?.avatarUrl ? (
@@ -304,7 +304,7 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
               </div>
               <div className="space-y-2">
                 <h3 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">Verified!</h3>
-                <p className="text-[#8696a0] text-sm font-semibold px-6 leading-relaxed italic">"{message}"</p>
+                <p className="text-[#8696a0] text-sm font-semibold px-4 sm:px-6 leading-relaxed italic">"{message}"</p>
               </div>
               <button 
                 onClick={() => {
@@ -319,14 +319,14 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
           )}
 
           {status === 'error' && (
-            <div className="py-12 flex flex-col items-center text-center space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="py-12 flex flex-col items-center text-center space-y-2 sm:space-y-4 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
               <div className="w-24 h-24 bg-red-50 dark:bg-red-900/10 rounded-2xl flex items-center justify-center relative group">
                 <AlertCircle className="w-12 h-12 text-red-500 group-hover:scale-110 transition-transform" />
                 <div className="absolute inset-0 border-2 border-red-500/20 rounded-2xl animate-pulse" />
               </div>
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">Scan Reset</h2>
-                <p className="text-[#8696a0] text-sm font-semibold px-6 leading-relaxed italic">{message}</p>
+                <p className="text-[#8696a0] text-sm font-semibold px-4 sm:px-6 leading-relaxed italic">{message}</p>
               </div>
               <button 
                 onClick={() => { setStatus('idle'); setScanning(true); }}

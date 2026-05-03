@@ -113,17 +113,17 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
   const semestersDue = Array.from({ length: currentSem }, (_, i) => i + 1);
 
   return (
-    <div className={`min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-6 ${isEmbedded ? '' : 'pb-24 pt-12'}`}>
+    <div className={`min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-4 sm:p-6 ${isEmbedded ? '' : 'pb-24 pt-12'}`}>
       {!isEmbedded && (
         <button 
           onClick={() => navigate('/')}
-          className="mb-8 flex items-center gap-2 text-[#8696a0] font-semibold hover:text-wa-teal transition-colors"
+          className="mb-4 sm:mb-8 flex items-center gap-2 text-[#8696a0] font-semibold hover:text-wa-teal transition-colors"
         >
           <ArrowLeft className="w-5 h-5" /> Back to Dashboard
         </button>
       )}
 
-      <div className="max-w-6xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-2 sm:space-y-4 sm:space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-normal">
             <div className="w-12 h-12 bg-wa-teal/10 dark:bg-wa-teal/20 rounded-2xl flex items-center justify-center">
@@ -142,9 +142,9 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
             <p className="text-[#8696a0] font-bold  tracking-normal text-xs">Loading Ledger...</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-4 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Left Side: Payment History */}
-            <div className="space-y-6">
+            <div className="space-y-3 sm:space-y-6">
               <div className="flex items-center justify-between px-2">
                 <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal flex items-center gap-2">
                    <Clock className="w-4 h-4" /> Recent Transactions
@@ -153,16 +153,16 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
               </div>
               
               {payments.length === 0 ? (
-                <div className="bg-white dark:bg-[#202c33] p-6 sm:p-6 sm:p-5 sm:p-6 rounded-2xl border border-slate-50 dark:border-white/5 text-center shadow-sm">
+                <div className="bg-white dark:bg-[#202c33] p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 rounded-2xl border border-slate-50 dark:border-white/5 text-center shadow-sm">
                   <div className="w-16 h-16 bg-[#f0f2f5] dark:bg-[#111b21] rounded-full flex items-center justify-center mx-auto mb-4">
                      <Clock className="w-8 h-8 text-[#8696a0]/20" />
                   </div>
                   <p className="text-[#8696a0] font-bold  tracking-normal text-xs">No transaction history found</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-2 sm:space-y-4">
                   {payments.sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()).map(payment => (
-                    <div key={payment.id} className="bg-white dark:bg-[#202c33] p-6 rounded-2xl border border-slate-50 dark:border-white/5 flex justify-between items-center transition-all hover:shadow-md hover:border-wa-teal/30 group">
+                    <div key={payment.id} className="bg-white dark:bg-[#202c33] p-4 sm:p-6 rounded-2xl border border-slate-50 dark:border-white/5 flex justify-between items-center transition-all hover:shadow-md hover:border-wa-teal/30 group">
                       <div className="flex items-center gap-4">
                         <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-inner ${
                           payment.status === 'confirmed' ? 'bg-wa-green/10 text-wa-green' :
@@ -202,7 +202,7 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
             </div>
 
             {/* Right Side: Pay Now Dashboard */}
-            <div className="space-y-6">
+            <div className="space-y-3 sm:space-y-6">
               <div className="px-2">
                 <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal flex items-center gap-2">
                    <Info className="w-4 h-4" /> Billing Status
@@ -252,10 +252,10 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
 
                 if (expectedAmount === 0 || dueAmount === 0) {
                     return (
-                       <div className="bg-gradient-to-br from-wa-teal to-wa-teal-dark p-6 sm:p-6 sm:p-5 sm:p-6 rounded-3xl shadow-xl text-center text-white relative overflow-hidden group">
+                       <div className="bg-gradient-to-br from-wa-teal to-wa-teal-dark p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 rounded-3xl shadow-xl text-center text-white relative overflow-hidden group">
                           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
                           <div className="relative z-10">
-                            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6 backdrop-blur-md">
+                            <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 backdrop-blur-md">
                                <CheckCircle className="w-12 h-12 text-white" />
                             </div>
                             <h3 className="text-3xl font-bold mb-3 tracking-normal">Sem {sem} Fully Paid!</h3>
@@ -267,8 +267,8 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                 }
 
                 return (
-                    <div className="space-y-6">
-                        <div key={sem} className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 space-y-8 relative overflow-hidden group">
+                    <div className="space-y-3 sm:space-y-6">
+                        <div key={sem} className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 space-y-2 sm:space-y-4 sm:space-y-8 relative overflow-hidden group">
                             <div className="absolute top-0 right-0 p-4">
                                 <span className={`px-4 py-1.5 rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 ${paidAmount > 0 ? 'bg-wa-teal/10 text-wa-teal' : 'bg-red-50 text-red-600'}`}>
                                     {paidAmount > 0 ? 'Partly Paid' : 'Due Notification'}
@@ -282,7 +282,7 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                                 </p>
                             </div>
 
-                            <div className="space-y-4 pt-4">
+                            <div className="space-y-2 sm:space-y-4 pt-4">
                                 <div className="flex justify-between items-center p-4 bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl">
                                     <p className="text-xs font-bold text-[#8696a0]  tracking-normal">Expected Total</p>
                                     <p className="font-bold text-slate-900 dark:text-[#e9edef] text-xl tracking-normal">₹{expectedAmount.toLocaleString()}</p>
@@ -299,7 +299,7 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                                 )}
                             </div>
 
-                            <div className="pt-8 border-t border-slate-50 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                            <div className="pt-8 border-t border-slate-50 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-6">
                                 <div className="text-center md:text-left">
                                     <p className="text-xs text-red-500  font-bold tracking-normal mb-1">Current Outstanding Due</p>
                                     <div className="flex items-baseline gap-2">
@@ -320,12 +320,12 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
               })()
             }
 
-            <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5">
-               <h3 className="text-lg font-bold text-slate-900 dark:text-[#e9edef] mb-6 flex items-center gap-3 tracking-normal">
+            <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5">
+               <h3 className="text-lg font-bold text-slate-900 dark:text-[#e9edef] mb-4 sm:mb-6 flex items-center gap-3 tracking-normal">
                   <Info className="w-5 h-5 text-wa-teal" />
                   Account Support
                </h3>
-               <div className="space-y-4">
+               <div className="space-y-2 sm:space-y-4">
                   <div className="p-4 bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl">
                      <p className="text-xs font-bold text-[#8696a0]  tracking-normal mb-1">Tuition Accountant</p>
                      <p className="font-bold text-slate-900 dark:text-[#e9edef]">B.M Sir Admission Cell</p>
@@ -345,7 +345,7 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
       {/* Payment Modal */}
       {selectedSemester && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[130] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-5 sm:p-5 sm:p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-white/10 relative">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-5 sm:p-5 sm:p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-white/10 relative">
             <button 
               onClick={() => {
                 setSelectedSemester(null);
@@ -358,16 +358,16 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
               <XCircle className="w-6 h-6" />
             </button>
 
-            <div className="mb-8">
+            <div className="mb-4 sm:mb-8">
               <h3 className="text-2xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">Sync Payment</h3>
               <p className="text-xs font-bold text-[#8696a0]  tracking-normal mt-1">Select your preferred verification method</p>
             </div>
 
             {!paymentMethod ? (
-              <div className="space-y-4">
+              <div className="space-y-2 sm:space-y-4">
                 <button 
                   onClick={() => setPaymentMethod('offline')}
-                  className="w-full p-6 bg-[#f0f2f5] dark:bg-[#111b21] border-2 border-transparent hover:border-wa-teal rounded-2xl flex items-center gap-5 transition-all group shadow-sm active:scale-95"
+                  className="w-full p-4 sm:p-6 bg-[#f0f2f5] dark:bg-[#111b21] border-2 border-transparent hover:border-wa-teal rounded-2xl flex items-center gap-5 transition-all group shadow-sm active:scale-95"
                 >
                   <div className="w-14 h-14 bg-white dark:bg-[#202c33] rounded-2xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
                     <User className="text-[#8696a0] w-7 h-7 group-hover:text-wa-teal" />
@@ -380,7 +380,7 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
 
                 <button 
                   onClick={() => setPaymentMethod('online')}
-                  className="w-full p-6 bg-[#f0f2f5] dark:bg-[#111b21] border-2 border-transparent hover:border-wa-teal rounded-2xl flex items-center gap-5 transition-all group shadow-sm active:scale-95"
+                  className="w-full p-4 sm:p-6 bg-[#f0f2f5] dark:bg-[#111b21] border-2 border-transparent hover:border-wa-teal rounded-2xl flex items-center gap-5 transition-all group shadow-sm active:scale-95"
                 >
                   <div className="w-14 h-14 bg-wa-teal rounded-2xl flex items-center justify-center shadow-lg shadow-wa-teal/20 group-hover:scale-110 transition-transform">
                     <CreditCard className="text-white w-7 h-7" />
@@ -392,7 +392,7 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                 </button>
               </div>
             ) : paymentMethod === 'offline' ? (
-              <div className="space-y-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <div className="space-y-2 sm:space-y-4 sm:space-y-8 text-center animate-in fade-in slide-in-from-bottom-4 duration-300">
                 <div className="w-24 h-24 bg-wa-teal/10 rounded-full flex items-center justify-center mx-auto transition-transform hover:scale-110">
                   <User className="w-12 h-12 text-wa-teal" />
                 </div>
@@ -401,12 +401,12 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                   <h4 className="text-2xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">Barun Maity (B.M) Sir</h4>
                   <a 
                     href="tel:+919775220895" 
-                    className="inline-flex items-center gap-3 text-wa-teal px-6 py-3 bg-wa-teal/10 rounded-2xl font-bold text-xl hover:bg-wa-teal/20 transition-all shadow-sm"
+                    className="inline-flex items-center gap-3 text-wa-teal px-4 sm:px-6 py-3 bg-wa-teal/10 rounded-2xl font-bold text-xl hover:bg-wa-teal/20 transition-all shadow-sm"
                   >
                     +91 9775220895
                   </a>
                 </div>
-                <div className="p-6 bg-wa-teal/5 rounded-3xl border border-wa-teal/10 italic">
+                <div className="p-4 sm:p-6 bg-wa-teal/5 rounded-3xl border border-wa-teal/10 italic">
                   <p className="text-[11px] text-wa-teal leading-relaxed font-semibold">
                     "Please visit the tuition center hub during working hours (10AM - 6PM) to complete your manual cash sync."
                   </p>
@@ -419,9 +419,9 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                 </button>
               </div>
             ) : (
-              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                <div className="text-center space-y-6">
-                  <div className="bg-[#f0f2f5] dark:bg-white p-6 rounded-2xl inline-block shadow-inner relative group border-4 border-slate-50">
+              <div className="space-y-2 sm:space-y-4 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="text-center space-y-3 sm:space-y-6">
+                  <div className="bg-[#f0f2f5] dark:bg-white p-4 sm:p-6 rounded-2xl inline-block shadow-inner relative group border-4 border-slate-50">
                     <img 
                       src="https://picsum.photos/seed/qr/400/400" 
                       alt="Tuition QR Sink" 
@@ -434,7 +434,7 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                   </div>
                   <div className="space-y-2">
                     <p className="text-xs font-bold text-wa-teal  tracking-normal">Sem {selectedSemester} Tuition Sink</p>
-                    <p className="text-xs text-[#8696a0] italic px-6 font-semibold opacity-60 leading-relaxed">
+                    <p className="text-xs text-[#8696a0] italic px-4 sm:px-6 font-semibold opacity-60 leading-relaxed">
                       "Education is the legacy you build. Your contribution ensures we provide the best tools for your future."
                     </p>
                   </div>

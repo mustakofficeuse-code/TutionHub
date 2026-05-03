@@ -267,7 +267,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
   };
 
   return (
-    <div className={`min-h-screen bg-wa-bg dark:bg-wa-bg-dark p-6 transition-colors ${isEmbedded ? '' : 'pb-24'}`}>
+    <div className={`min-h-screen bg-wa-bg dark:bg-wa-bg-dark p-4 sm:p-6 transition-colors ${isEmbedded ? '' : 'pb-24'}`}>
       <AnimatePresence>
         {zoomedImage && (
           <div 
@@ -300,7 +300,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
       </AnimatePresence>
 
       <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-4 sm:mb-8">
           {!isEmbedded ? (
             <button 
               onClick={() => navigate(-1)}
@@ -364,7 +364,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
             </div>
           </div>
 
-          <div className="pt-16 p-5 sm:p-5 sm:p-6">
+          <div className="pt-16 p-4 sm:p-5 sm:p-5 sm:p-6">
             {isEditing && (
               <div className="mb-0">
                 <label className="text-xs font-bold text-slate-400  tracking-normal block mb-3">Profile Picture Settings</label>
@@ -469,7 +469,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
             </div>
 
             {message.text && (
-              <div className={`mb-6 p-4 rounded-2xl flex items-center gap-3 ${
+              <div className={`mb-4 sm:mb-6 p-4 rounded-2xl flex items-center gap-3 ${
                 message.type === 'success' 
                   ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-900/30' 
                   : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-900/30'
@@ -479,8 +479,8 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
               </div>
             )}
 
-            <form onSubmit={handleUpdate} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <form onSubmit={handleUpdate} className="space-y-3 sm:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-700 dark:text-slate-300 flex items-center gap-2">
                     <User className="w-4 h-4 text-slate-400" /> Full Name
@@ -592,13 +592,13 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
               )}
             </form>
 
-            <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/5">
+            <div className="mt-4 sm:mt-8 pt-8 border-t border-slate-100 dark:border-white/5">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                 <Lock className="w-5 h-5 text-wa-teal" /> Change Password
               </h3>
               
               {passwordMessage.text && (
-                <div className={`mb-6 p-4 rounded-2xl flex items-center gap-3 ${
+                <div className={`mb-4 sm:mb-6 p-4 rounded-2xl flex items-center gap-3 ${
                   passwordMessage.type === 'success' 
                     ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-900/30' 
                     : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-900/30'
@@ -608,7 +608,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                 </div>
               )}
 
-              <form onSubmit={handleChangePassword} className="space-y-4">
+              <form onSubmit={handleChangePassword} className="space-y-2 sm:space-y-4">
                 <div className="space-y-2 max-w-xl">
                   <label className="text-sm font-bold text-slate-700 dark:text-slate-300">Current Password</label>
                   <div className="relative">
@@ -630,7 +630,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-xl pt-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6 max-w-xl pt-2">
                   <div className="space-y-2">
                     <label className="text-sm font-bold text-slate-700 dark:text-slate-300">New Password</label>
                     <div className="relative">
@@ -675,7 +675,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                 <button 
                   type="submit"
                   disabled={passwordLoading}
-                  className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-70"
+                  className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 font-bold py-3 px-4 sm:px-6 rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-70"
                 >
                   {passwordLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Update Password'}
                 </button>
@@ -683,7 +683,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
             </div>
 
             {profile?.role === 'teacher' && (
-              <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
+              <div className="mt-4 sm:mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                   <Key className="w-5 h-5 text-blue-600" /> Invite Students
                 </h3>

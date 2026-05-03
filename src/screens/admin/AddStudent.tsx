@@ -128,14 +128,14 @@ export default function AddStudent() {
 
   if (profile?.role !== 'teacher' && profile?.role !== 'admin') {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-6">
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 sm:p-6">
         <div className="text-center">
           <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Access Denied</h1>
           <p className="text-slate-500 dark:text-slate-400 mt-2">Only teachers can access this page.</p>
           <button 
             onClick={() => navigate('/')}
-            className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-xl font-bold"
+            className="mt-4 sm:mt-6 px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-xl font-bold"
           >
             Go Home
           </button>
@@ -145,11 +145,11 @@ export default function AddStudent() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-6 md:p-6 sm:p-6 sm:p-5 sm:p-6 pt-12 transition-colors font-sans">
+    <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-4 sm:p-6 md:p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 pt-12 transition-colors font-sans">
       <div className="max-w-xl mx-auto">
         <button 
           onClick={() => navigate('/')}
-          className="flex items-center gap-3 text-[#8696a0] font-bold  tracking-normal text-xs hover:text-wa-teal transition-all mb-8 group"
+          className="flex items-center gap-3 text-[#8696a0] font-bold  tracking-normal text-xs hover:text-wa-teal transition-all mb-4 sm:mb-8 group"
         >
           <div className="w-8 h-8 rounded-xl bg-white dark:bg-[#202c33] flex items-center justify-center shadow-sm border border-slate-100 dark:border-white/5 group-hover:scale-110 transition-transform">
             <ArrowLeft className="w-4 h-4" />
@@ -163,9 +163,9 @@ export default function AddStudent() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-100 dark:border-white/5"
+              className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-6 sm:p-10 shadow-sm border border-slate-100 dark:border-white/5"
             >
-              <div className="flex items-center gap-6 mb-6 sm:mb-10">
+              <div className="flex items-center gap-3 sm:gap-6 mb-4 sm:mb-6 sm:mb-10">
                 <div className="w-16 h-16 bg-wa-teal/10 rounded-[1.5rem] flex items-center justify-center shadow-inner">
                   <UserPlus className="w-8 h-8 text-wa-teal" />
                 </div>
@@ -176,13 +176,13 @@ export default function AddStudent() {
               </div>
 
               {error && (
-                <div className="mb-8 p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800 rounded-2xl flex items-center gap-4 text-red-600 dark:text-red-400 text-xs font-bold  tracking-normal leading-relaxed shadow-inner">
+                <div className="mb-4 sm:mb-8 p-4 sm:p-6 bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-800 rounded-2xl flex items-center gap-4 text-red-600 dark:text-red-400 text-xs font-bold  tracking-normal leading-relaxed shadow-inner">
                   <div className="w-2.5 h-2.5 bg-red-600 rounded-full animate-ping shrink-0" />
                   {error}
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-8">
+              <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-4 sm:space-y-8">
                 <div className="space-y-3">
                   <label className="block text-xs font-bold text-[#8696a0]  tracking-normal ml-4">Full Name</label>
                   <div className="relative group">
@@ -198,7 +198,7 @@ export default function AddStudent() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
                   <div className="space-y-3">
                     <label className="block text-xs font-bold text-[#8696a0]  tracking-normal ml-4">Phone Number</label>
                     <div className="relative group">
@@ -231,7 +231,7 @@ export default function AddStudent() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-6">
+                <div className="grid grid-cols-2 gap-3 sm:gap-6">
                   <div className="space-y-3">
                     <label className="block text-xs font-bold text-[#8696a0]  tracking-normal ml-4">Department</label>
                     <div className="relative group">
@@ -308,15 +308,15 @@ export default function AddStudent() {
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-6 sm:p-5 sm:p-6 shadow-sm border border-slate-100 dark:border-white/5 text-center"
+              className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 shadow-sm border border-slate-100 dark:border-white/5 text-center"
             >
-              <div className="w-24 h-24 bg-wa-green/10 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner">
+              <div className="w-24 h-24 bg-wa-green/10 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-8 shadow-inner">
                 <CheckCircle className="w-12 h-12 text-wa-green" />
               </div>
               <h2 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] mb-3 tracking-normal">Registration <span className="text-wa-green">Success</span></h2>
-              <p className="text-xs font-bold text-[#8696a0]  tracking-normal mb-6 sm:mb-10 leading-relaxed max-w-xs mx-auto">New student registered. Share these credentials securely.</p>
+              <p className="text-xs font-bold text-[#8696a0]  tracking-normal mb-4 sm:mb-6 sm:mb-10 leading-relaxed max-w-xs mx-auto">New student registered. Share these credentials securely.</p>
 
-              <div className="bg-[#f0f2f5] dark:bg-[#111b21] p-6 sm:p-10 rounded-2xl border border-slate-100 dark:border-white/5 mb-6 sm:mb-10 space-y-8 relative overflow-hidden group">
+              <div className="bg-[#f0f2f5] dark:bg-[#111b21] p-4 sm:p-6 sm:p-10 rounded-2xl border border-slate-100 dark:border-white/5 mb-4 sm:mb-6 sm:mb-10 space-y-2 sm:space-y-4 sm:space-y-8 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-5 translate-x-4 -translate-y-4 group-hover:translate-x-0 group-hover:translate-y-0 transition-transform">
                     <Shield className="w-20 h-20 text-wa-teal" />
                 </div>

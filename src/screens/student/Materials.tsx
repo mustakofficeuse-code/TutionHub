@@ -57,17 +57,17 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
   });
 
   return (
-    <div className={`min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-6 ${isEmbedded ? '' : 'pb-24 pt-12'}`}>
+    <div className={`min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-4 sm:p-6 ${isEmbedded ? '' : 'pb-24 pt-12'}`}>
       {!isEmbedded && (
         <button 
           onClick={() => navigate('/')}
-          className="mb-8 flex items-center gap-2 text-[#8696a0] font-semibold hover:text-wa-teal transition-colors"
+          className="mb-4 sm:mb-8 flex items-center gap-2 text-[#8696a0] font-semibold hover:text-wa-teal transition-colors"
         >
           <ArrowLeft className="w-5 h-5" /> Back to Dashboard
         </button>
       )}
 
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-4xl mx-auto space-y-2 sm:space-y-4 sm:space-y-8">
         <div className="flex justify-between items-end">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-normal">
@@ -95,7 +95,7 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
         </div>
 
         {/* Materials List */}
-        <div className="space-y-4">
+        <div className="space-y-2 sm:space-y-4">
           <div className="flex items-center justify-between px-2">
             <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal">Latest Updates</h2>
             <span className="text-xs font-bold text-wa-teal bg-wa-teal/10 px-3 py-1 rounded-full  tracking-normal">{filteredMaterials.length} Items</span>
@@ -118,7 +118,7 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
               </div>
             ) : (
               filteredMaterials.map((m) => (
-                <div key={m.id} className="bg-white dark:bg-[#202c33] p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group hover:border-wa-teal/30 transition-all">
+                <div key={m.id} className="bg-white dark:bg-[#202c33] p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group hover:border-wa-teal/30 transition-all">
                   <div className="flex items-center gap-5">
                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110 ${
                       m.type === 'pdf' ? 'bg-red-50 dark:bg-red-900/20 text-red-600' :
@@ -173,7 +173,7 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
       {viewMaterial && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[110] animate-in fade-in duration-300">
           <div className="bg-white dark:bg-[#202c33] rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl border border-white/10 animate-in zoom-in-95 duration-200">
-            <div className="p-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-white dark:bg-[#202c33]">
+            <div className="p-4 sm:p-6 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-white dark:bg-[#202c33]">
               <div className="flex items-center gap-4">
                  <div className="w-10 h-10 bg-wa-teal/10 dark:bg-wa-teal/20 rounded-xl flex items-center justify-center">
                     <BookOpen className="text-wa-teal w-6 h-6" />
@@ -197,13 +197,13 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
               {viewMaterial.type === 'pdf' ? (
                 <iframe src={viewMaterial.url} className="w-full h-full border-none" title="Material View" />
               ) : (viewMaterial.type === 'image' || viewMaterial.type === 'camera') ? (
-                <img src={viewMaterial.url} alt="Material" className="max-w-full max-h-full object-contain p-5 sm:p-5 sm:p-6 shadow-2xl rounded-2xl" referrerPolicy="no-referrer" />
+                <img src={viewMaterial.url} alt="Material" className="max-w-full max-h-full object-contain p-4 sm:p-5 sm:p-5 sm:p-6 shadow-2xl rounded-2xl" referrerPolicy="no-referrer" />
               ) : (
-                <div className="text-center p-6 sm:p-6 sm:p-5 sm:p-6 bg-white dark:bg-[#202c33] rounded-3xl shadow-2xl max-w-md mx-4 border border-slate-100 dark:border-white/5">
-                  <div className="w-24 h-24 bg-wa-teal/10 rounded-full flex items-center justify-center mx-auto mb-8">
+                <div className="text-center p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 bg-white dark:bg-[#202c33] rounded-3xl shadow-2xl max-w-md mx-4 border border-slate-100 dark:border-white/5">
+                  <div className="w-24 h-24 bg-wa-teal/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-8">
                      <LinkIcon className="w-12 h-12 text-wa-teal" />
                   </div>
-                  <h4 className="text-[#8696a0] mb-8 font-bold  tracking-normal text-xs">External Resource Archive</h4>
+                  <h4 className="text-[#8696a0] mb-4 sm:mb-8 font-bold  tracking-normal text-xs">External Resource Archive</h4>
                   <a 
                     href={viewMaterial.url} 
                     target="_blank" 

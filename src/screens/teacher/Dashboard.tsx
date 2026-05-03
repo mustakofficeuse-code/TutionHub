@@ -447,7 +447,7 @@ export default function TeacherDashboard({
     }, {});
 
     return (
-      <div className="space-y-4 px-1 pb-2">
+      <div className="space-y-2 sm:space-y-4 px-1 pb-2">
         <div className="flex flex-col sm:flex-row gap-3 pt-3">
           <select
             value={searchConfig.sem}
@@ -484,11 +484,11 @@ export default function TeacherDashboard({
         </div>
 
         {students.length === 0 ? (
-          <div className="p-5 sm:p-5 sm:p-6 text-center text-slate-400 text-xs italic bg-white dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5">
+          <div className="p-4 sm:p-5 sm:p-5 sm:p-6 text-center text-slate-400 text-xs italic bg-white dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5">
             No students match your search in {dept}.
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2 sm:space-y-4">
             {Object.keys(grouped)
               .sort()
               .map((sem) => (
@@ -596,10 +596,10 @@ export default function TeacherDashboard({
   ];
 
   return (
-    <div className="flex-1 overflow-y-auto bg-[#f0f2f5] dark:bg-[#111b21] p-6 space-y-8 custom-scrollbar pb-24 font-sans">
+    <div className="flex-1 overflow-y-auto bg-[#f0f2f5] dark:bg-[#111b21] p-4 sm:p-6 space-y-2 sm:space-y-4 sm:space-y-8 custom-scrollbar pb-24 font-sans">
       {loading && (
         <div className="flex flex-col items-center justify-center py-32">
-          <Loader2 className="w-12 h-12 text-wa-teal animate-spin mb-6" />
+          <Loader2 className="w-12 h-12 text-wa-teal animate-spin mb-4 sm:mb-6" />
           <p className="text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal">Synchronizing Uplink...</p>
         </div>
       )}
@@ -607,7 +607,7 @@ export default function TeacherDashboard({
       {!loading && (
         <>
           {/* Header Stats / Status */}
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 sm:gap-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 sm:gap-4 sm:gap-8">
             <div>
               <h1 className="text-3xl font-bold text-slate-800 dark:text-[#e9edef] tracking-normal leading-none  italic">
                 Command <span className="text-wa-teal">Center</span>
@@ -623,19 +623,19 @@ export default function TeacherDashboard({
           </div>
 
           {/* Stats Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
             {overviewStats.map((s, i) => (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.1 }}
                 key={i}
-                className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl border border-slate-50 dark:border-white/5 shadow-sm relative overflow-hidden group"
+                className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl border border-slate-50 dark:border-white/5 shadow-sm relative overflow-hidden group"
               >
                 <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
                   <s.icon className={`w-20 h-20 ${s.color}`} />
                 </div>
-                <div className={`w-14 h-14 ${s.bg} ${s.color} rounded-2xl flex items-center justify-center mb-6 shadow-inner`}>
+                <div className={`w-14 h-14 ${s.bg} ${s.color} rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-inner`}>
                   <s.icon className="w-7 h-7" />
                 </div>
                 <p className="text-xs font-bold  text-slate-500 dark:text-slate-400 tracking-normal mb-2">
@@ -648,11 +648,11 @@ export default function TeacherDashboard({
             ))}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-4 sm:gap-8">
             {/* Left: Directory & Departments */}
-            <div className="lg:col-span-2 space-y-6">
-              <div className="bg-white dark:bg-[#202c33] p-6 sm:p-10 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-10 border-b border-slate-50 dark:border-white/5 pb-8 gap-6">
+            <div className="lg:col-span-2 space-y-3 sm:space-y-6">
+              <div className="bg-white dark:bg-[#202c33] p-4 sm:p-6 sm:p-10 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 sm:mb-10 border-b border-slate-50 dark:border-white/5 pb-8 gap-3 sm:gap-6">
                   <div>
                     <h2 className="text-xl font-bold text-slate-800 dark:text-[#e9edef] flex items-center gap-4 tracking-normal  italic">
                       <Users className="w-7 h-7 text-wa-teal" /> Faculty Records
@@ -668,7 +668,7 @@ export default function TeacherDashboard({
                 </div>
 
                 {/* Departments Expansion */}
-                <div className="space-y-6">
+                <div className="space-y-3 sm:space-y-6">
                   {departments.map((d, idx) => {
                     const name = d.name.toUpperCase();
                     const isActive = expandedDept === name;
@@ -682,11 +682,11 @@ export default function TeacherDashboard({
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: idx * 0.05 }}
                         key={d.id} 
-                        className="space-y-4"
+                        className="space-y-2 sm:space-y-4"
                       >
                         <div
                           onClick={() => setExpandedDept(isActive ? null : name)}
-                          className={`p-5 sm:p-5 sm:p-6 rounded-2xl border transition-all cursor-pointer flex justify-between items-center group relative overflow-hidden ${
+                          className={`p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl border transition-all cursor-pointer flex justify-between items-center group relative overflow-hidden ${
                             isActive 
                               ? "bg-wa-teal border-wa-teal text-white shadow-xl shadow-wa-teal/20" 
                               : "bg-[#f8f9fa] dark:bg-[#111b21] border-transparent hover:border-wa-teal/30 text-slate-800 dark:text-[#e9edef]"
@@ -744,7 +744,7 @@ export default function TeacherDashboard({
                               initial={{ height: 0, opacity: 0 }}
                               animate={{ height: "auto", opacity: 1 }}
                               exit={{ height: 0, opacity: 0 }}
-                              className="overflow-hidden bg-white dark:bg-[#202c33] rounded-3xl border border-slate-50 dark:border-white/5 p-6 shadow-inner"
+                              className="overflow-hidden bg-white dark:bg-[#202c33] rounded-3xl border border-slate-50 dark:border-white/5 p-4 sm:p-6 shadow-inner"
                             >
                               {renderStudentTable(name)}
                             </motion.div>
@@ -758,16 +758,16 @@ export default function TeacherDashboard({
             </div>
 
             {/* Right: Operations & Feed */}
-            <div className="space-y-8">
+            <div className="space-y-2 sm:space-y-4 sm:space-y-8">
               {/* Quick Actions Terminal */}
-              <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5">
-                 <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal mb-6 flex items-center gap-2">
+              <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5">
+                 <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal mb-4 sm:mb-6 flex items-center gap-2">
                     <TrendingUp className="w-4 h-4" /> Operations Terminal
                  </h2>
                  <div className="grid grid-cols-1 gap-4">
                   <button
                     onClick={() => handleNav("/attendance/generate", "attendance")}
-                    className="flex items-center gap-6 p-6 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-transparent hover:border-wa-teal/30 hover:bg-white dark:hover:bg-[#202c33] transition-all group"
+                    className="flex items-center gap-3 sm:gap-6 p-4 sm:p-6 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-transparent hover:border-wa-teal/30 hover:bg-white dark:hover:bg-[#202c33] transition-all group"
                   >
                     <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/20 text-wa-green rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
                       <QrCode className="w-7 h-7" />
@@ -779,7 +779,7 @@ export default function TeacherDashboard({
                   </button>
                   <button
                     onClick={() => handleNav("/fees/manage", "fees")}
-                    className="flex items-center gap-6 p-6 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-transparent hover:border-wa-teal/30 hover:bg-white dark:hover:bg-[#202c33] transition-all group"
+                    className="flex items-center gap-3 sm:gap-6 p-4 sm:p-6 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-transparent hover:border-wa-teal/30 hover:bg-white dark:hover:bg-[#202c33] transition-all group"
                   >
                     <div className="w-14 h-14 bg-wa-teal/10 text-wa-teal rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
                       <CreditCard className="w-7 h-7" />
@@ -791,7 +791,7 @@ export default function TeacherDashboard({
                   </button>
                   <button
                     onClick={() => handleNav("/admin", "admin")}
-                    className="flex items-center gap-6 p-6 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-transparent hover:border-wa-teal/30 hover:bg-white dark:hover:bg-[#202c33] transition-all group"
+                    className="flex items-center gap-3 sm:gap-6 p-4 sm:p-6 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-transparent hover:border-wa-teal/30 hover:bg-white dark:hover:bg-[#202c33] transition-all group"
                   >
                     <div className="w-14 h-14 bg-wa-teal text-white rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
                       <Shield className="w-7 h-7" />
@@ -806,7 +806,7 @@ export default function TeacherDashboard({
 
               {/* Activity Frequency Feed */}
               <div className="bg-white dark:bg-[#202c33] rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 overflow-hidden flex flex-col h-[550px]">
-                <div className="p-5 sm:p-5 sm:p-6 bg-[#f8f9fa] dark:bg-[#111b21] border-b border-slate-50 dark:border-white/10 flex justify-between items-center">
+                <div className="p-4 sm:p-5 sm:p-5 sm:p-6 bg-[#f8f9fa] dark:bg-[#111b21] border-b border-slate-50 dark:border-white/10 flex justify-between items-center">
                   <div>
                     <h3 className="text-sm font-bold text-slate-800 dark:text-[#e9edef] flex items-center gap-3 tracking-normal">
                       <Clock className="w-4 h-4 text-wa-teal" /> Signal Feed
@@ -826,7 +826,7 @@ export default function TeacherDashboard({
                     </div>
                   </div>
                 </div>
-                <div className="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar no-scrollbar">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-2 sm:space-y-4 custom-scrollbar no-scrollbar">
                   {recentAttendance.length === 0 ? (
                     <div className="py-20 text-center opacity-40">
                       <Clock className="w-12 h-12 mx-auto mb-4 text-[#8696a0]" />
@@ -839,7 +839,7 @@ export default function TeacherDashboard({
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: idx * 0.05 }}
                         key={rec.id}
-                        className="flex items-center gap-4 p-5 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-transparent hover:border-wa-teal/20 transition-all group cursor-default"
+                        className="flex items-center gap-4 p-4 sm:p-5 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-transparent hover:border-wa-teal/20 transition-all group cursor-default"
                       >
                         <div className="w-12 h-12 rounded-2xl bg-emerald-50 dark:bg-emerald-900/10 text-wa-green flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform">
                           <UserCheck className="w-5 h-5" />
@@ -867,7 +867,7 @@ export default function TeacherDashboard({
               
               <button
                 onClick={() => setShowScheduleModal(true)}
-                className="w-full p-6 bg-slate-900 dark:bg-wa-teal text-white rounded-2xl font-bold text-xs  tracking-normal shadow-2xl shadow-wa-teal/20 flex items-center justify-center gap-3 active:scale-95 transition-all group"
+                className="w-full p-4 sm:p-6 bg-slate-900 dark:bg-wa-teal text-white rounded-2xl font-bold text-xs  tracking-normal shadow-2xl shadow-wa-teal/20 flex items-center justify-center gap-3 active:scale-95 transition-all group"
               >
                 <Calendar className="w-5 h-5 group-hover:rotate-12 transition-transform" /> 
                 Synchronize Schedule
@@ -914,15 +914,15 @@ export default function TeacherDashboard({
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="bg-white dark:bg-[#1f2c34] w-full max-w-md rounded-2xl p-5 sm:p-5 sm:p-6 shadow-2xl text-center border border-slate-100 dark:border-white/5"
+              className="bg-white dark:bg-[#1f2c34] w-full max-w-md rounded-2xl p-4 sm:p-5 sm:p-5 sm:p-6 shadow-2xl text-center border border-slate-100 dark:border-white/5"
             >
-              <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-3xl flex items-center justify-center mx-auto mb-6 shrink-0 rotate-3">
+              <div className="w-20 h-20 bg-red-100 dark:bg-red-900/30 rounded-3xl flex items-center justify-center mx-auto mb-4 sm:mb-6 shrink-0 rotate-3">
                 <AlertCircle className="w-10 h-10 text-red-600" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 tracking-normal">
                 Deletion Restricted
               </h3>
-              <p className="text-slate-500 dark:text-[#8696a0] mb-8 font-medium leading-relaxed">
+              <p className="text-slate-500 dark:text-[#8696a0] mb-4 sm:mb-8 font-medium leading-relaxed">
                 Cannot delete the{" "}
                 <span className="font-bold text-slate-900 dark:text-white underline decoration-red-500 decoration-2 underline-offset-4 px-1">
                   {deletionRestriction.deptName}
@@ -951,12 +951,12 @@ export default function TeacherDashboard({
       {/* Modals for Add/Edit Dept, Edit Student, etc. (kept minimal for visual clarity) */}
       {showAddDeptModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1f2c34] w-full max-w-sm rounded-3xl p-6 shadow-2xl border border-white/5">
-            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-6 flex items-center gap-2">
+          <div className="bg-white dark:bg-[#1f2c34] w-full max-w-sm rounded-3xl p-4 sm:p-6 shadow-2xl border border-white/5">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-4 sm:mb-6 flex items-center gap-2">
               <Shield className="w-5 h-5 text-wa-teal" />{" "}
               {editingDept ? "Edit" : "New"} Department
             </h3>
-            <form onSubmit={handleAddDepartment} className="space-y-4">
+            <form onSubmit={handleAddDepartment} className="space-y-2 sm:space-y-4">
               <div>
                 <label className="text-xs font-bold  text-slate-400 tracking-normal block mb-2">
                   Name
@@ -1012,8 +1012,8 @@ export default function TeacherDashboard({
 
       {editingStudent && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1f2c34] w-full max-w-md rounded-3xl p-5 sm:p-5 sm:p-6 shadow-2xl border border-white/5">
-            <div className="flex items-center gap-4 mb-8">
+          <div className="bg-white dark:bg-[#1f2c34] w-full max-w-md rounded-3xl p-4 sm:p-5 sm:p-5 sm:p-6 shadow-2xl border border-white/5">
+            <div className="flex items-center gap-4 mb-4 sm:mb-8">
               <div className="w-16 h-16 rounded-3xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
                 {editingStudent.avatarUrl ? (
                   <img
@@ -1033,7 +1033,7 @@ export default function TeacherDashboard({
                 </p>
               </div>
             </div>
-            <form onSubmit={handleUpdateStudent} className="space-y-4">
+            <form onSubmit={handleUpdateStudent} className="space-y-2 sm:space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-bold  text-slate-400 tracking-normal block mb-2">
@@ -1096,8 +1096,8 @@ export default function TeacherDashboard({
       {/* Schedule Modal */}
       {showScheduleModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1f2c34] w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl p-5 sm:p-5 sm:p-6 shadow-2xl border border-white/5 custom-scrollbar">
-            <div className="flex justify-between items-center mb-8">
+          <div className="bg-white dark:bg-[#1f2c34] w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-5 sm:p-5 sm:p-6 shadow-2xl border border-white/5 custom-scrollbar">
+            <div className="flex justify-between items-center mb-4 sm:mb-8">
               <h3 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
                 <Calendar className="w-6 h-6 text-wa-teal" /> Class Schedule
               </h3>
@@ -1108,8 +1108,8 @@ export default function TeacherDashboard({
                 <X className="w-6 h-6 text-slate-400" />
               </button>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
-              <form onSubmit={handleAddSchedule} className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 sm:gap-10">
+              <form onSubmit={handleAddSchedule} className="space-y-2 sm:space-y-4">
                 <p className="text-xs font-bold  text-wa-teal tracking-normal mb-4">
                   {editingScheduleId ? "Edit Session" : "Plan New Session"}
                 </p>

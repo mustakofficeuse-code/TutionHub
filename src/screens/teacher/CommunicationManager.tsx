@@ -78,10 +78,10 @@ export default function CommunicationManager() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#111b21] p-6 sm:p-6 sm:p-10 pb-32 transition-colors">
+    <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#111b21] p-4 sm:p-6 sm:p-6 sm:p-10 pb-32 transition-colors">
       <button 
         onClick={() => navigate('/')}
-        className="mb-8 flex items-center gap-3 text-slate-500 dark:text-slate-400 font-bold hover:text-wa-teal transition-all  tracking-normal text-xs group"
+        className="mb-4 sm:mb-8 flex items-center gap-3 text-slate-500 dark:text-slate-400 font-bold hover:text-wa-teal transition-all  tracking-normal text-xs group"
       >
         <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#202c33] flex items-center justify-center shadow-sm group-hover:bg-wa-teal group-hover:text-white transition-all border border-slate-100 dark:border-white/5 shrink-0">
           <ArrowLeft className="w-4 h-4" />
@@ -90,7 +90,7 @@ export default function CommunicationManager() {
       </button>
 
       <div className="max-w-4xl mx-auto space-y-12">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3 sm:gap-6">
           <div>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-2 h-2 bg-wa-teal rounded-full animate-pulse" />
@@ -110,7 +110,7 @@ export default function CommunicationManager() {
         </div>
 
         {/* Announcements List */}
-        <div className="space-y-4">
+        <div className="space-y-2 sm:space-y-4">
           {loading ? (
             <div className="py-20 text-center">
               <Loader2 className="w-10 h-10 text-blue-600 animate-spin mx-auto" />
@@ -121,8 +121,8 @@ export default function CommunicationManager() {
             </div>
           ) : (
             announcements.map((a) => (
-              <div key={a.id} className="bg-white dark:bg-[#202c33] p-6 sm:p-10 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 hover:border-wa-teal transition-all duration-500 hover:-translate-y-1">
-                <div className="flex justify-between items-start mb-6">
+              <div key={a.id} className="bg-white dark:bg-[#202c33] p-4 sm:p-6 sm:p-10 rounded-2xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 hover:border-wa-teal transition-all duration-500 hover:-translate-y-1">
+                <div className="flex justify-between items-start mb-4 sm:mb-6">
                   <div className="flex items-center gap-5">
                     <div className={`p-4 rounded-2xl shadow-inner ${
                       a.type === 'urgent' ? 'bg-red-500/10 text-red-500' :
@@ -157,15 +157,15 @@ export default function CommunicationManager() {
       {/* Add Modal */}
       {showAdd && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-5 sm:p-5 sm:p-6 w-full max-w-lg shadow-2xl">
-            <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-8  italic tracking-normal">Post New Announcement</h3>
-            <form onSubmit={handleAdd} className="space-y-6">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 sm:p-5 sm:p-6 w-full max-w-lg shadow-2xl">
+            <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 sm:mb-8  italic tracking-normal">Post New Announcement</h3>
+            <form onSubmit={handleAdd} className="space-y-3 sm:space-y-6">
               <div>
                 <label className="block text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mb-2.5 ml-1">Title</label>
                 <input
                   type="text"
                   required
-                  className="w-full px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl text-base font-bold text-slate-800 dark:text-white transition-all outline-none"
+                  className="w-full px-4 sm:px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl text-base font-bold text-slate-800 dark:text-white transition-all outline-none"
                   placeholder="Exam Schedule Update"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -177,18 +177,18 @@ export default function CommunicationManager() {
                 <textarea
                   required
                   rows={4}
-                  className="w-full px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl text-base font-bold text-slate-800 dark:text-white transition-all outline-none resize-none"
+                  className="w-full px-4 sm:px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl text-base font-bold text-slate-800 dark:text-white transition-all outline-none resize-none"
                   placeholder="Enter notice details here..."
                   value={content}
                   onChange={(e) => setContent(e.target.value)}
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mb-2.5 ml-1">Type</label>
                   <select
-                    className="w-full px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl text-base font-bold text-slate-800 dark:text-white transition-all outline-none appearance-none cursor-pointer"
+                    className="w-full px-4 sm:px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl text-base font-bold text-slate-800 dark:text-white transition-all outline-none appearance-none cursor-pointer"
                     value={type}
                     onChange={(e: any) => setType(e.target.value)}
                   >
@@ -200,7 +200,7 @@ export default function CommunicationManager() {
                 <div>
                   <label className="block text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mb-2.5 ml-1">Target Course</label>
                   <select
-                    className="w-full px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl text-base font-bold text-slate-800 dark:text-white transition-all outline-none appearance-none cursor-pointer"
+                    className="w-full px-4 sm:px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl text-base font-bold text-slate-800 dark:text-white transition-all outline-none appearance-none cursor-pointer"
                     value={targetCourseId}
                     onChange={(e) => setTargetCourseId(e.target.value)}
                   >

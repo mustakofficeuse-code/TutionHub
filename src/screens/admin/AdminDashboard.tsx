@@ -183,8 +183,8 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
   return (
     <div className={`min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] transition-colors font-sans ${isEmbedded ? 'pb-24 pt-12' : ''}`}>
       {!isEmbedded && (
-        <nav className="bg-white dark:bg-[#202c33] border-b border-slate-100 dark:border-white/5 px-6 py-4 flex justify-between items-center sticky top-0 z-50 transition-colors shadow-sm">
-          <div className="flex items-center gap-6">
+        <nav className="bg-white dark:bg-[#202c33] border-b border-slate-100 dark:border-white/5 px-4 sm:px-6 py-4 flex justify-between items-center sticky top-0 z-50 transition-colors shadow-sm">
+          <div className="flex items-center gap-3 sm:gap-6">
             <button 
               onClick={() => navigate('/')}
               className="p-3 hover:bg-[#f0f2f5] dark:hover:bg-[#111b21] rounded-2xl transition-all active:scale-95 text-[#8696a0] hover:text-wa-teal"
@@ -233,11 +233,11 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
         </nav>
       )}
 
-      <main className="max-w-7xl mx-auto p-5 sm:p-5 sm:p-6 space-y-8">
+      <main className="max-w-7xl mx-auto p-4 sm:p-5 sm:p-5 sm:p-6 space-y-2 sm:space-y-4 sm:space-y-8">
         {/* Admin Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+          <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+            <div className="absolute top-0 right-0 p-4 sm:p-6 opacity-5 group-hover:scale-110 transition-transform">
               <Users className="w-16 h-16 text-wa-teal" />
             </div>
             <div className="flex items-center gap-4 mb-4 relative z-10">
@@ -246,11 +246,11 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
               </div>
               <h3 className="text-xs font-bold text-[#8696a0]  tracking-normal">Total Students</h3>
             </div>
-            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal relative z-10">{users.length}</p>
+            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal relative z-10">{users.filter(u => u.role === 'student').length}</p>
           </div>
           
-          <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
+          <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+             <div className="absolute top-0 right-0 p-4 sm:p-6 opacity-5 group-hover:scale-110 transition-transform">
               <UserCheck className="w-16 h-16 text-wa-green" />
             </div>
             <div className="flex items-center gap-4 mb-4 relative z-10">
@@ -264,8 +264,8 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
             </p>
           </div>
 
-          <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
-             <div className="absolute top-0 right-0 p-6 opacity-5 group-hover:scale-110 transition-transform">
+          <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+             <div className="absolute top-0 right-0 p-4 sm:p-6 opacity-5 group-hover:scale-110 transition-transform">
               <UserX className="w-16 h-16 text-orange-500" />
             </div>
             <div className="flex items-center gap-4 mb-4 relative z-10">
@@ -277,7 +277,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
             <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal relative z-10">{blacklistDocs.length}</p>
           </div>
 
-          <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+          <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
             <div className="flex items-center gap-4 mb-4">
               <div className="w-12 h-12 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center text-red-600 dark:text-red-400">
                 <Trash2 className="w-6 h-6" />
@@ -295,7 +295,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
 
         {/* Blocks List Section - MOVED HERE */}
         <div className="bg-white dark:bg-[#202c33] rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 overflow-hidden">
-          <div className="p-6 sm:p-10 border-b border-slate-50 dark:border-white/5 flex justify-between items-center bg-[#f0f2f5]/50 dark:bg-slate-800/10">
+          <div className="p-4 sm:p-6 sm:p-10 border-b border-slate-50 dark:border-white/5 flex justify-between items-center bg-[#f0f2f5]/50 dark:bg-slate-800/10">
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-normal">
                 <UserX className="w-6 h-6 text-red-500" /> Blacklist / Suspended
@@ -303,16 +303,16 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
               <p className="text-xs font-bold text-[#8696a0]  tracking-normal mt-2">Manage Suspended Users</p>
             </div>
           </div>
-          <div className="p-6 sm:p-10">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="p-4 sm:p-6 sm:p-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6">
               {blacklistDocs.length === 0 ? (
                 <div className="col-span-full text-center py-20 border-2 border-dashed border-slate-50 dark:border-white/5 rounded-3xl">
                   <p className="text-xs font-bold text-[#8696a0]  tracking-normal">No suspended users found</p>
                 </div>
               ) : (
                 blacklistDocs.map((user) => (
-                  <div key={user.id} className="group flex flex-col sm:flex-row items-center justify-between p-5 sm:p-5 sm:p-6 rounded-2xl border bg-red-50/10 dark:bg-red-900/5 border-red-100/50 dark:border-red-900/20 gap-6 transition-all hover:bg-red-50/20 dark:hover:bg-red-900/10">
-                    <div className="flex items-center gap-6">
+                  <div key={user.id} className="group flex flex-col sm:flex-row items-center justify-between p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl border bg-red-50/10 dark:bg-red-900/5 border-red-100/50 dark:border-red-900/20 gap-3 sm:gap-6 transition-all hover:bg-red-50/20 dark:hover:bg-red-900/10">
+                    <div className="flex items-center gap-3 sm:gap-6">
                       <motion.button 
                         layoutId={`avatar-${user.id}`}
                         onClick={() => user.avatarUrl && setZoomedImage({ url: user.avatarUrl, id: user.id })}
@@ -373,7 +373,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
 
         {/* User Management Table */}
         <div className="bg-white dark:bg-[#202c33] rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 overflow-hidden">
-          <div className="p-6 sm:p-10 border-b border-slate-50 dark:border-white/5 flex flex-col lg:flex-row justify-between items-center gap-5 sm:gap-8 bg-[#f0f2f5]/50 dark:bg-slate-800/10">
+          <div className="p-4 sm:p-6 sm:p-10 border-b border-slate-50 dark:border-white/5 flex flex-col lg:flex-row justify-between items-center gap-5 sm:gap-4 sm:gap-8 bg-[#f0f2f5]/50 dark:bg-slate-800/10">
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">User Register</h2>
               <p className="text-xs font-bold text-[#8696a0]  tracking-normal mt-2">All authenticated system users</p>
@@ -401,32 +401,32 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
           <div className="w-full overflow-x-auto"><table className="w-full min-w-max text-left">
               <thead>
                 <tr className="bg-[#f0f2f5]/30 dark:bg-slate-800/20 text-[#8696a0] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">
-                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">User Name</th>
-                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Role</th>
-                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Department / Semester</th>
-                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Call</th>
-                  <th className="px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Joined date</th>
-                  <th className="px-6 sm:px-10 py-4 sm:py-6 text-right border-b border-slate-50 dark:border-white/5 text-nowrap sticky right-0 bg-[#f0f2f5]/30 dark:bg-[#111b21] z-10">Actions</th>
+                  <th className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">User Name</th>
+                  <th className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Role</th>
+                  <th className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Department / Semester</th>
+                  <th className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Call</th>
+                  <th className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Joined date</th>
+                  <th className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 text-right border-b border-slate-50 dark:border-white/5 text-nowrap sticky right-0 bg-[#f0f2f5]/30 dark:bg-[#111b21] z-10">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50 dark:divide-white/5">
                 {loading ? (
                   <tr>
-                    <td colSpan={6} className="px-6 sm:px-10 py-20 text-center">
+                    <td colSpan={6} className="px-4 sm:px-6 sm:px-10 py-20 text-center">
                       <Loader2 className="w-12 h-12 text-wa-teal animate-spin mx-auto" />
                     </td>
                   </tr>
                 ) : filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-6 sm:px-10 py-20 text-center">
+                    <td colSpan={6} className="px-4 sm:px-6 sm:px-10 py-20 text-center">
                       <p className="text-xs font-bold text-[#8696a0]  tracking-normal leading-relaxed">No users match your query parameters</p>
                     </td>
                   </tr>
                 ) : (
                   filteredUsers.map((user) => (
                     <tr key={user.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/10 transition-colors group">
-                      <td className="px-6 sm:px-10 py-4 sm:py-6 whitespace-nowrap">
-                        <div className="flex items-center gap-6">
+                      <td className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 whitespace-nowrap">
+                        <div className="flex items-center gap-3 sm:gap-6">
                           <motion.button 
                             layoutId={`avatar-${user.id}`}
                             onClick={() => user.avatarUrl && setZoomedImage({ url: user.avatarUrl, id: user.id })}
@@ -455,7 +455,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 sm:px-10 py-4 sm:py-6 whitespace-nowrap">
+                      <td className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 whitespace-nowrap">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 ${
                           user.role === 'admin' 
                             ? 'bg-wa-teal/10 text-wa-teal border border-wa-teal/20' 
@@ -466,7 +466,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                           {user.role}
                         </span>
                       </td>
-                      <td className="px-6 sm:px-10 py-4 sm:py-6 text-nowrap">
+                      <td className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 text-nowrap">
                         {user.role === 'student' ? (
                           <div className="flex flex-col gap-0.5">
                             <p className="text-sm font-bold text-slate-700 dark:text-[#e9edef]  tracking-normal">{user.department || user.courseName || user.courseId || '-'}</p>
@@ -476,7 +476,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                           <span className="text-slate-200 dark:text-slate-800 tracking-normal">---</span>
                         )}
                       </td>
-                      <td className="px-6 sm:px-10 py-4 sm:py-6 text-nowrap">
+                      <td className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 text-nowrap">
                         {user.phoneNumber ? (
                           <a 
                             href={`tel:${user.phoneNumber}`}
@@ -489,10 +489,10 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                           <p className="text-[#8696a0]/40 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Offline</p>
                         )}
                       </td>
-                      <td className="px-6 sm:px-10 py-4 sm:py-6 text-[11px] text-[#8696a0] font-bold  tracking-normal whitespace-nowrap">
+                      <td className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 text-[11px] text-[#8696a0] font-bold  tracking-normal whitespace-nowrap">
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
                       </td>
-                      <td className="px-6 sm:px-10 py-4 sm:py-6 text-right whitespace-nowrap sticky right-0 bg-white dark:bg-[#202c33] z-10 group-hover:bg-slate-50/50 dark:group-hover:bg-slate-800/10 shadow-[-10px_0_15px_-10px_rgba(0,0,0,0.05)]">
+                      <td className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 text-right whitespace-nowrap sticky right-0 bg-white dark:bg-[#202c33] z-10 group-hover:bg-slate-50/50 dark:group-hover:bg-slate-800/10 shadow-[-10px_0_15px_-10px_rgba(0,0,0,0.05)]">
                         <div className="flex items-center justify-end gap-3 transition-all">
                            <button
                             onClick={() => setUserToBlock(user)}
@@ -525,7 +525,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
             initial={{ y: 100, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[210] bg-wa-green text-white px-6 py-3 rounded-2xl shadow-xl font-bold flex items-center gap-3"
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[210] bg-wa-green text-white px-4 sm:px-6 py-3 rounded-2xl shadow-xl font-bold flex items-center gap-3"
           >
             <UserCheck className="w-5 h-5" />
             {successMessage}
@@ -536,12 +536,12 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
       {/* Delete Confirmation Modal */}
       {userToDelete && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xl flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
-            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-inner">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
+            <div className="w-20 h-20 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mb-4 sm:mb-8 mx-auto shadow-inner">
               <Trash2 className="w-10 h-10 text-red-500" />
             </div>
             <h3 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal mb-4">Delete User?</h3>
-            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-6 sm:mb-10">
+            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-4 sm:mb-6 sm:mb-10">
               Are you sure you want to permanently delete <span className="text-slate-900 dark:text-[#e9edef] font-bold">{userToDelete.name}</span>? This action cannot be undone.
             </p>
             <div className="flex flex-col gap-3">
@@ -566,12 +566,12 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
       {/* Block Confirmation Modal */}
       {userToBlock && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xl flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
-            <div className="w-20 h-20 bg-orange-50 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-inner">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
+            <div className="w-20 h-20 bg-orange-50 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center mb-4 sm:mb-8 mx-auto shadow-inner">
               <UserX className="w-10 h-10 text-orange-500" />
             </div>
             <h3 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal mb-4">Suspend User?</h3>
-            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-6 sm:mb-10">
+            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-4 sm:mb-6 sm:mb-10">
               Suspend <span className="text-slate-900 dark:text-[#e9edef] font-bold">{userToBlock.name}</span>? They will no longer be able to log in.
             </p>
             <div className="flex flex-col gap-3">
@@ -598,12 +598,12 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
       {/* Unblock Confirmation Modal */}
       {userToUnblock && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xl flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
-            <div className="w-20 h-20 bg-wa-green/10 rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-inner">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
+            <div className="w-20 h-20 bg-wa-green/10 rounded-2xl flex items-center justify-center mb-4 sm:mb-8 mx-auto shadow-inner">
               <UserCheck className="w-10 h-10 text-wa-green" />
             </div>
             <h3 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal mb-4">Unblock User?</h3>
-            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-6 sm:mb-10">
+            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-4 sm:mb-6 sm:mb-10">
               Unblock <span className="text-slate-900 dark:text-[#e9edef] font-bold">{userToUnblock.name}</span>? They will be able to log in again.
             </p>
             <div className="flex flex-col gap-3">
@@ -663,12 +663,12 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
       {/* Factory Reset Modal */}
       {showResetConfirm && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xl flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
-            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/40 rounded-2xl flex items-center justify-center mb-8 mx-auto shadow-inner">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/5 text-center">
+            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/40 rounded-2xl flex items-center justify-center mb-4 sm:mb-8 mx-auto shadow-inner">
               <Trash2 className="w-10 h-10 text-red-600" />
             </div>
             <h3 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal mb-4">FACTORY RESET?</h3>
-            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-6 sm:mb-10">
+            <p className="text-[#8696a0] font-semibold text-sm leading-relaxed mb-4 sm:mb-6 sm:mb-10">
               WARNING: This will irreversibly delete ALL users, teachers, payments, assignments, and config from Firebase. The system will be empty.
             </p>
             <div className="flex flex-col gap-3">

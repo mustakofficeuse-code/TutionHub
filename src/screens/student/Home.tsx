@@ -367,13 +367,13 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
         )}
       </AnimatePresence>
 
-      <main className={`${isEmbedded ? 'p-4' : 'px-6 mt-8'} relative z-10 space-y-6 max-w-2xl mx-auto`}>
+      <main className={`${isEmbedded ? 'p-4' : 'px-4 sm:px-6 mt-4 sm:mt-8'} relative z-10 space-y-3 sm:space-y-6 max-w-2xl mx-auto`}>
         {/* Profile Card */}
-        <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
+        <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 sm:p-6 opacity-10 group-hover:scale-110 transition-transform">
              <Shield className="w-16 h-16 text-wa-teal" />
           </div>
-          <div className="flex items-center gap-6 relative z-10">
+          <div className="flex items-center gap-3 sm:gap-6 relative z-10">
             <div 
               onClick={() => profile?.avatarUrl && setZoomedImage(profile.avatarUrl)}
               className="w-20 h-20 bg-[#f0f2f5] dark:bg-wa-teal/10 rounded-2xl p-1 overflow-hidden cursor-pointer hover:rotate-3 transition-all shadow-inner border-2 border-slate-50 dark:border-white/10"
@@ -401,7 +401,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
         </div>
 
         {profile?.courseId === 'legacy' && (
-          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in slide-in-from-top-4">
+          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 p-4 sm:p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in slide-in-from-top-4">
             <div className="flex items-start gap-4">
               <Shield className="w-6 h-6 shrink-0 mt-1" />
               <div>
@@ -411,7 +411,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
             </div>
             <button 
               onClick={() => navigate('/profile')} 
-              className="px-6 py-3 bg-orange-500 text-white font-bold  tracking-normal text-xs rounded-2xl shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all whitespace-nowrap active:scale-95"
+              className="px-4 sm:px-6 py-3 bg-orange-500 text-white font-bold  tracking-normal text-xs rounded-2xl shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all whitespace-nowrap active:scale-95"
             >
               Update Profile
             </button>
@@ -419,19 +419,19 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
         )}
 
         {loading ? (
-          <div className="bg-white dark:bg-[#202c33] p-6 sm:p-10 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col items-center justify-center">
-            <div className="w-12 h-12 border-4 border-wa-teal border-t-transparent rounded-full animate-spin mb-6"></div>
+          <div className="bg-white dark:bg-[#202c33] p-4 sm:p-6 sm:p-10 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col items-center justify-center">
+            <div className="w-12 h-12 border-4 border-wa-teal border-t-transparent rounded-full animate-spin mb-4 sm:mb-6"></div>
             <p className="text-xs font-bold text-[#8696a0]  tracking-normal">Synchronizing Ledger...</p>
           </div>
         ) : (
-          <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+          <div className="space-y-3 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
             {/* Stats Row */}
             <div className="grid grid-cols-3 gap-4">
               {quickStats.map((stat, i) => (
                 <button 
                   key={i} 
                   onClick={() => handleNav(stat.link, stat.tabId)}
-                  className="bg-white dark:bg-[#202c33] p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col items-center text-center group transition-all hover:bg-wa-teal/5 active:scale-95"
+                  className="bg-white dark:bg-[#202c33] p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col items-center text-center group transition-all hover:bg-wa-teal/5 active:scale-95"
                 >
                   <div className="w-10 h-10 bg-[#f0f2f5] dark:bg-[#111b21] rounded-xl flex items-center justify-center mb-3 group-hover:bg-wa-teal group-hover:text-white transition-colors">
                     <stat.icon className="w-5 h-5" />
@@ -443,17 +443,17 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
             </div>
 
             {/* Attendance & Scanner Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
                 {/* Scan Attendance Card */}
                 <div 
                   onClick={() => handleNav('/attendance/scan', 'scan')}
-                  className="bg-wa-teal p-5 sm:p-5 sm:p-6 rounded-3xl shadow-xl shadow-wa-teal/20 flex flex-col justify-between group cursor-pointer hover:bg-wa-teal/90 transition-all relative overflow-hidden active:scale-[0.98]"
+                  className="bg-wa-teal p-4 sm:p-5 sm:p-5 sm:p-6 rounded-3xl shadow-xl shadow-wa-teal/20 flex flex-col justify-between group cursor-pointer hover:bg-wa-teal/90 transition-all relative overflow-hidden active:scale-[0.98]"
                 >
-                  <div className="absolute top-0 right-0 p-5 sm:p-5 sm:p-6 opacity-10 group-hover:rotate-12 transition-transform">
+                  <div className="absolute top-0 right-0 p-4 sm:p-5 sm:p-5 sm:p-6 opacity-10 group-hover:rotate-12 transition-transform">
                      <QrCode className="w-24 h-24 text-white" />
                   </div>
                   <div className="relative z-10">
-                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-6 backdrop-blur-md border border-white/20">
+                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 backdrop-blur-md border border-white/20">
                       <QrCode className="text-white w-6 h-6" />
                     </div>
                     <div>
@@ -464,8 +464,8 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                 </div>
 
                 {/* Teacher Contact Section */}
-                <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col justify-between">
-                   <div className="flex items-center justify-between mb-6">
+                <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col justify-between">
+                   <div className="flex items-center justify-between mb-4 sm:mb-6">
                      <h3 className="text-sm font-bold text-[#8696a0]  tracking-normal flex items-center gap-2">
                        <Shield className="w-4 h-4" /> Mentor Unit
                      </h3>
@@ -511,23 +511,23 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
             </div>
 
             {/* Upcoming Classes */}
-            <div className="space-y-4">
+            <div className="space-y-2 sm:space-y-4">
               <div className="flex justify-between items-center px-4">
                 <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal flex items-center gap-2">
                    <Clock className="w-4 h-4" /> Schedule Broadcast
                 </h2>
                 <button className="text-wa-teal text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 bg-wa-teal/5 px-4 py-1.5 rounded-full">View All</button>
               </div>
-              <div className="space-y-4 px-2">
+              <div className="space-y-2 sm:space-y-4 px-2">
                 {upcomingClasses.length === 0 ? (
-                  <div className="bg-white dark:bg-[#202c33] p-6 sm:p-6 sm:p-5 sm:p-6 rounded-2xl border border-dashed border-slate-100 dark:border-white/5 text-center">
+                  <div className="bg-white dark:bg-[#202c33] p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 rounded-2xl border border-dashed border-slate-100 dark:border-white/5 text-center">
                     <Calendar className="w-10 h-10 text-slate-100 dark:text-slate-800 mx-auto mb-4" />
                     <p className="text-xs font-bold text-[#8696a0]  tracking-normal">No spectral schedules detected</p>
                   </div>
                 ) : (
                   upcomingClasses.map((cls, i) => (
-                    <div key={i} className="bg-white dark:bg-[#202c33] p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group transition-all hover:border-wa-teal/30">
-                      <div className="flex items-center gap-6">
+                    <div key={i} className="bg-white dark:bg-[#202c33] p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group transition-all hover:border-wa-teal/30">
+                      <div className="flex items-center gap-3 sm:gap-6">
                         <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner relative overflow-hidden ${cls.type === 'active' ? 'bg-wa-green/10' : 'bg-[#f0f2f5] dark:bg-[#111b21]'}`}>
                            <Clock className={`w-6 h-6 ${cls.type === 'active' ? 'text-wa-green animate-pulse' : 'text-wa-teal'}`} />
                            {cls.type === 'active' && <div className="absolute inset-0 border-2 border-wa-green/30 rounded-2xl animate-ping" />}
@@ -563,7 +563,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
             </div>
 
             {/* Recent Attendance */}
-            <div className="space-y-4 pb-8">
+            <div className="space-y-2 sm:space-y-4 pb-8">
               <div className="flex items-center justify-between px-4">
                 <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4" /> Presence Ledger
@@ -591,13 +591,13 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
               </div>
               <div className="space-y-3 px-2">
                 {recentAttendance.length === 0 ? (
-                  <div className="bg-white dark:bg-[#202c33] p-6 sm:p-6 sm:p-5 sm:p-6 rounded-2xl border border-dashed border-slate-100 dark:border-white/5 text-center">
+                  <div className="bg-white dark:bg-[#202c33] p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 rounded-2xl border border-dashed border-slate-100 dark:border-white/5 text-center">
                     <CheckCircle2 className="w-10 h-10 text-slate-100 dark:text-slate-800 mx-auto mb-4" />
                     <p className="text-xs font-bold text-[#8696a0]  tracking-normal">No verification data located</p>
                   </div>
                 ) : (
                   recentAttendance.map((record, i) => (
-                    <div key={record.id || i} className="bg-white dark:bg-[#202c33] p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group hover:border-wa-green/30 transition-all">
+                    <div key={record.id || i} className="bg-white dark:bg-[#202c33] p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group hover:border-wa-green/30 transition-all">
                       <div className="flex items-center gap-4 min-w-0">
                         <div className="w-12 h-12 bg-wa-green/5 dark:bg-wa-green/10 rounded-2xl flex items-center justify-center shrink-0 border border-wa-green/10">
                           <CheckCircle2 className="text-wa-green w-6 h-6" />
@@ -628,7 +628,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
 
       {/* Bottom Navigation Ported from Global Hub Design */}
       {!isEmbedded && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-[#111b21]/80 backdrop-blur-2xl border-t border-slate-100 dark:border-white/5 px-6 pb-6 pt-3 flex justify-between items-center z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
+        <nav className="fixed bottom-0 left-0 right-0 bg-white/80 dark:bg-[#111b21]/80 backdrop-blur-2xl border-t border-slate-100 dark:border-white/5 px-4 sm:px-6 pb-6 pt-3 flex justify-between items-center z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.1)]">
           <button className="flex flex-col items-center gap-1.5 text-wa-teal relative group">
              <div className="absolute -top-3 w-8 h-1 bg-wa-teal rounded-full" />
              <div className="w-12 h-12 bg-wa-teal/10 rounded-2xl flex items-center justify-center transition-all group-active:scale-90">

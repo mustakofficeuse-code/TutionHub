@@ -37,15 +37,15 @@ export default function NoticeBoard() {
   }, [profile?.courseId]);
 
   return (
-    <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-6 pb-24 pt-12 transition-colors font-sans">
+    <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-4 sm:p-6 pb-24 pt-12 transition-colors font-sans">
       <button 
         onClick={() => navigate('/')}
-        className="mb-8 flex items-center gap-2 text-[#8696a0] font-semibold hover:text-wa-teal transition-colors"
+        className="mb-4 sm:mb-8 flex items-center gap-2 text-[#8696a0] font-semibold hover:text-wa-teal transition-colors"
       >
         <ArrowLeft className="w-5 h-5" /> Back to Dashboard
       </button>
 
-      <div className="max-w-3xl mx-auto space-y-8">
+      <div className="max-w-3xl mx-auto space-y-2 sm:space-y-4 sm:space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] flex items-center gap-3 tracking-normal">
             <div className="w-12 h-12 bg-wa-teal/10 dark:bg-wa-teal/20 rounded-2xl flex items-center justify-center">
@@ -57,7 +57,7 @@ export default function NoticeBoard() {
         </div>
 
         {/* Notices List */}
-        <div className="space-y-6">
+        <div className="space-y-3 sm:space-y-6">
           {loading ? (
             <div className="py-20 text-center">
               <div className="w-16 h-16 bg-wa-teal/10 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -71,23 +71,23 @@ export default function NoticeBoard() {
               <p className="text-xs font-bold text-[#8696a0]  tracking-normal leading-relaxed">No notices detected for your designated department</p>
             </div>
           ) : (
-            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+            <div className="space-y-3 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
               {announcements.map((a) => (
                 <div 
                   key={a.id} 
-                  className={`bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border-l-8 transition-all hover:shadow-md hover:-translate-y-1 group ${
+                  className={`bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border-l-8 transition-all hover:shadow-md hover:-translate-y-1 group ${
                     a.type === 'urgent' ? 'border-l-red-500' :
                     a.type === 'holiday' ? 'border-l-orange-500' :
                     'border-l-wa-teal'
                   } border-slate-50 dark:border-white/5 relative overflow-hidden`}
                 >
-                  <div className="absolute top-0 right-0 p-5 sm:p-5 sm:p-6 opacity-5 group-hover:scale-110 transition-transform">
+                  <div className="absolute top-0 right-0 p-4 sm:p-5 sm:p-5 sm:p-6 opacity-5 group-hover:scale-110 transition-transform">
                      {a.type === 'urgent' ? <AlertTriangle className="w-24 h-24" /> :
                       a.type === 'holiday' ? <Palmtree className="w-24 h-24" /> :
                       <Megaphone className="w-24 h-24" />}
                   </div>
 
-                  <div className="flex justify-between items-start mb-6 relative z-10">
+                  <div className="flex justify-between items-start mb-4 sm:mb-6 relative z-10">
                     <div className="flex items-center gap-4">
                       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner ${
                         a.type === 'urgent' ? 'bg-red-50 text-red-500' :

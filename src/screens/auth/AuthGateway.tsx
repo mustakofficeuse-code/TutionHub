@@ -571,10 +571,10 @@ export default function AuthGateway() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-5 sm:p-5 sm:p-6 border border-slate-100 dark:border-slate-800">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-4 sm:p-5 sm:p-5 sm:p-6 border border-slate-100 dark:border-slate-800">
         {view === "teacher-setup" && (
           <>
-            <div className="text-center mb-8">
+            <div className="text-center mb-4 sm:mb-8">
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Teacher Setup
               </h1>
@@ -587,7 +587,7 @@ export default function AuthGateway() {
                 {error}
               </div>
             )}
-            <form onSubmit={handleTeacherSetup} className="space-y-4">
+            <form onSubmit={handleTeacherSetup} className="space-y-2 sm:space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Teacher Name
@@ -646,7 +646,7 @@ export default function AuthGateway() {
 
         {view === "teacher-login" && (
           <>
-            <div className="text-center mb-8">
+            <div className="text-center mb-4 sm:mb-8">
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Teacher Login
               </h1>
@@ -659,7 +659,7 @@ export default function AuthGateway() {
                 {error}
               </div>
             )}
-            <form onSubmit={handleTeacherLogin} className="space-y-4">
+            <form onSubmit={handleTeacherLogin} className="space-y-2 sm:space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Access Password
@@ -719,7 +719,7 @@ export default function AuthGateway() {
 
         {view === "student-login" && (
           <>
-            <div className="text-center mb-8">
+            <div className="text-center mb-4 sm:mb-8">
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Student Login
               </h1>
@@ -732,7 +732,7 @@ export default function AuthGateway() {
                 {error}
               </div>
             )}
-            <form onSubmit={handleStudentLogin} className="space-y-4">
+            <form onSubmit={handleStudentLogin} className="space-y-2 sm:space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Student ID or Name
@@ -810,7 +810,7 @@ export default function AuthGateway() {
 
         {view === "student-enroll" && !generatedId && (
           <>
-            <div className="text-center mb-8">
+            <div className="text-center mb-4 sm:mb-8">
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Enroll in TutionHub
               </h1>
@@ -823,7 +823,7 @@ export default function AuthGateway() {
                 {error}
               </div>
             )}
-            <form onSubmit={handleStudentEnroll} className="space-y-4">
+            <form onSubmit={handleStudentEnroll} className="space-y-2 sm:space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                   Student Name
@@ -976,7 +976,7 @@ export default function AuthGateway() {
                 )}
               </button>
             </form>
-            <div className="flex justify-between mt-6">
+            <div className="flex justify-between mt-4 sm:mt-6">
               <button
                 onClick={() => setView("student-login")}
                 className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
@@ -994,14 +994,14 @@ export default function AuthGateway() {
         )}
 
         {view === "student-enroll" && generatedId && (
-          <div className="text-center space-y-6 py-4">
+          <div className="text-center space-y-3 sm:space-y-6 py-4">
             <div className="w-20 h-20 bg-green-100 dark:bg-green-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <CheckCircle className="w-10 h-10 text-green-600 dark:text-green-400" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
               Enrollment Successful!
             </h2>
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-2xl border border-blue-100 dark:border-blue-800">
+            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 sm:p-6 rounded-2xl border border-blue-100 dark:border-blue-800">
               <p className="text-sm text-slate-600 dark:text-slate-400 mb-2">
                 Your unique Student ID is:
               </p>
@@ -1022,18 +1022,18 @@ export default function AuthGateway() {
         )}
         {view === "student-blocked" && (
           <div className="text-center py-4 animate-in fade-in zoom-in duration-300">
-            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/40 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+            <div className="w-20 h-20 bg-red-100 dark:bg-red-900/40 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
               <Lock className="w-10 h-10" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
               Access Revoked
             </h2>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">
+            <p className="text-slate-600 dark:text-slate-400 mb-4 sm:mb-6">
               You have been blocked by {teacherName}. Please contact{" "}
               {teacherName} directly for permission to access the platform.
             </p>
             {(teacherPhone || teacherEmail) && (
-              <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 mb-6">
+              <div className="space-y-3 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-100 dark:border-slate-800 mb-4 sm:mb-6">
                 {teacherPhone && (
                   <div className="flex items-center justify-center gap-2 text-slate-700 dark:text-slate-300">
                     <Phone className="w-4 h-4" />

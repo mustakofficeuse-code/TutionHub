@@ -112,10 +112,10 @@ export default function StudentAssignments() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-6 pb-24 pt-12 transition-colors font-sans">
+    <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#111b21] p-4 sm:p-6 pb-24 pt-12 transition-colors font-sans">
       <button 
         onClick={() => navigate('/')}
-        className="mb-8 flex items-center gap-3 text-[#8696a0] font-bold  tracking-normal text-xs hover:text-wa-teal transition-all group"
+        className="mb-4 sm:mb-8 flex items-center gap-3 text-[#8696a0] font-bold  tracking-normal text-xs hover:text-wa-teal transition-all group"
       >
         <div className="w-8 h-8 flex items-center justify-center bg-white dark:bg-[#202c33] rounded-xl shadow-sm border border-slate-100 dark:border-white/5 group-hover:scale-110 transition-transform">
           <ArrowLeft className="w-4 h-4" />
@@ -124,7 +124,7 @@ export default function StudentAssignments() {
       </button>
 
       <div className="max-w-4xl mx-auto space-y-10">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6">
           <div>
             <h1 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] flex items-center gap-4 tracking-normal leading-none">
               <div className="p-3 bg-wa-teal/10 rounded-2xl">
@@ -144,15 +144,15 @@ export default function StudentAssignments() {
         </div>
 
         {/* Assignments List */}
-        <div className="space-y-6">
+        <div className="space-y-3 sm:space-y-6">
           {loading ? (
             <div className="py-24 text-center">
               <Loader2 className="w-12 h-12 text-wa-teal animate-spin mx-auto" />
-              <p className="text-xs font-bold text-[#8696a0]  tracking-normal mt-6">Scanning database...</p>
+              <p className="text-xs font-bold text-[#8696a0]  tracking-normal mt-4 sm:mt-6">Scanning database...</p>
             </div>
           ) : assignments.length === 0 ? (
             <div className="py-24 text-center bg-white dark:bg-[#202c33] rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm">
-              <AlertCircle className="w-12 h-12 text-[#8696a0]/30 mx-auto mb-6" />
+              <AlertCircle className="w-12 h-12 text-[#8696a0]/30 mx-auto mb-4 sm:mb-6" />
               <p className="text-xs font-bold text-[#8696a0]  tracking-normal">Zero pending directives found</p>
             </div>
           ) : (
@@ -163,12 +163,12 @@ export default function StudentAssignments() {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   key={a.id} 
-                  className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-8 group hover:border-wa-teal transition-all relative overflow-hidden"
+                  className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-4 sm:gap-8 group hover:border-wa-teal transition-all relative overflow-hidden"
                 >
                   <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:scale-110 transition-transform">
                     <ClipboardList className="w-20 h-20 text-wa-teal" />
                   </div>
-                  <div className="flex items-center gap-6 relative z-10">
+                  <div className="flex items-center gap-3 sm:gap-6 relative z-10">
                     <div className={`w-16 h-16 rounded-[1.5rem] flex items-center justify-center transition-all ${
                       submission ? 'bg-wa-green/10 text-wa-green' : 'bg-wa-teal/10 text-wa-teal'
                     }`}>
@@ -198,7 +198,7 @@ export default function StudentAssignments() {
                     ) : (
                       <button 
                         onClick={() => setSelectedAssignment(a)}
-                        className="w-full md:w-auto bg-wa-teal hover:bg-wa-teal-dark text-white px-6 sm:px-10 py-4 rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all shadow-lg shadow-wa-teal/20 active:scale-95"
+                        className="w-full md:w-auto bg-wa-teal hover:bg-wa-teal-dark text-white px-4 sm:px-6 sm:px-10 py-4 rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all shadow-lg shadow-wa-teal/20 active:scale-95"
                       >
                         Transmit Now
                       </button>
@@ -214,22 +214,22 @@ export default function StudentAssignments() {
       {/* Scanner Modal */}
       {scanning && (
         <div className="fixed inset-0 bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-10 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.4)] relative border border-white/5 text-center animate-in zoom-in-95 duration-200">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-6 sm:p-10 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.4)] relative border border-white/5 text-center animate-in zoom-in-95 duration-200">
             <button 
               onClick={() => setScanning(false)}
               className="absolute top-8 right-8 w-10 h-10 bg-[#f0f2f5] dark:bg-white/5 rounded-xl flex items-center justify-center text-[#8696a0] hover:bg-red-500 hover:text-white transition-all shadow-sm"
             >
               <X className="w-5 h-5" />
             </button>
-            <div className="w-20 h-20 bg-wa-teal/10 rounded-2xl flex items-center justify-center mx-auto mb-8">
+            <div className="w-20 h-20 bg-wa-teal/10 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-8">
               <QrCode className="w-10 h-10 text-wa-teal" />
             </div>
             <h3 className="text-2xl font-bold text-slate-900 dark:text-[#e9edef] mb-3 tracking-normal leading-none">Sensor <span className="text-wa-teal">Scan</span></h3>
-            <p className="text-xs font-bold text-[#8696a0]  tracking-normal mb-8">Align directive QR in terminal view</p>
+            <p className="text-xs font-bold text-[#8696a0]  tracking-normal mb-4 sm:mb-8">Align directive QR in terminal view</p>
             
             <div id="reader" className="overflow-hidden rounded-2xl border-8 border-slate-50 dark:border-white/5 bg-slate-900 shadow-inner group aspect-square"></div>
             
-            <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-wa-teal mt-8 leading-relaxed opacity-60 italic">Scan QR provided by your department</p>
+            <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-wa-teal mt-4 sm:mt-8 leading-relaxed opacity-60 italic">Scan QR provided by your department</p>
           </div>
         </div>
       )}
@@ -237,14 +237,14 @@ export default function StudentAssignments() {
       {/* Submission Modal */}
       {selectedAssignment && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-xl flex items-center justify-center p-4 z-[200] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] border border-white/10 animate-in zoom-in-95 duration-200 text-center">
-            <div className="w-20 h-20 bg-wa-teal/10 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-inner">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 w-full max-w-md shadow-[0_0_50px_rgba(0,0,0,0.3)] border border-white/10 animate-in zoom-in-95 duration-200 text-center">
+            <div className="w-20 h-20 bg-wa-teal/10 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-8 shadow-inner">
                <ClipboardList className="text-wa-teal w-10 h-10" />
             </div>
             <h3 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] mb-3 tracking-normal leading-none">Final <span className="text-wa-teal">Transmit</span></h3>
-            <p className="text-xs font-bold text-[#8696a0]  tracking-normal mb-6 sm:mb-10 leading-relaxed truncate px-4">{selectedAssignment.title}</p>
+            <p className="text-xs font-bold text-[#8696a0]  tracking-normal mb-4 sm:mb-6 sm:mb-10 leading-relaxed truncate px-4">{selectedAssignment.title}</p>
             
-            <form onSubmit={handleSubmit} className="space-y-8">
+            <form onSubmit={handleSubmit} className="space-y-2 sm:space-y-4 sm:space-y-8">
               <div className="space-y-3">
                 <label className="block text-xs font-bold text-[#8696a0]  tracking-normal text-left ml-6">Directive Link</label>
                 <div className="relative group">

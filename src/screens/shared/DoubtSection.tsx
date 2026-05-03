@@ -294,7 +294,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                   <Loader2 className="w-8 h-8 text-wa-teal animate-spin" />
                 </div>
               ) : doubts.length === 0 ? (
-                <div className="p-5 sm:p-5 sm:p-6 text-center">
+                <div className="p-4 sm:p-5 sm:p-5 sm:p-6 text-center">
                   <p className="text-slate-500 text-sm">No doubts posted yet.</p>
                 </div>
               ) : (
@@ -352,8 +352,8 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         {/* Right Area: Conversation */}
         <div className={`flex-1 flex flex-col bg-[#efeae2] dark:bg-[#0b141a] relative ${!selectedDoubt ? 'hidden md:flex' : 'flex'}`}>
           {!selectedDoubt ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 sm:p-6 sm:p-5 sm:p-6 bg-[#f8f9fa] dark:bg-[#222e35] border-b-[6px] border-wa-teal">
-              <div className="w-64 h-64 bg-slate-100 dark:bg-[#222e35] rounded-full flex items-center justify-center mb-8">
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 bg-[#f8f9fa] dark:bg-[#222e35] border-b-[6px] border-wa-teal">
+              <div className="w-64 h-64 bg-slate-100 dark:bg-[#222e35] rounded-full flex items-center justify-center mb-4 sm:mb-8">
                  <GraduationCap className="w-32 h-32 text-slate-300 dark:text-slate-600" />
               </div>
               <h2 className="text-3xl font-light text-slate-800 dark:text-[#e9edef] mb-3">TutionHub Web</h2>
@@ -400,9 +400,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               </div>
 
               {/* Chat Canvas */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-6 sm:p-10 space-y-4 custom-scrollbar bg-chat-pattern">
+              <div className="flex-1 overflow-y-auto p-4 md:p-4 sm:p-6 sm:p-10 space-y-2 sm:space-y-4 custom-scrollbar bg-chat-pattern">
                  {/* Original Doubt Message as a bubble */}
-                 <div className="flex justify-start mb-8">
+                 <div className="flex justify-start mb-4 sm:mb-8">
                     <div className="max-w-[85%] sm:max-w-[70%] bg-white dark:bg-[#202c33] p-4 rounded-xl rounded-tl-none shadow-sm relative">
                        <div className="absolute -left-2 top-0 w-0 h-0 border-[10px] border-transparent border-t-white dark:border-t-[#202c33]"></div>
                        <div className="flex items-center gap-2 mb-2">
@@ -546,7 +546,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       {viewMaterial && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center">
           <div className="w-full h-full flex flex-col relative">
-             <div className="h-16 flex items-center justify-between px-6 bg-black/20 text-white">
+             <div className="h-16 flex items-center justify-between px-4 sm:px-6 bg-black/20 text-white">
                 <span className="font-bold truncate">{viewMaterial.title}</span>
                 <button 
                   onClick={() => setViewMaterial(null)}
@@ -574,15 +574,15 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               initial={{ scale: 0.9, opacity: 0, y: 50 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 50 }}
-              className="bg-white dark:bg-[#202c33] rounded-3xl p-6 w-full max-w-lg shadow-2xl"
+              className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-6 w-full max-w-lg shadow-2xl"
             >
-              <div className="flex justify-between items-center mb-6">
+              <div className="flex justify-between items-center mb-4 sm:mb-6">
                 <h3 className="text-xl font-bold text-wa-teal dark:text-wa-green">New Doubt</h3>
                 <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-red-500 transition-colors">
                   <XIcon className="w-6 h-6" />
                 </button>
               </div>
-              <form onSubmit={handleAddDoubt} className="space-y-4">
+              <form onSubmit={handleAddDoubt} className="space-y-2 sm:space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                    <div className="col-span-1">
                       <label className="block text-xs font-bold text-slate-400  tracking-normal mb-1 ml-1">Subject</label>

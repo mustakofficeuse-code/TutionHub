@@ -249,11 +249,11 @@ export default function FeeManagement({
   return (
     <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#111b21] p-4 sm:p-6 sm:p-10 pb-32">
       <div className="max-w-7xl mx-auto">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 sm:gap-8 mb-8 sm:mb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-5 sm:gap-4 sm:gap-8 mb-4 sm:mb-8 sm:mb-12">
           {!isEmbedded && (
             <button
               onClick={() => navigate("/")}
-              className="w-fit flex items-center gap-3 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-wa-teal transition-all  tracking-normal bg-white dark:bg-[#202c33] px-6 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 shrink-0"
+              className="w-fit flex items-center gap-3 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-wa-teal transition-all  tracking-normal bg-white dark:bg-[#202c33] px-4 sm:px-6 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 shrink-0"
             >
               <ArrowLeft className="w-4 h-4" /> REVERT TO TERMINAL
             </button>
@@ -288,7 +288,7 @@ export default function FeeManagement({
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 bg-[#eeeeee] dark:bg-[#111b21] p-1.5 rounded-[1.8rem] mb-8 sm:mb-12 w-fit border border-slate-100 dark:border-white/5">
+        <div className="flex gap-2 bg-[#eeeeee] dark:bg-[#111b21] p-1.5 rounded-[1.8rem] mb-4 sm:mb-8 sm:mb-12 w-fit border border-slate-100 dark:border-white/5">
           <button
             onClick={() => setActiveTab("history")}
             className={`px-5 sm:px-8 py-4 rounded-[1.4rem] text-[11px] font-bold  tracking-normal transition-all flex items-center gap-2 ${
@@ -316,7 +316,7 @@ export default function FeeManagement({
         {activeTab === "history" ? (
           <div className="space-y-12 animate-in fade-in duration-500">
             {/* Filters & Search */}
-            <div className="bg-white dark:bg-[#202c33] p-5 sm:p-5 sm:p-6 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 flex flex-col lg:flex-row gap-5 sm:gap-8 items-center justify-between">
+            <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-3xl shadow-xl shadow-slate-200/50 dark:shadow-none border border-slate-100 dark:border-white/5 flex flex-col lg:flex-row gap-5 sm:gap-4 sm:gap-8 items-center justify-between">
               <div className="relative w-full lg:w-[500px]">
                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                 <input
@@ -337,14 +337,14 @@ export default function FeeManagement({
                         : departments.map((d) => d.name),
                     )
                   }
-                  className="flex-1 lg:flex-none px-6 sm:px-10 py-3 sm:py-5 bg-white dark:bg-[#202c33] border border-slate-200 dark:border-white/10 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-slate-600 dark:text-slate-400 rounded-2xl hover:border-wa-teal hover:text-wa-teal transition-all shadow-sm flex items-center justify-center gap-3"
+                  className="flex-1 lg:flex-none px-4 sm:px-6 sm:px-10 py-3 sm:py-5 bg-white dark:bg-[#202c33] border border-slate-200 dark:border-white/10 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-slate-600 dark:text-slate-400 rounded-2xl hover:border-wa-teal hover:text-wa-teal transition-all shadow-sm flex items-center justify-center gap-3"
                 >
                   {expandedDepts.length === departments.length ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />}
                   {expandedDepts.length === departments.length ? "COLLAPSE ALL" : "EXPAND VECTORS"}
                 </button>
                 <button
                   onClick={handleClearData}
-                  className="flex-1 lg:flex-none px-6 sm:px-10 py-3 sm:py-5 border border-rose-100 text-rose-500 dark:border-rose-900/30 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-2xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all"
+                  className="flex-1 lg:flex-none px-4 sm:px-6 sm:px-10 py-3 sm:py-5 border border-rose-100 text-rose-500 dark:border-rose-900/30 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-2xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all"
                 >
                   PURGE DATA
                 </button>
@@ -352,7 +352,7 @@ export default function FeeManagement({
             </div>
 
             {/* Department Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
               {departments.map((deptObj) => {
                 const dept = deptObj.name;
                 const deptCount = students.filter((s) => {
@@ -376,7 +376,7 @@ export default function FeeManagement({
                           : [...prev, dept],
                       )
                     }
-                    className={`group relative p-5 sm:p-5 sm:p-6 rounded-3xl border transition-all text-left flex flex-col gap-4 overflow-hidden h-52 outline-none ${
+                    className={`group relative p-4 sm:p-5 sm:p-5 sm:p-6 rounded-3xl border transition-all text-left flex flex-col gap-4 overflow-hidden h-52 outline-none ${
                       isExpanded
                         ? "bg-slate-900 dark:bg-slate-900 border-slate-900 text-white shadow-2xl scale-[1.02]"
                         : deptCount === 0
@@ -471,8 +471,8 @@ export default function FeeManagement({
                   >
                     <div className="absolute top-0 left-0 w-2 h-full bg-wa-teal/20" />
                     
-                    <div className="px-6 sm:px-10 py-10 border-b border-slate-100 dark:border-white/5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5 sm:gap-8 bg-[#fdfdfe] dark:bg-[#202c33]/50 backdrop-blur-xl">
-                      <div className="flex items-center gap-5 sm:gap-8">
+                    <div className="px-4 sm:px-6 sm:px-10 py-10 border-b border-slate-100 dark:border-white/5 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5 sm:gap-4 sm:gap-8 bg-[#fdfdfe] dark:bg-[#202c33]/50 backdrop-blur-xl">
+                      <div className="flex items-center gap-5 sm:gap-4 sm:gap-8">
                         <div className="w-20 h-20 bg-white dark:bg-[#111b21] rounded-2xl shadow-xl flex items-center justify-center text-wa-teal border border-slate-100 dark:border-white/5 rotate-[-6deg] shrink-0 transform group-hover:rotate-0 transition-transform">
                           <User className="w-10 h-10" />
                         </div>
@@ -499,7 +499,7 @@ export default function FeeManagement({
                               [dept]: { ...searchConfig, sem: e.target.value },
                             }))
                           }
-                          className="w-full sm:w-auto px-6 py-4 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 outline-none focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-slate-800 dark:text-white appearance-none cursor-pointer"
+                          className="w-full sm:w-auto px-4 sm:px-6 py-4 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 outline-none focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-slate-800 dark:text-white appearance-none cursor-pointer"
                         >
                           <option value="ALL">All Semesters</option>
                           {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
@@ -677,7 +677,7 @@ export default function FeeManagement({
 
               {!loading && filteredStudents.length === 0 && (
                 <div className="py-40 text-center bg-white dark:bg-slate-900 rounded-3xl border border-dashed border-slate-200 dark:border-slate-800 shadow-inner">
-                  <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-8 animate-bounce">
+                  <div className="w-24 h-24 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-8 animate-bounce">
                     <Search className="w-12 h-12 text-slate-300" />
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
@@ -692,7 +692,7 @@ export default function FeeManagement({
 
               {loading && (
                 <div className="py-24 text-center">
-                  <div className="relative w-16 h-16 mx-auto mb-6">
+                  <div className="relative w-16 h-16 mx-auto mb-4 sm:mb-6">
                     <Loader2 className="w-16 h-16 text-blue-600 animate-spin absolute inset-0" />
                     <div className="absolute inset-4 bg-blue-600 rounded-full opacity-20 animate-ping" />
                   </div>
@@ -704,8 +704,8 @@ export default function FeeManagement({
             </div>
           </div>
         ) : (
-          <div className="bg-white dark:bg-[#202c33] rounded-3xl border border-slate-100 dark:border-white/5 p-6 sm:p-6 sm:p-5 sm:p-6 space-y-12 shadow-2xl">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl border border-slate-100 dark:border-white/5 p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 space-y-12 shadow-2xl">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-6">
               <div>
                 <h2 className="text-3xl font-bold text-slate-800 dark:text-white tracking-normal  italic">
                   Fee Configuration Matrix
@@ -721,7 +721,7 @@ export default function FeeManagement({
                     : () => setIsEditingStructure(true)
                 }
                 disabled={savingStructure}
-                className={`px-6 sm:px-10 py-3 sm:py-5 rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 flex items-center gap-3 transition-all shadow-xl disabled:opacity-50 ${
+                className={`px-4 sm:px-6 sm:px-10 py-3 sm:py-5 rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 flex items-center gap-3 transition-all shadow-xl disabled:opacity-50 ${
                   isEditingStructure
                     ? "bg-wa-green text-white hover:bg-wa-green/90"
                     : "bg-slate-900 text-white hover:bg-slate-800"
@@ -743,21 +743,21 @@ export default function FeeManagement({
               </button>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-6 sm:gap-10">
               {departments.map((deptObj) => {
                 const dept = deptObj.name;
                 const totalSemesters = Number(deptObj.totalSemesters) || 8;
                 return (
                   <div
                     key={dept}
-                    className="space-y-6 p-6 sm:p-10 bg-[#fcfcfd] dark:bg-[#111b21] rounded-3xl border border-slate-100 dark:border-white/5 relative overflow-hidden"
+                    className="space-y-3 sm:space-y-6 p-4 sm:p-6 sm:p-10 bg-[#fcfcfd] dark:bg-[#111b21] rounded-3xl border border-slate-100 dark:border-white/5 relative overflow-hidden"
                   >
                     <div className="absolute top-0 right-0 w-24 h-24 bg-wa-teal/5 rounded-bl-[4rem]" />
                     <h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-4  tracking-normal">
                       <BookOpen className="w-6 h-6 text-wa-teal" />
                       {dept} DEPARTMENT
                     </h3>
-                    <div className="grid grid-cols-2 gap-6 relative z-10">
+                    <div className="grid grid-cols-2 gap-3 sm:gap-6 relative z-10">
                       {Array.from(
                         { length: totalSemesters },
                         (_, i) => i + 1,
@@ -803,8 +803,8 @@ export default function FeeManagement({
 
       {showPaymentModal && (
         <div className="fixed inset-0 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4 z-[120] animate-in fade-in duration-300">
-          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-6 sm:p-10 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-white/10">
-            <div className="flex justify-between items-center mb-6 sm:mb-10">
+          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-6 sm:p-10 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-white/10">
+            <div className="flex justify-between items-center mb-4 sm:mb-6 sm:mb-10">
               <div>
                 <h3 className="text-2xl font-bold text-slate-800 dark:text-white  tracking-normal italic">
                   Payment Interface
@@ -824,11 +824,11 @@ export default function FeeManagement({
             </div>
             <form
               onSubmit={handleTeacherPaymentReceipt}
-              className="space-y-6 text-left"
+              className="space-y-3 sm:space-y-6 text-left"
             >
               {isManualPayment ? (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
                     <div>
                       <label className="block text-xs font-bold text-slate-400  tracking-normal mb-3 ml-1">
                         Department Filter
@@ -938,7 +938,7 @@ export default function FeeManagement({
 
                               if (filtered.length === 0) {
                                 return (
-                                  <div className="p-5 sm:p-5 sm:p-6 text-xs font-bold text-slate-400  tracking-normal text-center">
+                                  <div className="p-4 sm:p-5 sm:p-5 sm:p-6 text-xs font-bold text-slate-400  tracking-normal text-center">
                                     No Matching Students
                                   </div>
                                 );
@@ -968,7 +968,7 @@ export default function FeeManagement({
                         )}
                     </div>
                     {paymentStudent && (
-                      <div className="mt-4 p-5 bg-wa-teal/10 dark:bg-wa-teal/20 rounded-2xl border border-wa-teal/20 flex items-center gap-4 animate-in slide-in-from-bottom-2 duration-300">
+                      <div className="mt-4 p-4 sm:p-5 bg-wa-teal/10 dark:bg-wa-teal/20 rounded-2xl border border-wa-teal/20 flex items-center gap-4 animate-in slide-in-from-bottom-2 duration-300">
                         <div className="w-10 h-10 bg-wa-teal rounded-full flex items-center justify-center text-white shadow-lg shadow-wa-teal/30">
                           <CheckCircle className="w-5 h-5" />
                         </div>
@@ -994,7 +994,7 @@ export default function FeeManagement({
                 </>
               ) : (
                 paymentStudent && (
-                  <div className="p-6 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 mb-6">
+                  <div className="p-4 sm:p-6 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 mb-4 sm:mb-6">
                     <div className="flex items-center gap-4">
                        <div className="w-12 h-12 bg-indigo-500 rounded-full flex items-center justify-center text-white shadow-xl shadow-indigo-500/20">
                           <User className="w-6 h-6" />
@@ -1113,7 +1113,7 @@ export default function FeeManagement({
                             .reduce((sum, p) => sum + Number(p.amount), 0),
                       ))
                 }
-                className="w-full py-4 sm:py-6 bg-slate-900 text-white font-bold  tracking-normal text-xs rounded-[1.5rem] hover:bg-slate-800 transition-all shadow-2xl shadow-slate-900/20 disabled:bg-slate-300 disabled:shadow-none mt-8 flex items-center justify-center gap-4"
+                className="w-full py-4 sm:py-6 bg-slate-900 text-white font-bold  tracking-normal text-xs rounded-[1.5rem] hover:bg-slate-800 transition-all shadow-2xl shadow-slate-900/20 disabled:bg-slate-300 disabled:shadow-none mt-4 sm:mt-8 flex items-center justify-center gap-4"
               >
                 AUTHORIZE REMITTANCE
                 <CheckCircle className="w-5 h-5" />
@@ -1129,7 +1129,7 @@ export default function FeeManagement({
           <div className="bg-white dark:bg-[#202c33] rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border border-white/10 relative">
             <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-wa-teal via-indigo-500 to-wa-green" />
             
-            <div className="px-6 sm:px-10 py-10 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-white dark:bg-[#202c33] shrink-0">
+            <div className="px-4 sm:px-6 sm:px-10 py-10 border-b border-slate-100 dark:border-white/5 flex justify-between items-center bg-white dark:bg-[#202c33] shrink-0">
               <div>
                 <h3 className="text-3xl font-bold text-slate-800 dark:text-white flex items-center gap-4  tracking-normal italic">
                   <User className="text-wa-teal w-8 h-8" />
@@ -1145,9 +1145,9 @@ export default function FeeManagement({
               </button>
             </div>
 
-            <div className="p-6 sm:p-10 overflow-y-auto flex-1 custom-scrollbar">
+            <div className="p-4 sm:p-6 sm:p-10 overflow-y-auto flex-1 custom-scrollbar">
               {/* Profile Info */}
-              <div className="flex flex-col sm:flex-row gap-5 sm:gap-8 items-center mb-8 sm:mb-12 bg-[#fcfcfd] dark:bg-[#111b21] p-6 sm:p-10 rounded-3xl border border-slate-100 dark:border-white/5 shadow-inner">
+              <div className="flex flex-col sm:flex-row gap-5 sm:gap-4 sm:gap-8 items-center mb-4 sm:mb-8 sm:mb-12 bg-[#fcfcfd] dark:bg-[#111b21] p-4 sm:p-6 sm:p-10 rounded-3xl border border-slate-100 dark:border-white/5 shadow-inner">
                 <div
                   onClick={() =>
                     viewDetailsStudent.avatarUrl &&
@@ -1182,27 +1182,27 @@ export default function FeeManagement({
               </div>
 
               {/* Financial Status */}
-              <div className="mb-8 sm:mb-12">
-                <div className="flex items-center gap-3 mb-6">
+              <div className="mb-4 sm:mb-8 sm:mb-12">
+                <div className="flex items-center gap-3 mb-4 sm:mb-6">
                   <div className="w-2 h-2 bg-indigo-500 rounded-full" />
                   <h4 className="text-xs font-bold text-slate-400  tracking-normal">Current Revenue Metrics</h4>
                 </div>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                  <div className="bg-white dark:bg-[#111b21] p-5 sm:p-5 sm:p-6 rounded-2xl border border-slate-100 dark:border-white/5 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-slate-500/5 rounded-bl-[3rem] -mr-6 -mt-6" />
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-6">
+                  <div className="bg-white dark:bg-[#111b21] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl border border-slate-100 dark:border-white/5 shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-slate-500/5 rounded-bl-[3rem] -mr-6 -mt-4 sm:mt-6" />
                     <p className="text-xs font-bold text-slate-400  tracking-normal mb-4">Total Obligation</p>
                     <p className="text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white tracking-normal italic">₹{viewDetailsStudent.expectedAmount.toLocaleString()}</p>
                   </div>
                   
-                  <div className="bg-wa-green/5 dark:bg-wa-green/10 p-5 sm:p-5 sm:p-6 rounded-2xl border border-wa-green/10 shadow-xl relative overflow-hidden group">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-wa-green/10 rounded-bl-[3rem] -mr-6 -mt-6" />
+                  <div className="bg-wa-green/5 dark:bg-wa-green/10 p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl border border-wa-green/10 shadow-xl relative overflow-hidden group">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-wa-green/10 rounded-bl-[3rem] -mr-6 -mt-4 sm:mt-6" />
                     <p className="text-xs font-bold text-wa-green  tracking-normal mb-4">Verified Remittance</p>
                     <p className="text-3xl sm:text-4xl font-bold text-wa-green tracking-normal italic">₹{viewDetailsStudent.paidAmount.toLocaleString()}</p>
                   </div>
 
-                  <div className="bg-rose-500/5 dark:bg-rose-500/10 p-5 sm:p-5 sm:p-6 rounded-2xl border border-rose-500/10 shadow-xl relative overflow-hidden group border-dashed border-2">
-                    <div className="absolute top-0 right-0 w-20 h-20 bg-rose-500/10 rounded-bl-[3rem] -mr-6 -mt-6" />
+                  <div className="bg-rose-500/5 dark:bg-rose-500/10 p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl border border-rose-500/10 shadow-xl relative overflow-hidden group border-dashed border-2">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-rose-500/10 rounded-bl-[3rem] -mr-6 -mt-4 sm:mt-6" />
                     <p className="text-xs font-bold text-rose-500  tracking-normal mb-4">Outstanding Vector</p>
                     <p className="text-3xl sm:text-4xl font-bold text-rose-500 tracking-normal italic">₹{viewDetailsStudent.amountDue.toLocaleString()}</p>
                   </div>
@@ -1211,17 +1211,17 @@ export default function FeeManagement({
 
               {/* Payment History */}
               <div>
-                <div className="flex items-center gap-3 mb-6">
+                <div className="flex items-center gap-3 mb-4 sm:mb-6">
                   <div className="w-2 h-2 bg-wa-teal rounded-full" />
                   <h4 className="text-xs font-bold text-slate-400  tracking-normal">Transaction Audit Log</h4>
                 </div>
                 
                 {viewDetailsStudent.semPayments.length === 0 ? (
-                  <div className="p-6 sm:p-6 sm:p-5 sm:p-6 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-dashed border-slate-200 dark:border-white/5 text-center">
+                  <div className="p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-dashed border-slate-200 dark:border-white/5 text-center">
                     <p className="text-xs font-bold text-slate-400  tracking-normal italic">No transaction records found in current semester.</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
+                  <div className="space-y-2 sm:space-y-4">
                     {viewDetailsStudent.semPayments
                       .sort(
                         (a: any, b: any) =>
@@ -1231,9 +1231,9 @@ export default function FeeManagement({
                       .map((p: any) => (
                         <div
                           key={p.id}
-                          className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-5 sm:p-5 sm:p-6 bg-white dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-2xl gap-6 hover:shadow-2xl transition-all group"
+                          className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-5 sm:p-5 sm:p-6 bg-white dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-2xl gap-3 sm:gap-6 hover:shadow-2xl transition-all group"
                         >
-                          <div className="flex gap-6 items-center">
+                          <div className="flex gap-3 sm:gap-6 items-center">
                             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${p.status === "confirmed" ? "bg-wa-green/10 text-wa-green group-hover:bg-wa-green group-hover:text-white" : "bg-amber-500/10 text-amber-500 group-hover:bg-amber-500 group-hover:text-white"}`}>
                                <CreditCard className="w-6 h-6" />
                             </div>
@@ -1282,7 +1282,7 @@ export default function FeeManagement({
                                   ),
                                 }));
                               }}
-                              className="w-full sm:w-auto px-6 sm:px-10 py-4 bg-wa-green text-white rounded-xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 shadow-xl hover:shadow-wa-green/20 active:scale-95 transition-all"
+                              className="w-full sm:w-auto px-4 sm:px-6 sm:px-10 py-4 bg-wa-green text-white rounded-xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 shadow-xl hover:shadow-wa-green/20 active:scale-95 transition-all"
                             >
                               VERIFY REMITTANCE
                             </button>

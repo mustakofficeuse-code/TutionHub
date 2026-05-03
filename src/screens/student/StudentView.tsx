@@ -85,7 +85,7 @@ export default function StudentView() {
   return (
     <div className="fixed inset-0 bg-[#f0f2f5] dark:bg-[#111b21] overflow-hidden flex flex-col font-sans">
       {/* WhatsApp Header */}
-      <header className="bg-wa-teal dark:bg-[#202c33] text-white pt-2 px-6 shadow-lg z-[60] border-b border-wa-teal/10">
+      <header className="bg-wa-teal dark:bg-[#202c33] text-white pt-2 px-4 sm:px-6 shadow-lg z-[60] border-b border-wa-teal/10">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-4">
             <div className="w-11 h-11 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shadow-inner border border-white/10 group">
@@ -131,7 +131,7 @@ export default function StudentView() {
               exit={{ x: 400, opacity: 0 }}
               className="w-full sm:w-[450px] h-full sm:h-auto sm:max-h-[85vh] bg-[#f0f2f5] dark:bg-[#111b21] sm:rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden border border-white/5"
             >
-              <div className="p-5 sm:p-5 sm:p-6 bg-wa-teal dark:bg-[#202c33] flex justify-between items-center text-white border-b border-wa-teal/10">
+              <div className="p-4 sm:p-5 sm:p-5 sm:p-6 bg-wa-teal dark:bg-[#202c33] flex justify-between items-center text-white border-b border-wa-teal/10">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
                     <Bell className="w-6 h-6" />
@@ -165,10 +165,10 @@ export default function StudentView() {
                 </div>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-2 sm:space-y-4 no-scrollbar">
                 {notifications.length === 0 ? (
                   <div className="py-24 text-center">
-                    <div className="w-20 h-20 bg-[#f0f2f5] dark:bg-slate-800/10 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                    <div className="w-20 h-20 bg-[#f0f2f5] dark:bg-slate-800/10 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
                       <Bell className="w-10 h-10 text-[#8696a0]/30" />
                     </div>
                     <p className="text-xs font-bold text-[#8696a0]  tracking-normal">Void frequency detected</p>
@@ -180,7 +180,7 @@ export default function StudentView() {
                       initial={{ opacity: 0, x: 20 }}
                       animate={{ opacity: 1, x: 0 }}
                       key={notif.id} 
-                      className={`p-6 rounded-2xl border transition-all cursor-pointer group ${
+                      className={`p-4 sm:p-6 rounded-2xl border transition-all cursor-pointer group ${
                         !notif.read 
                           ? 'bg-white dark:bg-[#202c33] border-wa-teal shadow-md' 
                           : 'bg-white/50 dark:bg-slate-800/20 border-transparent hover:bg-white dark:hover:bg-[#202c33]'
@@ -247,8 +247,8 @@ export default function StudentView() {
       </div>
 
       {/* Static Footer Navigation */}
-      <footer className="bg-white dark:bg-[#202c33] border-t border-slate-200 dark:border-white/5 pb-2 pt-1 z-[60]">
-        <div className="w-full flex sm:justify-center bg-white dark:bg-[#202c33] overflow-x-auto no-scrollbar items-center px-2 gap-1 sm:gap-4">
+      <footer className="bg-white dark:bg-[#202c33] border-t border-slate-200 dark:border-white/5 pb-safe z-[60]">
+        <div className="w-full flex justify-between items-center px-1 sm:px-4 py-2 max-w-md mx-auto">
         {TABS.filter(t => !t.hidden).map((tab) => {
           const index = TABS.findIndex(t => t.id === tab.id);
           const isActive = activeTab === index;
@@ -256,16 +256,16 @@ export default function StudentView() {
           <button
             key={tab.id}
             onClick={() => changeTab(index)}
-            className={`flex flex-col items-center justify-center min-w-[60px] sm:min-w-[80px] py-1 px-2 relative transition-all duration-300 rounded-xl ${
+            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 relative transition-all duration-300 rounded-xl ${
               isActive 
                 ? 'text-wa-teal dark:text-wa-green bg-slate-50 dark:bg-slate-800/50' 
                 : 'text-slate-500 dark:text-[#8696a0] hover:text-wa-teal hover:bg-slate-50 dark:hover:bg-slate-800/50'
             }`}
           >
-            <tab.icon className={`w-6 h-6 mb-1 ${isActive ? 'fill-wa-teal/20 dark:fill-wa-green/20' : ''}`} />
+            <tab.icon className={`w-5 h-5 sm:w-6 sm:h-6 mb-1 ${isActive ? 'fill-wa-teal/20 dark:fill-wa-green/20 scale-110' : ''} transition-transform`} />
             
             <span 
-              className={`text-[10px] font-medium tracking-wide ${isActive ? 'text-wa-teal dark:text-wa-green font-bold' : 'text-slate-500 dark:text-slate-400'}`}
+              className={`text-[9px] sm:text-[10px] font-medium tracking-wide truncate w-full text-center ${isActive ? 'text-wa-teal dark:text-wa-green font-bold' : 'text-slate-500 dark:text-slate-400'}`}
             >
               {tab.label}
             </span>
