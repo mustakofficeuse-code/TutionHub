@@ -248,7 +248,7 @@ export default function StudentView() {
 
       {/* Static Footer Navigation */}
       <footer className="bg-white dark:bg-[#202c33] border-t border-slate-200 dark:border-white/5 pb-safe z-[60]">
-        <div className="w-full flex justify-between items-center px-1 sm:px-4 py-2 max-w-md mx-auto">
+        <div className="w-full flex justify-between items-center px-2 sm:px-8 py-2 md:py-3 max-w-full md:max-w-5xl mx-auto md:gap-4">
         {TABS.filter(t => !t.hidden).map((tab) => {
           const index = TABS.findIndex(t => t.id === tab.id);
           const isActive = activeTab === index;
@@ -256,7 +256,7 @@ export default function StudentView() {
           <button
             key={tab.id}
             onClick={() => changeTab(index)}
-            className={`flex flex-col items-center justify-center flex-1 py-1 px-1 relative transition-all duration-300 rounded-xl ${
+            className={`flex flex-col items-center justify-center flex-1 md:flex-initial md:min-w-[100px] py-1 px-1 relative transition-all duration-300 rounded-xl ${
               isActive 
                 ? 'text-wa-teal dark:text-wa-green bg-slate-50 dark:bg-slate-800/50' 
                 : 'text-slate-500 dark:text-[#8696a0] hover:text-wa-teal hover:bg-slate-50 dark:hover:bg-slate-800/50'
