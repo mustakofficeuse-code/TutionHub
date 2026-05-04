@@ -393,7 +393,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-center sm:justify-start lg:justify-center gap-2 mb-1">
                      <span className="w-2.5 h-2.5 bg-wa-green rounded-full animate-pulse shadow-[0_0_10px_rgba(37,211,102,0.5)]"></span>
-                     <p className="text-sm font-bold tracking-normal text-wa-teal uppercase">Authenticated</p>
+                     <p className="text-sm font-bold tracking-normal text-wa-teal uppercase">Student</p>
                   </div>
                   <h2 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] truncate tracking-tight mb-2">{profile?.name}</h2>
                   <div className="flex flex-wrap items-center justify-center sm:justify-start lg:justify-center gap-2 mb-4">
@@ -538,7 +538,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                 <div className="space-y-4">
                   <div className="flex justify-between items-center px-2">
                     <h2 className="text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
-                       <Clock className="w-4 h-4 text-wa-teal" /> Broadcast Schedule
+                       <Clock className="w-4 h-4 text-wa-teal" /> Upcoming Classes
                     </h2>
                     <button className="text-wa-teal text-sm font-bold bg-wa-teal/5 px-4 py-1.5 rounded-full hover:bg-wa-teal hover:text-white transition-all">View Archive</button>
                   </div>

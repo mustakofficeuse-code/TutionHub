@@ -610,15 +610,12 @@ export default function TeacherDashboard({
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 sm:gap-4 sm:gap-8">
             <div>
               <h1 className="text-3xl font-bold text-slate-800 dark:text-[#e9edef] tracking-normal leading-none  italic">
-                Command <span className="text-wa-teal">Center</span>
+                Teacher <span className="text-wa-teal">Center</span>
               </h1>
-              <p className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal mt-4 ml-1">Faculty Operations Terminal</p>
+              <p className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal mt-4 ml-1">Teacher Operations Terminal</p>
             </div>
             <div className="flex items-center gap-3">
-               <div className="flex items-center gap-3 px-6 sm:px-10 py-3.5 sm:py-6 bg-white dark:bg-[#202c33] rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-sm">
-                  <div className="w-3 h-3 rounded-full bg-wa-green animate-pulse" />
-                  <span className="text-sm font-bold text-slate-600 dark:text-slate-200 tracking-normal">System Online</span>
-               </div>
+               {/* System Online Box Removed */}
             </div>
           </div>
 
@@ -655,9 +652,9 @@ export default function TeacherDashboard({
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6 sm:mb-10 border-b border-slate-50 dark:border-white/5 pb-8 gap-3 sm:gap-6">
                   <div>
                     <h2 className="text-xl font-bold text-slate-800 dark:text-[#e9edef] flex items-center gap-4 tracking-normal  italic">
-                      <Users className="w-7 h-7 text-wa-teal" /> Faculty Records
+                      <Users className="w-7 h-7 text-wa-teal" /> Departments
                     </h2>
-                    <p className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal mt-2">Student Personnel Directory</p>
+                    <p className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal mt-2">Course Personnel Directory</p>
                   </div>
                   <button
                     onClick={() => setShowAddDeptModal(true)}
@@ -870,7 +867,7 @@ export default function TeacherDashboard({
                 className="w-full p-4 sm:p-6 bg-slate-900 dark:bg-wa-teal text-white rounded-2xl font-bold text-xs  tracking-normal shadow-2xl shadow-wa-teal/20 flex items-center justify-center gap-3 active:scale-95 transition-all group"
               >
                 <Calendar className="w-5 h-5 group-hover:rotate-12 transition-transform" /> 
-                Synchronize Schedule
+                Class Schedule
               </button>
             </div>
           </div>

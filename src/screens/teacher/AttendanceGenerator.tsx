@@ -755,18 +755,18 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                     <Activity className="w-6 h-6 text-wa-green animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white tracking-normal">SIGNAL REALITY FEED</h3>
+                    <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white tracking-normal">ATTENDANCE FEED</h3>
                     <p className="text-sm font-bold text-slate-600 dark:text-slate-400 tracking-normal mt-1">Live Telemetry Incoming</p>
                   </div>
                 </div>
-                <button 
-                  onClick={() => setShowClearFeedConfirm(true)}
-                  disabled={recentAttendance.length === 0 || saving || isClearingFeed}
-                  className="flex items-center gap-2 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all px-5 py-3 rounded-2xl text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 disabled:opacity-30"
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> 
-                  {isClearingFeed ? 'PURGING...' : 'PURGE FEED'}
-                </button>
+                  <button 
+                    onClick={() => setShowClearFeedConfirm(true)}
+                    disabled={recentAttendance.length === 0 || saving || isClearingFeed}
+                    className="flex items-center gap-2 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all px-5 py-3 rounded-2xl text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 disabled:opacity-30"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" /> 
+                    {isClearingFeed ? 'CLEARING...' : 'CLEAR FEED'}
+                  </button>
               </div>
 
               <div className="space-y-2 sm:space-y-4">
