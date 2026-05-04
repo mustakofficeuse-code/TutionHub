@@ -436,8 +436,8 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                 <div className="w-16 h-16 bg-wa-teal rounded-[1.25rem] flex items-center justify-center mb-5 shadow-lg shadow-wa-teal/20 dark:shadow-none animate-pulse print:hidden shrink-0">
                   <QrCode className="text-white w-8 h-8" />
                 </div>
-                <h2 className="text-3xl font-bold text-slate-800 dark:text-[#e9edef] tracking-normal  italic leading-none">ATTENDANCE QR</h2>
-                <p className="text-xs font-bold text-wa-teal  tracking-normal mt-3 print:text-black">Scan to Attend</p>
+                <h2 className="text-3xl font-bold text-slate-800 dark:text-[#e9edef] tracking-normal italic leading-none">ATTENDANCE QR</h2>
+                <p className="text-sm font-bold text-wa-teal tracking-normal mt-3 print:text-black">Scan to Attend</p>
               </div>
               
               <div className="bg-[#f8f9fa] dark:bg-[#111b21] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl inline-block border-2 border-slate-50 dark:border-white/5 mb-4 sm:mb-8 group-hover:border-wa-teal/30 transition-all print:border-slate-200 print:bg-white relative">
@@ -756,7 +756,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                   </div>
                   <div>
                     <h3 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-white tracking-normal">SIGNAL REALITY FEED</h3>
-                    <p className="text-xs font-bold text-slate-400  tracking-normal mt-1">Live Telemetry Incoming</p>
+                    <p className="text-sm font-bold text-slate-600 dark:text-slate-400 tracking-normal mt-1">Live Telemetry Incoming</p>
                   </div>
                 </div>
                 <button 

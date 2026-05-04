@@ -496,9 +496,9 @@ export default function TeacherDashboard({
                   key={sem}
                   className="bg-white dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 overflow-hidden"
                 >
-                  <div className="px-4 py-3 bg-slate-50 dark:bg-[#202c33] border-b border-slate-100 dark:border-white/5 flex justify-between items-center text-sm font-bold text-wa-teal cursor-pointer transition-all hover:bg-wa-teal/5">
+                  <div className="px-4 py-3 bg-slate-50 dark:bg-[#202c33] border-b border-slate-100 dark:border-white/5 flex justify-between items-center text-base font-bold text-wa-teal cursor-pointer transition-all hover:bg-wa-teal/5">
                     <span className="text-lg">Semester {sem}</span>
-                    <span className="text-xs bg-wa-teal/10 px-2.5 py-0.5 rounded-full">{grouped[sem].length} Students</span>
+                    <span className="text-sm bg-wa-teal/10 px-2.5 py-0.5 rounded-full">{grouped[sem].length} Students</span>
                   </div>
                   <div className="divide-y divide-slate-50 dark:divide-white/5">
                     {grouped[sem].map((s: any) => (
@@ -612,12 +612,12 @@ export default function TeacherDashboard({
               <h1 className="text-3xl font-bold text-slate-800 dark:text-[#e9edef] tracking-normal leading-none  italic">
                 Command <span className="text-wa-teal">Center</span>
               </h1>
-              <p className="text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mt-4 ml-1">Faculty Operations Terminal</p>
+              <p className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal mt-4 ml-1">Faculty Operations Terminal</p>
             </div>
             <div className="flex items-center gap-3">
-               <div className="flex items-center gap-3 px-5 sm:px-8 py-3 sm:py-5 bg-white dark:bg-[#202c33] rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-sm">
-                  <div className="w-2.5 h-2.5 rounded-full bg-wa-green animate-pulse" />
-                  <span className="text-xs font-bold text-slate-500 dark:text-slate-300  tracking-normal">System Online</span>
+               <div className="flex items-center gap-3 px-6 sm:px-10 py-3.5 sm:py-6 bg-white dark:bg-[#202c33] rounded-[1.5rem] border border-slate-100 dark:border-white/5 shadow-sm">
+                  <div className="w-3 h-3 rounded-full bg-wa-green animate-pulse" />
+                  <span className="text-sm font-bold text-slate-600 dark:text-slate-200 tracking-normal">System Online</span>
                </div>
             </div>
           </div>
@@ -638,7 +638,7 @@ export default function TeacherDashboard({
                 <div className={`w-14 h-14 ${s.bg} ${s.color} rounded-2xl flex items-center justify-center mb-4 sm:mb-6 shadow-inner`}>
                   <s.icon className="w-7 h-7" />
                 </div>
-                <p className="text-xs font-bold  text-slate-500 dark:text-slate-400 tracking-normal mb-2">
+                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal mb-2">
                   {s.label}
                 </p>
                 <p className="text-3xl font-bold text-slate-800 dark:text-[#e9edef] tracking-normal">
@@ -657,7 +657,7 @@ export default function TeacherDashboard({
                     <h2 className="text-xl font-bold text-slate-800 dark:text-[#e9edef] flex items-center gap-4 tracking-normal  italic">
                       <Users className="w-7 h-7 text-wa-teal" /> Faculty Records
                     </h2>
-                    <p className="text-xs font-bold text-slate-400  tracking-normal mt-2">Student Personnel Directory</p>
+                    <p className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal mt-2">Student Personnel Directory</p>
                   </div>
                   <button
                     onClick={() => setShowAddDeptModal(true)}
@@ -700,7 +700,7 @@ export default function TeacherDashboard({
                             </div>
                             <div>
                               <h3 className="font-bold text-lg tracking-normal  italic">{name}</h3>
-                              <p className={`text-xs font-bold  tracking-normal mt-1.5 ${isActive ? "text-white/60" : "text-slate-400"}`}>
+                              <p className={`text-sm font-bold tracking-normal mt-1.5 ${isActive ? "text-white/80" : "text-slate-500 dark:text-slate-300"}`}>
                                 {count} Active Students
                               </p>
                             </div>
@@ -758,35 +758,35 @@ export default function TeacherDashboard({
             </div>
 
             {/* Right: Operations & Feed */}
-            <div className="space-y-2 sm:space-y-4 sm:space-y-8">
+            <div className="space-y-4 sm:space-y-8">
               {/* Quick Actions Terminal */}
-              <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5">
-                 <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal mb-4 sm:mb-6 flex items-center gap-2">
-                    <TrendingUp className="w-4 h-4" /> Operations Terminal
+              <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5">
+                 <h2 className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal mb-4 sm:mb-8 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-wa-teal" /> Operations Terminal
                  </h2>
                  <div className="grid grid-cols-1 gap-4">
                   <button
                     onClick={() => handleNav("/attendance/generate", "attendance")}
-                    className="flex items-center gap-3 sm:gap-6 p-4 sm:p-6 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-transparent hover:border-wa-teal/30 hover:bg-white dark:hover:bg-[#202c33] transition-all group"
+                    className="flex items-center gap-4 sm:gap-6 p-5 sm:p-7 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-transparent hover:border-wa-teal/30 hover:bg-white dark:hover:bg-[#202c33] transition-all group"
                   >
                     <div className="w-14 h-14 bg-emerald-100 dark:bg-emerald-900/20 text-wa-green rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
                       <QrCode className="w-7 h-7" />
                     </div>
                     <div className="text-left">
-                       <p className="text-sm font-bold text-slate-800 dark:text-[#e9edef] tracking-normal">Attendance</p>
-                       <p className="text-xs font-bold text-[#8696a0]  tracking-normal mt-1">Uplink Generator</p>
+                       <p className="text-lg font-bold text-slate-800 dark:text-[#e9edef] tracking-normal">Attendance</p>
+                       <p className="text-sm font-bold text-slate-500 dark:text-slate-300 tracking-normal mt-1">Uplink Generator</p>
                     </div>
                   </button>
                   <button
                     onClick={() => handleNav("/fees/manage", "fees")}
-                    className="flex items-center gap-3 sm:gap-6 p-4 sm:p-6 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-transparent hover:border-wa-teal/30 hover:bg-white dark:hover:bg-[#202c33] transition-all group"
+                    className="flex items-center gap-4 sm:gap-6 p-5 sm:p-7 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-transparent hover:border-wa-teal/30 hover:bg-white dark:hover:bg-[#202c33] transition-all group"
                   >
                     <div className="w-14 h-14 bg-wa-teal/10 text-wa-teal rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform shadow-inner">
                       <CreditCard className="w-7 h-7" />
                     </div>
                     <div className="text-left">
-                       <p className="text-sm font-bold text-slate-800 dark:text-[#e9edef] tracking-normal">Finance</p>
-                       <p className="text-xs font-bold text-[#8696a0]  tracking-normal mt-1">Ledger Manager</p>
+                       <p className="text-lg font-bold text-slate-800 dark:text-[#e9edef] tracking-normal">Finance</p>
+                       <p className="text-sm font-bold text-slate-500 dark:text-slate-300 tracking-normal mt-1">Ledger Manager</p>
                     </div>
                   </button>
                   <button

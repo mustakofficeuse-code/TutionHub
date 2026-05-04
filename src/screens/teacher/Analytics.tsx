@@ -127,10 +127,10 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
               <div className="w-2 h-2 bg-wa-teal rounded-full animate-pulse" />
               <span className="text-xs font-bold text-wa-teal  tracking-normal">Live Intelligence Feed</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl sm:text-3xl sm:text-4xl sm:text-5xl font-bold text-slate-800 dark:text-white tracking-normal  leading-none italic">
+            <h1 className="text-3xl sm:text-4xl sm:text-3xl sm:text-4xl sm:text-5xl font-bold text-slate-800 dark:text-white tracking-normal leading-none italic">
               OPS ANALYTICS
             </h1>
-            <p className="text-xs font-bold text-slate-400  tracking-normal mt-4 ml-1">Real-time performance metrics & system diagnostics</p>
+            <p className="text-sm font-bold text-slate-600 dark:text-slate-400 tracking-normal mt-4 ml-1">Real-time performance metrics & system diagnostics</p>
           </div>
         </div>
 
@@ -154,11 +154,11 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                   <div className="w-14 h-14 bg-wa-teal/10 dark:bg-wa-teal/20 rounded-2xl flex items-center justify-center">
                     <Users2 className="w-7 h-7 text-wa-teal" />
                   </div>
-                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal">Population Matrix</span>
+                  <span className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal">Population Matrix</span>
                 </div>
                 <div className="relative z-10">
                   <p className="text-3xl sm:text-6xl font-bold text-slate-800 dark:text-white tracking-normal italic leading-none">{overallStats.totalStudents}</p>
-                  <p className="text-xs font-bold text-slate-400  tracking-normal mt-4">TOTAL STUDENTS</p>
+                  <p className="text-sm font-bold text-slate-600 dark:text-slate-400 tracking-normal mt-4">TOTAL STUDENTS</p>
                 </div>
               </div>
 
@@ -168,7 +168,7 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                   <div className="w-14 h-14 bg-wa-green/10 dark:bg-wa-green/20 rounded-2xl flex items-center justify-center">
                     <Calendar className="w-7 h-7 text-wa-green" />
                   </div>
-                  <span className="text-xs font-bold text-slate-400  tracking-normal">Overall Attendance</span>
+                  <span className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal">Overall Attendance</span>
                 </div>
                 <div className="relative z-10">
                   <div className="flex items-end gap-3">
@@ -178,7 +178,7 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                   <div className="mt-4 sm:mt-6 h-2 bg-slate-100 dark:bg-[#111b21] rounded-full overflow-hidden">
                     <div className="h-full bg-wa-green shadow-[0_0_15px_rgba(37,211,102,0.5)] transition-all duration-1000" style={{ width: `${overallStats.avgAttendance}%` }} />
                   </div>
-                  <p className="text-xs font-bold text-slate-400  tracking-normal mt-5">SYSTEM ATTENDANCE VECTOR</p>
+                  <p className="text-sm font-bold text-slate-600 dark:text-slate-400 tracking-normal mt-5">SYSTEM ATTENDANCE VECTOR</p>
                 </div>
               </div>
 
@@ -188,11 +188,11 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                   <div className="w-14 h-14 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-2xl flex items-center justify-center">
                     <CreditCard className="w-7 h-7 text-indigo-500" />
                   </div>
-                  <span className="text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal">Revenue Stream</span>
+                  <span className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal">Revenue Stream</span>
                 </div>
                 <div className="relative z-10">
                   <p className="text-3xl sm:text-6xl font-bold text-slate-800 dark:text-white tracking-normal italic leading-none">₹{overallStats.feeCollection.toLocaleString()}</p>
-                  <p className="text-xs font-bold text-slate-400  tracking-normal mt-4">TOTAL REVENUE OPTIMIZED</p>
+                  <p className="text-sm font-bold text-slate-600 dark:text-slate-400 tracking-normal mt-4">TOTAL REVENUE OPTIMIZED</p>
                 </div>
               </div>
             </div>

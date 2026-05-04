@@ -197,7 +197,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-[#e9edef] leading-tight tracking-normal">Access <span className="text-wa-teal">Control</span></h1>
-                <p className="text-xs font-bold text-[#8696a0]  tracking-normal">Root Authority</p>
+                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal">Root Authority</p>
               </div>
             </div>
           </div>
@@ -244,9 +244,9 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
               <div className="w-12 h-12 bg-wa-teal/10 rounded-2xl flex items-center justify-center text-wa-teal">
                 <Users className="w-6 h-6" />
               </div>
-              <h3 className="text-xs font-bold text-[#8696a0]  tracking-normal">Total Students</h3>
+              <h3 className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal">Total Students</h3>
             </div>
-            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal relative z-10">{users.filter(u => u.role === 'student').length}</p>
+            <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal relative z-10">{users.filter(u => u.role === 'student').length}</p>
           </div>
           
           <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
@@ -257,9 +257,9 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
               <div className="w-12 h-12 bg-wa-green/10 rounded-2xl flex items-center justify-center text-wa-green">
                 <UserCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-xs font-bold text-[#8696a0]  tracking-normal">Teachers</h3>
+              <h3 className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal">Teachers</h3>
             </div>
-            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal relative z-10">
+            <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal relative z-10">
               {users.filter(u => u.role === 'teacher').length}
             </p>
           </div>
@@ -272,9 +272,9 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
               <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 rounded-2xl flex items-center justify-center text-orange-600 dark:text-orange-400">
                 <UserX className="w-6 h-6" />
               </div>
-              <h3 className="text-xs font-bold text-[#8696a0]  tracking-normal">Suspended</h3>
+              <h3 className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal">Suspended</h3>
             </div>
-            <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal relative z-10">{blacklistDocs.length}</p>
+            <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal relative z-10">{blacklistDocs.length}</p>
           </div>
 
           <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
@@ -376,7 +376,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
           <div className="p-4 sm:p-6 sm:p-10 border-b border-slate-50 dark:border-white/5 flex flex-col lg:flex-row justify-between items-center gap-5 sm:gap-4 sm:gap-8 bg-[#f0f2f5]/50 dark:bg-slate-800/10">
             <div>
               <h2 className="text-xl font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">User Register</h2>
-              <p className="text-xs font-bold text-[#8696a0]  tracking-normal mt-2">All authenticated system users</p>
+              <p className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal mt-2">All authenticated system users</p>
             </div>
             <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
               <button 
@@ -400,7 +400,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
 
           <div className="w-full overflow-x-auto"><table className="w-full min-w-max text-left">
               <thead>
-                <tr className="bg-[#f0f2f5]/30 dark:bg-slate-800/20 text-[#8696a0] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">
+                <tr className="bg-[#f0f2f5]/30 dark:bg-slate-800/20 text-slate-600 dark:text-slate-300 text-sm font-bold tracking-normal">
                   <th className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">User Name</th>
                   <th className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Role</th>
                   <th className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 border-b border-slate-50 dark:border-white/5 text-nowrap">Department / Semester</th>

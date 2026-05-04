@@ -76,7 +76,7 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
               </div>
               Study Hub
             </h1>
-            <p className="text-[#8696a0] font-semibold mt-1">Curated academic resources for your success</p>
+            <p className="text-slate-600 dark:text-slate-300 font-bold mt-1 text-base">Curated academic resources for your success</p>
           </div>
         </div>
 
@@ -95,10 +95,10 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
         </div>
 
         {/* Materials List */}
-        <div className="space-y-2 sm:space-y-4">
+        <div className="space-y-4">
           <div className="flex items-center justify-between px-2">
-            <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal">Latest Updates</h2>
-            <span className="text-xs font-bold text-wa-teal bg-wa-teal/10 px-3 py-1 rounded-full  tracking-normal">{filteredMaterials.length} Items</span>
+            <h2 className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal">Latest Updates</h2>
+            <span className="text-sm font-bold text-wa-teal bg-wa-teal/10 px-3 py-1 rounded-full tracking-normal">{filteredMaterials.length} Items</span>
           </div>
 
           <div className="grid grid-cols-1 gap-4">
@@ -132,13 +132,13 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
                     <div>
                       <h3 className="font-bold text-slate-900 dark:text-[#e9edef] group-hover:text-wa-teal transition-colors tracking-normal text-lg">{m.title}</h3>
                       <div className="flex flex-wrap items-center gap-2 mt-1">
-                        <span className="text-xs font-bold text-wa-teal  tracking-normal bg-wa-teal/10 px-2 py-0.5 rounded-md">{m.subject}</span>
-                        <div className="w-1 h-1 rounded-full bg-[#8696a0]/30" />
-                        <span className="text-xs font-bold text-[#8696a0]  tracking-normal">Unit {m.unit || 'N/A'}</span>
+                        <span className="text-sm font-bold text-wa-teal tracking-normal bg-wa-teal/10 px-2 py-0.5 rounded-md">{m.subject}</span>
+                        <div className="w-1 h-1 rounded-full bg-slate-400" />
+                        <span className="text-sm font-bold text-slate-600 dark:text-slate-400 tracking-normal">Unit {m.unit || 'N/A'}</span>
                         {m.topic && (
                           <>
-                            <div className="w-1 h-1 rounded-full bg-[#8696a0]/30" />
-                            <span className="text-xs italic font-bold text-[#8696a0] tracking-wide truncate max-w-[150px]">{m.topic}</span>
+                            <div className="w-1 h-1 rounded-full bg-slate-400" />
+                            <span className="text-sm italic font-bold text-slate-500 dark:text-slate-400 tracking-wide truncate max-w-[150px]">{m.topic}</span>
                           </>
                         )}
                       </div>

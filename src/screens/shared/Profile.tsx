@@ -299,8 +299,8 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
         )}
       </AnimatePresence>
 
-      <div className="max-w-2xl mx-auto">
-        <div className="flex items-center justify-between mb-4 sm:mb-8">
+      <div className="max-w-4xl mx-auto">
+        <div className="flex items-center justify-between mb-6 sm:mb-10">
           {!isEmbedded ? (
             <button 
               onClick={() => navigate(-1)}
@@ -364,11 +364,11 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
             </div>
           </div>
 
-          <div className="pt-16 p-4 sm:p-5 sm:p-5 sm:p-6">
+          <div className="pt-20 p-6 sm:p-8 md:p-10">
             {isEditing && (
-              <div className="mb-0">
-                <label className="text-xs font-bold text-slate-400  tracking-normal block mb-3">Profile Picture Settings</label>
-                <div className="flex flex-wrap gap-2 mb-4">
+              <div className="mb-10 bg-slate-50 dark:bg-[#111b21] p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-inner">
+                <label className="text-sm font-bold text-slate-500 dark:text-slate-400 tracking-normal block mb-4">PROFILE IMAGE CUSTOMIZATION</label>
+                <div className="flex flex-wrap gap-3 mb-6">
                   <button 
                     type="button"
                     onClick={triggerUpload}
@@ -413,17 +413,17 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
               </div>
             )}
 
-            <div className="my-8 flex justify-between items-start">
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900 dark:text-white">{profile?.name}</h1>
-                <p className="text-slate-500 dark:text-slate-400 capitalize">{profile?.role} Account {profile?.role === 'student' && `• ${profile?.courseName} Sem ${profile?.semester}`}</p>
+            <div className="my-10 flex flex-col md:flex-row justify-between items-start gap-6">
+              <div className="flex-1">
+                <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">{profile?.name}</h1>
+                <p className="text-lg text-slate-500 dark:text-slate-400 capitalize mt-1 font-medium">{profile?.role} Account {profile?.role === 'student' && `• ${profile?.courseName} Sem ${profile?.semester}`}</p>
                 
                 {!isEditing && (
                   <button 
                     onClick={() => setIsEditing(true)}
-                    className="mt-3 flex items-center gap-2 px-4 py-2 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-xl text-xs font-bold hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+                    className="mt-6 flex items-center gap-3 px-6 py-3 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 rounded-2xl text-sm font-bold shadow-xl hover:bg-slate-50 dark:hover:bg-slate-700 transition-all border border-slate-200 dark:border-white/10"
                   >
-                    <Edit2 className="w-3.5 h-3.5" /> Edit Profile
+                    <Edit2 className="w-4 h-4" /> Edit Profile Details
                   </button>
                 )}
                 
@@ -439,29 +439,29 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                       setCourseId(profile?.courseId || '');
                       setAvatarUrl(profile?.avatarUrl || '');
                     }}
-                    className="mt-3 flex items-center gap-2 px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/40 transition-all border border-red-100 dark:border-red-900/30"
+                    className="mt-6 flex items-center gap-3 px-6 py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-2xl text-sm font-bold hover:bg-red-100 dark:hover:bg-red-900/40 transition-all border border-red-100 dark:border-red-900/30"
                   >
-                    <X className="w-3.5 h-3.5" /> Cancel Editing
+                    <X className="w-4 h-4" /> Discard Changes
                   </button>
                 )}
               </div>
-              <div className="flex flex-col gap-2 items-end">
+              <div className="flex flex-col gap-4 items-end shrink-0 w-full md:w-auto">
                 {profile?.role === 'student' && (
                   <button 
                     onClick={() => navigate('/attendance/scan')}
-                    className="flex items-center gap-2 px-4 py-2 bg-wa-teal text-white rounded-xl font-bold text-sm shadow-lg shadow-wa-teal/20 hover:bg-wa-teal-dark transition-all"
+                    className="w-full md:w-auto flex items-center justify-center gap-3 px-8 py-4 bg-wa-teal text-white rounded-[1.5rem] font-bold text-base shadow-xl shadow-wa-teal/20 hover:bg-wa-teal-dark active:scale-95 transition-all"
                   >
-                    <QrCode className="w-4 h-4" /> Scan Attendance
+                    <QrCode className="w-5 h-5" /> SCAN ATTENDANCE
                   </button>
                 )}
                 {profile?.role === 'student' && profile?.studentId && (
-                  <div className="bg-wa-teal/5 dark:bg-wa-teal/10 px-4 py-2 rounded-xl border border-wa-teal/10 flex items-center gap-3">
+                  <div className="w-full md:w-auto bg-wa-teal/5 dark:bg-wa-teal/10 px-6 py-4 rounded-2xl border border-wa-teal/10 flex items-center justify-between md:justify-start gap-6 shadow-sm">
                     <div>
-                      <p className="text-xs  font-bold text-wa-teal dark:text-wa-green">Student ID</p>
-                      <p className="font-mono font-bold text-slate-900 dark:text-white">{profile.studentId}</p>
+                      <p className="text-xs font-black text-wa-teal dark:text-wa-green uppercase tracking-widest">Student Identity</p>
+                      <p className="text-xl font-mono font-bold text-slate-800 dark:text-white mt-1">{profile.studentId}</p>
                     </div>
-                    <button onClick={copyStudentId} className="text-wa-teal dark:text-wa-green hover:bg-wa-teal/10 p-1.5 rounded-lg transition-colors">
-                      {idCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    <button onClick={copyStudentId} className="bg-white dark:bg-white/5 p-2.5 rounded-xl shadow-sm text-wa-teal dark:text-wa-green hover:bg-wa-teal hover:text-white transition-all border border-slate-100 dark:border-white/5">
+                      {idCopied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />}
                     </button>
                   </div>
                 )}

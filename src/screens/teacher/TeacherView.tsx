@@ -116,8 +116,8 @@ export default function TeacherView() {
               <GraduationCap className="text-white w-6 h-6 group-hover:rotate-12 transition-transform" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-normal leading-none  italic">Tuition<span className="text-wa-green">Hub</span></h1>
-              <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-white/60 mt-1.5 ml-0.5">Faculty Account</p>
+              <h1 className="text-2xl font-bold tracking-normal leading-none italic">Tuition<span className="text-wa-green">Hub</span></h1>
+              <p className="text-sm font-bold tracking-normal text-white/90 mt-1.5 ml-0.5">Faculty Account</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -278,7 +278,7 @@ export default function TeacherView() {
             <tab.icon className={`w-4 h-4 sm:w-6 sm:h-6 mb-1 ${isActive ? 'fill-wa-teal/20 dark:fill-wa-green/20 scale-110' : ''} transition-transform`} />
             
             <span 
-              className={`text-[8px] sm:text-[10px] font-medium tracking-wide truncate w-full text-center ${isActive ? 'text-wa-teal dark:text-wa-green font-bold' : 'text-slate-500 dark:text-slate-400'}`}
+              className={`text-[9px] sm:text-xs font-bold tracking-wide truncate w-full text-center ${isActive ? 'text-wa-teal dark:text-wa-green' : 'text-slate-600 dark:text-slate-300'}`}
             >
               {tab.label}
             </span>

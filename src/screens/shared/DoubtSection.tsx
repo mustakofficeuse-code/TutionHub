@@ -116,12 +116,14 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    multiple: false
+    multiple: false,
+    noClick: false
   } as any);
 
-  const { getRootProps: getReplyRootProps, getInputProps: getReplyInputProps } = useDropzone({
+  const { getRootProps: getReplyRootProps, getInputProps: getReplyInputProps, isDragActive: isReplyDragActive } = useDropzone({
     onDrop: onReplyDrop,
-    multiple: false
+    multiple: false,
+    noClick: true // Only drag and drop for the whole container
   } as any);
 
   useEffect(() => {
@@ -376,17 +378,36 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         </div>
 
         {/* Right Area: Conversation */}
-        <div className={`flex-1 flex flex-col bg-[#efeae2] dark:bg-[#0b141a] relative ${!selectedDoubt ? 'hidden md:flex' : 'flex'}`}>
+        <div 
+          {...getReplyRootProps()}
+          className={`flex-1 flex flex-col bg-[#efeae2] dark:bg-[#0b141a] relative ${!selectedDoubt ? 'hidden md:flex' : 'flex'}`}
+        >
+          <input {...getReplyInputProps()} />
+          <AnimatePresence>
+            {isReplyDragActive && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 z-50 bg-wa-teal/20 backdrop-blur-sm flex flex-col items-center justify-center border-4 border-dashed border-wa-teal m-4 rounded-3xl"
+              >
+                <div className="bg-white dark:bg-[#202c33] p-8 rounded-full shadow-2xl mb-4">
+                  <ImageIcon className="w-16 h-16 text-wa-teal animate-bounce" />
+                </div>
+                <h3 className="text-2xl font-bold text-wa-teal bg-white dark:bg-[#202c33] px-6 py-2 rounded-full shadow-lg">Drop image or file to attach</h3>
+              </motion.div>
+            )}
+          </AnimatePresence>
           {!selectedDoubt ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 bg-[#f8f9fa] dark:bg-[#222e35] border-b-[6px] border-wa-teal">
               <div className="w-64 h-64 bg-slate-100 dark:bg-[#222e35] rounded-full flex items-center justify-center mb-4 sm:mb-8">
                  <GraduationCap className="w-32 h-32 text-slate-300 dark:text-slate-600" />
               </div>
               <h2 className="text-3xl font-light text-slate-800 dark:text-[#e9edef] mb-3">TutionHub Web</h2>
-              <p className="text-[#8696a0] max-w-sm text-sm">
+              <p className="text-slate-600 dark:text-slate-300 max-w-sm text-base font-medium">
                 Send and receive messages to resolve doubts. Use the list to select a conversation.
               </p>
-              <div className="mt-auto text-[#8696a0] flex items-center gap-1 text-xs">
+              <div className="mt-auto text-slate-500 dark:text-slate-400 flex items-center gap-1 text-sm font-bold">
                 <Shield className="w-3 h-3" /> End-to-end encrypted
               </div>
             </div>
@@ -405,10 +426,10 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate">
+                  <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate text-base">
                     {selectedDoubt.isAnonymous ? 'Anonymous Student' : selectedDoubt.studentName}
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-[#8696a0] truncate">
+                  <p className="text-sm font-bold text-slate-600 dark:text-slate-300 truncate">
                      {selectedDoubt.subject} • {selectedDoubt.status === 'resolved' ? 'Resolved' : 'Active'}
                   </p>
                 </div>
@@ -443,16 +464,16 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                                <img 
                                  src={selectedDoubt.attachmentUrl} 
                                  alt="" 
-                                 className="w-full max-h-[300px] object-contain cursor-zoom-in"
+                                 className="w-full max-h-[400px] object-contain cursor-zoom-in rounded-lg"
                                  onClick={() => setViewMaterial({ url: selectedDoubt.attachmentUrl, title: selectedDoubt.attachmentName, type: 'image' })}
                                />
                              ) : (
                                <button 
                                  onClick={() => setViewMaterial({ url: selectedDoubt.attachmentUrl, title: selectedDoubt.attachmentName, type: 'pdf' })}
-                                 className="p-3 w-full flex items-center gap-3 text-slate-700 dark:text-white hover:bg-slate-200 dark:hover:bg-white/5 transition-colors"
+                                 className="p-4 w-full flex items-center gap-4 text-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-white/5 transition-colors"
                                >
-                                  <FileText className="w-8 h-8 text-wa-teal" />
-                                  <span className="text-xs truncate font-medium">{selectedDoubt.attachmentName}</span>
+                                  <FileText className="w-10 h-10 text-wa-teal" />
+                                  <span className="text-sm truncate font-bold">{selectedDoubt.attachmentName}</span>
                                </button>
                              )}
                           </div>

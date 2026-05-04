@@ -123,7 +123,7 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
             </div>
             Performance Hub
           </h1>
-          <p className="text-[#8696a0] font-semibold mt-1">Real-time insights into your academic progress</p>
+          <p className="text-slate-600 dark:text-slate-300 font-bold mt-1 text-base">Real-time insights into your academic progress</p>
         </div>
 
         {loading ? (
@@ -143,11 +143,11 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                   <div className="w-10 h-10 bg-wa-teal/10 rounded-xl flex items-center justify-center text-wa-teal">
                     <Calendar className="w-5 h-5" />
                   </div>
-                  <span className="text-xs font-bold text-[#8696a0]  tracking-normal">Attendance Rate</span>
+                  <span className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal">Attendance Rate</span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef]">{stats.attendance}</p>
-                  <span className="text-xl font-bold text-[#8696a0]">%</span>
+                  <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-[#e9edef]">{stats.attendance}</p>
+                  <span className="text-xl font-bold text-slate-500 dark:text-slate-400">%</span>
                 </div>
                 <div className="mt-4 h-2 bg-[#f0f2f5] dark:bg-[#111b21] rounded-full overflow-hidden">
                   <div className="h-full bg-wa-teal transition-all duration-1000" style={{ width: `${stats.attendance}%` }} />
@@ -157,14 +157,14 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
               <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-wa-green/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700" />
                 <div className="flex items-center gap-4 mb-4 sm:mb-6">
-                  <div className="w-10 h-10 bg-wa-green/10 rounded-xl text-wa-green">
+                  <div className="w-10 h-10 bg-wa-green/10 rounded-xl text-wa-green flex items-center justify-center">
                     <ClipboardList className="w-5 h-5" />
                   </div>
-                  <span className="text-xs font-bold text-[#8696a0]  tracking-normal">Assignments Hub</span>
+                  <span className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal">Assignments Hub</span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <p className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-[#e9edef]">{stats.assignmentRate}</p>
-                  <span className="text-xl font-bold text-[#8696a0]">%</span>
+                  <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-[#e9edef]">{stats.assignmentRate}</p>
+                  <span className="text-xl font-bold text-slate-500 dark:text-slate-400">%</span>
                 </div>
                 <div className="mt-4 h-2 bg-[#f0f2f5] dark:bg-[#111b21] rounded-full overflow-hidden">
                   <div className="h-full bg-wa-green transition-all duration-1000" style={{ width: `${stats.assignmentRate}%` }} />
@@ -174,15 +174,15 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
               <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full -mr-16 -mt-16 transition-transform group-hover:scale-150 duration-700" />
                 <div className="flex items-center gap-4 mb-4 sm:mb-6">
-                  <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-xl text-purple-600">
+                  <div className="w-10 h-10 bg-purple-50 dark:bg-purple-900/20 rounded-xl text-purple-600 flex items-center justify-center">
                     <Trophy className="w-5 h-5" />
                   </div>
-                  <span className="text-xs font-bold text-[#8696a0]  tracking-normal">Fee Clearance</span>
+                  <span className="text-sm font-bold text-slate-600 dark:text-slate-300 tracking-normal">Fee Clearance</span>
                 </div>
-                <p className={`text-3xl sm:text-4xl font-bold tracking-normal ${stats.feeStatus === 'Paid' ? 'text-wa-green' : 'text-orange-500'}`}>
+                <p className={`text-3xl sm:text-4xl lg:text-5xl font-bold tracking-normal ${stats.feeStatus === 'Paid' ? 'text-wa-green' : 'text-orange-500'}`}>
                   {stats.feeStatus}
                 </p>
-                <p className="text-xs font-bold text-[#8696a0] mt-3  tracking-normal">Sem {profile.semester} Status</p>
+                <p className="text-sm font-bold text-slate-600 dark:text-slate-300 mt-3 tracking-normal">Sem {profile.semester} Status</p>
               </div>
             </div>
 

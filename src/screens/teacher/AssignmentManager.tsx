@@ -124,10 +124,10 @@ export default function AssignmentManager() {
               <div className="w-2 h-2 bg-wa-teal rounded-full animate-pulse" />
               <span className="text-xs font-bold text-wa-teal  tracking-normal">Assignments Center</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl sm:text-3xl sm:text-4xl sm:text-5xl font-bold text-slate-800 dark:text-white tracking-normal  leading-none italic">
+            <h1 className="text-3xl sm:text-4xl sm:text-3xl sm:text-4xl sm:text-5xl font-bold text-slate-800 dark:text-white tracking-normal leading-none italic">
               ASSIGNMENT TRACKER
             </h1>
-            <p className="text-xs font-bold text-slate-400  tracking-normal mt-3 ml-1">Manage and track student submissions for active courses</p>
+            <p className="text-sm font-bold text-slate-600 dark:text-slate-400 tracking-normal mt-3 ml-1">Manage and track student submissions for active courses</p>
           </div>
           <button 
             onClick={() => setShowAdd(true)}
@@ -185,12 +185,12 @@ export default function AssignmentManager() {
                       <span>DUE: {new Date(a.dueDate).toLocaleDateString()}</span>
                     </div>
                     <div className="flex items-center justify-between pt-6 border-t border-slate-50 dark:border-white/5">
-                      <span className="text-xs font-bold text-wa-teal bg-wa-teal/10 dark:bg-wa-teal/20 px-3 py-1.5 rounded-lg  tracking-normal border border-wa-teal/10">
+                      <span className="text-sm font-bold text-wa-teal bg-wa-teal/10 dark:bg-wa-teal/20 px-3 py-1.5 rounded-lg tracking-normal border border-wa-teal/10">
                         {subCount} SUBMISSIONS
                       </span>
                       <button 
                         onClick={() => setViewSubmissions(a)}
-                        className="text-slate-800 dark:text-[#e9edef] text-xs font-bold flex items-center gap-2 hover:text-wa-teal transition-colors tracking-normal "
+                        className="text-slate-800 dark:text-[#e9edef] text-sm font-bold flex items-center gap-2 hover:text-wa-teal transition-colors tracking-normal"
                       >
                         VIEW ALL <ExternalLink className="w-3.5 h-3.5" />
                       </button>

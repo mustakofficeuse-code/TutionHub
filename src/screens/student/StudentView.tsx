@@ -92,8 +92,8 @@ export default function StudentView() {
               <GraduationCap className="text-white w-6 h-6 group-hover:rotate-12 transition-transform" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold tracking-normal leading-none">Tuition<span className="opacity-70">Hub</span></h1>
-              <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 opacity-60 mt-1">Student Account</p>
+              <h1 className="text-2xl font-bold tracking-normal leading-none">Tuition<span className="opacity-80">Hub</span></h1>
+              <p className="text-sm font-bold tracking-normal text-white/80 mt-1.5">Student Account</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -265,7 +265,7 @@ export default function StudentView() {
             <tab.icon className={`w-5 h-5 sm:w-6 sm:h-6 mb-1 ${isActive ? 'fill-wa-teal/20 dark:fill-wa-green/20 scale-110' : ''} transition-transform`} />
             
             <span 
-              className={`text-[9px] sm:text-[10px] font-medium tracking-wide truncate w-full text-center ${isActive ? 'text-wa-teal dark:text-wa-green font-bold' : 'text-slate-500 dark:text-slate-400'}`}
+              className={`text-[10px] sm:text-xs font-bold tracking-wide truncate w-full text-center ${isActive ? 'text-wa-teal dark:text-wa-green' : 'text-slate-600 dark:text-slate-300'}`}
             >
               {tab.label}
             </span>

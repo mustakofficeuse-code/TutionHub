@@ -385,8 +385,8 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                 <BookOpen className="text-wa-teal w-8 h-8" />
               </div>
               <div>
-                <h1 className="text-2xl sm:text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white tracking-normal  italic leading-none">Materials</h1>
-                <p className="text-xs font-bold text-wa-teal  tracking-normal mt-3 ml-1">Asset Repository [VER 0.92]</p>
+                <h1 className="text-2xl sm:text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white tracking-normal italic leading-none">Materials</h1>
+                <p className="text-sm font-bold text-wa-teal tracking-normal mt-3 ml-1">Asset Repository [VER 0.92]</p>
               </div>
             </div>
           </div>

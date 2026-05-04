@@ -393,12 +393,12 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-center sm:justify-start lg:justify-center gap-2 mb-1">
                      <span className="w-2.5 h-2.5 bg-wa-green rounded-full animate-pulse shadow-[0_0_10px_rgba(37,211,102,0.5)]"></span>
-                     <p className="text-xs font-bold tracking-normal text-wa-teal uppercase">Authenticated</p>
+                     <p className="text-sm font-bold tracking-normal text-wa-teal uppercase">Authenticated</p>
                   </div>
                   <h2 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] truncate tracking-tight mb-2">{profile?.name}</h2>
                   <div className="flex flex-wrap items-center justify-center sm:justify-start lg:justify-center gap-2 mb-4">
-                    <span className="px-3 py-1 bg-wa-teal/10 text-wa-teal rounded-full text-[10px] font-bold uppercase border border-wa-teal/10">Sem {profile?.semester}</span>
-                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-[#8696a0] rounded-full text-[10px] font-bold uppercase border border-transparent truncate max-w-[150px]">{profile?.courseName || profile?.department}</span>
+                    <span className="px-3 py-1 bg-wa-teal/10 text-wa-teal rounded-full text-xs font-bold uppercase border border-wa-teal/10">Sem {profile?.semester}</span>
+                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full text-xs font-bold uppercase border border-transparent truncate max-w-[150px]">{profile?.courseName || profile?.department}</span>
                   </div>
                   
                   {profile?.courseId === 'legacy' && (
@@ -425,7 +425,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                     <stat.icon className="w-6 h-6" />
                   </div>
                   <div className="text-left min-w-0">
-                    <p className="text-[10px] text-[#8696a0] font-bold uppercase tracking-wider mb-0.5">{stat.label}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-300 font-bold uppercase tracking-wider mb-0.5">{stat.label}</p>
                     <p className="text-lg font-bold text-slate-900 dark:text-[#e9edef] tracking-tight">{stat.value}</p>
                   </div>
                 </button>
@@ -435,10 +435,10 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
             {/* Teacher Contact Section */}
             <div className="bg-white dark:bg-[#202c33] p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 space-y-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold text-[#8696a0] uppercase tracking-wider flex items-center gap-2">
+                  <h3 className="text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
                     <Shield className="w-4 h-4 text-wa-teal" /> Mentor Unit
                   </h3>
-                  <span className="text-[10px] font-bold tracking-normal text-wa-green bg-wa-green/10 px-2 py-0.5 rounded-full">Secure</span>
+                  <span className="text-xs font-bold tracking-normal text-wa-green bg-wa-green/10 px-2.5 py-1 rounded-full">Secure</span>
                 </div>
                 <div className="flex items-center gap-4">
                   <div 
@@ -482,7 +482,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
             {/* Header / Welcome (Desktop Only) */}
             <div className="hidden lg:block">
                <h1 className="text-4xl font-bold text-slate-900 dark:text-[#e9edef] tracking-tight">Dashboard Overview</h1>
-               <p className="text-slate-500 dark:text-[#8696a0] mt-2 font-medium">Welcome back, {profile?.name?.split(' ')[0]}. Here is your learning trajectory for today.</p>
+               <p className="text-slate-600 dark:text-slate-300 mt-2 text-lg font-medium">Welcome back, {profile?.name?.split(' ')[0]}. Here is your learning trajectory for today.</p>
             </div>
 
             {loading ? (
@@ -509,7 +509,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                       </div>
                       <div>
                         <h3 className="text-3xl font-bold text-white tracking-tight">Sync Presence</h3>
-                        <p className="text-white/70 text-sm font-bold uppercase tracking-wider mt-2">Biometric Digital Scanner</p>
+                        <p className="text-white/90 text-base font-bold uppercase tracking-wider mt-2">Biometric Digital Scanner</p>
                       </div>
                     </div>
                   </div>
@@ -528,7 +528,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                       </div>
                       <div>
                         <h3 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] tracking-tight">Access Library</h3>
-                        <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mt-2">Course Repository & Notes</p>
+                        <p className="text-slate-600 dark:text-slate-300 text-base font-bold uppercase tracking-wider mt-2">Course Repository & Notes</p>
                       </div>
                     </div>
                   </div>
@@ -537,10 +537,10 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                 {/* Upcoming Classes */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center px-2">
-                    <h2 className="text-xs font-bold text-[#8696a0] uppercase tracking-widest flex items-center gap-2">
+                    <h2 className="text-sm font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest flex items-center gap-2">
                        <Clock className="w-4 h-4 text-wa-teal" /> Broadcast Schedule
                     </h2>
-                    <button className="text-wa-teal text-xs font-bold bg-wa-teal/5 px-4 py-1.5 rounded-full hover:bg-wa-teal hover:text-white transition-all">View Archive</button>
+                    <button className="text-wa-teal text-sm font-bold bg-wa-teal/5 px-4 py-1.5 rounded-full hover:bg-wa-teal hover:text-white transition-all">View Archive</button>
                   </div>
                   <div className="grid grid-cols-1 gap-4">
                     {upcomingClasses.length === 0 ? (
@@ -557,21 +557,21 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                                {cls.type === 'active' && <div className="absolute inset-0 border-2 border-wa-green/30 rounded-2xl animate-ping" />}
                             </div>
                             <div className="min-w-0 flex-1">
-                              <p className={`text-[10px] font-bold uppercase tracking-wider mb-1.5 ${cls.type === 'active' ? 'text-wa-green' : 'text-wa-teal'}`}>
+                              <p className={`text-[12px] font-bold uppercase tracking-wider mb-1.5 ${cls.type === 'active' ? 'text-wa-green' : 'text-wa-teal'}`}>
                                 {cls.type === 'active' ? 'Active Frequency' : 'Pending Schedule'}
                               </p>
                               <h4 className="font-bold text-slate-900 dark:text-[#e9edef] text-xl tracking-tight leading-none mb-2 truncate">
                                 {cls.subject || `${cls.department} Sem ${cls.semester}`}
                               </h4>
                               <div className="flex flex-wrap items-center gap-3">
-                                 <p className="text-xs text-[#8696a0] font-semibold flex items-center gap-1.5">
-                                   <User className="w-3 h-3" /> {cls.teacherName || 'Instructor'}
+                                 <p className="text-sm text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-1.5">
+                                   <User className="w-4 h-4 text-wa-teal" /> {cls.teacherName || 'Instructor'}
                                  </p>
                                  <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                                 <p className="text-xs text-[#8696a0] font-semibold flex items-center gap-1.5">
-                                   <Calendar className="w-3 h-3" /> {cls.date === today ? 'Today' : cls.date}
+                                 <p className="text-sm text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-1.5">
+                                   <Calendar className="w-4 h-4 text-wa-teal" /> {cls.date === today ? 'Today' : cls.date}
                                  </p>
-                                 {cls.topic && <span className="text-[10px] text-wa-teal font-bold uppercase px-2 py-0.5 bg-wa-teal/5 rounded-md border border-wa-teal/10">{cls.topic}</span>}
+                                 {cls.topic && <span className="text-[12px] text-wa-teal font-bold uppercase px-2 py-0.5 bg-wa-teal/5 rounded-md border border-wa-teal/10">{cls.topic}</span>}
                               </div>
                             </div>
                           </div>
@@ -579,11 +579,11 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                             <p className="text-2xl font-bold text-wa-teal tracking-tight">{formatTime12h(cls.startTime)}</p>
                             {cls.type === 'active' ? (
                               <div className="flex items-center justify-end gap-1.5 mt-1.5">
-                                 <span className="w-2 h-2 bg-wa-green rounded-full animate-pulse shadow-[0_0_8px_rgba(37,211,102,0.5)]"></span>
-                                 <span className="text-xs font-bold text-wa-green uppercase tracking-wider">Live</span>
+                                 <span className="w-2.5 h-2.5 bg-wa-green rounded-full animate-pulse shadow-[0_0_8px_rgba(37,211,102,0.5)]"></span>
+                                 <span className="text-sm font-bold text-wa-green uppercase tracking-wider">Live</span>
                               </div>
                             ) : (
-                               <p className="text-[10px] font-bold text-[#8696a0] uppercase tracking-widest mt-1.5">Standby</p>
+                               <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1.5">Standby</p>
                             )}
                           </div>
                         </div>
