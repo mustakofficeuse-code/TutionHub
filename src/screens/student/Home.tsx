@@ -367,263 +367,291 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
         )}
       </AnimatePresence>
 
-      <main className={`${isEmbedded ? 'p-4' : 'px-4 sm:px-6 mt-4 sm:mt-8'} relative z-10 space-y-3 sm:space-y-6 max-w-2xl mx-auto`}>
-        {/* Profile Card */}
-        <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-4 sm:p-6 opacity-10 group-hover:scale-110 transition-transform">
-             <Shield className="w-16 h-16 text-wa-teal" />
-          </div>
-          <div className="flex items-center gap-3 sm:gap-6 relative z-10">
-            <div 
-              onClick={() => profile?.avatarUrl && setZoomedImage(profile.avatarUrl)}
-              className="w-20 h-20 bg-[#f0f2f5] dark:bg-wa-teal/10 rounded-2xl p-1 overflow-hidden cursor-pointer hover:rotate-3 transition-all shadow-inner border-2 border-slate-50 dark:border-white/10"
-            >
-              {profile?.avatarUrl ? (
-                <img src={profile.avatarUrl} className="w-full h-full object-cover rounded-xl" referrerPolicy="no-referrer" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-wa-teal font-bold text-3xl">
-                  {profile?.name?.charAt(0)}
+      <main className={`${isEmbedded ? 'p-4' : 'px-4 sm:px-6 md:px-8 lg:px-12 mt-4 sm:mt-8'} relative z-10 max-w-7xl mx-auto pb-24`}>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+          
+          {/* Left Sidebar (Profile & Stats) */}
+          <div className="lg:col-span-4 space-y-6 sticky lg:top-8">
+            {/* Profile Card */}
+            <div className="bg-white dark:bg-[#202c33] p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
+                 <Shield className="w-16 h-16 text-wa-teal" />
+              </div>
+              <div className="flex flex-col sm:flex-row lg:flex-col items-center sm:items-start lg:items-center text-center sm:text-left lg:text-center gap-6 relative z-10">
+                <div 
+                  onClick={() => profile?.avatarUrl && setZoomedImage(profile.avatarUrl)}
+                  className="w-24 h-24 bg-[#f0f2f5] dark:bg-wa-teal/10 rounded-3xl p-1 overflow-hidden cursor-pointer hover:rotate-3 transition-all shadow-inner border-2 border-slate-50 dark:border-white/10"
+                >
+                  {profile?.avatarUrl ? (
+                    <img src={profile.avatarUrl} className="w-full h-full object-cover rounded-2xl" referrerPolicy="no-referrer" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-wa-teal font-bold text-4xl">
+                      {profile?.name?.charAt(0)}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                 <span className="w-2 h-2 bg-wa-green rounded-full animate-pulse shadow-[0_0_10px_rgba(37,211,102,0.5)]"></span>
-                 <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-wa-teal">Authenticated</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-center sm:justify-start lg:justify-center gap-2 mb-1">
+                     <span className="w-2.5 h-2.5 bg-wa-green rounded-full animate-pulse shadow-[0_0_10px_rgba(37,211,102,0.5)]"></span>
+                     <p className="text-xs font-bold tracking-normal text-wa-teal uppercase">Authenticated</p>
+                  </div>
+                  <h2 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] truncate tracking-tight mb-2">{profile?.name}</h2>
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start lg:justify-center gap-2 mb-4">
+                    <span className="px-3 py-1 bg-wa-teal/10 text-wa-teal rounded-full text-[10px] font-bold uppercase border border-wa-teal/10">Sem {profile?.semester}</span>
+                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-[#8696a0] rounded-full text-[10px] font-bold uppercase border border-transparent truncate max-w-[150px]">{profile?.courseName || profile?.department}</span>
+                  </div>
+                  
+                  {profile?.courseId === 'legacy' && (
+                    <button 
+                      onClick={() => navigate('/profile')} 
+                      className="w-full py-2.5 bg-orange-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all active:scale-95 flex items-center justify-center gap-2"
+                    >
+                      <Shield className="w-4 h-4" /> Update Profile
+                    </button>
+                  )}
+                </div>
               </div>
-              <h2 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] truncate tracking-normal">{profile?.name}</h2>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="px-3 py-1 bg-wa-teal/10 text-wa-teal rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 border border-wa-teal/10">Sem {profile?.semester}</span>
-                <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-[#8696a0] rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 border border-transparent truncate max-w-[150px]">{profile?.courseName || profile?.department}</span>
-              </div>
             </div>
-          </div>
-        </div>
 
-        {profile?.courseId === 'legacy' && (
-          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-100 dark:border-orange-900/30 text-orange-600 dark:text-orange-400 p-4 sm:p-6 rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-in slide-in-from-top-4">
-            <div className="flex items-start gap-4">
-              <Shield className="w-6 h-6 shrink-0 mt-1" />
-              <div>
-                <p className="font-bold  tracking-normal text-xs">Profile Audit Required</p>
-                <p className="text-sm font-semibold opacity-80 mt-1 leading-relaxed">Update your department and semester to sync your learning materials repository.</p>
-              </div>
-            </div>
-            <button 
-              onClick={() => navigate('/profile')} 
-              className="px-4 sm:px-6 py-3 bg-orange-500 text-white font-bold  tracking-normal text-xs rounded-2xl shadow-lg shadow-orange-500/20 hover:bg-orange-600 transition-all whitespace-nowrap active:scale-95"
-            >
-              Update Profile
-            </button>
-          </div>
-        )}
-
-        {loading ? (
-          <div className="bg-white dark:bg-[#202c33] p-4 sm:p-6 sm:p-10 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col items-center justify-center">
-            <div className="w-12 h-12 border-4 border-wa-teal border-t-transparent rounded-full animate-spin mb-4 sm:mb-6"></div>
-            <p className="text-xs font-bold text-[#8696a0]  tracking-normal">Synchronizing Ledger...</p>
-          </div>
-        ) : (
-          <div className="space-y-3 sm:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            {/* Stats Row */}
-            <div className="grid grid-cols-3 gap-4">
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
               {quickStats.map((stat, i) => (
                 <button 
                   key={i} 
                   onClick={() => handleNav(stat.link, stat.tabId)}
-                  className="bg-white dark:bg-[#202c33] p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col items-center text-center group transition-all hover:bg-wa-teal/5 active:scale-95"
+                  className="bg-white dark:bg-[#202c33] p-4 lg:p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center gap-4 group transition-all hover:bg-wa-teal/5 active:scale-95"
                 >
-                  <div className="w-10 h-10 bg-[#f0f2f5] dark:bg-[#111b21] rounded-xl flex items-center justify-center mb-3 group-hover:bg-wa-teal group-hover:text-white transition-colors">
-                    <stat.icon className="w-5 h-5" />
+                  <div className="w-12 h-12 bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl flex items-center justify-center group-hover:bg-wa-teal group-hover:text-white transition-colors shrink-0">
+                    <stat.icon className="w-6 h-6" />
                   </div>
-                  <p className="text-xs text-[#8696a0] font-bold  tracking-normal mb-1">{stat.label}</p>
-                  <p className="text-sm font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">{stat.value}</p>
+                  <div className="text-left min-w-0">
+                    <p className="text-[10px] text-[#8696a0] font-bold uppercase tracking-wider mb-0.5">{stat.label}</p>
+                    <p className="text-lg font-bold text-slate-900 dark:text-[#e9edef] tracking-tight">{stat.value}</p>
+                  </div>
                 </button>
               ))}
             </div>
 
-            {/* Attendance & Scanner Row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-6">
-                {/* Scan Attendance Card */}
-                <div 
-                  onClick={() => handleNav('/attendance/scan', 'scan')}
-                  className="bg-wa-teal p-4 sm:p-5 sm:p-5 sm:p-6 rounded-3xl shadow-xl shadow-wa-teal/20 flex flex-col justify-between group cursor-pointer hover:bg-wa-teal/90 transition-all relative overflow-hidden active:scale-[0.98]"
-                >
-                  <div className="absolute top-0 right-0 p-4 sm:p-5 sm:p-5 sm:p-6 opacity-10 group-hover:rotate-12 transition-transform">
-                     <QrCode className="w-24 h-24 text-white" />
-                  </div>
-                  <div className="relative z-10">
-                    <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 backdrop-blur-md border border-white/20">
-                      <QrCode className="text-white w-6 h-6" />
-                    </div>
-                    <div>
-                      <h3 className="text-2xl font-bold text-white tracking-normal">Sync Presence</h3>
-                      <p className="text-white/70 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 mt-1">Biometric Scanner</p>
-                    </div>
-                  </div>
+            {/* Teacher Contact Section */}
+            <div className="bg-white dark:bg-[#202c33] p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 space-y-6">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-bold text-[#8696a0] uppercase tracking-wider flex items-center gap-2">
+                    <Shield className="w-4 h-4 text-wa-teal" /> Mentor Unit
+                  </h3>
+                  <span className="text-[10px] font-bold tracking-normal text-wa-green bg-wa-green/10 px-2 py-0.5 rounded-full">Secure</span>
                 </div>
-
-                {/* Teacher Contact Section */}
-                <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col justify-between">
-                   <div className="flex items-center justify-between mb-4 sm:mb-6">
-                     <h3 className="text-sm font-bold text-[#8696a0]  tracking-normal flex items-center gap-2">
-                       <Shield className="w-4 h-4" /> Mentor Unit
-                     </h3>
-                     <span className="text-[8px] font-bold  tracking-normal text-wa-green bg-wa-green/10 px-2 py-1 rounded-full">Encrypted</span>
-                   </div>
-                   <div className="flex items-center justify-between gap-4">
-                     <div className="flex items-center gap-4">
-                       <div 
-                         onClick={() => teacherInfo?.avatarUrl && setZoomedImage(teacherInfo.avatarUrl)}
-                         className="w-14 h-14 bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl flex items-center justify-center overflow-hidden cursor-pointer hover:border-wa-teal border-2 border-transparent transition-all shadow-inner"
-                       >
-                         {teacherInfo?.avatarUrl ? (
-                           <img src={teacherInfo.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                         ) : (
-                           <User className="w-8 h-8 text-wa-teal" />
-                         )}
-                       </div>
-                       <div className="min-w-0">
-                         <p className="font-bold text-slate-900 dark:text-[#e9edef] text-base tracking-normal leading-none mb-1">{teacherInfo?.name || 'Barun Maity'}</p>
-                         <p className="text-xs font-bold text-wa-teal  tracking-normal">Master Instructor</p>
-                       </div>
-                     </div>
-                     <div className="flex items-center gap-3">
-                       {teacherInfo?.phone && (
-                         <a 
-                           href={`tel:${teacherInfo.phone}`}
-                           className="w-10 h-10 bg-wa-green/10 text-wa-green rounded-xl hover:bg-wa-green hover:text-white transition-all flex items-center justify-center shadow-lg shadow-wa-green/10"
-                         >
-                           <Phone className="w-4 h-4" />
-                         </a>
-                       )}
-                       {teacherInfo?.email && (
-                         <a 
-                           href={`mailto:${teacherInfo.email}`}
-                           className="w-10 h-10 bg-wa-teal/10 text-wa-teal rounded-xl hover:bg-wa-teal hover:text-white transition-all flex items-center justify-center shadow-lg shadow-wa-teal/10"
-                         >
-                           <MessageSquare className="w-4 h-4" />
-                         </a>
-                       )}
-                     </div>
-                   </div>
-                </div>
-            </div>
-
-            {/* Upcoming Classes */}
-            <div className="space-y-2 sm:space-y-4">
-              <div className="flex justify-between items-center px-4">
-                <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal flex items-center gap-2">
-                   <Clock className="w-4 h-4" /> Schedule Broadcast
-                </h2>
-                <button className="text-wa-teal text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 bg-wa-teal/5 px-4 py-1.5 rounded-full">View All</button>
-              </div>
-              <div className="space-y-2 sm:space-y-4 px-2">
-                {upcomingClasses.length === 0 ? (
-                  <div className="bg-white dark:bg-[#202c33] p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 rounded-2xl border border-dashed border-slate-100 dark:border-white/5 text-center">
-                    <Calendar className="w-10 h-10 text-slate-100 dark:text-slate-800 mx-auto mb-4" />
-                    <p className="text-xs font-bold text-[#8696a0]  tracking-normal">No spectral schedules detected</p>
-                  </div>
-                ) : (
-                  upcomingClasses.map((cls, i) => (
-                    <div key={i} className="bg-white dark:bg-[#202c33] p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group transition-all hover:border-wa-teal/30">
-                      <div className="flex items-center gap-3 sm:gap-6">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner relative overflow-hidden ${cls.type === 'active' ? 'bg-wa-green/10' : 'bg-[#f0f2f5] dark:bg-[#111b21]'}`}>
-                           <Clock className={`w-6 h-6 ${cls.type === 'active' ? 'text-wa-green animate-pulse' : 'text-wa-teal'}`} />
-                           {cls.type === 'active' && <div className="absolute inset-0 border-2 border-wa-green/30 rounded-2xl animate-ping" />}
-                        </div>
-                        <div className="min-w-0">
-                          <p className={`text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 mb-1 ${cls.type === 'active' ? 'text-wa-green' : 'text-wa-teal'}`}>
-                            {cls.type === 'active' ? 'Live Now' : 'Upcoming Class'}
-                          </p>
-                          <h4 className="font-bold text-slate-900 dark:text-[#e9edef] text-lg tracking-normal leading-none mb-1">
-                            {cls.subject || `${cls.department} Sem ${cls.semester}`}
-                          </h4>
-                          <div className="flex items-center gap-3">
-                             <p className="text-xs text-[#8696a0] font-bold">{cls.teacherName || 'Teacher'} • {cls.date === today ? 'Today' : cls.date}</p>
-                             {cls.topic && <span className="text-xs text-wa-teal font-bold  tracking-normal px-2 py-0.5 bg-wa-teal/5 rounded-md truncate max-w-[150px]">{cls.topic}</span>}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-xl font-bold text-wa-teal tracking-normal">{formatTime12h(cls.startTime)}</p>
-                        {cls.type === 'active' ? (
-                          <div className="flex items-center justify-end gap-1.5 mt-1.5">
-                             <span className="w-1.5 h-1.5 bg-wa-green rounded-full animate-pulse"></span>
-                             <span className="text-xs font-bold text-wa-green  tracking-normal">Active</span>
-                          </div>
-                        ) : (
-                           <p className="text-xs font-bold text-[#8696a0]/40  tracking-normal mt-1.5">Standby</p>
-                        )}
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-
-            {/* Recent Attendance */}
-            <div className="space-y-2 sm:space-y-4 pb-8">
-              <div className="flex items-center justify-between px-4">
-                <h2 className="text-xs font-bold text-[#8696a0]  tracking-normal flex items-center gap-2">
-                  <CheckCircle2 className="w-4 h-4" /> Presence Ledger
-                </h2>
-                {recentAttendance.length > 0 && (
-                  <button 
-                    onClick={async () => {
-                      if (!window.confirm("Are you sure you want to clear your recent attendance history?")) return;
-                      try {
-                        const { writeBatch, doc } = await import('firebase/firestore');
-                        const batch = writeBatch(db);
-                        recentAttendance.forEach(rec => {
-                          batch.delete(doc(db, 'attendance', rec.id));
-                        });
-                        await batch.commit();
-                      } catch (err) {
-                        console.error(err);
-                      }
-                    }}
-                    className="text-xs font-bold  text-red-500 hover:text-red-700 tracking-normal px-4 py-2 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/10 transition-all border border-transparent hover:border-red-100"
+                <div className="flex items-center gap-4">
+                  <div 
+                    onClick={() => teacherInfo?.avatarUrl && setZoomedImage(teacherInfo.avatarUrl)}
+                    className="w-16 h-16 bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl flex items-center justify-center overflow-hidden cursor-pointer hover:border-wa-teal border-2 border-transparent transition-all shadow-inner"
                   >
-                    Purge Records
-                  </button>
-                )}
-              </div>
-              <div className="space-y-3 px-2">
-                {recentAttendance.length === 0 ? (
-                  <div className="bg-white dark:bg-[#202c33] p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 rounded-2xl border border-dashed border-slate-100 dark:border-white/5 text-center">
-                    <CheckCircle2 className="w-10 h-10 text-slate-100 dark:text-slate-800 mx-auto mb-4" />
-                    <p className="text-xs font-bold text-[#8696a0]  tracking-normal">No verification data located</p>
+                    {teacherInfo?.avatarUrl ? (
+                      <img src={teacherInfo.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      <User className="w-8 h-8 text-wa-teal" />
+                    )}
                   </div>
-                ) : (
-                  recentAttendance.map((record, i) => (
-                    <div key={record.id || i} className="bg-white dark:bg-[#202c33] p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group hover:border-wa-green/30 transition-all">
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-12 h-12 bg-wa-green/5 dark:bg-wa-green/10 rounded-2xl flex items-center justify-center shrink-0 border border-wa-green/10">
-                          <CheckCircle2 className="text-wa-green w-6 h-6" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-base font-bold text-slate-900 dark:text-[#e9edef] truncate tracking-normal">{record.subject || 'Standard Session'}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                             <p className="text-xs text-[#8696a0] font-bold">
-                               {new Date(record.timestamp).toLocaleDateString()}
-                             </p>
-                             <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                             <p className="text-xs text-wa-teal font-bold  tracking-normal italic">{new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-xs font-bold text-wa-teal  tracking-normal mb-1">{record.department}</p>
-                        <div className="inline-flex px-2 py-0.5 bg-wa-teal/5 text-wa-teal rounded-md text-[8px] font-bold  tracking-normal">Sem {record.semester}</div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+                  <div className="min-w-0">
+                    <p className="font-bold text-slate-900 dark:text-[#e9edef] text-lg tracking-tight leading-tight mb-1">{teacherInfo?.name || 'Mentor'}</p>
+                    <p className="text-xs font-bold text-wa-teal uppercase">Master Instructor</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  {teacherInfo?.phone && (
+                    <a 
+                      href={`tel:${teacherInfo.phone}`}
+                      className="flex-1 py-2.5 bg-wa-green/10 text-wa-green rounded-xl hover:bg-wa-green hover:text-white transition-all flex items-center justify-center gap-2 font-bold text-xs"
+                    >
+                      <Phone className="w-4 h-4" /> Call
+                    </a>
+                  )}
+                  {teacherInfo?.email && (
+                    <a 
+                      href={`mailto:${teacherInfo.email}`}
+                      className="flex-1 py-2.5 bg-wa-teal/10 text-wa-teal rounded-xl hover:bg-wa-teal hover:text-white transition-all flex items-center justify-center gap-2 font-bold text-xs"
+                    >
+                      <MessageSquare className="w-4 h-4" /> Chat
+                    </a>
+                  )}
+                </div>
             </div>
           </div>
-        )}
+
+          {/* Right Main Column (Dynamic Content) */}
+          <div className="lg:col-span-8 space-y-8">
+            {/* Header / Welcome (Desktop Only) */}
+            <div className="hidden lg:block">
+               <h1 className="text-4xl font-bold text-slate-900 dark:text-[#e9edef] tracking-tight">Dashboard Overview</h1>
+               <p className="text-slate-500 dark:text-[#8696a0] mt-2 font-medium">Welcome back, {profile?.name?.split(' ')[0]}. Here is your learning trajectory for today.</p>
+            </div>
+
+            {loading ? (
+              <div className="bg-white dark:bg-[#202c33] p-12 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col items-center justify-center">
+                <Loader2 className="w-12 h-12 text-wa-teal animate-spin mb-6" />
+                <p className="text-xs font-bold text-[#8696a0] uppercase tracking-widest">Synchronizing Matrix...</p>
+              </div>
+            ) : (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                
+                {/* Actions Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Scan Attendance Card */}
+                  <div 
+                    onClick={() => handleNav('/attendance/scan', 'scan')}
+                    className="bg-wa-teal p-8 rounded-3xl shadow-xl shadow-wa-teal/20 flex flex-col justify-between group cursor-pointer hover:bg-wa-teal/90 transition-all relative overflow-hidden active:scale-[0.98] min-h-[220px]"
+                  >
+                    <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:rotate-12 transition-transform">
+                       <QrCode className="w-32 h-32 text-white" />
+                    </div>
+                    <div className="relative z-10 flex flex-col h-full justify-between">
+                      <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20">
+                        <QrCode className="text-white w-8 h-8" />
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-bold text-white tracking-tight">Sync Presence</h3>
+                        <p className="text-white/70 text-sm font-bold uppercase tracking-wider mt-2">Biometric Digital Scanner</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Secondary Action / Material Link */}
+                  <div 
+                    onClick={() => handleNav('/materials/list', 'materials')}
+                    className="bg-white dark:bg-[#202c33] p-8 rounded-3xl shadow-sm border border-slate-100 dark:border-white/5 flex flex-col justify-between group cursor-pointer hover:border-wa-teal/50 transition-all active:scale-[0.98] min-h-[220px]"
+                  >
+                    <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:scale-110 transition-transform">
+                       <BookOpen className="w-32 h-32 text-wa-teal" />
+                    </div>
+                    <div className="relative z-10 flex flex-col h-full justify-between">
+                      <div className="w-16 h-16 bg-wa-teal/10 rounded-2xl flex items-center justify-center">
+                        <BookOpen className="text-wa-teal w-8 h-8" />
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] tracking-tight">Access Library</h3>
+                        <p className="text-slate-500 text-sm font-bold uppercase tracking-wider mt-2">Course Repository & Notes</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Upcoming Classes */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center px-2">
+                    <h2 className="text-xs font-bold text-[#8696a0] uppercase tracking-widest flex items-center gap-2">
+                       <Clock className="w-4 h-4 text-wa-teal" /> Broadcast Schedule
+                    </h2>
+                    <button className="text-wa-teal text-xs font-bold bg-wa-teal/5 px-4 py-1.5 rounded-full hover:bg-wa-teal hover:text-white transition-all">View Archive</button>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    {upcomingClasses.length === 0 ? (
+                      <div className="bg-white dark:bg-[#202c33] p-12 rounded-3xl border border-dashed border-slate-200 dark:border-white/10 text-center">
+                        <Calendar className="w-12 h-12 text-slate-200 dark:text-slate-800 mx-auto mb-4" />
+                        <p className="text-sm font-bold text-[#8696a0] uppercase tracking-widest">No active sessions detected in current frequency</p>
+                      </div>
+                    ) : (
+                      upcomingClasses.map((cls, i) => (
+                        <div key={i} className="bg-white dark:bg-[#202c33] p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between group transition-all hover:border-wa-teal/30 hover:shadow-lg hover:shadow-wa-teal/5">
+                          <div className="flex items-center gap-6 w-full min-w-0">
+                            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner relative overflow-hidden shrink-0 ${cls.type === 'active' ? 'bg-wa-green/10' : 'bg-[#f0f2f5] dark:bg-[#111b21]'}`}>
+                               <Clock className={`w-8 h-8 ${cls.type === 'active' ? 'text-wa-green animate-pulse' : 'text-wa-teal'}`} />
+                               {cls.type === 'active' && <div className="absolute inset-0 border-2 border-wa-green/30 rounded-2xl animate-ping" />}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className={`text-[10px] font-bold uppercase tracking-wider mb-1.5 ${cls.type === 'active' ? 'text-wa-green' : 'text-wa-teal'}`}>
+                                {cls.type === 'active' ? 'Active Frequency' : 'Pending Schedule'}
+                              </p>
+                              <h4 className="font-bold text-slate-900 dark:text-[#e9edef] text-xl tracking-tight leading-none mb-2 truncate">
+                                {cls.subject || `${cls.department} Sem ${cls.semester}`}
+                              </h4>
+                              <div className="flex flex-wrap items-center gap-3">
+                                 <p className="text-xs text-[#8696a0] font-semibold flex items-center gap-1.5">
+                                   <User className="w-3 h-3" /> {cls.teacherName || 'Instructor'}
+                                 </p>
+                                 <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                 <p className="text-xs text-[#8696a0] font-semibold flex items-center gap-1.5">
+                                   <Calendar className="w-3 h-3" /> {cls.date === today ? 'Today' : cls.date}
+                                 </p>
+                                 {cls.topic && <span className="text-[10px] text-wa-teal font-bold uppercase px-2 py-0.5 bg-wa-teal/5 rounded-md border border-wa-teal/10">{cls.topic}</span>}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0 mt-4 sm:mt-0 w-full sm:w-auto border-t sm:border-0 border-slate-50 pt-4 sm:pt-0">
+                            <p className="text-2xl font-bold text-wa-teal tracking-tight">{formatTime12h(cls.startTime)}</p>
+                            {cls.type === 'active' ? (
+                              <div className="flex items-center justify-end gap-1.5 mt-1.5">
+                                 <span className="w-2 h-2 bg-wa-green rounded-full animate-pulse shadow-[0_0_8px_rgba(37,211,102,0.5)]"></span>
+                                 <span className="text-xs font-bold text-wa-green uppercase tracking-wider">Live</span>
+                              </div>
+                            ) : (
+                               <p className="text-[10px] font-bold text-[#8696a0] uppercase tracking-widest mt-1.5">Standby</p>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                {/* Recent Attendance */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between px-2">
+                    <h2 className="text-xs font-bold text-[#8696a0] uppercase tracking-widest flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-wa-green" /> Presence Ledger
+                    </h2>
+                    {recentAttendance.length > 0 && (
+                      <button 
+                        onClick={async () => {
+                          if (!window.confirm("Purge recent attendance artifacts?")) return;
+                          try {
+                            const { writeBatch, doc } = await import('firebase/firestore');
+                            const batch = writeBatch(db);
+                            recentAttendance.forEach(rec => {
+                              batch.delete(doc(db, 'attendance', rec.id));
+                            });
+                            await batch.commit();
+                          } catch (err) {
+                            console.error(err);
+                          }
+                        }}
+                        className="text-[10px] font-bold text-red-500 uppercase tracking-widest hover:text-red-600 transition-all px-3 py-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/10"
+                      >
+                        Purge History
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {recentAttendance.length === 0 ? (
+                      <div className="md:col-span-2 bg-white dark:bg-[#202c33] p-12 rounded-3xl border border-dashed border-slate-200 dark:border-white/10 text-center">
+                        <CheckCircle2 className="w-12 h-12 text-slate-200 dark:text-slate-800 mx-auto mb-4" />
+                        <p className="text-sm font-bold text-[#8696a0] uppercase tracking-widest">No verification logs located</p>
+                      </div>
+                    ) : (
+                      recentAttendance.map((record, i) => (
+                        <div key={record.id || i} className="bg-white dark:bg-[#202c33] p-5 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center justify-between group hover:border-wa-green/30 transition-all">
+                          <div className="flex items-center gap-4 min-w-0">
+                            <div className="w-12 h-12 bg-wa-green/5 dark:bg-wa-green/10 rounded-2xl flex items-center justify-center shrink-0 border border-wa-green/10 group-hover:bg-wa-green group-hover:text-white transition-all">
+                              <CheckCircle2 className="text-wa-green w-6 h-6 group-hover:text-white transition-colors" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-base font-bold text-slate-900 dark:text-[#e9edef] truncate tracking-tight mb-1">{record.subject || 'Session'}</p>
+                              <div className="flex items-center gap-2">
+                                 <p className="text-[10px] text-[#8696a0] font-bold uppercase">
+                                   {new Date(record.timestamp).toLocaleDateString()}
+                                 </p>
+                                 <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                                 <p className="text-[10px] text-wa-teal font-bold italic">{new Date(record.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </main>
 
       {/* Bottom Navigation Ported from Global Hub Design */}

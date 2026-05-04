@@ -496,9 +496,9 @@ export default function TeacherDashboard({
                   key={sem}
                   className="bg-white dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 overflow-hidden"
                 >
-                  <div className="px-4 py-2 bg-slate-50 dark:bg-[#202c33] border-b border-slate-100 dark:border-white/5 flex justify-between items-center text-xs font-bold  text-wa-teal">
-                    <span>Semester {sem}</span>
-                    <span>{grouped[sem].length} Students</span>
+                  <div className="px-4 py-3 bg-slate-50 dark:bg-[#202c33] border-b border-slate-100 dark:border-white/5 flex justify-between items-center text-sm font-bold text-wa-teal cursor-pointer transition-all hover:bg-wa-teal/5">
+                    <span className="text-lg">Semester {sem}</span>
+                    <span className="text-xs bg-wa-teal/10 px-2.5 py-0.5 rounded-full">{grouped[sem].length} Students</span>
                   </div>
                   <div className="divide-y divide-slate-50 dark:divide-white/5">
                     {grouped[sem].map((s: any) => (
@@ -531,7 +531,7 @@ export default function TeacherDashboard({
                             );
                           }}
                         >
-                          <p className="text-sm font-bold text-slate-800 dark:text-[#e9edef] truncate">
+                          <p className="text-lg font-bold text-slate-800 dark:text-[#e9edef] truncate cursor-pointer transition-all hover:text-wa-teal hover:translate-x-1">
                             {s.name}
                           </p>
                           <p className="text-xs text-slate-500 truncate">

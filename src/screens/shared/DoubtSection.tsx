@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { collection, query, where, addDoc, onSnapshot, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { sendNotification } from '../../services/notificationService';
@@ -26,7 +26,13 @@ import {
   Image as ImageIcon,
   X as XIcon,
   Shield,
-  GraduationCap
+  GraduationCap,
+  Crop,
+  Wand2,
+  Pen,
+  Type,
+  Square,
+  Maximize2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -45,6 +51,8 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [replyFile, setReplyFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState('');
+  const [showImagePreview, setShowImagePreview] = useState(false);
+  const replyInputRef = useRef<HTMLInputElement>(null);
 
   const [viewMaterial, setViewMaterial] = useState<any>(null);
 
@@ -99,10 +107,28 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
     }
   }, []);
 
+  const onReplyDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles.length > 0) {
+      setReplyFile(acceptedFiles[0]);
+      setShowImagePreview(true);
+    }
+  }, []);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     multiple: false
   } as any);
+
+  const { getRootProps: getReplyRootProps, getInputProps: getReplyInputProps } = useDropzone({
+    onDrop: onReplyDrop,
+    multiple: false
+  } as any);
+
+  useEffect(() => {
+    if (replyFile) {
+      setShowImagePreview(true);
+    }
+  }, [replyFile]);
 
   useEffect(() => {
     if (!profile) return;
@@ -503,7 +529,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                  </button>
                  <label className="text-slate-500 hover:text-wa-teal transition-colors cursor-pointer">
                     <Paperclip className="w-6 h-6" />
-                    <input type="file" className="hidden" onChange={(e) => setReplyFile(e.target.files?.[0] || null)} />
+                    <input ref={replyInputRef} type="file" className="hidden" onChange={(e) => e.target.files?.[0] && setReplyFile(e.target.files[0])} />
                  </label>
                  
                  <div className="flex-1 relative">

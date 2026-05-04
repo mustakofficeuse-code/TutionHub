@@ -618,11 +618,11 @@ export default function FeeManagement({
                                       )}
                                     </div>
                                     <div>
-                                      <p className="font-bold text-slate-800 dark:text-white text-lg sm:text-xl tracking-normal  leading-tight italic">
+                                      <p className="font-bold text-slate-800 dark:text-white text-2xl sm:text-3xl tracking-normal leading-tight italic cursor-pointer transition-all hover:text-wa-teal hover:translate-x-1">
                                         {student.name}
                                       </p>
                                       <p className="text-xs font-bold text-slate-500  tracking-normal mt-1.5 flex items-center gap-2">
-                                        PRN {student.studentId || "0000"} <span className="text-slate-200 dark:text-slate-700">|</span> SEMESTER {currentSem}
+                                        PRN {student.studentId || "0000"} <span className="text-slate-200 dark:text-slate-700">|</span> <span className="bg-wa-teal/10 px-2 py-0.5 rounded-lg text-wa-teal text-sm transition-all hover:bg-wa-teal hover:text-white cursor-pointer">SEMESTER {currentSem}</span>
                                       </p>
                                     </div>
                                   </div>
@@ -1037,41 +1037,60 @@ export default function FeeManagement({
                     0,
                     targetSemFee - totalPaidForSem,
                   );
+                  const isFullyPaid = targetSemFee > 0 && maxAllowed <= 0;
 
                   return (
-                    <div>
-                      <div className="flex justify-between items-end mb-3">
-                        <label className="block text-xs font-bold text-slate-400  tracking-normal ml-1">
-                          Remittance Amount (₹)
-                        </label>
-                        {targetSemFee > 0 && (
-                          <div className="px-3 py-1 bg-wa-teal/10 rounded-full animate-in zoom-in-50 duration-500">
-                             <span className="text-xs font-bold text-wa-teal  tracking-normal leading-none">
-                              Cap: ₹{maxAllowed}
-                            </span>
+                    <div className="space-y-4">
+                      {isFullyPaid && (
+                        <div className="mb-2 p-5 bg-wa-green/10 dark:bg-wa-green/20 border border-wa-green/30 rounded-2xl flex items-center gap-4 animate-in zoom-in-95 duration-500">
+                          <div className="w-12 h-12 bg-wa-green text-white rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-wa-green/30">
+                            <CheckCircle className="w-6 h-6" />
                           </div>
-                        )}
-                      </div>
-                      <div className="relative group">
-                        <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl">₹</span>
-                        <input
-                          type="number"
-                          required
-                          autoFocus
-                          placeholder="00.00"
-                          max={targetSemFee > 0 ? maxAllowed : undefined}
-                          className="w-full pl-12 pr-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-[1.5rem] focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal outline-none text-slate-800 dark:text-white transition-all text-2xl font-bold italic tracking-normal"
-                          value={paymentAmount}
-                          onChange={(e) => {
-                            const val = Number(e.target.value);
-                            if (targetSemFee > 0 && val > maxAllowed) {
-                              setPaymentAmount(maxAllowed.toString());
-                            } else {
-                              setPaymentAmount(e.target.value);
-                            }
-                          }}
-                        />
-                      </div>
+                          <div>
+                            <p className="text-sm font-bold text-wa-green uppercase tracking-wider">Account Fully Cleared</p>
+                            <p className="text-xs font-bold text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
+                              Verified: Student has fulfilled all remittance requirements for Semester {paymentSemester}.
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {!isFullyPaid && (
+                        <div>
+                          <div className="flex justify-between items-end mb-3">
+                            <label className="block text-xs font-bold text-slate-400  tracking-normal ml-1">
+                              Remittance Amount (₹)
+                            </label>
+                            {targetSemFee > 0 && (
+                              <div className="px-3 py-1 bg-wa-teal/10 rounded-full animate-in zoom-in-50 duration-500">
+                                <span className="text-xs font-bold text-wa-teal  tracking-normal leading-none">
+                                  Cap: ₹{maxAllowed}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="relative group">
+                            <span className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl">₹</span>
+                            <input
+                              type="number"
+                              required
+                              autoFocus
+                              placeholder="00.00"
+                              max={targetSemFee > 0 ? maxAllowed : undefined}
+                              className="w-full pl-12 pr-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-[1.5rem] focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal outline-none text-slate-800 dark:text-white transition-all text-2xl font-bold italic tracking-normal"
+                              value={paymentAmount}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                if (targetSemFee > 0 && val > maxAllowed) {
+                                  setPaymentAmount(maxAllowed.toString());
+                                } else {
+                                  setPaymentAmount(e.target.value);
+                                }
+                              }}
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -1081,6 +1100,16 @@ export default function FeeManagement({
                 disabled={
                   !paymentAmount ||
                   !paymentStudent ||
+                  (feeStructure[
+                    isManualPayment
+                      ? modalDepartment
+                      : cleanStr(
+                          paymentStudent?.courseId ||
+                            paymentStudent?.courseName ||
+                            paymentStudent?.department,
+                        )
+                  ]?.[paymentSemester] > 0 &&
+                    Number(paymentAmount) <= 0) ||
                   (feeStructure[
                     isManualPayment
                       ? modalDepartment
