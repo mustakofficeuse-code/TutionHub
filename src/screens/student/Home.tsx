@@ -414,19 +414,19 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
             </div>
 
             {/* Quick Stats Grid */}
-            <div className="grid grid-cols-2 lg:grid-cols-1 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-4">
               {quickStats.map((stat, i) => (
                 <button 
                   key={i} 
                   onClick={() => handleNav(stat.link, stat.tabId)}
                   className="bg-white dark:bg-[#202c33] p-4 lg:p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center gap-4 group transition-all hover:bg-wa-teal/5 active:scale-95"
                 >
-                  <div className="w-12 h-12 bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl flex items-center justify-center group-hover:bg-wa-teal group-hover:text-white transition-colors shrink-0">
-                    <stat.icon className="w-6 h-6" />
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl flex items-center justify-center group-hover:bg-wa-teal group-hover:text-white transition-colors shrink-0">
+                    <stat.icon className="w-5 h-5 lg:w-6 lg:h-6" />
                   </div>
                   <div className="text-left min-w-0">
-                    <p className="text-xs text-slate-500 dark:text-slate-300 font-bold uppercase tracking-wider mb-0.5">{stat.label}</p>
-                    <p className="text-lg font-bold text-slate-900 dark:text-[#e9edef] tracking-tight">{stat.value}</p>
+                    <p className="text-[10px] lg:text-xs text-slate-500 dark:text-slate-300 font-bold uppercase tracking-wider mb-0.5 truncate">{stat.label}</p>
+                    <p className="text-sm lg:text-lg font-bold text-slate-900 dark:text-[#e9edef] tracking-tight truncate">{stat.value}</p>
                   </div>
                 </button>
               ))}
@@ -465,9 +465,11 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                       <Phone className="w-4 h-4" /> Call
                     </a>
                   )}
-                  {teacherInfo?.email && (
+                  {teacherInfo?.phone && (
                     <a 
-                      href={`mailto:${teacherInfo.email}`}
+                      href={`https://wa.me/${teacherInfo.phone.replace(/[^0-9]/g, '')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                       className="flex-1 py-2.5 bg-wa-teal/10 text-wa-teal rounded-xl hover:bg-wa-teal hover:text-white transition-all flex items-center justify-center gap-2 font-bold text-xs"
                     >
                       <MessageSquare className="w-4 h-4" /> Chat
