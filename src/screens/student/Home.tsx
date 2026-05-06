@@ -116,24 +116,19 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
     const sem = String(profile?.semester || 'ALL');
 
     // Fetch Teacher Info
-    const fetchTeacherInfo = async () => {
-      try {
-        const docRef = doc(db, 'config', 'appSettings');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setTeacherInfo({
-            name: data.teacherName || 'Barun Maity',
-            phone: data.teacherPhone,
-            email: data.teacherEmail,
-            avatarUrl: data.teacherAvatarUrl || data.avatarUrl
-          });
-        }
-      } catch (err) {
-        console.error("Error fetching teacher info:", err);
+    const unsubTeacher = onSnapshot(doc(db, 'config', 'appSettings'), (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setTeacherInfo({
+          name: data.teacherName || 'Barun Maity',
+          phone: data.teacherPhone,
+          email: data.teacherEmail,
+          avatarUrl: data.teacherAvatarUrl || data.avatarUrl
+        });
       }
-    };
-    fetchTeacherInfo();
+    }, (err) => {
+      console.error("Error fetching teacher info:", err);
+    });
 
     // 1. Attendance Count
     const unsubAtt = onSnapshot(
@@ -258,6 +253,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
     );
 
     return () => {
+      unsubTeacher();
       unsubAtt();
       unsubRecentAtt();
       unsubSess();
@@ -419,14 +415,14 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                 <button 
                   key={i} 
                   onClick={() => handleNav(stat.link, stat.tabId)}
-                  className="bg-white dark:bg-[#202c33] p-4 lg:p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center gap-4 group transition-all hover:bg-wa-teal/5 active:scale-95"
+                  className="bg-white dark:bg-[#202c33] p-3 sm:p-4 lg:p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center gap-2 sm:gap-4 group transition-all hover:bg-wa-teal/5 active:scale-95"
                 >
-                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl flex items-center justify-center group-hover:bg-wa-teal group-hover:text-white transition-colors shrink-0">
-                    <stat.icon className="w-5 h-5 lg:w-6 lg:h-6" />
+                  <div className="w-8 h-8 lg:w-12 lg:h-12 bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl flex items-center justify-center group-hover:bg-wa-teal group-hover:text-white transition-colors shrink-0">
+                    <stat.icon className="w-4 h-4 lg:w-6 lg:h-6" />
                   </div>
                   <div className="text-left min-w-0">
-                    <p className="text-[10px] lg:text-xs text-slate-500 dark:text-slate-300 font-bold uppercase tracking-wider mb-0.5 truncate">{stat.label}</p>
-                    <p className="text-sm lg:text-lg font-bold text-slate-900 dark:text-[#e9edef] tracking-tight truncate">{stat.value}</p>
+                    <p className="text-[9px] sm:text-[10px] lg:text-xs text-slate-500 dark:text-slate-300 font-bold uppercase tracking-wider mb-0.5 truncate">{stat.label}</p>
+                    <p className="text-xs sm:text-sm lg:text-lg font-bold text-slate-900 dark:text-[#e9edef] tracking-tight truncate">{stat.value}</p>
                   </div>
                 </button>
               ))}
