@@ -54,7 +54,7 @@ export default function TeacherView() {
   useEffect(() => {
     if (!profile) return;
     const unsub = subscribeToNotifications(profile.uid, 'teacher', (list) => {
-        setNotifications(list);
+        setNotifications(list.filter(n => n.type !== 'chat_message' && n.type !== 'group_chat_message'));
     });
     return () => unsub();
   }, [profile]);

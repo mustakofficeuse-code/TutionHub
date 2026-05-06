@@ -41,6 +41,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const [replyFile, setReplyFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [viewMaterial, setViewMaterial] = useState<any>(null);
+  const [isAnonymous, setIsAnonymous] = useState(false);
   
   const replyInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -99,7 +100,8 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         }
         
         if (n.relatedId) {
-          counts[n.relatedId] = (counts[n.relatedId] || 0) + 1;
+          const key = n.relatedId.toLowerCase();
+          counts[key] = (counts[key] || 0) + 1;
         }
       });
       setUnreadCounts(counts);
@@ -175,12 +177,18 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         fileUrl = await uploadFile(replyFile);
       }
 
+      let senderNameToUse = profile.name;
+      if (profile.role === 'student' && isAnonymous) {
+        senderNameToUse = 'Anonymous Student';
+      }
+
       await addDoc(collection(db, 'chat_messages'), {
         chatId: selectedChat.id,
         chatType: selectedChat.type,
         senderId: profile.uid,
-        senderName: profile.name,
+        senderName: senderNameToUse,
         senderRole: profile.role,
+        isAnonymous: profile.role === 'student' ? isAnonymous : false,
         content: replyText.trim(),
         attachmentUrl: fileUrl,
         attachmentName: replyFile?.name || '',
@@ -192,21 +200,21 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
 
       if (selectedChat.type === 'private' && selectedChat.participantId) {
         await sendNotification({
-          title: `New Message from ${profile.name}`,
+          title: `New Message from ${senderNameToUse}`,
           message: replyText.trim() || 'Sent an attachment',
           type: 'chat_message',
           senderId: profile.uid,
-          senderName: profile.name,
+          senderName: senderNameToUse,
           recipientId: selectedChat.participantId,
           relatedId: selectedChat.id,
         });
       } else if (selectedChat.type === 'group') {
          await sendNotification({
           title: `New Message in ${selectedChat.name}`,
-          message: `${profile.name}: ${replyText.trim() || 'Sent an attachment'}`,
+          message: `${senderNameToUse}: ${replyText.trim() || 'Sent an attachment'}`,
           type: 'group_chat_message',
           senderId: profile.uid,
-          senderName: profile.name,
+          senderName: senderNameToUse,
           targetRole: 'ALL',
           relatedId: selectedChat.id,
           targetDept: selectedChat.department,
@@ -263,9 +271,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                         <span className="font-bold text-slate-800 dark:text-[#e9edef]">{dept.name}</span>
                      </div>
                     <div className="flex items-center gap-2">
-                       {Object.keys(unreadCounts).filter(k => k.startsWith(`group_${dept.name}_`)).reduce((acc, k) => acc + unreadCounts[k], 0) > 0 && (
+                       {Object.keys(unreadCounts).filter(k => k.startsWith(`group_${dept.name.toLowerCase()}_`)).reduce((acc, k) => acc + unreadCounts[k], 0) > 0 && (
                           <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                            {Object.keys(unreadCounts).filter(k => k.startsWith(`group_${dept.name}_`)).reduce((acc, k) => acc + unreadCounts[k], 0)}
+                            {Object.keys(unreadCounts).filter(k => k.startsWith(`group_${dept.name.toLowerCase()}_`)).reduce((acc, k) => acc + unreadCounts[k], 0)}
                           </span>
                        )}
                        {expandedDept === dept.name ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
@@ -290,9 +298,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                                 <div className="flex items-center gap-3">
                                   <Hash className="w-4 h-4 text-slate-400" /> Semester {i + 1}
                                 </div>
-                                {unreadCounts[chatId] > 0 && (
+                                {unreadCounts[chatId.toLowerCase()] > 0 && (
                                   <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                                    {unreadCounts[chatId]}
+                                    {unreadCounts[chatId.toLowerCase()]}
                                   </span>
                                 )}
                              </button>
@@ -354,9 +362,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                    <div className="text-xs text-slate-500">Group Doubt Session</div>
                  </div>
                </div>
-               {unreadCounts[`group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`] > 0 && (
+               {unreadCounts[`group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`.toLowerCase()] > 0 && (
                   <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                     {unreadCounts[`group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`]}
+                     {unreadCounts[`group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`.toLowerCase()]}
                   </span>
                )}
             </button>
@@ -376,9 +384,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                      <div className="text-xs text-slate-500">Teacher</div>
                    </div>
                  </div>
-                 {unreadCounts[getDMId(profile!.uid, teacherObj.id)] > 0 && (
+                 {unreadCounts[getDMId(profile!.uid, teacherObj.id).toLowerCase()] > 0 && (
                   <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                     {unreadCounts[getDMId(profile!.uid, teacherObj.id)]}
+                     {unreadCounts[getDMId(profile!.uid, teacherObj.id).toLowerCase()]}
                   </span>
                  )}
               </button>
@@ -399,9 +407,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                      <div className="text-xs text-slate-500 truncate">Student</div>
                    </div>
                  </div>
-                 {unreadCounts[getDMId(profile!.uid, peer.id)] > 0 && (
+                 {unreadCounts[getDMId(profile!.uid, peer.id).toLowerCase()] > 0 && (
                   <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center shrink-0">
-                     {unreadCounts[getDMId(profile!.uid, peer.id)]}
+                     {unreadCounts[getDMId(profile!.uid, peer.id).toLowerCase()]}
                   </span>
                  )}
               </button>
@@ -517,48 +525,63 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               </div>
 
               {/* Chat Input */}
-              <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-3 flex items-center gap-2 sm:gap-4 shrink-0 transition-all">
-                 <label className="text-slate-500 hover:text-wa-teal transition-colors cursor-pointer p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
-                    <Paperclip className="w-6 h-6" />
-                    <input ref={replyInputRef} type="file" className="hidden" onChange={(e) => e.target.files?.[0] && setReplyFile(e.target.files[0])} />
-                 </label>
-                 
-                 <div className="flex-1 relative">
-                    <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
-                       <div className="flex-1 relative bg-white dark:bg-[#2a3942] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm focus-within:border-wa-teal transition-all overflow-hidden flex flex-col">
-                          {replyFile && (
-                             <div className="bg-slate-50 dark:bg-[#202c33] p-2 sm:p-3 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
-                                <div className="flex items-center gap-2 text-xs font-bold text-wa-teal truncate">
-                                   <FileText className="w-4 h-4 shrink-0" /> <span className="truncate">{replyFile.name}</span>
-                                </div>
-                                <button type="button" onClick={() => setReplyFile(null)} className="text-slate-400 hover:text-red-500 bg-white dark:bg-[#111b21] p-1 rounded-full"><XIcon className="w-4 h-4" /></button>
-                             </div>
-                          )}
-                          <textarea
-                            rows={replyText.split('\n').length > 1 ? Math.min(replyText.split('\n').length, 5) : 1}
-                            placeholder="Type your doubt or message..."
-                            className="w-full py-3 sm:py-4 px-4 bg-transparent border-none outline-none text-sm text-slate-800 dark:text-[#e9edef] placeholder:text-[#8696a0] resize-none custom-scrollbar"
-                            value={replyText}
-                            onChange={(e) => setReplyText(e.target.value)}
-                            onKeyDown={(e) => {
-                               if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault();
-                                  handleSendMessage(e);
-                               }
-                            }}
-                          />
-                       </div>
-                       <button 
-                         type="submit"
-                         disabled={submitting || (!replyText.trim() && !replyFile)}
-                         className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all shrink-0 ${
-                           (!replyText.trim() && !replyFile) ? 'bg-slate-200 dark:bg-slate-700 text-slate-400' : 'bg-wa-teal text-white shadow-lg active:scale-95'
-                         }`}
-                       >
-                         {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                       </button>
-                    </form>
+              <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-3 flex flex-col gap-2 shrink-0 transition-all">
+                 <div className="flex items-center gap-2 sm:gap-4">
+                   <label className="text-slate-500 hover:text-wa-teal transition-colors cursor-pointer p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+                      <Paperclip className="w-6 h-6" />
+                      <input ref={replyInputRef} type="file" className="hidden" onChange={(e) => e.target.files?.[0] && setReplyFile(e.target.files[0])} />
+                   </label>
+                   
+                   <div className="flex-1 relative">
+                      <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
+                         <div className="flex-1 relative bg-white dark:bg-[#2a3942] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm focus-within:border-wa-teal transition-all overflow-hidden flex flex-col">
+                            {replyFile && (
+                               <div className="bg-slate-50 dark:bg-[#202c33] p-2 sm:p-3 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
+                                  <div className="flex items-center gap-2 text-xs font-bold text-wa-teal truncate">
+                                     <FileText className="w-4 h-4 shrink-0" /> <span className="truncate">{replyFile.name}</span>
+                                  </div>
+                                  <button type="button" onClick={() => setReplyFile(null)} className="text-slate-400 hover:text-red-500 bg-white dark:bg-[#111b21] p-1 rounded-full"><XIcon className="w-4 h-4" /></button>
+                               </div>
+                            )}
+                            <textarea
+                              rows={replyText.split('\n').length > 1 ? Math.min(replyText.split('\n').length, 5) : 1}
+                              placeholder="Type your doubt or message..."
+                              className="w-full py-3 sm:py-4 px-4 bg-transparent border-none outline-none text-sm text-slate-800 dark:text-[#e9edef] placeholder:text-[#8696a0] resize-none custom-scrollbar"
+                              value={replyText}
+                              onChange={(e) => setReplyText(e.target.value)}
+                              onKeyDown={(e) => {
+                                 if (e.key === 'Enter' && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleSendMessage(e);
+                                 }
+                              }}
+                            />
+                         </div>
+                         <button 
+                           type="submit"
+                           disabled={submitting || (!replyText.trim() && !replyFile)}
+                           className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all shrink-0 ${
+                             (!replyText.trim() && !replyFile) ? 'bg-slate-200 dark:bg-slate-700 text-slate-400' : 'bg-wa-teal text-white shadow-lg active:scale-95'
+                           }`}
+                         >
+                           {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                         </button>
+                      </form>
+                   </div>
                  </div>
+                 {profile?.role === 'student' && (
+                    <div className="flex items-center justify-end px-1 sm:px-[68px]">
+                       <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
+                          <input 
+                            type="checkbox" 
+                            checked={isAnonymous}
+                            onChange={(e) => setIsAnonymous(e.target.checked)}
+                            className="w-3.5 h-3.5 rounded-sm border-slate-300 dark:border-slate-600 outline-none accent-wa-teal"
+                          />
+                          <span>Send anonymously</span>
+                       </label>
+                    </div>
+                 )}
               </div>
             </>
           )}

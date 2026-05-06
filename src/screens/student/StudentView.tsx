@@ -48,7 +48,7 @@ export default function StudentView() {
     if (!profile) return;
     const dept = profile.courseId || profile.courseName || profile.department;
     const unsub = subscribeToNotifications(profile.uid, 'student', (list) => {
-        setNotifications(list);
+        setNotifications(list.filter(n => n.type !== 'chat_message' && n.type !== 'group_chat_message'));
     }, dept, String(profile.semester));
     return () => unsub();
   }, [profile]);

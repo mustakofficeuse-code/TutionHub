@@ -64,7 +64,7 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
       if (n.targetRole === targetRole || n.targetRole === 'ALL') {
         // If there are department constraints on the notification and the user has a department to check against
         if (n.targetDept && userDept) {
-          if (n.targetDept !== userDept && n.targetDept !== 'ALL') return false;
+          if (n.targetDept.toLowerCase() !== userDept.toLowerCase() && n.targetDept !== 'ALL') return false;
         }
         if (n.targetSem && userSem) {
           if (String(n.targetSem) !== String(userSem) && n.targetSem !== 'ALL') return false;
