@@ -232,25 +232,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
       }
     );
 
-    // 7. Notifications Listener
-    const unsubNotif = onSnapshot(
-      query(
-        collection(db, 'notifications'),
-        where('targetDept', 'in', [dept, 'ALL']),
-        limit(50)
-      ),
-      (snapshot) => {
-        const allNotifs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        // Filter by semester and sort by timestamp DESC client-side to avoid index requirement
-        const filtered = allNotifs
-          .filter((n: any) => 
-            !n.targetSem || n.targetSem === 'ALL' || String(n.targetSem) === sem || sem === 'ALL'
-          )
-          .sort((a: any, b: any) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
-        
-        setNotifications(filtered.slice(0, 20));
-      }
-    );
+    // We removed Notification Listener from here because StudentView top bar handles it.
 
     return () => {
       unsubTeacher();
@@ -261,7 +243,6 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
       unsubFees();
       unsubSchedule();
       unsubActiveSchedules();
-      unsubNotif();
     };
   }, [user?.uid, profile?.courseId, profile?.courseName, profile?.semester, profile?.department]);
 

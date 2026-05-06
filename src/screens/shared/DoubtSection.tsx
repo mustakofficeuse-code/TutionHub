@@ -1,88 +1,156 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { collection, query, where, addDoc, onSnapshot, orderBy, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import React, { useState, useEffect, useRef } from 'react';
+import { collection, query, where, addDoc, onSnapshot, orderBy } from 'firebase/firestore';
 import { db } from '../../firebase';
-import { sendNotification } from '../../services/notificationService';
+import { sendNotification, subscribeToNotifications, markAsRead } from '../../services/notificationService';
 import { useAuth } from '../../context/AuthContext';
-import { useDropzone } from 'react-dropzone';
 import {
-  MessageSquare,
-  Plus,
-  Search,
-  Filter,
-  CheckCircle2,
-  Check,
-  CheckCheck,
-  Clock,
-  ArrowLeft,
-  Loader2,
-  User,
-  Send,
-  MoreVertical,
-  Trash2,
-  MessageCircle,
-  Paperclip,
-  File,
-  FileText,
-  Image as ImageIcon,
-  X as XIcon,
-  Shield,
-  GraduationCap,
-  Crop,
-  Wand2,
-  Pen,
-  Type,
-  Square,
-  Maximize2
+  Search, CheckCheck, ArrowLeft, Loader2, User, Send,
+  MessageCircle, Paperclip, FileText, X as XIcon, Shield,
+  GraduationCap, Plus, ChevronDown, ChevronRight, Hash
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
-import ViewableImage from '../../components/ViewableImage';
+
+// Types
+type ChatRoom = {
+  id: string; // "group_DEPT_SEM" or "dm_UID1_UID2"
+  type: 'group' | 'private';
+  name: string;
+  department?: string;
+  semester?: string;
+  participantId?: string; // for private
+  avatarUrl?: string; // for private
+};
+
+const getDMId = (uid1: string, uid2: string) => {
+  return [uid1, uid2].sort().join('_');
+};
 
 export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const { profile } = useAuth();
   const navigate = useNavigate();
-  const [doubts, setDoubts] = useState<any[]>([]);
-  const [replies, setReplies] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [selectedDoubt, setSelectedDoubt] = useState<any>(null);
+  const [departments, setDepartments] = useState<any[]>([]);
+  const [allUsers, setAllUsers] = useState<Record<string, any>>({});
+  
+  const [selectedChat, setSelectedChat] = useState<ChatRoom | null>(null);
+  const selectedChatRef = useRef<ChatRoom | null>(null);
+  const [messages, setMessages] = useState<any[]>([]);
   const [replyText, setReplyText] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [replyFile, setReplyFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState('');
-  const [showImagePreview, setShowImagePreview] = useState(false);
-  const replyInputRef = useRef<HTMLInputElement>(null);
-
+  const [submitting, setSubmitting] = useState(false);
   const [viewMaterial, setViewMaterial] = useState<any>(null);
+  
+  const replyInputRef = useRef<HTMLInputElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const uploadFile = async (file: File) => {
-    // 10MB Limit for Cloudinary Free Tier
-    if (file.size > 10 * 1024 * 1024) {
-      throw new Error(`File size too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum is 10MB. Please use a smaller file or compress it.`);
+  // Accordion state for teacher sidebar
+  const [expandedDept, setExpandedDept] = useState<string | null>(null);
+  const [showStudentsList, setShowStudentsList] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const [chatNotifications, setChatNotifications] = useState<any[]>([]);
+
+  // keep ref up to date
+  useEffect(() => {
+    selectedChatRef.current = selectedChat;
+    
+    // Also mark related notifications as read when chat opens
+    if (selectedChat) {
+      chatNotifications.forEach(n => {
+        if (n.relatedId === selectedChat.id && n.id) {
+          markAsRead(n.id);
+        }
+      });
     }
+  }, [selectedChat, chatNotifications]);
 
+  // Fetch initial data
+  useEffect(() => {
+    if (!profile) return;
+
+    const unsubDepts = onSnapshot(collection(db, 'departments'), (snap) => {
+      setDepartments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+
+    const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
+      const uMap: Record<string, any> = {};
+      snap.docs.forEach(doc => {
+        uMap[doc.id] = { id: doc.id, ...doc.data() };
+      });
+      setAllUsers(uMap);
+      setLoading(false);
+    });
+
+    const dept = profile.courseId || profile.courseName || profile.department;
+    const unsubNotifs = subscribeToNotifications(profile.uid, profile.role || 'student', (notifs) => {
+      const chatNotifs = notifs.filter(n => !n.read && (n.type === 'chat_message' || n.type === 'group_chat_message'));
+      setChatNotifications(chatNotifs);
+      
+      const counts: Record<string, number> = {};
+      chatNotifs.forEach(n => {
+        // Auto-read if currently open
+        if (selectedChatRef.current && n.relatedId === selectedChatRef.current.id) {
+          if (n.id) markAsRead(n.id);
+          return;
+        }
+        
+        if (n.relatedId) {
+          counts[n.relatedId] = (counts[n.relatedId] || 0) + 1;
+        }
+      });
+      setUnreadCounts(counts);
+    }, dept, String(profile.semester));
+
+    return () => {
+      unsubDepts();
+      unsubUsers();
+      unsubNotifs();
+    };
+  }, [profile]);
+
+  // Fetch messages for selected chat
+  useEffect(() => {
+    if (!selectedChat) {
+      setMessages([]);
+      return;
+    }
+    const q = query(
+      collection(db, 'chat_messages'),
+      where('chatId', '==', selectedChat.id)
+    );
+    const unsub = onSnapshot(q, snap => {
+      const fetchedMessages = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      fetchedMessages.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      setMessages(fetchedMessages);
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, 100);
+    });
+    return unsub;
+  }, [selectedChat]);
+
+  // File Upload
+  const uploadFile = async (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      throw new Error(`File size too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum is 10MB.`);
+    }
     return new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = async () => {
         try {
           const base64 = reader.result as string;
-          const fileName = `doubts/${Date.now()}_${file.name}`;
+          const fileName = `chat/${Date.now()}_${file.name}`;
           const response = await fetch('/api/upload-capture', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              base64,
-              fileName,
-              contentType: file.type
-            })
+            body: JSON.stringify({ base64, fileName, contentType: file.type })
           });
-
           if (!response.ok) {
             const err = await response.json();
             throw new Error(err.error || 'Upload failed');
           }
-
           const { url } = await response.json();
           resolve(url);
         } catch (err) {
@@ -94,138 +162,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
     });
   };
 
-  // Form state
-  const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
-  const [subject, setSubject] = useState('');
-  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
-  const [isAnonymous, setIsAnonymous] = useState(false);
-
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      setSelectedFile(acceptedFiles[0]);
-    }
-  }, []);
-
-  const onReplyDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      setReplyFile(acceptedFiles[0]);
-      setShowImagePreview(true);
-    }
-  }, []);
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    multiple: false,
-    noClick: false
-  } as any);
-
-  const { getRootProps: getReplyRootProps, getInputProps: getReplyInputProps, isDragActive: isReplyDragActive } = useDropzone({
-    onDrop: onReplyDrop,
-    multiple: false,
-    noClick: true // Only drag and drop for the whole container
-  } as any);
-
-  useEffect(() => {
-    if (replyFile) {
-      setShowImagePreview(true);
-    }
-  }, [replyFile]);
-
-  useEffect(() => {
-    if (!profile) return;
-
-    // Fetch doubts: Teachers see all, students see their own + public doubts for their department
-    const doubtsRef = collection(db, 'doubts');
-    const q = query(doubtsRef, orderBy('createdAt', 'desc'));
-
-    const unsubscribeDoubts = onSnapshot(q, (snapshot) => {
-      let fetchedDoubts = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      
-      // Client-side filtering for students to respect visibility and department
-      if (profile.role === 'student') {
-        const studentDept = profile.courseId || profile.courseName || profile.department || '';
-        fetchedDoubts = fetchedDoubts.filter((d: any) => 
-          d.department === studentDept && (d.studentId === profile.uid || d.visibility === 'public')
-        );
-      }
-      
-      setDoubts(fetchedDoubts);
-      setLoading(false);
-    });
-
-    const unsubscribeReplies = onSnapshot(query(collection(db, 'replies'), orderBy('createdAt', 'asc')), (snapshot) => {
-      setReplies(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-
-    return () => {
-      unsubscribeDoubts();
-      unsubscribeReplies();
-    };
-  }, [profile]);
-
-  const handleAddDoubt = async (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile) return;
-
-    setSubmitting(true);
-    setUploadProgress(selectedFile ? 'Uploading file...' : '');
-    try {
-      let fileUrl = '';
-      if (selectedFile) {
-        fileUrl = await uploadFile(selectedFile);
-      }
-
-      await addDoc(collection(db, 'doubts'), {
-        studentId: profile.uid,
-        studentName: profile.name,
-        department: profile.courseId || 'unknown',
-        semester: profile.semester || 'unknown',
-        subject,
-        title,
-        content,
-        visibility,
-        isAnonymous,
-        attachmentUrl: fileUrl,
-        attachmentName: selectedFile?.name || '',
-        attachmentType: selectedFile?.type || '',
-        status: 'open',
-        createdAt: new Date().toISOString()
-      });
-
-      const notifMessage = isAnonymous 
-        ? `A student has raised a new doubt: "${title}".` 
-        : `${profile.name} has raised a new doubt: "${title}".`;
-
-      await sendNotification({
-        title: 'New Doubt Raised',
-        message: notifMessage,
-        type: 'doubt_raised',
-        senderId: profile.uid,
-        senderName: isAnonymous ? 'Anonymous Student' : profile.name,
-        targetRole: 'teacher',
-        isAnonymous: isAnonymous,
-      });
-
-      setShowAdd(false);
-      setTitle('');
-      setContent('');
-      setSubject('');
-      setVisibility('public');
-      setIsAnonymous(false);
-      setSelectedFile(null);
-    } catch (error: any) {
-      console.error("Error adding doubt:", error);
-      alert(error.message || "Failed to add doubt");
-    } finally {
-      setSubmitting(false);
-      setUploadProgress('');
-    }
-  };
-
-  const handleAddReply = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if ((!replyText && !replyFile) || !selectedDoubt || !profile) return;
+    if ((!replyText.trim() && !replyFile) || !selectedChat || !profile) return;
 
     setSubmitting(true);
     try {
@@ -234,352 +173,380 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         fileUrl = await uploadFile(replyFile);
       }
 
-      await addDoc(collection(db, 'replies'), {
-        doubtId: selectedDoubt.id,
-        userUid: profile.uid,
-        userName: profile.name,
-        userRole: profile.role,
-        content: replyText,
+      await addDoc(collection(db, 'chat_messages'), {
+        chatId: selectedChat.id,
+        chatType: selectedChat.type,
+        senderId: profile.uid,
+        senderName: profile.name,
+        senderRole: profile.role,
+        content: replyText.trim(),
         attachmentUrl: fileUrl,
         attachmentName: replyFile?.name || '',
         attachmentType: replyFile?.type || '',
         createdAt: new Date().toISOString(),
-        status: 'sent'
+        status: 'sent',
+        participants: selectedChat.type === 'private' ? [profile.uid, selectedChat.participantId] : []
       });
-      
-      if (profile.role === 'teacher') {
+
+      if (selectedChat.type === 'private' && selectedChat.participantId) {
         await sendNotification({
-          title: 'New Reply to Your Doubt',
-          message: `Teacher ${profile.name} has replied to your doubt "${selectedDoubt.title}".`,
-          type: 'doubt_reply',
+          title: `New Message from ${profile.name}`,
+          message: replyText.trim() || 'Sent an attachment',
+          type: 'chat_message',
           senderId: profile.uid,
           senderName: profile.name,
-          recipientId: selectedDoubt.studentId,
+          recipientId: selectedChat.participantId,
+          relatedId: selectedChat.id,
+        });
+      } else if (selectedChat.type === 'group') {
+         await sendNotification({
+          title: `New Message in ${selectedChat.name}`,
+          message: `${profile.name}: ${replyText.trim() || 'Sent an attachment'}`,
+          type: 'group_chat_message',
+          senderId: profile.uid,
+          senderName: profile.name,
+          targetRole: 'ALL',
+          relatedId: selectedChat.id,
+          targetDept: selectedChat.department,
+          targetSem: selectedChat.semester
         });
       }
-      
+
       setReplyText('');
       setReplyFile(null);
     } catch (error: any) {
-      console.error("Error adding reply:", error);
-      alert(error.message || "Failed to add reply");
+      console.error("Error sending message:", error);
+      alert(error.message || "Failed to send message");
     } finally {
       setSubmitting(false);
     }
   };
 
-  const toggleStatus = async (doubtId: string, currentStatus: string) => {
-    try {
-      await updateDoc(doc(db, 'doubts', doubtId), {
-        status: currentStatus === 'open' ? 'resolved' : 'open'
-      });
-    } catch (error) {
-      console.error("Error updating status:", error);
-    }
+  const startPrivateChat = (uid: string) => {
+    const user = allUsers[uid];
+    if (!user) return;
+    setSelectedChat({
+      id: getDMId(profile!.uid, uid),
+      type: 'private',
+      name: user.name,
+      participantId: uid,
+      avatarUrl: user.avatarUrl
+    });
+    setShowStudentsList(false);
   };
 
-  const deleteDoubt = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this doubt?')) return;
-    try {
-      await deleteDoc(doc(db, 'doubts', id));
-      if (selectedDoubt?.id === id) setSelectedDoubt(null);
-    } catch (error) {
-      console.error("Error deleting doubt:", error);
-    }
+  const renderSidebar = () => {
+    if (loading) return <div className="p-4 flex justify-center"><Loader2 className="animate-spin text-wa-teal w-6 h-6" /></div>;
+
+    const teacherObj = Object.values(allUsers).find(u => u.role === 'teacher');
+    const peers = Object.values(allUsers).filter(u => u.role === 'student' && u.id !== profile?.uid && (u.courseId === profile?.courseId || u.courseId === profile?.courseName || u.courseName === profile?.courseName || u.courseName === profile?.courseId || u.department === profile?.department || u.department === profile?.courseId) && String(u.semester) === String(profile?.semester));
+    const allStudentsList = Object.values(allUsers).filter(u => u.role === 'student' && u.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    return (
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
+        {profile?.role === 'teacher' ? (
+          <>
+            <div className="px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Group Doubts</div>
+            <div className="space-y-1">
+              {departments.map(dept => (
+                <div key={dept.id} className="border-b border-slate-50 dark:border-white/5">
+                  <button 
+                    onClick={() => setExpandedDept(expandedDept === dept.name ? null : dept.name)}
+                    className="w-full flex items-center justify-between p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-all"
+                  >
+                     <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-wa-teal/10 text-wa-teal rounded-full flex items-center justify-center">
+                           <GraduationCap className="w-5 h-5" />
+                        </div>
+                        <span className="font-bold text-slate-800 dark:text-[#e9edef]">{dept.name}</span>
+                     </div>
+                     {expandedDept === dept.name ? <ChevronDown className="w-5 h-5 text-slate-400" /> : <ChevronRight className="w-5 h-5 text-slate-400" />}
+                  </button>
+                  <AnimatePresence>
+                    {expandedDept === dept.name && (
+                      <motion.div 
+                        initial={{ height: 0 }} 
+                        animate={{ height: 'auto' }} 
+                        exit={{ height: 0 }} 
+                        className="overflow-hidden bg-slate-50 dark:bg-[#111b21]"
+                      >
+                        {Array.from({ length: dept.totalSemesters || 8 }).map((_, i) => {
+                           const chatId = `group_${dept.name}_${i + 1}`;
+                           return (
+                             <button
+                               key={i}
+                               onClick={() => setSelectedChat({ id: chatId, type: 'group', name: `${dept.name} - Semester ${i + 1}`, department: dept.name, semester: String(i + 1) })}
+                               className={`w-full flex items-center justify-between gap-3 p-3 pl-14 hover:bg-[#ebebeb] dark:hover:bg-[#2a3942] transition-all text-sm font-medium border-b border-slate-100 dark:border-white/5 ${selectedChat?.id === chatId ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : 'text-slate-600 dark:text-slate-300'}`}
+                             >
+                                <div className="flex items-center gap-3">
+                                  <Hash className="w-4 h-4 text-slate-400" /> Semester {i + 1}
+                                </div>
+                                {unreadCounts[chatId] > 0 && (
+                                  <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                                    {unreadCounts[chatId]}
+                                  </span>
+                                )}
+                             </button>
+                           )
+                        })}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              ))}
+            </div>
+
+            <div className="px-4 py-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider flex justify-between items-center">
+               <span>Direct Messages</span>
+               <button onClick={() => setShowStudentsList(!showStudentsList)} className="text-wa-teal hover:bg-wa-teal/10 p-1 rounded"><Plus className="w-4 h-4" /></button>
+            </div>
+            
+            {showStudentsList && (
+              <div className="p-2 bg-slate-50 dark:bg-[#202c33]">
+                <div className="relative mb-2">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input type="text" placeholder="Search student..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-lg outline-none text-slate-800 dark:text-white" />
+                </div>
+                <div className="max-h-48 overflow-y-auto custom-scrollbar space-y-1">
+                  {allStudentsList.map(s => (
+                    <button key={s.id} onClick={() => startPrivateChat(s.id)} className="w-full flex items-center gap-2 p-2 hover:bg-white dark:hover:bg-[#2a3942] rounded-lg transition-all text-left">
+                      <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200">
+                        {s.avatarUrl ? <img src={s.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-4 h-4 text-slate-500 m-2" />}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-bold text-slate-800 dark:text-[#e9edef] truncate">{s.name}</div>
+                        <div className="text-xs text-slate-500 truncate">{s.courseId} - Sem {s.semester}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <div className="px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">My Group</div>
+            <button
+               onClick={() => setSelectedChat({ 
+                id: `group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`, 
+                 type: 'group', 
+                 name: `${profile?.courseId || profile?.courseName || profile?.department} - Semester ${profile?.semester}`,
+                 department: profile?.courseId || profile?.courseName || profile?.department || '',
+                 semester: String(profile?.semester || '1')
+               })}
+               className={`w-full flex items-center justify-between gap-3 p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-all border-b border-slate-50 dark:border-white/5 ${selectedChat?.id === `group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}` ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : ''}`}
+            >
+               <div className="flex items-center gap-3">
+                 <div className="w-12 h-12 bg-wa-teal/10 text-wa-teal rounded-full flex items-center justify-center shrink-0">
+                    <Hash className="w-6 h-6" />
+                 </div>
+                 <div className="text-left">
+                   <div className="font-bold text-slate-900 dark:text-[#e9edef]">{profile?.courseId || profile?.courseName || profile?.department} - Semester {profile?.semester}</div>
+                   <div className="text-xs text-slate-500">Group Doubt Session</div>
+                 </div>
+               </div>
+               {unreadCounts[`group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`] > 0 && (
+                  <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                     {unreadCounts[`group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`]}
+                  </span>
+               )}
+            </button>
+
+            <div className="px-4 py-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Direct Messages</div>
+            {teacherObj && (
+              <button
+                 onClick={() => startPrivateChat(teacherObj.id)}
+                 className={`w-full flex items-center justify-between gap-3 p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-all border-b border-slate-50 dark:border-white/5 ${selectedChat?.id === getDMId(profile!.uid, teacherObj.id) ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : ''}`}
+              >
+                 <div className="flex items-center gap-3">
+                   <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-wa-teal">
+                      {teacherObj.avatarUrl ? <img src={teacherObj.avatarUrl} className="w-full h-full object-cover" /> : <Shield className="w-6 h-6" />}
+                   </div>
+                   <div className="text-left">
+                     <div className="font-bold text-slate-900 dark:text-[#e9edef]">{teacherObj.name}</div>
+                     <div className="text-xs text-slate-500">Teacher</div>
+                   </div>
+                 </div>
+                 {unreadCounts[getDMId(profile!.uid, teacherObj.id)] > 0 && (
+                  <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                     {unreadCounts[getDMId(profile!.uid, teacherObj.id)]}
+                  </span>
+                 )}
+              </button>
+            )}
+
+            {peers.map(peer => (
+              <button
+                 key={peer.id}
+                 onClick={() => startPrivateChat(peer.id)}
+                 className={`w-full flex items-center justify-between gap-3 p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-all ${selectedChat?.id === getDMId(profile!.uid, peer.id) ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : ''}`}
+              >
+                 <div className="flex items-center gap-3 flex-1 min-w-0">
+                   <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-slate-500">
+                      {peer.avatarUrl ? <img src={peer.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-6 h-6" />}
+                   </div>
+                   <div className="text-left flex-1 min-w-0">
+                     <div className="font-bold text-slate-900 dark:text-[#e9edef] truncate">{peer.name}</div>
+                     <div className="text-xs text-slate-500 truncate">Student</div>
+                   </div>
+                 </div>
+                 {unreadCounts[getDMId(profile!.uid, peer.id)] > 0 && (
+                  <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center shrink-0">
+                     {unreadCounts[getDMId(profile!.uid, peer.id)]}
+                  </span>
+                 )}
+              </button>
+            ))}
+          </>
+        )}
+      </div>
+    );
   };
 
   return (
     <div className={`${isEmbedded ? 'absolute inset-0' : 'fixed inset-0'} bg-[#f0f2f5] dark:bg-[#0b141a] transition-colors flex ${!isEmbedded ? 'top-16 pb-0' : ''}`}>
       <div className="flex-1 flex max-w-[1600px] mx-auto w-full overflow-hidden">
         
-        {/* Left Sidebar: Contacts/Doubts List */}
-        <div className={`w-full md:w-[350px] lg:w-[400px] border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111b21] flex flex-col ${selectedDoubt ? 'hidden md:flex' : 'flex'}`}>
-          {/* Header */}
-          <div className="p-3 bg-[#f0f2f5] dark:bg-[#202c33] flex justify-between items-center sm:hidden">
-             <div className="w-10 h-10 bg-wa-teal rounded-full flex items-center justify-center text-white font-bold">
+        {/* Left Sidebar */}
+        <div className={`w-full md:w-[350px] lg:w-[400px] border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111b21] flex flex-col ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
+          <div className="p-4 bg-[#f0f2f5] dark:bg-[#202c33] flex items-center gap-3">
+             <div className="w-10 h-10 bg-wa-teal rounded-full flex items-center justify-center text-white font-bold shrink-0">
                 {profile?.name?.charAt(0)}
              </div>
-             <div className="flex gap-4">
-                <button className="text-slate-500"><MessageCircle className="w-6 h-6" /></button>
-                <button className="text-slate-500"><MoreVertical className="w-6 h-6" /></button>
-             </div>
+             <h2 className="font-bold text-slate-800 dark:text-[#e9edef]">Doubts & Chat</h2>
           </div>
-
-          <div className="p-3">
-             <div className="relative bg-[#f0f2f5] dark:bg-[#202c33] rounded-xl flex items-center px-3 py-1.5 focus-within:bg-white dark:focus-within:bg-white/10 transition-all">
-                <Search className="text-slate-400 w-4 h-4 mr-3" />
-                <input 
-                  type="text" 
-                  placeholder="Search or start new doubt"
-                  className="bg-transparent border-none outline-none text-sm w-full text-slate-900 dark:text-white"
-                />
-             </div>
-          </div>
-
-          <div className="flex-1 overflow-y-auto custom-scrollbar min-h-0">
-            {loading ? (
-                <div className="flex justify-center py-12">
-                  <Loader2 className="w-8 h-8 text-wa-teal animate-spin" />
-                </div>
-              ) : doubts.length === 0 ? (
-                <div className="p-4 sm:p-5 sm:p-5 sm:p-6 text-center">
-                  <p className="text-slate-500 text-sm">No doubts posted yet.</p>
-                </div>
-              ) : (
-                doubts.map((d) => (
-                  <button
-                    key={d.id}
-                    onClick={() => setSelectedDoubt(d)}
-                    className={`w-full flex items-center gap-3 p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-all border-b border-slate-50 dark:border-white/5 ${
-                      selectedDoubt?.id === d.id ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : ''
-                    }`}
-                  >
-                    <div className="relative shrink-0">
-                       <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center text-slate-500 overflow-hidden">
-                          {d.isAnonymous ? (
-                            <User className="w-6 h-6" />
-                          ) : (
-                            d.studentAvatar ? <ViewableImage roundedFull={false} src={d.studentAvatar} alt={d.studentName} className="w-full h-full object-cover" /> : <User className="w-6 h-6" />
-                          )}
-                       </div>
-                       {d.status === 'resolved' && (
-                         <div className="absolute -bottom-1 -right-1 bg-wa-green rounded-full p-0.5 ring-2 ring-white dark:ring-wa-header">
-                            <CheckCircle2 className="w-3 h-3 text-white" />
-                         </div>
-                       )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                       <div className="flex justify-between items-baseline mb-0.5">
-                          <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate text-base">
-                             {d.isAnonymous ? 'Anonymous Student' : d.studentName}
-                          </h3>
-                          <span className="text-xs text-slate-500 shrink-0">{new Date(d.createdAt).toLocaleDateString()}</span>
-                       </div>
-                       <div className="flex justify-between items-center">
-                          <p className="text-sm text-slate-500 dark:text-[#8696a0] truncate flex-1">{d.title}</p>
-                          {d.visibility === 'private' && <Shield className="w-3 h-3 text-purple-400 ml-1" />}
-                       </div>
-                    </div>
-                  </button>
-                ))
-              )}
-          </div>
-
-          {profile?.role === 'student' && (
-            <div className="p-4 z-20 bg-white dark:bg-[#111b21] border-t border-slate-100 dark:border-white/5">
-              <button 
-                onClick={() => setShowAdd(true)}
-                className="w-full bg-wa-teal hover:bg-wa-teal-dark text-white py-3 rounded-full font-bold flex items-center justify-center gap-2 shadow-lg transition-all"
-              >
-                <Plus className="w-5 h-5" /> New Doubt
-              </button>
-            </div>
-          )}
+          {renderSidebar()}
         </div>
 
-        {/* Right Area: Conversation */}
-        <div 
-          {...getReplyRootProps()}
-          className={`flex-1 flex flex-col bg-[#efeae2] dark:bg-[#0b141a] relative ${!selectedDoubt ? 'hidden md:flex' : 'flex'}`}
-        >
-          <input {...getReplyInputProps()} />
-          <AnimatePresence>
-            {isReplyDragActive && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="absolute inset-0 z-50 bg-wa-teal/20 backdrop-blur-sm flex flex-col items-center justify-center border-4 border-dashed border-wa-teal m-4 rounded-3xl"
-              >
-                <div className="bg-white dark:bg-[#202c33] p-8 rounded-full shadow-2xl mb-4">
-                  <ImageIcon className="w-16 h-16 text-wa-teal animate-bounce" />
-                </div>
-                <h3 className="text-2xl font-bold text-wa-teal bg-white dark:bg-[#202c33] px-6 py-2 rounded-full shadow-lg">Drop image or file to attach</h3>
-              </motion.div>
-            )}
-          </AnimatePresence>
-          {!selectedDoubt ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 bg-[#f8f9fa] dark:bg-[#222e35] border-b-[6px] border-wa-teal">
-              <div className="w-64 h-64 bg-slate-100 dark:bg-[#222e35] rounded-full flex items-center justify-center mb-4 sm:mb-8">
-                 <GraduationCap className="w-32 h-32 text-slate-300 dark:text-slate-600" />
+        {/* Right Chat Area */}
+        <div className={`flex-1 flex flex-col bg-[#efeae2] dark:bg-[#0b141a] relative ${!selectedChat ? 'hidden md:flex' : 'flex'}`}>
+          {!selectedChat ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-[#f8f9fa] dark:bg-[#222e35] border-b-[6px] border-wa-teal">
+              <div className="w-64 h-64 bg-slate-100 dark:bg-[#222e35] rounded-full flex items-center justify-center mb-8">
+                 <MessageCircle className="w-32 h-32 text-slate-300 dark:text-slate-600" />
               </div>
-              <h2 className="text-3xl font-light text-slate-800 dark:text-[#e9edef] mb-3">TutionHub Web</h2>
-              <p className="text-slate-600 dark:text-slate-300 max-w-sm text-base font-medium">
-                Send and receive messages to resolve doubts. Use the list to select a conversation.
+              <h2 className="text-3xl font-light text-slate-800 dark:text-[#e9edef] mb-3">TuitionHub Chat</h2>
+              <p className="text-slate-600 dark:text-slate-300 max-w-md text-base font-medium">
+                Communicate with your teacher and peers. Select a group or a contact from the sidebar to start solving doubts.
               </p>
-              <div className="mt-auto text-slate-500 dark:text-slate-400 flex items-center gap-1 text-sm font-bold">
-                <Shield className="w-3 h-3" /> End-to-end encrypted
-              </div>
             </div>
           ) : (
             <>
               {/* Chat Header */}
-              <div className="h-16 bg-[#f0f2f5] dark:bg-[#202c33] px-4 flex items-center gap-3 shrink-0 z-10 border-l border-slate-200 dark:border-slate-700">
-                <button onClick={() => setSelectedDoubt(null)} className="md:hidden text-slate-500">
+              <div className="h-16 bg-[#f0f2f5] dark:bg-[#202c33] px-4 flex items-center gap-3 shrink-0 z-10 border-l border-slate-200 dark:border-slate-700 shadow-sm">
+                <button onClick={() => setSelectedChat(null)} className="md:hidden text-slate-500 p-2 -ml-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
                    <ArrowLeft className="w-6 h-6" />
                 </button>
-                <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0">
-                  {selectedDoubt.isAnonymous ? (
-                    <User className="w-5 h-5 text-slate-500" />
-                  ) : (
-                    selectedDoubt.studentAvatar ? <ViewableImage roundedFull={false} src={selectedDoubt.studentAvatar} alt={selectedDoubt.studentName} className="w-full h-full object-cover rounded-full" /> : <User className="w-5 h-5 text-slate-500" />
+                <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-wa-teal">
+                  {selectedChat.type === 'group' ? <Hash className="w-5 h-5" /> : (
+                    selectedChat.avatarUrl ? <img src={selectedChat.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-5 h-5" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate text-base">
-                    {selectedDoubt.isAnonymous ? 'Anonymous Student' : selectedDoubt.studentName}
-                  </h3>
-                  <p className="text-sm font-bold text-slate-600 dark:text-slate-300 truncate">
-                     {selectedDoubt.subject} • {selectedDoubt.status === 'resolved' ? 'Resolved' : 'Active'}
+                  <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate">{selectedChat.name}</h3>
+                  <p className="text-xs text-slate-500 truncate">
+                     {selectedChat.type === 'group' ? 'Group Doubt Chat' : 'Private Conversation'}
                   </p>
-                </div>
-                <div className="flex gap-4 text-slate-500">
-                   <button onClick={() => toggleStatus(selectedDoubt.id, selectedDoubt.status)} className={`${selectedDoubt.status === 'resolved' ? 'text-wa-green' : ''}`}>
-                      <CheckCircle2 className="w-6 h-6" />
-                   </button>
-                   {(profile?.role === 'teacher' || profile?.uid === selectedDoubt.studentId) && (
-                      <button onClick={(e) => { e.stopPropagation(); deleteDoubt(selectedDoubt.id); }} className="hover:text-red-500">
-                         <Trash2 className="w-6 h-6" />
-                      </button>
-                   )}
-                   <button onClick={(e) => { e.stopPropagation(); alert('More options menu'); }}><MoreVertical className="w-6 h-6" /></button>
                 </div>
               </div>
 
-              {/* Chat Canvas */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-4 sm:p-6 sm:p-10 space-y-2 sm:space-y-4 custom-scrollbar bg-chat-pattern">
-                 {/* Original Doubt Message as a bubble */}
-                 <div className="flex justify-start mb-4 sm:mb-8">
-                    <div className="max-w-[85%] sm:max-w-[70%] bg-white dark:bg-[#202c33] p-4 rounded-xl rounded-tl-none shadow-sm relative">
-                       <div className="absolute -left-2 top-0 w-0 h-0 border-[10px] border-transparent border-t-white dark:border-t-[#202c33]"></div>
-                       <div className="flex items-center gap-2 mb-2">
-                          <span className="text-xs font-bold text-wa-teal dark:text-wa-green ">{selectedDoubt.subject}</span>
-                       </div>
-                       <h4 className="font-bold text-slate-900 dark:text-white mb-2">{selectedDoubt.title}</h4>
-                       <p className="text-sm text-slate-700 dark:text-[#d1d7db] whitespace-pre-wrap leading-relaxed">{selectedDoubt.content}</p>
-                       
-                       {selectedDoubt.attachmentUrl && (
-                          <div className="mt-3 overflow-hidden rounded-lg bg-slate-100 dark:bg-[#111b21] p-1 border border-slate-200 dark:border-white/10">
-                             {selectedDoubt.attachmentType?.startsWith('image/') ? (
-                               <img 
-                                 src={selectedDoubt.attachmentUrl} 
-                                 alt="" 
-                                 className="w-full max-h-[400px] object-contain cursor-zoom-in rounded-lg"
-                                 onClick={() => setViewMaterial({ url: selectedDoubt.attachmentUrl, title: selectedDoubt.attachmentName, type: 'image' })}
-                               />
-                             ) : (
-                               <button 
-                                 onClick={() => setViewMaterial({ url: selectedDoubt.attachmentUrl, title: selectedDoubt.attachmentName, type: 'pdf' })}
-                                 className="p-4 w-full flex items-center gap-4 text-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-white/5 transition-colors"
-                               >
-                                  <FileText className="w-10 h-10 text-wa-teal" />
-                                  <span className="text-sm truncate font-bold">{selectedDoubt.attachmentName}</span>
-                               </button>
-                             )}
-                          </div>
-                       )}
-
-                       <div className="flex justify-end mt-2">
-                          <span className="text-xs text-slate-400">{new Date(selectedDoubt.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                       </div>
-                    </div>
-                 </div>
-
-                 {/* Replies */}
-                 {replies.filter(r => r.doubtId === selectedDoubt.id).map((r) => {
-                    const isOwn = r.userUid === profile?.uid;
+              {/* Chat Window */}
+              <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar bg-chat-pattern">
+                {messages.length === 0 ? (
+                  <div className="flex justify-center mt-10">
+                     <span className="bg-[#ffeecd] dark:bg-[#182229] text-slate-700 dark:text-slate-300 px-4 py-2 text-sm rounded-lg shadow-sm text-center">
+                        This is the beginning of your chat history.
+                     </span>
+                  </div>
+                ) : (
+                  messages.map((m) => {
+                    const isOwn = m.senderId === profile?.uid;
                     return (
-                      <div key={r.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                         <div className={`max-w-[85%] sm:max-w-[70%] p-3 px-4 rounded-xl shadow-sm relative ${
+                      <div key={m.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
+                         <div className={`max-w-[85%] sm:max-w-[70%] p-2 px-3 rounded-xl shadow-sm relative ${
                            isOwn ? 'bg-[#dcf8c6] dark:bg-[#005c4b] rounded-tr-none' : 'bg-white dark:bg-[#202c33] rounded-tl-none'
                          }`}>
-                            {/* Tail */}
-                            <div className={`absolute top-0 w-0 h-0 border-[10px] border-transparent ${
-                               isOwn 
-                                 ? '-right-2 border-t-[#dcf8c6] dark:border-t-[#005c4b]' 
-                                 : '-left-2 border-t-white dark:border-t-[#202c33]'
-                            }`}></div>
-
-                            {!isOwn && (
-                               <p className="text-xs font-bold text-wa-teal dark:text-wa-green mb-1">{r.userName}</p>
+                            {selectedChat.type === 'group' && !isOwn && (
+                               <p className="text-xs font-bold text-wa-teal dark:text-[#53bdeb] mb-1">{m.senderName}</p>
                             )}
 
-                            <p className={`text-sm leading-relaxed ${isOwn ? 'text-slate-900 dark:text-[#e9edef]' : 'text-slate-700 dark:text-[#d1d7db]'}`}>
-                               {r.content}
+                            <p className={`text-sm leading-relaxed whitespace-pre-wrap ${isOwn ? 'text-slate-900 dark:text-[#e9edef]' : 'text-slate-700 dark:text-[#d1d7db]'}`}>
+                               {m.content}
                             </p>
 
-                            {r.attachmentUrl && (
+                            {m.attachmentUrl && (
                                <div className="mt-2 rounded-lg bg-black/5 p-1">
-                                  {r.attachmentType.startsWith('image/') ? (
+                                  {m.attachmentType.startsWith('image/') ? (
                                     <img 
-                                      src={r.attachmentUrl} 
+                                      src={m.attachmentUrl} 
                                       alt="" 
-                                      className="w-full max-h-48 object-contain rounded cursor-pointer"
-                                      onClick={() => setViewMaterial({ url: r.attachmentUrl, title: r.attachmentName, type: 'image' })}
+                                      className="w-full max-h-64 object-contain rounded cursor-pointer"
+                                      onClick={() => setViewMaterial({ url: m.attachmentUrl, title: m.attachmentName, type: 'image' })}
                                     />
                                   ) : (
                                     <button 
-                                      onClick={() => setViewMaterial({ url: r.attachmentUrl, title: r.attachmentName, type: 'pdf' })}
-                                      className="flex items-center gap-2 p-2 w-full text-left"
+                                      onClick={() => setViewMaterial({ url: m.attachmentUrl, title: m.attachmentName, type: 'pdf' })}
+                                      className="flex items-center gap-2 p-2 w-full text-left bg-white dark:bg-[#2a3942] rounded"
                                     >
-                                       <Paperclip className="w-5 h-5 opacity-50" />
-                                       <span className="text-xs truncate font-medium">{r.attachmentName}</span>
+                                       <FileText className="w-6 h-6 text-wa-teal" />
+                                       <span className="text-xs truncate font-medium flex-1">{m.attachmentName}</span>
                                     </button>
                                   )}
                                </div>
                             )}
 
-                            <div className="flex justify-end items-center gap-1 mt-1 opacity-50">
-                               <span className="text-xs ">{new Date(r.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                               {isOwn && (
-                                 r.status === 'read' ? <CheckCheck className="w-3 h-3 text-blue-500" /> :
-                                 r.status === 'delivered' ? <CheckCheck className="w-3 h-3 text-slate-500" /> :
-                                 <Check className="w-3 h-3 text-slate-500" />
-                               )}
+                            <div className="flex justify-end items-center gap-1 mt-1 opacity-60">
+                               <span className="text-[10px]">{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                               {isOwn && <CheckCheck className="w-3 h-3" />}
                             </div>
                          </div>
                       </div>
                     );
-                 })}
+                  })
+                )}
+                <div ref={messagesEndRef} />
               </div>
 
               {/* Chat Input */}
-              <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-3 flex items-center gap-3 shrink-0">
-                 <button className="text-slate-500 hover:text-wa-teal transition-colors">
-                    <ImageIcon className="w-6 h-6" />
-                 </button>
-                 <label className="text-slate-500 hover:text-wa-teal transition-colors cursor-pointer">
+              <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-3 flex items-center gap-2 sm:gap-4 shrink-0 transition-all">
+                 <label className="text-slate-500 hover:text-wa-teal transition-colors cursor-pointer p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
                     <Paperclip className="w-6 h-6" />
                     <input ref={replyInputRef} type="file" className="hidden" onChange={(e) => e.target.files?.[0] && setReplyFile(e.target.files[0])} />
                  </label>
                  
                  <div className="flex-1 relative">
-                    <form onSubmit={handleAddReply} className="flex gap-2">
-                       <div className="flex-1 relative group">
+                    <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
+                       <div className="flex-1 relative bg-white dark:bg-[#2a3942] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm focus-within:border-wa-teal transition-all overflow-hidden flex flex-col">
                           {replyFile && (
-                             <div className="absolute -top-12 left-0 right-0 bg-white dark:bg-[#202c33] p-2 rounded-t-xl border-t border-x border-slate-200 dark:border-white/10 flex justify-between items-center shadow-lg">
-                                <div className="flex items-center gap-2 text-xs text-wa-teal truncate px-2">
-                                   <Paperclip className="w-3 h-3" /> {replyFile.name}
+                             <div className="bg-slate-50 dark:bg-[#202c33] p-2 sm:p-3 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
+                                <div className="flex items-center gap-2 text-xs font-bold text-wa-teal truncate">
+                                   <FileText className="w-4 h-4 shrink-0" /> <span className="truncate">{replyFile.name}</span>
                                 </div>
-                                <button onClick={() => setReplyFile(null)} className="text-slate-400 hover:text-red-500"><XIcon className="w-4 h-4" /></button>
+                                <button type="button" onClick={() => setReplyFile(null)} className="text-slate-400 hover:text-red-500 bg-white dark:bg-[#111b21] p-1 rounded-full"><XIcon className="w-4 h-4" /></button>
                              </div>
                           )}
-                          <input 
-                            type="text" 
-                            placeholder="Type a message"
-                            className="w-full py-2.5 px-4 bg-white dark:bg-[#2a3942] border-none rounded-full outline-none text-sm text-slate-800 dark:text-[#e9edef] placeholder:text-[#8696a0]"
+                          <textarea
+                            rows={replyText.split('\n').length > 1 ? Math.min(replyText.split('\n').length, 5) : 1}
+                            placeholder="Type your doubt or message..."
+                            className="w-full py-3 sm:py-4 px-4 bg-transparent border-none outline-none text-sm text-slate-800 dark:text-[#e9edef] placeholder:text-[#8696a0] resize-none custom-scrollbar"
                             value={replyText}
                             onChange={(e) => setReplyText(e.target.value)}
+                            onKeyDown={(e) => {
+                               if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleSendMessage(e);
+                               }
+                            }}
                           />
                        </div>
                        <button 
                          type="submit"
-                         disabled={submitting || (!replyText && !replyFile)}
-                         className={`w-11 h-11 flex items-center justify-center rounded-full transition-all shrink-0 ${
-                           (!replyText && !replyFile) ? 'text-slate-500' : 'bg-wa-teal text-white shadow-md active:scale-90'
+                         disabled={submitting || (!replyText.trim() && !replyFile)}
+                         className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all shrink-0 ${
+                           (!replyText.trim() && !replyFile) ? 'bg-slate-200 dark:bg-slate-700 text-slate-400' : 'bg-wa-teal text-white shadow-lg active:scale-95'
                          }`}
                        >
-                         <Send className="w-5 h-5 ml-0.5" />
+                         {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
                        </button>
                     </form>
                  </div>
@@ -589,129 +556,28 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         </div>
       </div>
 
-      {/* Viewer Modal */}
+      {/* Media Viewer Modal */}
       {viewMaterial && (
-        <div className="fixed inset-0 bg-black/90 backdrop-blur-sm z-[200] flex items-center justify-center">
-          <div className="w-full h-full flex flex-col relative">
-             <div className="h-16 flex items-center justify-between px-4 sm:px-6 bg-black/20 text-white">
-                <span className="font-bold truncate">{viewMaterial.title}</span>
-                <button 
-                  onClick={() => setViewMaterial(null)}
-                  className="p-2 hover:bg-white/10 rounded-full transition-all"
-                >
-                  <XIcon className="w-8 h-8" />
-                </button>
-             </div>
-             <div className="flex-1 flex items-center justify-center overflow-hidden p-4">
-                {viewMaterial.type === 'pdf' ? (
-                  <iframe src={viewMaterial.url} className="w-full max-w-5xl h-full border-none rounded-lg" />
-                ) : (
-                  <img src={viewMaterial.url} className="max-w-full max-h-full object-contain shadow-2xl" />
-                )}
-             </div>
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-[200] flex items-center justify-center">
+          <div className="absolute top-0 inset-x-0 h-16 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-b from-black/50 text-white z-10">
+             <span className="font-bold truncate text-sm sm:text-base pr-4 opacity-80">{viewMaterial.title}</span>
+             <button 
+               onClick={() => setViewMaterial(null)}
+               className="p-2 hover:bg-white/10 rounded-full transition-all"
+               title="Close"
+             >
+               <XIcon className="w-6 h-6 sm:w-8 sm:h-8" />
+             </button>
+          </div>
+          <div className="w-full h-full p-4 sm:p-12 flex items-center justify-center">
+             {viewMaterial.type === 'pdf' ? (
+               <iframe src={viewMaterial.url} className="w-full h-full border-none rounded-xl bg-white" />
+             ) : (
+               <img src={viewMaterial.url} className="max-w-full max-h-full object-contain" />
+             )}
           </div>
         </div>
       )}
-
-      {/* Add Doubt Modal (Student only) */}
-      <AnimatePresence>
-        {showAdd && (
-          <div className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[300]">
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0, y: 50 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 50 }}
-              className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-6 w-full max-w-lg shadow-2xl"
-            >
-              <div className="flex justify-between items-center mb-4 sm:mb-6">
-                <h3 className="text-xl font-bold text-wa-teal dark:text-wa-green">New Doubt</h3>
-                <button onClick={() => setShowAdd(false)} className="text-slate-400 hover:text-red-500 transition-colors">
-                  <XIcon className="w-6 h-6" />
-                </button>
-              </div>
-              <form onSubmit={handleAddDoubt} className="space-y-2 sm:space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                   <div className="col-span-1">
-                      <label className="block text-xs font-bold text-slate-400  tracking-normal mb-1 ml-1">Subject</label>
-                      <input
-                        type="text"
-                        required
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-wa-teal transition-all"
-                        placeholder="e.g. Java"
-                        value={subject}
-                        onChange={(e) => setSubject(e.target.value)}
-                      />
-                   </div>
-                   <div className="col-span-1">
-                      <label className="block text-xs font-bold text-slate-400  tracking-normal mb-1 ml-1">Visibility</label>
-                      <select 
-                        className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-wa-teal transition-all"
-                        value={visibility}
-                        onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
-                      >
-                        <option value="public">Public</option>
-                        <option value="private">Private</option>
-                      </select>
-                   </div>
-                </div>
-                <div className="flex items-center gap-2">
-                   <input 
-                     type="checkbox" 
-                     id="anonymous"
-                     className="w-4 h-4 accent-wa-teal"
-                     checked={isAnonymous}
-                     onChange={(e) => setIsAnonymous(e.target.checked)}
-                   />
-                   <label htmlFor="anonymous" className="text-xs text-slate-600 dark:text-slate-400">Hide personal details (name, profile picture)</label>
-                </div>
-                <div>
-                   <label className="block text-xs font-bold text-slate-400  tracking-normal mb-1 ml-1">Title</label>
-                   <input
-                     type="text"
-                     required
-                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-wa-teal transition-all"
-                     placeholder="Summary of the issue"
-                     value={title}
-                     onChange={(e) => setTitle(e.target.value)}
-                   />
-                </div>
-                <div>
-                   <label className="block text-xs font-bold text-slate-400  tracking-normal mb-1 ml-1">Explanation</label>
-                   <textarea
-                     rows={4}
-                     required
-                     className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-slate-900 dark:text-white text-sm outline-none focus:border-wa-teal transition-all resize-none"
-                     placeholder="Describe in detail..."
-                     value={content}
-                     onChange={(e) => setContent(e.target.value)}
-                   />
-                </div>
-                <div>
-                   <label className="block text-xs font-bold text-slate-400  tracking-normal mb-1 ml-1">Attachment</label>
-                   <div 
-                      {...getRootProps()} 
-                      className={`w-full flex flex-col items-center justify-center gap-2 px-4 py-4 sm:py-6 bg-slate-50 dark:bg-[#111b21] border-2 border-dashed ${isDragActive ? 'border-wa-teal bg-wa-teal/5' : 'border-slate-200 dark:border-white/10'} rounded-xl cursor-pointer hover:border-wa-teal transition-all`}
-                   >
-                      <input {...getInputProps()} />
-                      <Paperclip className={`w-8 h-8 ${isDragActive ? 'text-wa-teal' : 'text-slate-400'}`} />
-                      <span className="text-xs font-bold text-slate-500 truncate max-w-[200px]">
-                         {selectedFile ? selectedFile.name : "Drag & drop or click to attach"}
-                      </span>
-                   </div>
-                </div>
-                
-                <button 
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full py-4 bg-wa-teal text-white font-bold rounded-2xl hover:bg-wa-teal-dark transition-all disabled:opacity-50 shadow-xl overflow-hidden relative"
-                >
-                  {submitting ? <Loader2 className="w-6 h-6 animate-spin mx-auto" /> : 'Post to Tutor'}
-                </button>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
     </div>
   );
 }

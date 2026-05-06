@@ -9,7 +9,9 @@ export type NotificationType =
   | 'doubt_raised' 
   | 'fee_payment' 
   | 'fee_confirmed' 
-  | 'new_student';
+  | 'new_student'
+  | 'chat_message'
+  | 'group_chat_message';
 
 export interface Notification {
   id?: string;
@@ -38,21 +40,38 @@ export const sendNotification = async (notification: Omit<Notification, 'id' | '
   });
 };
 
-export const subscribeToNotifications = (userId: string, targetRole: string, callback: (notifications: Notification[]) => void) => {
+export const subscribeToNotifications = (userId: string, targetRole: string, callback: (notifications: Notification[]) => void, userDept?: string, userSem?: string) => {
   const q = query(
     collection(db, 'notifications'),
-    or(
-      where('recipientId', '==', userId),
-      where('targetRole', 'in', [targetRole, 'ALL'])
-    ),
     orderBy('createdAt', 'desc')
   );
 
   return onSnapshot(q, (snapshot) => {
-    const notifications = snapshot.docs.map(doc => ({
+    let notifications = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     } as Notification));
+    
+    // Client-side filtering to avoid complex composite index error
+    notifications = notifications.filter(n => {
+      // Always show direct messages to the user
+      if (n.recipientId === userId) return true;
+      
+      // Filter role base
+      if (n.targetRole === targetRole || n.targetRole === 'ALL') {
+        // If there are department constraints on the notification and the user has a department to check against
+        if (n.targetDept && userDept) {
+          if (n.targetDept !== userDept && n.targetDept !== 'ALL') return false;
+        }
+        if (n.targetSem && userSem) {
+          if (String(n.targetSem) !== String(userSem) && n.targetSem !== 'ALL') return false;
+        }
+        return true;
+      }
+      
+      return false;
+    });
+    
     callback(notifications);
   }, (error) => {
     console.error('Error subscribing to notifications:', error);

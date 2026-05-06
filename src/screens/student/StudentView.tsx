@@ -46,9 +46,10 @@ export default function StudentView() {
 
   useEffect(() => {
     if (!profile) return;
+    const dept = profile.courseId || profile.courseName || profile.department;
     const unsub = subscribeToNotifications(profile.uid, 'student', (list) => {
         setNotifications(list);
-    });
+    }, dept, String(profile.semester));
     return () => unsub();
   }, [profile]);
 
