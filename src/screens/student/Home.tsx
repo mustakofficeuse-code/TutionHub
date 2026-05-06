@@ -463,7 +463,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                   )}
                   {teacherInfo?.phone && (
                     <a 
-                      href={`https://wa.me/${(() => { const p = teacherInfo.phone.replace(/[^0-9]/g, ''); return p.length === 10 ? '91' + p : p; })()}`}
+                      href={`https://wa.me/${(() => { const p = teacherInfo.phone.replace(/[^0-9]/g, ''); return (p.startsWith('91') && p.length === 12) ? p : '91' + p.slice(-10); })()}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 py-2.5 bg-wa-teal/10 text-wa-teal rounded-xl hover:bg-wa-teal hover:text-white transition-all flex items-center justify-center gap-2 font-bold text-xs"
