@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, query, where, addDoc, onSnapshot, orderBy } from 'firebase/firestore';
+import { collection, query, where, addDoc, onSnapshot, orderBy, updateDoc, doc, arrayUnion, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { sendNotification, subscribeToNotifications, markAsRead } from '../../services/notificationService';
 import { useAuth } from '../../context/AuthContext';
 import {
   Search, CheckCheck, ArrowLeft, Loader2, User, Send,
   MessageCircle, Paperclip, FileText, X as XIcon, Shield,
-  GraduationCap, Plus, ChevronDown, ChevronRight, Hash
+  GraduationCap, Plus, ChevronDown, ChevronRight, Hash,
+  Smile, Trash2, Reply
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -42,6 +43,8 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const [submitting, setSubmitting] = useState(false);
   const [viewMaterial, setViewMaterial] = useState<any>(null);
   const [isAnonymous, setIsAnonymous] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<any>(null);
+  const [showReactFor, setShowReactFor] = useState<string | null>(null);
   
   const replyInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -163,6 +166,14 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
     const unsub = onSnapshot(q, snap => {
       const fetchedMessages = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       fetchedMessages.sort((a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+      
+      // Mark as seen
+      fetchedMessages.forEach((m: any) => {
+        if (m.senderId !== profile?.uid && (!m.seenBy || !m.seenBy.includes(profile?.uid))) {
+           updateDoc(doc(db, 'chat_messages', m.id), { seenBy: arrayUnion(profile?.uid) }).catch(console.error);
+        }
+      });
+
       setMessages(fetchedMessages);
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -218,7 +229,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         senderNameToUse = 'Anonymous Student';
       }
 
-      await addDoc(collection(db, 'chat_messages'), {
+      const newMsgObj: any = {
         chatId: selectedChat.id,
         chatType: selectedChat.type,
         senderId: profile.uid,
@@ -231,8 +242,20 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         attachmentType: replyFile?.type || '',
         createdAt: new Date().toISOString(),
         status: 'sent',
+        seenBy: [],
+        reactions: {},
         participants: selectedChat.type === 'private' ? [profile.uid, selectedChat.participantId] : []
-      });
+      };
+
+      if (replyingTo) {
+        newMsgObj.replyTo = {
+          id: replyingTo.id,
+          content: replyingTo.content,
+          senderName: replyingTo.senderName
+        };
+      }
+
+      await addDoc(collection(db, 'chat_messages'), newMsgObj);
 
       if (selectedChat.type === 'private' && selectedChat.participantId) {
         await sendNotification({
@@ -262,6 +285,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
 
       setReplyText('');
       setReplyFile(null);
+      setReplyingTo(null);
     } catch (error: any) {
       console.error("Error sending message:", error);
       alert(error.message || "Failed to send message");
@@ -548,46 +572,120 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                 ) : (
                   messages.map((m) => {
                     const isOwn = m.senderId === profile?.uid;
+                    const reactionsMapping: Record<string, string[]> = {};
+                    if (m.reactions) {
+                      Object.keys(m.reactions).forEach(uid => {
+                        const emoji = m.reactions[uid];
+                        if (!reactionsMapping[emoji]) reactionsMapping[emoji] = [];
+                        reactionsMapping[emoji].push(uid);
+                      });
+                    }
+                    
                     return (
-                      <div key={m.id} className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}>
-                         <div className={`max-w-[85%] sm:max-w-[70%] p-2 px-3 rounded-xl shadow-sm relative ${
-                           isOwn ? 'bg-[#dcf8c6] dark:bg-[#005c4b] rounded-tr-none' : 'bg-white dark:bg-[#202c33] rounded-tl-none'
-                         }`}>
-                            {selectedChat.type === 'group' && !isOwn && (
-                               <p className="text-xs font-bold text-wa-teal dark:text-[#53bdeb] mb-1">{m.senderName}</p>
-                            )}
+                      <motion.div 
+                        key={m.id} 
+                        className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} group w-full`}
+                        drag="x"
+                        dragConstraints={{ left: 0, right: 0 }}
+                        dragElastic={0.1}
+                        onDragEnd={(_, info) => { if (Math.abs(info.offset.x) > 50) setReplyingTo(m) }}
+                      >
+                         <div className={`max-w-[85%] sm:max-w-[70%] relative flex gap-2 items-center ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+                            
+                            {/* Actions visible on hover */}
+                            <div className={`hidden md:flex opacity-0 group-hover:opacity-100 items-center gap-1 transition-opacity bg-white/50 dark:bg-black/50 p-1 rounded-full shadow-sm`}>
+                              <button onClick={() => setReplyingTo(m)} className="p-1 hover:text-wa-teal" title="Reply"><Reply className="w-4 h-4" /></button>
+                              <button onClick={() => setShowReactFor(showReactFor === m.id ? null : m.id)} className="p-1 hover:text-yellow-500" title="React"><Smile className="w-4 h-4" /></button>
+                              {isOwn && <button onClick={() => deleteDoc(doc(db, 'chat_messages', m.id))} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-4 h-4" /></button>}
+                            </div>
 
-                            <p className={`text-sm leading-relaxed whitespace-pre-wrap ${isOwn ? 'text-slate-900 dark:text-[#e9edef]' : 'text-slate-700 dark:text-[#d1d7db]'}`}>
-                               {m.content}
-                            </p>
+                            <div className={`p-2 px-3 rounded-xl shadow-sm relative ${
+                              isOwn ? 'bg-[#dcf8c6] dark:bg-[#005c4b] rounded-tr-none' : 'bg-white dark:bg-[#202c33] rounded-tl-none'
+                            } ${Object.keys(reactionsMapping).length > 0 ? 'mb-3' : ''}`}
+                               onClick={() => {
+                                 // On mobile tap to toggle actions
+                                 if (window.innerWidth < 768) {
+                                   setShowReactFor(showReactFor === m.id ? null : m.id);
+                                 }
+                               }}
+                            >
+                               {/* Reaction Popup */}
+                               {showReactFor === m.id && (
+                                  <div className="absolute top-[-40px] left-0 md:left-auto md:right-0 bg-white dark:bg-[#2a3942] shadow-lg border border-slate-200 dark:border-white/10 rounded-full flex gap-2 p-1.5 z-20">
+                                     {['👍', '❤️', '😂', '😮', '😢', '🙏'].map(emoji => (
+                                       <button key={emoji} onClick={async (e) => {
+                                          e.stopPropagation();
+                                          await updateDoc(doc(db, 'chat_messages', m.id), { [`reactions.${profile?.uid}`]: emoji }).catch(console.error);
+                                          setShowReactFor(null);
+                                       }} className="text-lg hover:scale-125 transition-transform origin-bottom">{emoji}</button>
+                                     ))}
+                                     <button onClick={(e) => { e.stopPropagation(); setShowReactFor(null); }} className="p-1 text-slate-400 hover:text-red-500"><XIcon className="w-4 h-4" /></button>
+                                     
+                                     {/* Mobile Actions in popup */}
+                                     <div className="md:hidden flex items-center border-l dark:border-white/10 pl-2 ml-1">
+                                        <button onClick={(e) => { e.stopPropagation(); setReplyingTo(m); setShowReactFor(null); }} className="p-1 text-wa-teal"><Reply className="w-4 h-4" /></button>
+                                        {isOwn && <button onClick={(e) => { e.stopPropagation(); deleteDoc(doc(db, 'chat_messages', m.id)); setShowReactFor(null); }} className="p-1 text-red-500"><Trash2 className="w-4 h-4" /></button>}
+                                     </div>
+                                  </div>
+                               )}
 
-                            {m.attachmentUrl && (
-                               <div className="mt-2 rounded-lg bg-black/5 p-1">
-                                  {m.attachmentType.startsWith('image/') ? (
-                                    <img 
-                                      src={m.attachmentUrl} 
-                                      alt="" 
-                                      className="w-full max-h-64 object-contain rounded cursor-pointer"
-                                      onClick={() => setViewMaterial({ url: m.attachmentUrl, title: m.attachmentName, type: 'image' })}
-                                    />
-                                  ) : (
-                                    <button 
-                                      onClick={() => setViewMaterial({ url: m.attachmentUrl, title: m.attachmentName, type: 'pdf' })}
-                                      className="flex items-center gap-2 p-2 w-full text-left bg-white dark:bg-[#2a3942] rounded"
-                                    >
-                                       <FileText className="w-6 h-6 text-wa-teal" />
-                                       <span className="text-xs truncate font-medium flex-1">{m.attachmentName}</span>
-                                    </button>
-                                  )}
+                               {/* Reply Block */}
+                               {m.replyTo && (
+                                  <div className="mb-2 bg-black/5 dark:bg-black/20 p-2 rounded border-l-4 border-wa-teal max-w-full">
+                                    <p className="text-[10px] font-bold text-wa-teal truncate">{m.replyTo.senderName}</p>
+                                    <p className="text-xs text-slate-600 dark:text-slate-400 truncate mt-0.5">{m.replyTo.content || 'Attachment'}</p>
+                                  </div>
+                               )}
+
+                               {selectedChat.type === 'group' && !isOwn && (
+                                  <p className="text-xs font-bold text-wa-teal dark:text-[#53bdeb] mb-1">{m.senderName}</p>
+                               )}
+
+                               {m.content && (
+                                 <p className={`text-sm leading-relaxed whitespace-pre-wrap ${isOwn ? 'text-slate-900 dark:text-[#e9edef]' : 'text-slate-700 dark:text-[#d1d7db]'}`}>
+                                    {m.content}
+                                 </p>
+                               )}
+
+                               {m.attachmentUrl && (
+                                  <div className={`mt-2 rounded-lg bg-black/5 p-1 ${!m.content ? 'mt-0' : ''}`}>
+                                    {m.attachmentType.startsWith('image/') ? (
+                                      <img 
+                                        src={m.attachmentUrl} 
+                                        alt="" 
+                                        className="w-full max-h-64 object-contain rounded cursor-pointer"
+                                        onClick={() => setViewMaterial({ url: m.attachmentUrl, title: m.attachmentName, type: 'image' })}
+                                      />
+                                    ) : (
+                                      <button 
+                                        onClick={() => setViewMaterial({ url: m.attachmentUrl, title: m.attachmentName, type: 'pdf' })}
+                                        className="flex items-center gap-2 p-2 w-full text-left bg-white dark:bg-[#2a3942] rounded"
+                                      >
+                                         <FileText className="w-6 h-6 text-wa-teal" />
+                                         <span className="text-xs truncate font-medium flex-1">{m.attachmentName}</span>
+                                      </button>
+                                    )}
+                                  </div>
+                               )}
+
+                               <div className="flex justify-end items-center gap-1 mt-1 opacity-60">
+                                  <span className="text-[10px]">{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                  {isOwn && <CheckCheck className={`w-3 h-3 transition-colors ${m.seenBy?.length > 0 ? 'text-[#53bdeb]' : ''}`} />}
                                </div>
-                            )}
 
-                            <div className="flex justify-end items-center gap-1 mt-1 opacity-60">
-                               <span className="text-[10px]">{new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                               {isOwn && <CheckCheck className="w-3 h-3" />}
+                               {/* Render Reactions */}
+                               {Object.keys(reactionsMapping).length > 0 && (
+                                  <div className={`absolute bottom-[-14px] ${isOwn ? 'right-2' : 'left-2'} bg-white dark:bg-[#202c33] shadow-sm rounded-full px-1.5 py-0.5 border border-slate-100 dark:border-white/5 flex gap-1 items-center text-xs z-10`}>
+                                     {Object.entries(reactionsMapping).map(([emoji, uids]: any) => (
+                                        <span key={emoji} className="flex gap-0.5 items-center">
+                                          {emoji} {uids.length > 1 && <span className="text-[10px] text-slate-500 font-bold">{uids.length}</span>}
+                                        </span>
+                                     ))}
+                                  </div>
+                               )}
                             </div>
                          </div>
-                      </div>
+                      </motion.div>
                     );
                   })
                 )}
@@ -605,6 +703,15 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                    <div className="flex-1 relative">
                       <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
                          <div className="flex-1 relative bg-white dark:bg-[#2a3942] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm focus-within:border-wa-teal transition-all overflow-hidden flex flex-col">
+                            {replyingTo && (
+                               <div className="bg-slate-50 dark:bg-[#182229] p-2 sm:p-3 border-l-4 border-wa-teal flex justify-between items-start relative">
+                                  <div className="flex-1 min-w-0 pr-4">
+                                     <p className="text-xs font-bold text-wa-teal truncate">{replyingTo.senderName}</p>
+                                     <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{replyingTo.content || 'Attachment'}</p>
+                                  </div>
+                                  <button type="button" onClick={() => setReplyingTo(null)} className="absolute top-1/2 -translate-y-1/2 right-2 text-slate-400 hover:text-red-500 rounded-full p-1"><XIcon className="w-4 h-4" /></button>
+                               </div>
+                            )}
                             {replyFile && (
                                <div className="bg-slate-50 dark:bg-[#202c33] p-2 sm:p-3 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
                                   <div className="flex items-center gap-2 text-xs font-bold text-wa-teal truncate">
