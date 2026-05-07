@@ -67,6 +67,42 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
     }
   }, [selectedChat, chatNotifications]);
 
+  useEffect(() => {
+    const handleOpenChat = (e: any) => {
+      const chatId = e.detail?.chatId;
+      if (!chatId) return;
+
+      if (chatId.startsWith('group_')) {
+        const parts = chatId.split('_');
+        const semIndex = parts.length - 1;
+        const sem = parts[semIndex];
+        const dept = parts.slice(1, semIndex).join('_');
+        setSelectedChat({
+          id: chatId,
+          type: 'group',
+          name: `${dept} - Semester ${sem}`,
+          department: dept,
+          semester: sem
+        });
+      } else {
+        const uids = chatId.split('_');
+        const otherUserId = uids.find((id: string) => id !== profile?.uid);
+        if (otherUserId) {
+          const otherUser = allUsers[otherUserId];
+           setSelectedChat({
+              id: chatId,
+              type: 'private',
+              name: otherUser?.name || 'User',
+              participantId: otherUserId,
+              avatarUrl: otherUser?.avatarUrl
+            });
+        }
+      }
+    };
+    window.addEventListener('OPEN_CHAT', handleOpenChat);
+    return () => window.removeEventListener('OPEN_CHAT', handleOpenChat);
+  }, [profile, allUsers]);
+
   // Fetch initial data
   useEffect(() => {
     if (!profile) return;
@@ -207,6 +243,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
           senderName: senderNameToUse,
           recipientId: selectedChat.participantId,
           relatedId: selectedChat.id,
+          isAnonymous: isAnonymous,
         });
       } else if (selectedChat.type === 'group') {
          await sendNotification({
@@ -218,7 +255,8 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
           targetRole: 'ALL',
           relatedId: selectedChat.id,
           targetDept: selectedChat.department,
-          targetSem: selectedChat.semester
+          targetSem: selectedChat.semester,
+          isAnonymous: isAnonymous,
         });
       }
 
@@ -248,9 +286,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const renderSidebar = () => {
     if (loading) return <div className="p-4 flex justify-center"><Loader2 className="animate-spin text-wa-teal w-6 h-6" /></div>;
 
-    const teacherObj = Object.values(allUsers).find(u => u.role === 'teacher');
-    const peers = Object.values(allUsers).filter(u => u.role === 'student' && u.id !== profile?.uid && (u.courseId === profile?.courseId || u.courseId === profile?.courseName || u.courseName === profile?.courseName || u.courseName === profile?.courseId || u.department === profile?.department || u.department === profile?.courseId) && String(u.semester) === String(profile?.semester));
-    const allStudentsList = Object.values(allUsers).filter(u => u.role === 'student' && u.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    const teacherObj = Object.values(allUsers).find((u: any) => u.role === 'teacher');
+    const peers = Object.values(allUsers).filter((u: any) => u.role === 'student' && u.id !== profile?.uid && (u.courseId === profile?.courseId || u.courseId === profile?.courseName || u.courseName === profile?.courseName || u.courseName === profile?.courseId || u.department === profile?.department || u.department === profile?.courseId) && String(u.semester) === String(profile?.semester));
+    const allStudentsList = Object.values(allUsers).filter((u: any) => u.role === 'student' && u.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
     return (
       <div className="flex-1 overflow-y-auto custom-scrollbar">
@@ -578,7 +616,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                             onChange={(e) => setIsAnonymous(e.target.checked)}
                             className="w-3.5 h-3.5 rounded-sm border-slate-300 dark:border-slate-600 outline-none accent-wa-teal"
                           />
-                          <span>Send anonymously</span>
+                          <span>Hide My Identity</span>
                        </label>
                     </div>
                  )}

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Home, 
@@ -14,13 +14,15 @@ import {
   Sun,
   X,
   Trash2,
-  GraduationCap
+  GraduationCap,
+  LogOut
 } from 'lucide-react';
+import { signOut } from 'firebase/auth';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { subscribeToNotifications, markAsRead, deleteNotification, Notification } from '../../services/notificationService';
 import { writeBatch, doc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { auth, db } from '../../firebase';
 import TeacherDashboard from './Dashboard';
 import MaterialManager from './MaterialManager';
 import DoubtSection from '../shared/DoubtSection';
@@ -29,6 +31,7 @@ import FeeManagement from './FeeManagement';
 import Profile from '../shared/Profile';
 import AttendanceGenerator from './AttendanceGenerator';
 import AdminDashboard from '../admin/AdminDashboard';
+import SidebarNavigation from '../../components/SidebarNavigation';
 
 const TABS = [
   { id: 'dashboard', label: 'Home', icon: Home, component: TeacherDashboard },
@@ -45,6 +48,9 @@ export default function TeacherView() {
   const { profile } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab ] = useState(0);
+  const activeTabRef = useRef(activeTab);
+  useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [direction, setDirection] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -54,7 +60,12 @@ export default function TeacherView() {
   useEffect(() => {
     if (!profile) return;
     const unsub = subscribeToNotifications(profile.uid, 'teacher', (list) => {
-        setNotifications(list.filter(n => n.type !== 'chat_message' && n.type !== 'group_chat_message'));
+        setNotifications(list.filter(n => {
+            if(n.type === 'chat_message' || n.type === 'group_chat_message') {
+                return activeTabRef.current !== 3;
+            }
+            return true;
+        }));
     });
     return () => unsub();
   }, [profile]);
@@ -107,7 +118,16 @@ export default function TeacherView() {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#f0f2f5] dark:bg-[#111b21] overflow-hidden flex flex-col font-sans">
+    <div className="fixed inset-0 bg-[#f0f2f5] dark:bg-[#111b21] overflow-hidden flex flex-col md:flex-row font-sans">
+      <SidebarNavigation 
+        tabs={TABS} 
+        activeTab={activeTab} 
+        onTabChange={changeTab} 
+        isOpen={isSidebarOpen} 
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
+
+      <div className="flex-1 flex flex-col min-w-0">
       {/* WhatsApp Header */}
       <header className="bg-wa-teal dark:bg-[#202c33] text-white pt-2 px-4 sm:px-6 shadow-lg z-[60] border-b border-wa-teal/10">
         <div className="flex justify-between items-center h-16">
@@ -137,6 +157,12 @@ export default function TeacherView() {
               className="w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-2xl transition-all active:scale-95 border border-white/5"
             >
               {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+            <button 
+              onClick={() => signOut(auth)}
+              className="w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-red-500 rounded-2xl transition-all active:scale-95 border border-white/5 text-white"
+            >
+              <LogOut className="w-5 h-5" />
             </button>
           </div>
         </div>
@@ -202,8 +228,13 @@ export default function TeacherView() {
                       onClick={() => {
                         markAsRead(notif.id!);
                         setShowNotifications(false);
-                        if (['doubt_reply', 'doubt_raised'].includes(notif.type)) {
+                        if (['doubt_reply', 'doubt_raised', 'chat_message', 'group_chat_message'].includes(notif.type)) {
                            changeTab(3);
+                           if (notif.relatedId) {
+                             setTimeout(() => {
+                               window.dispatchEvent(new CustomEvent('OPEN_CHAT', { detail: { chatId: notif.relatedId } }));
+                             }, 100);
+                           }
                         }
                       }}
                     >
@@ -261,7 +292,7 @@ export default function TeacherView() {
       </main>
 
       {/* Static Footer Navigation */}
-      <footer className="bg-white dark:bg-[#202c33] border-t border-slate-200 dark:border-white/5 pb-safe z-[60]">
+      <footer className="bg-white dark:bg-[#202c33] border-t border-slate-200 dark:border-white/5 pb-safe z-[60] md:hidden">
         <div className="w-full flex justify-between items-center px-1 sm:px-8 py-2 md:py-3 max-w-full md:max-w-6xl mx-auto md:gap-2">
         {TABS.map((tab, index) => {
           const isActive = activeTab === index;
@@ -286,6 +317,7 @@ export default function TeacherView() {
         )})}
         </div>
       </footer>
+      </div>
     </div>
   );
 }

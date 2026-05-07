@@ -10,13 +10,18 @@ import {
   Shield,
   GraduationCap,
   Bell,
+  Moon,
+  Sun,
   X,
-  Trash2
+  Trash2,
+  LogOut
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { signOut } from 'firebase/auth';
 import { subscribeToNotifications, markAsRead, deleteNotification, Notification } from '../../services/notificationService';
 import { writeBatch, doc } from 'firebase/firestore';
-import { db } from '../../firebase';
+import { auth, db } from '../../firebase';
 import Home from './Home';
 import Materials from './Materials';
 import DoubtSection from '../shared/DoubtSection';
@@ -25,6 +30,7 @@ import PaymentHistory from './PaymentHistory';
 import Profile from '../shared/Profile';
 import AttendanceScanner from './AttendanceScanner';
 import { QrCode } from 'lucide-react';
+import SidebarNavigation from '../../components/SidebarNavigation';
 
 const TABS = [
   { id: 'home', label: 'Home', icon: Calendar, component: Home, hidden: false },
@@ -38,7 +44,11 @@ const TABS = [
 
 export default function StudentView() {
   const { profile } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab ] = useState(0);
+  const activeTabRef = useRef(activeTab);
+  useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [direction, setDirection] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -48,7 +58,12 @@ export default function StudentView() {
     if (!profile) return;
     const dept = profile.courseId || profile.courseName || profile.department;
     const unsub = subscribeToNotifications(profile.uid, 'student', (list) => {
-        setNotifications(list.filter(n => n.type !== 'chat_message' && n.type !== 'group_chat_message'));
+        setNotifications(list.filter(n => {
+            if(n.type === 'chat_message' || n.type === 'group_chat_message') {
+                return activeTabRef.current !== 2;
+            }
+            return true;
+        }));
     }, dept, String(profile.semester));
     return () => unsub();
   }, [profile]);
@@ -84,7 +99,16 @@ export default function StudentView() {
   };
 
   return (
-    <div className="fixed inset-0 bg-[#f0f2f5] dark:bg-[#111b21] overflow-hidden flex flex-col font-sans">
+    <div className="fixed inset-0 bg-[#f0f2f5] dark:bg-[#111b21] overflow-hidden flex flex-col md:flex-row font-sans">
+      <SidebarNavigation 
+        tabs={TABS} 
+        activeTab={activeTab} 
+        onTabChange={changeTab} 
+        isOpen={isSidebarOpen} 
+        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+      />
+      
+      <div className="flex-1 flex flex-col min-w-0">
       {/* WhatsApp Header */}
       <header className="bg-wa-teal dark:bg-[#202c33] text-white pt-2 px-4 sm:px-6 shadow-lg z-[60] border-b border-wa-teal/10">
         <div className="flex justify-between items-center h-16">
@@ -94,7 +118,7 @@ export default function StudentView() {
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-normal leading-none">Tuition<span className="opacity-80">Hub</span></h1>
-              <p className="text-sm font-bold tracking-normal text-white/80 mt-1.5">Student Account</p>
+              <p className="text-sm font-bold tracking-normal text-white/80 mt-1.5 ">Student Account</p>
             </div>
           </div>
           <div className="flex items-center gap-4">
@@ -108,6 +132,18 @@ export default function StudentView() {
                   {unreadCount}
                 </span>
               )}
+            </button>
+            <button 
+              onClick={toggleTheme}
+              className="w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-2xl transition-all active:scale-95 border border-white/5"
+            >
+              {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+            <button 
+              onClick={() => signOut(auth)}
+              className="w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-red-500 rounded-2xl transition-all active:scale-95 border border-white/5 text-white"
+            >
+              <LogOut className="w-5 h-5" />
             </button>
             <div className="w-11 h-11 rounded-2xl bg-white/10 overflow-hidden border border-white/20 shadow-inner group cursor-pointer hover:scale-105 transition-transform" onClick={() => changeTab(5)}>
                {profile?.avatarUrl ? (
@@ -189,8 +225,13 @@ export default function StudentView() {
                       onClick={() => {
                         markAsRead(notif.id!);
                         setShowNotifications(false);
-                        if (['doubt_reply', 'doubt_raised'].includes(notif.type)) {
+                        if (['doubt_reply', 'doubt_raised', 'chat_message', 'group_chat_message'].includes(notif.type)) {
                            changeTab(2);
+                           if (notif.relatedId) {
+                             setTimeout(() => {
+                               window.dispatchEvent(new CustomEvent('OPEN_CHAT', { detail: { chatId: notif.relatedId } }));
+                             }, 100);
+                           }
                         }
                       }}
                     >
@@ -248,7 +289,7 @@ export default function StudentView() {
       </div>
 
       {/* Static Footer Navigation */}
-      <footer className="bg-white dark:bg-[#202c33] border-t border-slate-200 dark:border-white/5 pb-safe z-[60]">
+      <footer className="bg-white dark:bg-[#202c33] border-t border-slate-200 dark:border-white/5 pb-safe z-[60] md:hidden">
         <div className="w-full flex justify-between items-center px-2 sm:px-8 py-2 md:py-3 max-w-full md:max-w-5xl mx-auto md:gap-4">
         {TABS.filter(t => !t.hidden).map((tab) => {
           const index = TABS.findIndex(t => t.id === tab.id);
@@ -274,6 +315,7 @@ export default function StudentView() {
         )})}
         </div>
       </footer>
+      </div>
     </div>
   );
 }
