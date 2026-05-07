@@ -53,6 +53,11 @@ export default function StudentView() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
+  // Calculate unread chat messages for badges
+  const unreadChatCount = notifications.filter(n => !n.read && (n.type === 'chat_message' || n.type === 'group_chat_message')).length;
+  const badges: Record<string, number> = {
+    doubts: unreadChatCount
+  };
 
   useEffect(() => {
     if (!profile) return;
@@ -106,6 +111,7 @@ export default function StudentView() {
         onTabChange={changeTab} 
         isOpen={isSidebarOpen} 
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        badges={badges}
       />
       
       <div className="flex-1 flex flex-col min-w-0">
@@ -304,7 +310,14 @@ export default function StudentView() {
                 : 'text-slate-500 dark:text-[#8696a0] hover:text-wa-teal hover:bg-slate-50 dark:hover:bg-slate-800/50'
             }`}
           >
-            <tab.icon className={`w-5 h-5 sm:w-6 sm:h-6 mb-1 ${isActive ? 'fill-wa-teal/20 dark:fill-wa-green/20 scale-110' : ''} transition-transform`} />
+            <div className="relative">
+              <tab.icon className={`w-5 h-5 sm:w-6 sm:h-6 mb-1 ${isActive ? 'fill-wa-teal/20 dark:fill-wa-green/20 scale-110' : ''} transition-transform`} />
+              {badges[tab.id] > 0 && (
+                <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center border border-white dark:border-[#202c33]">
+                  {badges[tab.id]}
+                </span>
+              )}
+            </div>
             
             <span 
               className={`text-[10px] sm:text-xs font-bold tracking-wide truncate w-full text-center ${isActive ? 'text-wa-teal dark:text-wa-green' : 'text-slate-600 dark:text-slate-300'}`}

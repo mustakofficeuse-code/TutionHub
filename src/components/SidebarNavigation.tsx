@@ -14,9 +14,10 @@ interface SidebarProps {
   onTabChange: (index: number) => void;
   isOpen: boolean;
   onToggle: () => void;
+  badges?: Record<string, number>;
 }
 
-export default function SidebarNavigation({ tabs, activeTab, onTabChange, isOpen, onToggle }: SidebarProps) {
+export default function SidebarNavigation({ tabs, activeTab, onTabChange, isOpen, onToggle, badges = {} }: SidebarProps) {
   return (
     <motion.div 
       initial={false}
@@ -45,14 +46,21 @@ export default function SidebarNavigation({ tabs, activeTab, onTabChange, isOpen
             <button
               key={tab.id}
               onClick={() => onTabChange(actualIndex)}
-              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all ${
+              className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all relative ${
                 isActive 
                   ? 'bg-wa-teal/10 text-wa-teal dark:bg-wa-teal/10 dark:text-wa-green' 
                   : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`}
               title={tab.label}
             >
-              <tab.icon className="w-5 h-5 shrink-0" />
+              <div className="relative">
+                <tab.icon className="w-5 h-5 shrink-0" />
+                {badges[tab.id] > 0 && (
+                  <span className="absolute -top-1 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center border border-white dark:border-[#111b21]">
+                     {badges[tab.id]}
+                  </span>
+                )}
+              </div>
               {isOpen && <span className="font-bold truncate">{tab.label}</span>}
               {isActive && <motion.div layoutId="active-nav" className="absolute left-0 w-1 h-8 bg-wa-teal rounded-r-full" />}
             </button>

@@ -286,7 +286,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const renderSidebar = () => {
     if (loading) return <div className="p-4 flex justify-center"><Loader2 className="animate-spin text-wa-teal w-6 h-6" /></div>;
 
-    const teacherObj = Object.values(allUsers).find((u: any) => u.role === 'teacher');
+    const teacherObj: any = Object.values(allUsers).find((u: any) => u.role === 'teacher');
     const peers = Object.values(allUsers).filter((u: any) => u.role === 'student' && u.id !== profile?.uid && (u.courseId === profile?.courseId || u.courseId === profile?.courseName || u.courseName === profile?.courseName || u.courseName === profile?.courseId || u.department === profile?.department || u.department === profile?.courseId) && String(u.semester) === String(profile?.semester));
     const allStudentsList = Object.values(allUsers).filter((u: any) => u.role === 'student' && u.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
@@ -355,6 +355,31 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                <span>Direct Messages</span>
                <button onClick={() => setShowStudentsList(!showStudentsList)} className="text-wa-teal hover:bg-wa-teal/10 p-1 rounded"><Plus className="w-4 h-4" /></button>
             </div>
+
+            <div className="space-y-[1px]">
+              {Object.values(allUsers)
+                .filter((u: any) => u.role === 'student' && unreadCounts[getDMId(profile!.uid, u.id).toLowerCase()]! > 0)
+                .map((s: any) => (
+                  <button
+                     key={s.id}
+                     onClick={() => startPrivateChat(s.id)}
+                     className={`w-full flex items-center justify-between gap-3 p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-all border-b border-slate-50 dark:border-white/5 ${selectedChat?.id === getDMId(profile!.uid, s.id) ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : ''}`}
+                  >
+                     <div className="flex items-center gap-3">
+                       <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-wa-teal">
+                          {s.avatarUrl ? <img src={s.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-5 h-5" />}
+                       </div>
+                       <div className="text-left max-w-[120px]">
+                         <div className="font-bold text-slate-900 dark:text-[#e9edef] truncate">{s.name}</div>
+                         <div className="text-[10px] text-slate-500 truncate">{s.courseId} - Sem {s.semester}</div>
+                       </div>
+                     </div>
+                     <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                        {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()]}
+                     </span>
+                  </button>
+                ))}
+            </div>
             
             {showStudentsList && (
               <div className="p-2 bg-slate-50 dark:bg-[#202c33]">
@@ -363,15 +388,22 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                   <input type="text" placeholder="Search student..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-lg outline-none text-slate-800 dark:text-white" />
                 </div>
                 <div className="max-h-48 overflow-y-auto custom-scrollbar space-y-1">
-                  {allStudentsList.map(s => (
-                    <button key={s.id} onClick={() => startPrivateChat(s.id)} className="w-full flex items-center gap-2 p-2 hover:bg-white dark:hover:bg-[#2a3942] rounded-lg transition-all text-left">
-                      <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200">
-                        {s.avatarUrl ? <img src={s.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-4 h-4 text-slate-500 m-2" />}
+                  {allStudentsList.map((s: any) => (
+                    <button key={s.id} onClick={() => startPrivateChat(s.id)} className="w-full flex justify-between items-center gap-2 p-2 hover:bg-white dark:hover:bg-[#2a3942] rounded-lg transition-all text-left">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0">
+                          {s.avatarUrl ? <img src={s.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-4 h-4 text-slate-500 m-2" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm font-bold text-slate-800 dark:text-[#e9edef] truncate">{s.name}</div>
+                          <div className="text-xs text-slate-500 truncate">{s.courseId} - Sem {s.semester}</div>
+                        </div>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-bold text-slate-800 dark:text-[#e9edef] truncate">{s.name}</div>
-                        <div className="text-xs text-slate-500 truncate">{s.courseId} - Sem {s.semester}</div>
-                      </div>
+                      {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()] > 0 && (
+                        <span className="bg-wa-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full text-center shrink-0">
+                           {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()]}
+                        </span>
+                      )}
                     </button>
                   ))}
                 </div>
@@ -430,7 +462,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               </button>
             )}
 
-            {peers.map(peer => (
+            {peers.map((peer: any) => (
               <button
                  key={peer.id}
                  onClick={() => startPrivateChat(peer.id)}
