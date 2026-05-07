@@ -45,6 +45,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [replyingTo, setReplyingTo] = useState<any>(null);
   const [showReactFor, setShowReactFor] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<'all' | any>(null);
   
   const replyInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -55,6 +56,23 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [chatNotifications, setChatNotifications] = useState<any[]>([]);
+  const [sidebarWidth, setSidebarWidth] = useState(350);
+
+  const startSidebarResize = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const handleMouseMove = (mouseEvent: MouseEvent) => {
+      let newWidth = mouseEvent.clientX;
+      if (newWidth < 250) newWidth = 250;
+      if (newWidth > 600) newWidth = 600;
+      setSidebarWidth(newWidth);
+    };
+    const handleMouseUp = () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+  };
 
   // keep ref up to date
   useEffect(() => {
@@ -174,7 +192,8 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         }
       });
 
-      setMessages(fetchedMessages);
+      const visibleMessages = fetchedMessages.filter((m: any) => !m.deletedFor?.includes(profile?.uid));
+      setMessages(visibleMessages);
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
@@ -375,10 +394,45 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               ))}
             </div>
 
-            <div className="px-4 py-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider flex justify-between items-center">
-               <span>Direct Messages</span>
-               <button onClick={() => setShowStudentsList(!showStudentsList)} className="text-wa-teal hover:bg-wa-teal/10 p-1 rounded"><Plus className="w-4 h-4" /></button>
+            <div className="px-4 py-3 bg-white dark:bg-[#182229] border-y border-slate-200 dark:border-white/10 flex justify-between items-center sticky top-0 z-10 shadow-sm">
+               <span className="font-bold text-slate-800 dark:text-[#e9edef] text-sm">Direct Messages</span>
+               <button onClick={() => setShowStudentsList(!showStudentsList)} className="text-white bg-wa-teal hover:opacity-90 px-2 py-1 rounded text-xs flex items-center gap-1 font-medium transition-opacity">
+                  <Plus className="w-3 h-3" /> New Chat
+               </button>
             </div>
+
+            {showStudentsList && (
+              <div className="p-3 bg-slate-50 dark:bg-[#202c33] border-b border-slate-200 dark:border-white/10">
+                <div className="relative mb-2">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input type="text" placeholder="Search student by name..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-[#111b21] border border-wa-teal/30 focus:border-wa-teal rounded-lg outline-none text-slate-800 dark:text-white shadow-sm transition-colors" />
+                </div>
+                <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1 bg-white dark:bg-[#111b21] rounded-lg border border-slate-100 dark:border-white/5 p-1 shadow-inner">
+                  {allStudentsList.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-500">No students found</div>
+                  ) : (
+                    allStudentsList.map((s: any) => (
+                      <button key={s.id} onClick={() => startPrivateChat(s.id)} className="w-full flex justify-between items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-[#2a3942] rounded-md transition-all text-left group">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 flex items-center justify-center">
+                            {s.avatarUrl ? <img src={s.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-slate-400" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-slate-800 dark:text-[#e9edef] group-hover:text-wa-teal transition-colors truncate">{s.name}</div>
+                            <div className="text-xs text-slate-500 truncate">{s.courseId} - Sem {s.semester}</div>
+                          </div>
+                        </div>
+                        {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()] > 0 && (
+                          <span className="bg-wa-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full text-center shrink-0">
+                             {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()]}
+                          </span>
+                        )}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
 
             <div className="space-y-[1px]">
               {Object.values(allUsers)
@@ -404,35 +458,6 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                   </button>
                 ))}
             </div>
-            
-            {showStudentsList && (
-              <div className="p-2 bg-slate-50 dark:bg-[#202c33]">
-                <div className="relative mb-2">
-                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input type="text" placeholder="Search student..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-lg outline-none text-slate-800 dark:text-white" />
-                </div>
-                <div className="max-h-48 overflow-y-auto custom-scrollbar space-y-1">
-                  {allStudentsList.map((s: any) => (
-                    <button key={s.id} onClick={() => startPrivateChat(s.id)} className="w-full flex justify-between items-center gap-2 p-2 hover:bg-white dark:hover:bg-[#2a3942] rounded-lg transition-all text-left">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-200 shrink-0">
-                          {s.avatarUrl ? <img src={s.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-4 h-4 text-slate-500 m-2" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-bold text-slate-800 dark:text-[#e9edef] truncate">{s.name}</div>
-                          <div className="text-xs text-slate-500 truncate">{s.courseId} - Sem {s.semester}</div>
-                        </div>
-                      </div>
-                      {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()] > 0 && (
-                        <span className="bg-wa-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full text-center shrink-0">
-                           {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()]}
-                        </span>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </>
         ) : (
           <>
@@ -463,7 +488,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                )}
             </button>
 
-            <div className="px-4 py-4 pb-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Direct Messages</div>
+            <div className="px-4 py-3 bg-white dark:bg-[#182229] border-y border-slate-200 dark:border-white/10 sticky top-0 z-10 shadow-sm mt-4">
+               <span className="font-bold text-slate-800 dark:text-[#e9edef] text-sm">Direct Messages</span>
+            </div>
             {teacherObj && (
               <button
                  onClick={() => startPrivateChat(teacherObj.id)}
@@ -519,7 +546,10 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       <div className="flex-1 flex max-w-[1600px] mx-auto w-full overflow-hidden">
         
         {/* Left Sidebar */}
-        <div className={`w-full md:w-[350px] lg:w-[400px] border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111b21] flex flex-col ${selectedChat ? 'hidden md:flex' : 'flex'}`}>
+        <div 
+          className={`w-full border-r border-slate-200 dark:border-slate-800 bg-white dark:bg-[#111b21] flex flex-col relative ${selectedChat ? 'hidden md:flex' : 'flex'}`}
+          style={{ width: window.innerWidth >= 768 ? sidebarWidth : '100%', flexShrink: 0, flexBasis: window.innerWidth >= 768 ? sidebarWidth : '100%' }}
+        >
           <div className="p-4 bg-[#f0f2f5] dark:bg-[#202c33] flex items-center gap-3">
              <div className="w-10 h-10 bg-wa-teal rounded-full flex items-center justify-center text-white font-bold shrink-0">
                 {profile?.name?.charAt(0)}
@@ -527,6 +557,11 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
              <h2 className="font-bold text-slate-800 dark:text-[#e9edef]">Doubts & Chat</h2>
           </div>
           {renderSidebar()}
+          {/* Drag Handle */}
+          <div 
+            onMouseDown={startSidebarResize}
+            className="hidden md:block absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-wa-teal transition-colors z-50 translate-x-1/2"
+          />
         </div>
 
         {/* Right Chat Area */}
@@ -544,7 +579,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
           ) : (
             <>
               {/* Chat Header */}
-              <div className="h-16 bg-[#f0f2f5] dark:bg-[#202c33] px-4 flex items-center gap-3 shrink-0 z-10 border-l border-slate-200 dark:border-slate-700 shadow-sm">
+              <div className="h-16 bg-[#f0f2f5] dark:bg-[#202c33] px-4 flex items-center gap-3 shrink-0 z-10 border-l border-slate-200 dark:border-slate-700 shadow-sm relative group/header">
                 <button onClick={() => setSelectedChat(null)} className="md:hidden text-slate-500 p-2 -ml-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
                    <ArrowLeft className="w-6 h-6" />
                 </button>
@@ -559,10 +594,19 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                      {selectedChat.type === 'group' ? 'Group Doubt Chat' : 'Private Conversation'}
                   </p>
                 </div>
+                {messages.length > 0 && (
+                  <button 
+                    onClick={() => setDeleteTarget('all')}
+                    className="p-2 text-slate-500 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors flex items-center justify-center"
+                    title="Delete All My Messages"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                  </button>
+                )}
               </div>
 
               {/* Chat Window */}
-              <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 custom-scrollbar bg-chat-pattern">
+              <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 space-y-4 custom-scrollbar bg-chat-pattern">
                 {messages.length === 0 ? (
                   <div className="flex justify-center mt-10">
                      <span className="bg-[#ffeecd] dark:bg-[#182229] text-slate-700 dark:text-slate-300 px-4 py-2 text-sm rounded-lg shadow-sm text-center">
@@ -590,13 +634,13 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                         dragElastic={0.1}
                         onDragEnd={(_, info) => { if (Math.abs(info.offset.x) > 50) setReplyingTo(m) }}
                       >
-                         <div className={`max-w-[85%] sm:max-w-[70%] relative flex gap-2 items-center ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}>
+                         <div className={`max-w-[100%] sm:max-w-[85%] relative flex gap-2 items-center ${isOwn ? 'flex-row' : 'flex-row-reverse'}`}>
                             
                             {/* Actions visible on hover */}
                             <div className={`hidden md:flex opacity-0 group-hover:opacity-100 items-center gap-1 transition-opacity bg-white/50 dark:bg-black/50 p-1 rounded-full shadow-sm`}>
                               <button onClick={() => setReplyingTo(m)} className="p-1 hover:text-wa-teal" title="Reply"><Reply className="w-4 h-4" /></button>
                               <button onClick={() => setShowReactFor(showReactFor === m.id ? null : m.id)} className="p-1 hover:text-yellow-500" title="React"><Smile className="w-4 h-4" /></button>
-                              {isOwn && <button onClick={() => deleteDoc(doc(db, 'chat_messages', m.id))} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-4 h-4" /></button>}
+                              <button onClick={() => setDeleteTarget(m)} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-4 h-4" /></button>
                             </div>
 
                             <div className={`p-2 px-3 rounded-xl shadow-sm relative ${
@@ -611,20 +655,20 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                             >
                                {/* Reaction Popup */}
                                {showReactFor === m.id && (
-                                  <div className="absolute top-[-40px] left-0 md:left-auto md:right-0 bg-white dark:bg-[#2a3942] shadow-lg border border-slate-200 dark:border-white/10 rounded-full flex gap-2 p-1.5 z-20">
+                                  <div className={`absolute bottom-full mb-1 ${isOwn ? 'right-0' : 'left-0'} bg-white dark:bg-[#2a3942] shadow-[0_4px_12px_rgba(0,0,0,0.1)] border border-slate-200 dark:border-white/10 rounded-2xl flex items-center gap-1 p-1 z-50 w-max max-w-[85vw] flex-wrap`}>
                                      {['👍', '❤️', '😂', '😮', '😢', '🙏'].map(emoji => (
                                        <button key={emoji} onClick={async (e) => {
                                           e.stopPropagation();
                                           await updateDoc(doc(db, 'chat_messages', m.id), { [`reactions.${profile?.uid}`]: emoji }).catch(console.error);
                                           setShowReactFor(null);
-                                       }} className="text-lg hover:scale-125 transition-transform origin-bottom">{emoji}</button>
+                                       }} className="text-base sm:text-lg hover:scale-125 transition-transform origin-bottom px-1">{emoji}</button>
                                      ))}
-                                     <button onClick={(e) => { e.stopPropagation(); setShowReactFor(null); }} className="p-1 text-slate-400 hover:text-red-500"><XIcon className="w-4 h-4" /></button>
+                                     <button onClick={(e) => { e.stopPropagation(); setShowReactFor(null); }} className="p-1 text-slate-400 hover:text-red-500 ml-1"><XIcon className="w-4 h-4" /></button>
                                      
                                      {/* Mobile Actions in popup */}
-                                     <div className="md:hidden flex items-center border-l dark:border-white/10 pl-2 ml-1">
-                                        <button onClick={(e) => { e.stopPropagation(); setReplyingTo(m); setShowReactFor(null); }} className="p-1 text-wa-teal"><Reply className="w-4 h-4" /></button>
-                                        {isOwn && <button onClick={(e) => { e.stopPropagation(); deleteDoc(doc(db, 'chat_messages', m.id)); setShowReactFor(null); }} className="p-1 text-red-500"><Trash2 className="w-4 h-4" /></button>}
+                                     <div className="md:hidden flex items-center border-l border-slate-200 dark:border-white/10 pl-1 sm:pl-2 ml-1">
+                                        <button onClick={(e) => { e.stopPropagation(); setReplyingTo(m); setShowReactFor(null); }} className="p-1.5 text-wa-teal" title="Reply"><Reply className="w-4 h-4" /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(m); setShowReactFor(null); }} className="p-1.5 text-red-500" title="Delete"><Trash2 className="w-4 h-4" /></button>
                                      </div>
                                   </div>
                                )}
@@ -784,9 +828,64 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
              ) : (
                <img src={viewMaterial.url} className="max-w-full max-h-full object-contain" />
              )}
-          </div>
-        </div>
-      )}
+           </div>
+         </div>
+       )}
+
+       {/* Delete Confirmation Modal */}
+       {deleteTarget && (
+         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+           <motion.div 
+             initial={{ scale: 0.95, opacity: 0 }} 
+             animate={{ scale: 1, opacity: 1 }}
+             className="bg-white dark:bg-[#202c33] rounded-2xl p-6 shadow-xl w-full max-w-sm space-y-4"
+           >
+              <h3 className="text-xl font-bold text-slate-900 dark:text-[#e9edef] mb-2">{deleteTarget === 'all' ? 'Delete chat?' : 'Delete message?'}</h3>
+              <div className="space-y-2">
+                 {deleteTarget === 'all' ? (
+                    <>
+                      <button onClick={() => {
+                         const ownMessages = messages.filter(m => m.senderId === profile?.uid);
+                         ownMessages.forEach(m => deleteDoc(doc(db, 'chat_messages', m.id)).catch(console.error));
+                         setDeleteTarget(null);
+                      }} className="w-full text-left px-4 py-3 bg-red-50 dark:bg-red-500/10 text-red-600 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-xl font-medium transition-colors">
+                         Delete all my messages for everyone
+                      </button>
+                      <button onClick={() => {
+                         messages.forEach(m => {
+                            updateDoc(doc(db, 'chat_messages', m.id), { deletedFor: arrayUnion(profile?.uid) }).catch(console.error);
+                         });
+                         setDeleteTarget(null);
+                      }} className="w-full text-left px-4 py-3 bg-slate-50 dark:bg-[#2a3942] text-slate-700 dark:text-[#d1d7db] hover:bg-slate-100 dark:hover:bg-[#182229] rounded-xl font-medium transition-colors border border-slate-200 dark:border-white/5">
+                         Delete all messages for me
+                      </button>
+                    </>
+                 ) : (
+                    <>
+                      {deleteTarget.senderId === profile?.uid && (
+                         <button onClick={() => {
+                            deleteDoc(doc(db, 'chat_messages', deleteTarget.id)).catch(console.error);
+                            setDeleteTarget(null);
+                         }} className="w-full text-left px-4 py-3 bg-red-50 dark:bg-red-500/10 text-red-600 hover:bg-red-100 dark:hover:bg-red-500/20 rounded-xl font-medium transition-colors">
+                            Delete for everyone
+                         </button>
+                      )}
+                      <button onClick={() => {
+                         updateDoc(doc(db, 'chat_messages', deleteTarget.id), { deletedFor: arrayUnion(profile?.uid) }).catch(console.error);
+                         setDeleteTarget(null);
+                      }} className="w-full text-left px-4 py-3 bg-slate-50 dark:bg-[#2a3942] text-slate-700 dark:text-[#d1d7db] hover:bg-slate-100 dark:hover:bg-[#182229] rounded-xl font-medium transition-colors border border-slate-200 dark:border-white/5">
+                         Delete for me
+                      </button>
+                    </>
+                 )}
+                 
+                 <button onClick={() => setDeleteTarget(null)} className="w-full text-center px-4 py-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-[#2a3942] rounded-xl font-medium mt-2 transition-colors">
+                    Cancel
+                 </button>
+              </div>
+           </motion.div>
+         </div>
+       )}
     </div>
   );
 }
