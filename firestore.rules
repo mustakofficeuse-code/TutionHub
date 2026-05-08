@@ -185,5 +185,11 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }
+
+    // Suspended Users
+    match /suspended_users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
   }
 }

@@ -258,6 +258,17 @@
       },
       "required": ["recipientId", "title", "message", "type", "read", "createdAt"]
     },
+    "suspended_users": {
+      "title": "Suspended User",
+      "description": "Users who are temporarily suspended from chatting",
+      "type": "object",
+      "properties": {
+        "suspended": { "type": "boolean" },
+        "suspendedBy": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["suspended", "timestamp"]
+    },
     "config": {
       "title": "Configuration",
       "description": "App-wide configuration settings",
@@ -332,6 +343,10 @@
     "/notifications/{notificationId}": {
       "schema": "notifications",
       "description": "System notifications"
+    },
+    "/suspended_users/{userId}": {
+      "schema": "suspended_users",
+      "description": "Suspended student records"
     },
     "/config/{configId}": {
       "schema": "config",

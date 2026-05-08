@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { collection, query, where, addDoc, onSnapshot, orderBy, updateDoc, doc, arrayUnion, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, addDoc, onSnapshot, orderBy, updateDoc, doc, arrayUnion, deleteDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { sendNotification, subscribeToNotifications, markAsRead } from '../../services/notificationService';
 import { useAuth } from '../../context/AuthContext';
@@ -7,7 +7,7 @@ import {
   Search, CheckCheck, ArrowLeft, Loader2, User, Send,
   MessageCircle, Paperclip, FileText, X as XIcon, Shield,
   GraduationCap, Plus, ChevronDown, ChevronRight, Hash,
-  Smile, Trash2, Reply
+  Smile, Trash2, Reply, Ban
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -56,22 +56,33 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [chatNotifications, setChatNotifications] = useState<any[]>([]);
+  const [suspendedUsers, setSuspendedUsers] = useState<Record<string, boolean>>({});
   const [sidebarWidth, setSidebarWidth] = useState(350);
 
-  const startSidebarResize = (e: React.MouseEvent) => {
+  const startSidebarResize = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const handleMouseMove = (mouseEvent: MouseEvent) => {
-      let newWidth = mouseEvent.clientX;
+    const startX = e.clientX;
+    const startWidth = sidebarWidth;
+    const target = e.currentTarget;
+    
+    target.setPointerCapture(e.pointerId);
+    document.body.style.userSelect = 'none';
+
+    const handlePointerMove = (mouseEvent: PointerEvent) => {
+      const deltaX = mouseEvent.clientX - startX;
+      let newWidth = startWidth + deltaX;
       if (newWidth < 250) newWidth = 250;
       if (newWidth > 600) newWidth = 600;
       setSidebarWidth(newWidth);
     };
-    const handleMouseUp = () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+    const handlePointerUp = (pointerEvent: PointerEvent) => {
+      document.body.style.userSelect = '';
+      target.releasePointerCapture(pointerEvent.pointerId);
+      target.removeEventListener('pointermove', handlePointerMove as EventListener);
+      target.removeEventListener('pointerup', handlePointerUp as EventListener);
     };
-    document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    target.addEventListener('pointermove', handlePointerMove as EventListener);
+    target.addEventListener('pointerup', handlePointerUp as EventListener);
   };
 
   // keep ref up to date
@@ -141,6 +152,16 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       setLoading(false);
     });
 
+    const unsubSuspended = onSnapshot(collection(db, 'suspended_users'), (snap) => {
+      const sMap: Record<string, boolean> = {};
+      snap.docs.forEach(doc => {
+        if (doc.data().suspended) {
+          sMap[doc.id] = true;
+        }
+      });
+      setSuspendedUsers(sMap);
+    });
+
     const isStudent = profile.role === 'student';
     const dept = isStudent ? (profile.courseId || profile.courseName || profile.department) : undefined;
     const sem = isStudent ? String(profile.semester) : undefined;
@@ -168,6 +189,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       unsubDepts();
       unsubUsers();
       unsubNotifs();
+      unsubSuspended();
     };
   }, [profile]);
 
@@ -230,6 +252,22 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
+  };
+
+  const toggleSuspension = async (userId: string, isCurrentlySuspended: boolean) => {
+    try {
+      if (isCurrentlySuspended) {
+        await deleteDoc(doc(db, 'suspended_users', userId));
+      } else {
+        await setDoc(doc(db, 'suspended_users', userId), {
+          suspended: true,
+          suspendedBy: profile?.uid,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } catch (e) {
+      console.error('Failed to toggle suspension', e);
+    }
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -397,7 +435,11 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
             <div className="px-4 py-3 bg-white dark:bg-[#182229] border-y border-slate-200 dark:border-white/10 flex justify-between items-center sticky top-0 z-10 shadow-sm">
                <span className="font-bold text-slate-800 dark:text-[#e9edef] text-sm">Direct Messages</span>
                <button onClick={() => setShowStudentsList(!showStudentsList)} className="text-white bg-wa-teal hover:opacity-90 px-2 py-1 rounded text-xs flex items-center gap-1 font-medium transition-opacity">
-                  <Plus className="w-3 h-3" /> New Chat
+                  {showStudentsList ? (
+                     <><XIcon className="w-3 h-3" /> Close</>
+                  ) : (
+                     <><Plus className="w-3 h-3" /> New Chat</>
+                  )}
                </button>
             </div>
 
@@ -559,7 +601,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
           {renderSidebar()}
           {/* Drag Handle */}
           <div 
-            onMouseDown={startSidebarResize}
+            onPointerDown={startSidebarResize}
             className="hidden md:block absolute top-0 right-0 w-1.5 h-full cursor-col-resize hover:bg-wa-teal transition-colors z-50 translate-x-1/2"
           />
         </div>
@@ -585,7 +627,13 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                 </button>
                 <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-wa-teal">
                   {selectedChat.type === 'group' ? <Hash className="w-5 h-5" /> : (
-                    selectedChat.avatarUrl ? <img src={selectedChat.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-5 h-5" />
+                    selectedChat.avatarUrl ? (
+                      <img 
+                        src={selectedChat.avatarUrl} 
+                        onClick={() => setViewMaterial({ url: selectedChat.avatarUrl, title: selectedChat.name, type: 'image' })}
+                        className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity" 
+                      />
+                    ) : <User className="w-5 h-5" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -638,6 +686,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                             
                             {/* Actions visible on hover */}
                             <div className={`hidden md:flex opacity-0 group-hover:opacity-100 items-center gap-1 transition-opacity bg-white/50 dark:bg-black/50 p-1 rounded-full shadow-sm`}>
+                              {profile?.role === 'teacher' && !isOwn && (
+                                <button onClick={() => toggleSuspension(m.senderId, !!suspendedUsers[m.senderId])} className={`p-1 ${suspendedUsers[m.senderId] ? 'text-wa-teal' : 'hover:text-red-500'}`} title={suspendedUsers[m.senderId] ? "Restore Access" : "Suspend User"}><Ban className="w-4 h-4" /></button>
+                              )}
                               <button onClick={() => setReplyingTo(m)} className="p-1 hover:text-wa-teal" title="Reply"><Reply className="w-4 h-4" /></button>
                               <button onClick={() => setShowReactFor(showReactFor === m.id ? null : m.id)} className="p-1 hover:text-yellow-500" title="React"><Smile className="w-4 h-4" /></button>
                               <button onClick={() => setDeleteTarget(m)} className="p-1 hover:text-red-500" title="Delete"><Trash2 className="w-4 h-4" /></button>
@@ -667,6 +718,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                                      
                                      {/* Mobile Actions in popup */}
                                      <div className="md:hidden flex items-center border-l border-slate-200 dark:border-white/10 pl-1 sm:pl-2 ml-1">
+                                        {profile?.role === 'teacher' && !isOwn && (
+                                          <button onClick={(e) => { e.stopPropagation(); toggleSuspension(m.senderId, !!suspendedUsers[m.senderId]); setShowReactFor(null); }} className={`p-1.5 ${suspendedUsers[m.senderId] ? 'text-wa-teal' : 'text-slate-400'}`} title={suspendedUsers[m.senderId] ? "Restore Access" : "Suspend User"}><Ban className="w-4 h-4" /></button>
+                                        )}
                                         <button onClick={(e) => { e.stopPropagation(); setReplyingTo(m); setShowReactFor(null); }} className="p-1.5 text-wa-teal" title="Reply"><Reply className="w-4 h-4" /></button>
                                         <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(m); setShowReactFor(null); }} className="p-1.5 text-red-500" title="Delete"><Trash2 className="w-4 h-4" /></button>
                                      </div>
@@ -737,73 +791,81 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               </div>
 
               {/* Chat Input */}
-              <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-3 flex flex-col gap-2 shrink-0 transition-all">
-                 <div className="flex items-center gap-2 sm:gap-4">
-                   <label className="text-slate-500 hover:text-wa-teal transition-colors cursor-pointer p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
-                      <Paperclip className="w-6 h-6" />
-                      <input ref={replyInputRef} type="file" className="hidden" onChange={(e) => e.target.files?.[0] && setReplyFile(e.target.files[0])} />
-                   </label>
-                   
-                   <div className="flex-1 relative">
-                      <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
-                         <div className="flex-1 relative bg-white dark:bg-[#2a3942] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm focus-within:border-wa-teal transition-all overflow-hidden flex flex-col">
-                            {replyingTo && (
-                               <div className="bg-slate-50 dark:bg-[#182229] p-2 sm:p-3 border-l-4 border-wa-teal flex justify-between items-start relative">
-                                  <div className="flex-1 min-w-0 pr-4">
-                                     <p className="text-xs font-bold text-wa-teal truncate">{replyingTo.senderName}</p>
-                                     <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{replyingTo.content || 'Attachment'}</p>
-                                  </div>
-                                  <button type="button" onClick={() => setReplyingTo(null)} className="absolute top-1/2 -translate-y-1/2 right-2 text-slate-400 hover:text-red-500 rounded-full p-1"><XIcon className="w-4 h-4" /></button>
-                               </div>
-                            )}
-                            {replyFile && (
-                               <div className="bg-slate-50 dark:bg-[#202c33] p-2 sm:p-3 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
-                                  <div className="flex items-center gap-2 text-xs font-bold text-wa-teal truncate">
-                                     <FileText className="w-4 h-4 shrink-0" /> <span className="truncate">{replyFile.name}</span>
-                                  </div>
-                                  <button type="button" onClick={() => setReplyFile(null)} className="text-slate-400 hover:text-red-500 bg-white dark:bg-[#111b21] p-1 rounded-full"><XIcon className="w-4 h-4" /></button>
-                               </div>
-                            )}
-                            <textarea
-                              rows={replyText.split('\n').length > 1 ? Math.min(replyText.split('\n').length, 5) : 1}
-                              placeholder="Type your doubt or message..."
-                              className="w-full py-3 sm:py-4 px-4 bg-transparent border-none outline-none text-sm text-slate-800 dark:text-[#e9edef] placeholder:text-[#8696a0] resize-none custom-scrollbar"
-                              value={replyText}
-                              onChange={(e) => setReplyText(e.target.value)}
-                              onKeyDown={(e) => {
-                                 if (e.key === 'Enter' && !e.shiftKey) {
-                                    e.preventDefault();
-                                    handleSendMessage(e);
-                                 }
-                              }}
-                            />
-                         </div>
-                         <button 
-                           type="submit"
-                           disabled={submitting || (!replyText.trim() && !replyFile)}
-                           className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all shrink-0 ${
-                             (!replyText.trim() && !replyFile) ? 'bg-slate-200 dark:bg-slate-700 text-slate-400' : 'bg-wa-teal text-white shadow-lg active:scale-95'
-                           }`}
-                         >
-                           {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                         </button>
-                      </form>
-                   </div>
+              {suspendedUsers[profile?.uid] ? (
+                 <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-4 flex flex-col items-center justify-center gap-2 shrink-0 border-t border-slate-200 dark:border-slate-800 text-center">
+                    <Shield className="w-8 h-8 text-red-500 mb-1 opacity-80" />
+                    <p className="text-sm font-bold text-slate-800 dark:text-[#e9edef]">You are temporarily suspended from chatting</p>
+                    <p className="text-xs text-slate-500">You can still read the messages but cannot send new ones until the teacher restores your access.</p>
                  </div>
-                 {profile?.role === 'student' && (
-                    <div className="flex items-center justify-end px-1 sm:px-[68px]">
-                       <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
-                          <input 
-                            type="checkbox" 
-                            checked={isAnonymous}
-                            onChange={(e) => setIsAnonymous(e.target.checked)}
-                            className="w-3.5 h-3.5 rounded-sm border-slate-300 dark:border-slate-600 outline-none accent-wa-teal"
-                          />
-                          <span>Hide My Identity</span>
-                       </label>
-                    </div>
-                 )}
-              </div>
+              ) : (
+                <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-3 flex flex-col gap-2 shrink-0 transition-all">
+                   <div className="flex items-center gap-2 sm:gap-4">
+                     <label className="text-slate-500 hover:text-wa-teal transition-colors cursor-pointer p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+                        <Paperclip className="w-6 h-6" />
+                        <input ref={replyInputRef} type="file" className="hidden" onChange={(e) => e.target.files?.[0] && setReplyFile(e.target.files[0])} />
+                     </label>
+                     
+                     <div className="flex-1 relative">
+                        <form onSubmit={handleSendMessage} className="flex gap-2 items-end">
+                           <div className="flex-1 relative bg-white dark:bg-[#2a3942] rounded-xl border border-slate-200 dark:border-white/10 shadow-sm focus-within:border-wa-teal transition-all overflow-hidden flex flex-col">
+                              {replyingTo && (
+                                 <div className="bg-slate-50 dark:bg-[#182229] p-2 sm:p-3 border-l-4 border-wa-teal flex justify-between items-start relative">
+                                    <div className="flex-1 min-w-0 pr-4">
+                                       <p className="text-xs font-bold text-wa-teal truncate">{replyingTo.senderName}</p>
+                                       <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{replyingTo.content || 'Attachment'}</p>
+                                    </div>
+                                    <button type="button" onClick={() => setReplyingTo(null)} className="absolute top-1/2 -translate-y-1/2 right-2 text-slate-400 hover:text-red-500 rounded-full p-1"><XIcon className="w-4 h-4" /></button>
+                                 </div>
+                              )}
+                              {replyFile && (
+                                 <div className="bg-slate-50 dark:bg-[#202c33] p-2 sm:p-3 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
+                                    <div className="flex items-center gap-2 text-xs font-bold text-wa-teal truncate">
+                                       <FileText className="w-4 h-4 shrink-0" /> <span className="truncate">{replyFile.name}</span>
+                                    </div>
+                                    <button type="button" onClick={() => setReplyFile(null)} className="text-slate-400 hover:text-red-500 bg-white dark:bg-[#111b21] p-1 rounded-full"><XIcon className="w-4 h-4" /></button>
+                                 </div>
+                              )}
+                              <textarea
+                                rows={replyText.split('\n').length > 1 ? Math.min(replyText.split('\n').length, 5) : 1}
+                                placeholder="Type your doubt or message..."
+                                className="w-full py-3 sm:py-4 px-4 bg-transparent border-none outline-none text-sm text-slate-800 dark:text-[#e9edef] placeholder:text-[#8696a0] resize-none custom-scrollbar"
+                                value={replyText}
+                                onChange={(e) => setReplyText(e.target.value)}
+                                onKeyDown={(e) => {
+                                   if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      handleSendMessage(e);
+                                   }
+                                }}
+                              />
+                           </div>
+                           <button 
+                             type="submit"
+                             disabled={submitting || (!replyText.trim() && !replyFile)}
+                             className={`w-12 h-12 flex items-center justify-center rounded-xl transition-all shrink-0 ${
+                               (!replyText.trim() && !replyFile) ? 'bg-slate-200 dark:bg-slate-700 text-slate-400' : 'bg-wa-teal text-white shadow-lg active:scale-95'
+                             }`}
+                           >
+                             {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                           </button>
+                        </form>
+                     </div>
+                   </div>
+                   {profile?.role === 'student' && (
+                      <div className="flex items-center justify-end px-1 sm:px-[68px]">
+                         <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
+                            <input 
+                              type="checkbox" 
+                              checked={isAnonymous}
+                              onChange={(e) => setIsAnonymous(e.target.checked)}
+                              className="w-3.5 h-3.5 rounded-sm border-slate-300 dark:border-slate-600 outline-none accent-wa-teal"
+                            />
+                            <span>Hide My Identity</span>
+                         </label>
+                      </div>
+                   )}
+                </div>
+              )}
             </>
           )}
         </div>
