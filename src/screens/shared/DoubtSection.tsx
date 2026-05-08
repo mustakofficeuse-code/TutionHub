@@ -642,6 +642,18 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                      {selectedChat.type === 'group' ? 'Group Doubt Chat' : 'Private Conversation'}
                   </p>
                 </div>
+                
+                {profile?.role === 'student' && selectedChat.type === 'private' && messages.length > 0 && (
+                   <button 
+                     onClick={() => setDeleteTarget('resolved')} 
+                     className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm shrink-0"
+                     title="Mark problem as solved and clear chat history"
+                   >
+                     <CheckCheck className="w-4 h-4" />
+                     <span className="hidden sm:inline">Problem Solved</span>
+                   </button>
+                )}
+
                 {messages.length > 0 && (
                   <button 
                     onClick={() => setDeleteTarget('all')}
@@ -902,9 +914,41 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
              animate={{ scale: 1, opacity: 1 }}
              className="bg-white dark:bg-[#202c33] rounded-2xl p-6 shadow-xl w-full max-w-sm space-y-4"
            >
-              <h3 className="text-xl font-bold text-slate-900 dark:text-[#e9edef] mb-2">{deleteTarget === 'all' ? 'Delete chat?' : 'Delete message?'}</h3>
+              <h3 className="text-xl font-bold text-slate-900 dark:text-[#e9edef] mb-2">{deleteTarget === 'resolved' ? 'Mark as Solved?' : deleteTarget === 'all' ? 'Delete chat?' : 'Delete message?'}</h3>
               <div className="space-y-2">
-                 {deleteTarget === 'all' ? (
+                 {deleteTarget === 'resolved' ? (
+                    <>
+                      <p className="text-sm text-slate-500 mb-4">This will notify the teacher that your query is resolved, and clear this chat history for you.</p>
+                      <button onClick={async () => {
+                         try {
+                           await addDoc(collection(db, 'chat_messages'), {
+                             chatId: selectedChat?.id,
+                             chatType: selectedChat?.type,
+                             senderId: profile?.uid,
+                             senderName: profile?.role === 'student' && isAnonymous ? 'Anonymous Student' : profile?.name,
+                             senderRole: profile?.role,
+                             isAnonymous: profile?.role === 'student' ? isAnonymous : false,
+                             content: 'Problem Solved ✅',
+                             attachmentUrl: '',
+                             attachmentName: '',
+                             attachmentType: '',
+                             createdAt: new Date().toISOString(),
+                             deletedFor: [],
+                             type: 'feedback'
+                           });
+                           
+                           messages.forEach(m => {
+                             updateDoc(doc(db, 'chat_messages', m.id), { deletedFor: arrayUnion(profile?.uid) }).catch(console.error);
+                           });
+                         } catch (e) {
+                           console.error('Failed to mark resolved: ', e);
+                         }
+                         setDeleteTarget(null);
+                      }} className="w-full text-center px-4 py-3 bg-wa-teal text-white hover:opacity-90 rounded-xl font-medium transition-colors border border-transparent shadow-sm">
+                         Confirm & Clear Chat
+                      </button>
+                    </>
+                 ) : deleteTarget === 'all' ? (
                     <>
                       <button onClick={() => {
                          const ownMessages = messages.filter(m => m.senderId === profile?.uid);
