@@ -281,7 +281,7 @@ export default function TeacherView() {
               x: { type: "spring", stiffness: 300, damping: 30 },
               opacity: { duration: 0.2 }
             }}
-            drag="x"
+            drag={window.innerWidth < 768 ? "x" : false}
             dragConstraints={{ left: 0, right: 0 }}
             onDragEnd={handleDragEnd}
             className="absolute inset-0 overflow-y-auto no-scrollbar"

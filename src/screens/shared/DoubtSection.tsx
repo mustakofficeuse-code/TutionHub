@@ -436,9 +436,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                <span className="font-bold text-slate-800 dark:text-[#e9edef] text-sm">Direct Messages</span>
                <button onClick={() => setShowStudentsList(!showStudentsList)} className="text-white bg-wa-teal hover:opacity-90 px-2 py-1 rounded text-xs flex items-center gap-1 font-medium transition-opacity">
                   {showStudentsList ? (
-                     <><Plus className="w-3 h-3" /> Add Materials</>
+                     <><XIcon className="w-3 h-3" /> Close</>
                   ) : (
-                     <><Plus className="w-3 h-3" /> Add Materials</>
+                     <><Plus className="w-3 h-3" /> New Chat</>
                   )}
                </button>
             </div>
@@ -643,7 +643,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                   </p>
                 </div>
                 
-                {profile?.role === 'student' && selectedChat.type === 'private' && messages.length > 0 && (
+                {profile?.role === 'student' && selectedChat.type === 'private' && messages.length > 0 && messages[messages.length - 1]?.type !== 'feedback' && (
                    <button 
                      onClick={() => setDeleteTarget('resolved')} 
                      className="px-3 py-1.5 bg-green-500 hover:bg-green-600 text-white text-xs font-bold rounded-lg transition-colors flex items-center gap-1 shadow-sm shrink-0"
@@ -689,7 +689,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                       <motion.div 
                         key={m.id} 
                         className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} group w-full`}
-                        drag="x"
+                        drag={window.innerWidth < 768 ? "x" : false}
                         dragConstraints={{ left: 0, right: 0 }}
                         dragElastic={0.1}
                         onDragEnd={(_, info) => { if (Math.abs(info.offset.x) > 50) setReplyingTo(m) }}
