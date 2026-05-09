@@ -436,9 +436,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                <span className="font-bold text-slate-800 dark:text-[#e9edef] text-sm">Direct Messages</span>
                <button onClick={() => setShowStudentsList(!showStudentsList)} className="text-white bg-wa-teal hover:opacity-90 px-2 py-1 rounded text-xs flex items-center gap-1 font-medium transition-opacity">
                   {showStudentsList ? (
-                     <><XIcon className="w-3 h-3" /> Close</>
+                     <><Plus className="w-3 h-3" /> Add Materials</>
                   ) : (
-                     <><Plus className="w-3 h-3" /> New Chat</>
+                     <><Plus className="w-3 h-3" /> Add Materials</>
                   )}
                </button>
             </div>
@@ -752,9 +752,22 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                                )}
 
                                {m.content && (
-                                 <p className={`text-sm leading-relaxed whitespace-pre-wrap ${isOwn ? 'text-slate-900 dark:text-[#e9edef]' : 'text-slate-700 dark:text-[#d1d7db]'}`}>
-                                    {m.content}
-                                 </p>
+                                 <div className="flex flex-col gap-2">
+                                   <p className={`text-sm leading-relaxed whitespace-pre-wrap ${isOwn ? 'text-slate-900 dark:text-[#e9edef]' : 'text-slate-700 dark:text-[#d1d7db]'}`}>
+                                      {m.content}
+                                   </p>
+                                   {m.type === 'feedback' && profile?.role === 'teacher' && (
+                                     <button
+                                       onClick={(e) => {
+                                         e.stopPropagation();
+                                         setDeleteTarget('all');
+                                       }}
+                                       className="mt-1 bg-wa-teal text-white hover:opacity-90 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm self-start"
+                                     >
+                                       Clear Chat
+                                     </button>
+                                   )}
+                                 </div>
                                )}
 
                                {m.attachmentUrl && (
@@ -918,7 +931,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               <div className="space-y-2">
                  {deleteTarget === 'resolved' ? (
                     <>
-                      <p className="text-sm text-slate-500 mb-4">This will notify the teacher that your query is resolved, and clear this chat history for you.</p>
+                      <p className="text-sm text-slate-500 mb-4">This will notify the teacher that your query is resolved.</p>
                       <button onClick={async () => {
                          try {
                            await addDoc(collection(db, 'chat_messages'), {
@@ -936,16 +949,12 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                              deletedFor: [],
                              type: 'feedback'
                            });
-                           
-                           messages.forEach(m => {
-                             updateDoc(doc(db, 'chat_messages', m.id), { deletedFor: arrayUnion(profile?.uid) }).catch(console.error);
-                           });
                          } catch (e) {
                            console.error('Failed to mark resolved: ', e);
                          }
                          setDeleteTarget(null);
                       }} className="w-full text-center px-4 py-3 bg-wa-teal text-white hover:opacity-90 rounded-xl font-medium transition-colors border border-transparent shadow-sm">
-                         Confirm & Clear Chat
+                         Confirm & Send Feedback
                       </button>
                     </>
                  ) : deleteTarget === 'all' ? (
