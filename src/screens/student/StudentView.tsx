@@ -151,15 +151,6 @@ export default function StudentView() {
             >
               <LogOut className="w-5 h-5" />
             </button>
-            <div className="w-11 h-11 rounded-2xl bg-white/10 overflow-hidden border border-white/20 shadow-inner group cursor-pointer hover:scale-105 transition-transform" onClick={() => changeTab(5)}>
-               {profile?.avatarUrl ? (
-                <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover rounded-xl" referrerPolicy="no-referrer" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-white font-bold text-lg">
-                  {profile?.name?.charAt(0) || 'S'}
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </header>

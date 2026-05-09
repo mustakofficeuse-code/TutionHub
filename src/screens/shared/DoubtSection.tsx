@@ -46,9 +46,11 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const [replyingTo, setReplyingTo] = useState<any>(null);
   const [showReactFor, setShowReactFor] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<'all' | any>(null);
+  const [isDragging, setIsDragging] = useState(false);
   
   const replyInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const dragCounter = useRef(0);
 
   // Accordion state for teacher sidebar
   const [expandedDept, setExpandedDept] = useState<string | null>(null);
@@ -267,6 +269,36 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       }
     } catch (e) {
       console.error('Failed to toggle suspension', e);
+    }
+  };
+
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current += 1;
+    if (dragCounter.current === 1) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current -= 1;
+    if (dragCounter.current === 0) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    dragCounter.current = 0;
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setReplyFile(e.dataTransfer.files[0]);
     }
   };
 
@@ -607,7 +639,22 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         </div>
 
         {/* Right Chat Area */}
-        <div className={`flex-1 flex flex-col bg-[#efeae2] dark:bg-[#0b141a] relative ${!selectedChat ? 'hidden md:flex' : 'flex'}`}>
+        <div 
+          className={`flex-1 flex flex-col bg-[#efeae2] dark:bg-[#0b141a] relative ${!selectedChat ? 'hidden md:flex' : 'flex'}`}
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+        >
+          {isDragging && selectedChat && (
+            <div className="absolute inset-0 bg-wa-teal/10 z-[100] border-4 border-dashed border-wa-teal rounded flex flex-col items-center justify-center backdrop-blur-[2px] pointer-events-none">
+              <div className="bg-white dark:bg-[#202c33] p-6 rounded-2xl shadow-xl flex flex-col items-center pointer-events-none">
+                <Paperclip className="w-12 h-12 text-wa-teal mb-3" />
+                <h3 className="text-xl font-bold text-slate-800 dark:text-[#e9edef]">Drop files here</h3>
+                <p className="text-sm text-slate-500 mt-1">Share images, PDFs, or documents</p>
+              </div>
+            </div>
+          )}
           {!selectedChat ? (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-6 bg-[#f8f9fa] dark:bg-[#222e35] border-b-[6px] border-wa-teal">
               <div className="w-64 h-64 bg-slate-100 dark:bg-[#222e35] rounded-full flex items-center justify-center mb-8">
