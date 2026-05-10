@@ -7,7 +7,7 @@ import {
   Search, CheckCheck, ArrowLeft, Loader2, User, Send,
   MessageCircle, Paperclip, FileText, X as XIcon, Shield,
   GraduationCap, Plus, ChevronDown, ChevronRight, Hash,
-  Smile, Trash2, Reply, Ban
+  Smile, Trash2, Reply, Ban, UserX
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -58,6 +58,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [chatNotifications, setChatNotifications] = useState<any[]>([]);
+  const [historicalAnonChats, setHistoricalAnonChats] = useState<string[]>([]);
   const [suspendedUsers, setSuspendedUsers] = useState<Record<string, boolean>>({});
   const [sidebarWidth, setSidebarWidth] = useState(350);
 
@@ -119,16 +120,18 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
           semester: sem
         });
       } else {
-        const uids = chatId.split('_');
+        const isAnon = chatId.startsWith('anon_');
+        const actualChatId = isAnon ? chatId.replace('anon_', '') : chatId;
+        const uids = actualChatId.split('_');
         const otherUserId = uids.find((id: string) => id !== profile?.uid);
         if (otherUserId) {
           const otherUser = allUsers[otherUserId];
            setSelectedChat({
               id: chatId,
               type: 'private',
-              name: otherUser?.name || 'User',
+              name: isAnon ? 'Anonymous Student' : (otherUser?.name || 'User'),
               participantId: otherUserId,
-              avatarUrl: otherUser?.avatarUrl
+              avatarUrl: isAnon ? '' : otherUser?.avatarUrl
             });
         }
       }
@@ -152,6 +155,21 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       });
       setAllUsers(uMap);
       setLoading(false);
+    });
+
+    const qAnon = query(
+      collection(db, 'chat_messages'),
+      where('participants', 'array-contains', profile.uid)
+    );
+    const unsubAnon = onSnapshot(qAnon, (snap) => {
+      const anonIds = new Set<string>();
+      snap.docs.forEach(doc => {
+        const data = doc.data();
+        if (data.chatId && data.chatId.startsWith('anon_')) {
+          anonIds.add(data.chatId);
+        }
+      });
+      setHistoricalAnonChats(Array.from(anonIds));
     });
 
     const unsubSuspended = onSnapshot(collection(db, 'suspended_users'), (snap) => {
@@ -192,6 +210,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       unsubUsers();
       unsubNotifs();
       unsubSuspended();
+      unsubAnon();
     };
   }, [profile]);
 
@@ -314,7 +333,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       }
 
       let senderNameToUse = profile.name;
-      if (profile.role === 'student' && isAnonymous) {
+      const isAnonForThisMessage = selectedChat.id.startsWith('anon_') || (profile.role === 'student' && isAnonymous);
+      
+      if (profile.role === 'student' && isAnonForThisMessage) {
         senderNameToUse = 'Anonymous Student';
       }
 
@@ -324,7 +345,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         senderId: profile.uid,
         senderName: senderNameToUse,
         senderRole: profile.role,
-        isAnonymous: profile.role === 'student' ? isAnonymous : false,
+        isAnonymous: isAnonForThisMessage,
         content: replyText.trim(),
         attachmentUrl: fileUrl,
         attachmentName: replyFile?.name || '',
@@ -509,6 +530,42 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
             )}
 
             <div className="space-y-[1px]">
+              {historicalAnonChats.map(chatId => {
+                   return (
+                     <button
+                        key={chatId}
+                        onClick={() => {
+                          const actualChatId = chatId.replace('anon_', '');
+                          const uids = actualChatId.split('_');
+                          const otherUserId = uids.find((id: string) => id !== profile?.uid);
+                          setSelectedChat({
+                             id: chatId,
+                             type: 'private',
+                             name: 'Anonymous Student',
+                             participantId: otherUserId,
+                             avatarUrl: ''
+                          });
+                        }}
+                        className={`w-full flex items-center justify-between gap-3 p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-all border-b border-slate-50 dark:border-white/5 ${selectedChat?.id === chatId ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : ''}`}
+                     >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-wa-teal">
+                             <UserX className="w-5 h-5" />
+                          </div>
+                          <div className="text-left max-w-[120px]">
+                            <div className="font-bold text-slate-900 dark:text-[#e9edef] truncate">Anonymous Student</div>
+                            <div className="text-[10px] text-slate-500 truncate">Hidden Identity</div>
+                          </div>
+                        </div>
+                        {unreadCounts[chatId.toLowerCase()] > 0 && (
+                          <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                             {unreadCounts[chatId.toLowerCase()]}
+                          </span>
+                        )}
+                     </button>
+                   );
+                })}
+
               {Object.values(allUsers)
                 .filter((u: any) => u.role === 'student' && unreadCounts[getDMId(profile!.uid, u.id).toLowerCase()]! > 0)
                 .map((s: any) => (
@@ -562,10 +619,70 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                )}
             </button>
 
-            <div className="px-4 py-3 bg-white dark:bg-[#182229] border-y border-slate-200 dark:border-white/10 sticky top-0 z-10 shadow-sm mt-4">
+            <div className="px-4 py-3 bg-white dark:bg-[#182229] border-y border-slate-200 dark:border-white/10 flex justify-between items-center sticky top-0 z-10 shadow-sm mt-4">
                <span className="font-bold text-slate-800 dark:text-[#e9edef] text-sm">Direct Messages</span>
+               <button onClick={() => setShowStudentsList(!showStudentsList)} className="text-white bg-wa-teal hover:opacity-90 px-2 py-1 rounded text-xs flex items-center gap-1 font-medium transition-opacity">
+                  {showStudentsList ? (
+                     <><XIcon className="w-3 h-3" /> Close</>
+                  ) : (
+                     <><Plus className="w-3 h-3" /> New Chat</>
+                  )}
+               </button>
             </div>
+
+            {showStudentsList && (
+              <div className="p-3 bg-slate-50 dark:bg-[#202c33] border-b border-slate-200 dark:border-white/10">
+                <div className="relative mb-2">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input type="text" placeholder="Search people..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-[#111b21] border border-wa-teal/30 focus:border-wa-teal rounded-lg outline-none text-slate-800 dark:text-white shadow-sm transition-colors" />
+                </div>
+                <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1 bg-white dark:bg-[#111b21] rounded-lg border border-slate-100 dark:border-white/5 p-1 shadow-inner">
+                  {peers.length === 0 && !teacherObj ? (
+                      <div className="p-4 text-center text-xs text-slate-500">No users found</div>
+                  ) : (
+                    (teacherObj && teacherObj.name.toLowerCase().includes(searchQuery.toLowerCase()) ? [teacherObj] : []).concat(peers.filter((p: any) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))).map((person: any) => (
+                      <div key={person.id} className="w-full flex justify-between items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-[#2a3942] rounded-md transition-all group">
+                        <button onClick={() => startPrivateChat(person.id)} className="flex-1 flex items-center gap-3 min-w-0 text-left">
+                          <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 flex items-center justify-center">
+                            {person.avatarUrl ? <img src={person.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-slate-400" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-bold text-slate-800 dark:text-[#e9edef] group-hover:text-wa-teal transition-colors truncate">{person.name}</div>
+                            <div className="text-xs text-slate-500 truncate">{person.role === 'teacher' ? 'Teacher' : 'Student'}</div>
+                          </div>
+                        </button>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {unreadCounts[getDMId(profile!.uid, person.id).toLowerCase()] > 0 && (
+                            <span className="bg-wa-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full text-center">
+                               {unreadCounts[getDMId(profile!.uid, person.id).toLowerCase()]}
+                            </span>
+                          )}
+                          <button
+                             onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedChat({
+                                   id: `anon_${getDMId(profile!.uid, person.id)}`,
+                                   type: 'private',
+                                   name: `Anonymous to ${person.name}`,
+                                   participantId: person.id,
+                                   avatarUrl: ''
+                                });
+                                setShowStudentsList(false);
+                             }}
+                             className="p-1.5 text-slate-400 hover:text-wa-teal hover:bg-wa-teal/10 rounded-full transition-colors"
+                             title="Chat Anonymously"
+                          >
+                             <UserX className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
             {teacherObj && (
+              <>
               <button
                  onClick={() => startPrivateChat(teacherObj.id)}
                  className={`w-full flex items-center justify-between gap-3 p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-all border-b border-slate-50 dark:border-white/5 ${selectedChat?.id === getDMId(profile!.uid, teacherObj.id) ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : ''}`}
@@ -585,9 +702,10 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                   </span>
                  )}
               </button>
+              </>
             )}
 
-            {peers.map((peer: any) => (
+            {peers.filter((p: any) => unreadCounts[getDMId(profile!.uid, p.id).toLowerCase()]! > 0).map((peer: any) => (
               <button
                  key={peer.id}
                  onClick={() => startPrivateChat(peer.id)}
@@ -923,7 +1041,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                         </form>
                      </div>
                    </div>
-                   {profile?.role === 'student' && (
+                   {profile?.role === 'student' && selectedChat?.type === 'group' && (
                       <div className="flex items-center justify-end px-1 sm:px-[68px]">
                          <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition-colors">
                             <input 
