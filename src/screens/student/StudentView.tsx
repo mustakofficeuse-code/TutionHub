@@ -79,11 +79,27 @@ export default function StudentView() {
   };
 
   // Swipe logic
-  const handleDragEnd = (event: any, info: any) => {
-    const threshold = 50;
-    if (info.offset.x < -threshold && activeTab < TABS.length - 1) {
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe && activeTab < TABS.length - 1) {
       changeTab(activeTab + 1);
-    } else if (info.offset.x > threshold && activeTab > 0) {
+    } else if (isRightSwipe && activeTab > 0) {
       changeTab(activeTab - 1);
     }
   };
@@ -256,7 +272,12 @@ export default function StudentView() {
       </AnimatePresence>
 
       {/* Content Area */}
-      <div className="flex-1 relative overflow-hidden bg-[#f0f2f5] dark:bg-[#111b21]">
+      <div 
+        className="flex-1 relative overflow-hidden bg-[#f0f2f5] dark:bg-[#111b21]"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
         <AnimatePresence initial={false} custom={direction} mode="popLayout">
           <motion.div
             key={activeTab}

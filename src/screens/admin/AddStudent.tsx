@@ -95,7 +95,9 @@ export default function AddStudent() {
         type: 'new_student',
         senderId: profile?.uid || 'auto',
         senderName: profile?.name || 'Teacher',
-        targetRole: 'teacher',
+        targetRole: 'ALL',
+        targetDept: department,
+        targetSem: semester,
       });
 
       // Clean up secondary session

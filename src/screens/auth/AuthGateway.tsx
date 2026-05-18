@@ -529,10 +529,16 @@ export default function AuthGateway() {
       const notifId = `enroll_${user.uid}`;
       await setDoc(doc(db, "notifications", notifId), {
         title: "New Student Enrolled",
-        message: `${studentName} (${department}, Sem ${semester}) has joined TutionHub.`,
+        message: `${studentName} has joined ${department}, Sem ${semester}.`,
+        createdAt: new Date().toISOString(),
         timestamp: new Date().toISOString(),
         read: false,
-        type: "enrollment",
+        type: "new_student",
+        senderId: user.uid,
+        senderName: studentName,
+        targetRole: "ALL",
+        targetDept: department,
+        targetSem: semester,
       });
 
       localStorage.setItem("isExistingStudent", "true");
