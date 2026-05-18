@@ -82,12 +82,12 @@ export default function StudentView() {
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
-  const handleTouchStart = (e: React.TouchEvent) => {
+  const handleTouchStart = (e: any) => {
     setTouchEnd(null);
     setTouchStart(e.targetTouches[0].clientX);
   };
 
-  const handleTouchMove = (e: React.TouchEvent) => {
+  const handleTouchMove = (e: any) => {
     setTouchEnd(e.targetTouches[0].clientX);
   };
 

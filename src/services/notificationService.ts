@@ -89,10 +89,20 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
              if (isForMe && !newNotif.read) {
                 // Show standard OS-level Notification
                 if ('Notification' in window && Notification.permission === 'granted') {
-                   new Notification(newNotif.title, {
-                      body: newNotif.message,
-                      icon: '/vite.svg', // generic icon
-                   });
+                   if ('serviceWorker' in navigator) {
+                       navigator.serviceWorker.ready.then(registration => {
+                           registration.showNotification(newNotif.title, {
+                               body: newNotif.message,
+                               icon: '/vite.svg',
+                               vibrate: [100, 50, 100],
+                           } as any);
+                       });
+                   } else {
+                       new Notification(newNotif.title, {
+                          body: newNotif.message,
+                          icon: '/vite.svg', // generic icon
+                       });
+                   }
                 }
                 
                 // Play Sound
