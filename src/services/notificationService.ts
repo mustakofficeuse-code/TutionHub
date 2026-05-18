@@ -41,10 +41,16 @@ export const sendNotification = async (notification: Omit<Notification, 'id' | '
 };
 
 export const subscribeToNotifications = (userId: string, targetRole: string, callback: (notifications: Notification[]) => void, userDept?: string, userSem?: string) => {
+  if ('Notification' in window && Notification.permission === 'default') {
+    Notification.requestPermission();
+  }
+
   const q = query(
     collection(db, 'notifications'),
     orderBy('createdAt', 'desc')
   );
+
+  let isInitialLoad = true;
 
   return onSnapshot(q, (snapshot) => {
     let notifications = snapshot.docs.map(doc => ({
@@ -75,6 +81,51 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
       return false;
     });
     
+    if (!isInitialLoad) {
+       snapshot.docChanges().forEach(change => {
+          if (change.type === 'added') {
+             const newNotif = { id: change.doc.id, ...change.doc.data() } as Notification;
+             const isForMe = notifications.some(n => n.id === newNotif.id);
+             if (isForMe && !newNotif.read) {
+                // Show standard OS-level Notification
+                if ('Notification' in window && Notification.permission === 'granted') {
+                   new Notification(newNotif.title, {
+                      body: newNotif.message,
+                      icon: '/vite.svg', // generic icon
+                   });
+                }
+                
+                // Play Sound
+                try {
+                   const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+                   if (AudioContext) {
+                     const audioCtx = new AudioContext();
+                     const oscillator = audioCtx.createOscillator();
+                     const gainNode = audioCtx.createGain();
+
+                     oscillator.type = 'sine';
+                     oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+                     oscillator.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.05);
+
+                     gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+                     gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.02);
+                     gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.15);
+
+                     oscillator.connect(gainNode);
+                     gainNode.connect(audioCtx.destination);
+
+                     oscillator.start(audioCtx.currentTime);
+                     oscillator.stop(audioCtx.currentTime + 0.15);
+                   }
+                } catch(e) {
+                   console.log('Audio could not be played', e);
+                }
+             }
+          }
+       });
+    }
+
+    isInitialLoad = false;
     callback(notifications);
   }, (error) => {
     console.error('Error subscribing to notifications:', error);
