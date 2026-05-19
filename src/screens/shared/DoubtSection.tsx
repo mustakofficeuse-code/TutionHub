@@ -133,10 +133,26 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               participantId: otherUserId,
               avatarUrl: isAnon ? '' : otherUser?.avatarUrl
             });
+        } else {
+          // Fallback if other user is not found locally yet
+          setSelectedChat({
+              id: chatId,
+              type: 'private',
+              name: isAnon ? 'Anonymous Student' : 'User',
+              participantId: '',
+              avatarUrl: ''
+          });
         }
       }
     };
     window.addEventListener('OPEN_CHAT', handleOpenChat);
+
+    const pendingChatId = localStorage.getItem('pendingChatId');
+    if (pendingChatId && Object.keys(allUsers).length > 0) {
+      handleOpenChat({ detail: { chatId: pendingChatId } });
+      localStorage.removeItem('pendingChatId');
+    }
+
     return () => window.removeEventListener('OPEN_CHAT', handleOpenChat);
   }, [profile, allUsers]);
 

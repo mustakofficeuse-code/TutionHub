@@ -73,7 +73,38 @@ export default function TeacherView() {
             return true;
         }));
     });
-    return () => unsub();
+
+    // Handle service worker messages for navigation
+    const handleServiceWorkerMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === 'NAVIGATE_TO_CHAT') {
+        const doubtsTabIndex = TABS.findIndex(t => t.id === 'doubts');
+        if (doubtsTabIndex !== -1) {
+          setActiveTab(doubtsTabIndex);
+          if (event.data.chatId) {
+             localStorage.setItem('pendingChatId', event.data.chatId);
+             window.dispatchEvent(new CustomEvent('OPEN_CHAT', { detail: { chatId: event.data.chatId } }));
+          }
+        }
+      }
+    };
+    navigator.serviceWorker?.addEventListener('message', handleServiceWorkerMessage);
+
+    // Handle cold start navigation from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const openChatId = urlParams.get('openChatId');
+    if (openChatId) {
+       const doubtsTabIndex = TABS.findIndex(t => t.id === 'doubts');
+       if (doubtsTabIndex !== -1) {
+         setActiveTab(doubtsTabIndex);
+         localStorage.setItem('pendingChatId', openChatId);
+         window.history.replaceState({}, document.title, window.location.pathname);
+       }
+    }
+
+    return () => {
+      unsub();
+      navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage);
+    };
   }, [profile]);
 
   const handleClearNotifications = async () => {

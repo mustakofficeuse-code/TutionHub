@@ -1,7 +1,7 @@
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
-// Version 2 - Added inline reply feature
+// Version 3 - Fixed double popups and actions
 
 firebase.initializeApp({
   apiKey: "AIzaSyDNC_VlFEwkE32P5CfvvmFI6kB5M3UJNN4",
@@ -14,37 +14,17 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background messages
-messaging.onBackgroundMessage((payload) => {
-  console.log('Received background message ', payload);
-  let notificationTitle = payload.notification?.title || payload.data?.title || 'New Notification';
-  const notificationOptions = {
-    body: payload.notification?.body || payload.data?.body,
-    icon: '/vite.svg',
-    vibrate: [100, 50, 100],
-    data: payload.data || {},
-  };
-
-  if (payload.data?.type === 'chat_message' || payload.data?.type === 'group_chat_message') {
-    notificationOptions.actions = [
-      {
-        action: 'reply',
-        type: 'text',
-        title: 'Reply'
-      }
-    ];
-  }
-
-  return self.registration.showNotification(notificationTitle, notificationOptions);
-});
+// Remove manual messaging.onBackgroundMessage to avoid double popups when FCM native SW displays webpush.notification
 
 self.addEventListener('notificationclick', (event) => {
+  event.stopImmediatePropagation(); // Important! Prevent FCM's default click handler
   event.notification.close();
+
+  const data = event.notification.data;
 
   if (event.action === 'reply') {
     const replyText = event.reply;
-    const data = event.notification.data;
-
+    
     if (replyText && data) {
       // Send the reply text via an API call
       event.waitUntil(
@@ -63,13 +43,21 @@ self.addEventListener('notificationclick', (event) => {
     }
   } else {
     // Default open behavior
+    let targetUrl = '/';
+    if ((data?.type === 'chat_message' || data?.type === 'group_chat_message') && data?.chatId) {
+      targetUrl = `/?openChatId=${data.chatId}`; 
+    }
+
     event.waitUntil(
       clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-        if (windowClients.length > 0) {
-          windowClients[0].focus();
-        } else {
-          clients.openWindow('/');
+        for (let i = 0; i < windowClients.length; i++) {
+          if ('focus' in windowClients[i]) {
+             // Send message to the app to route internally to the chat
+             windowClients[i].postMessage({ type: 'NAVIGATE_TO_CHAT', chatId: data?.chatId, msgType: data?.type });
+             return windowClients[i].focus();
+          }
         }
+        return clients.openWindow(targetUrl);
       })
     );
   }
