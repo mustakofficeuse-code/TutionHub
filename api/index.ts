@@ -156,6 +156,32 @@ app.post("/api/send-push", async (req, res) => {
         notification: { 
           title: String(title || "New Notification"), 
           body: String(body || "") 
+        },
+        android: {
+          priority: "high"
+        },
+        webpush: {
+          headers: {
+            Urgency: "high"
+          },
+          notification: {
+            title: String(title || "New Notification"),
+            body: String(body || ""),
+            icon: "/vite.svg",
+            actions: [
+              {
+                action: "reply",
+                title: "Reply",
+                type: "text"
+              }
+            ],
+            data: {
+              type: String(req.body.type || "general"),
+              chatId: String(req.body.chatId || ""),
+              senderId: String(req.body.senderId || ""),
+              targetId: String(recipientId || "")
+            }
+          }
         }
       };
 
@@ -273,17 +299,45 @@ app.post("/api/chat-reply", async (req, res) => {
        if (recipientDoc.exists && recipientDoc.data()?.fcmToken) {
            await admin.messaging().send({
               token: recipientDoc.data().fcmToken,
-              notification: {
-                title: `New Message from ${senderName}`,
-                body: text.trim(),
-              },
               data: {
+                 title: String(`New Message from ${senderName}`),
+                 body: String(text.trim()),
                  type: "chat_message",
-                 chatId: chatId,
-                 senderId: senderId,
-                 targetId: recipientId
+                 chatId: String(chatId),
+                 senderId: String(senderId),
+                 targetId: String(recipientId)
+              },
+              notification: {
+                title: String(`New Message from ${senderName}`),
+                body: String(text.trim()),
+              },
+              android: {
+                priority: "high"
+              },
+              webpush: {
+                headers: {
+                  Urgency: "high"
+                },
+                notification: {
+                  title: String(`New Message from ${senderName}`),
+                  body: String(text.trim()),
+                  icon: "/vite.svg",
+                  actions: [
+                    {
+                      action: "reply",
+                      title: "Reply",
+                      type: "text"
+                    }
+                  ],
+                  data: {
+                    type: "chat_message",
+                    chatId: String(chatId),
+                    senderId: String(senderId),
+                    targetId: String(recipientId)
+                  }
+                }
               }
-           });
+           } as any);
        }
     }
 
