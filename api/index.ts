@@ -118,4 +118,55 @@ app.post("/api/admin/clear-fees", async (req, res) => {
     }
 });
 
+app.post("/api/send-push", async (req, res) => {
+  try {
+    const { title, body, recipientId, targetRole, delayMs } = req.body;
+    const db = admin.firestore();
+
+    const sendPushWrapper = async () => {
+      if (recipientId) {
+        const userDoc = await db.collection("users").doc(recipientId).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          if (userData && userData.fcmToken) {
+            await admin.messaging().send({
+              token: userData.fcmToken,
+              notification: { title, body },
+            });
+            return;
+          }
+        }
+      } else if (targetRole && targetRole !== "ALL") {
+         const usersSnap = await db.collection("users").where("role", "==", targetRole).get();
+         const tokens: string[] = [];
+         usersSnap.forEach((doc: any) => {
+           const userData = doc.data();
+           if (userData.fcmToken) tokens.push(userData.fcmToken);
+         });
+
+         if (tokens.length > 0) {
+            await admin.messaging().sendEachForMulticast({
+               tokens,
+               notification: { title, body },
+            });
+            return;
+         }
+      }
+    };
+
+    if (delayMs) {
+      setTimeout(() => {
+        sendPushWrapper().catch(e => console.error("Delayed push failed:", e));
+      }, delayMs);
+      return res.json({ success: true, message: `Push scheduled to be sent in ${delayMs}ms` });
+    }
+
+    await sendPushWrapper();
+    return res.json({ success: true, message: "Push attempt completed" });
+  } catch (e: any) {
+    console.error("Push send error:", e);
+    return res.status(500).json({ error: e.message });
+  }
+});
+
 export default app;
