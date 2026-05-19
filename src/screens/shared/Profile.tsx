@@ -682,6 +682,37 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
               </form>
             </div>
 
+            <div className="mt-4 sm:mt-8 pt-8 border-t border-slate-100 dark:border-white/5">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                 Background Notification Test
+              </h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                Test if push notifications arrive when the app is fully closed. Click the button below, then immediately close the app completely (swipe it away from recent apps / close the browser tab). Wait 10 seconds.
+              </p>
+              <button 
+                onClick={async () => {
+                  try {
+                    await fetch('/api/send-push', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        title: 'Test Background Push',
+                        body: 'This notification arrived while the app was closed!',
+                        recipientId: profile?.uid,
+                        delayMs: 10000 // 10 seconds delay
+                      })
+                    });
+                    setMessage({ type: 'success', text: 'Scheduled! Close the app completely within 10 seconds.' });
+                  } catch (e) {
+                    setMessage({ type: 'error', text: 'Failed to schedule push.' });
+                  }
+                }}
+                className="bg-purple-600 text-white font-bold py-3 px-4 sm:px-6 rounded-xl transition-all flex items-center justify-center hover:bg-purple-700 w-full sm:w-auto"
+              >
+                Schedule Test Push (10s Delay)
+              </button>
+            </div>
+
             {profile?.role === 'teacher' && (
               <div className="mt-4 sm:mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">

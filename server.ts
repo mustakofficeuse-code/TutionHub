@@ -50,41 +50,52 @@ async function startServer() {
   // API to send push notification using FCM
   app.post("/api/send-push", async (req, res) => {
     try {
-      const { title, body, recipientId, targetRole } = req.body;
+      const { title, body, recipientId, targetRole, delayMs } = req.body;
       const db = admin.firestore();
 
-      if (recipientId) {
-        // Send to specific user
-        const userDoc = await db.collection("users").doc(recipientId).get();
-        if (userDoc.exists) {
-          const userData = userDoc.data();
-          if (userData && userData.fcmToken) {
-            await admin.messaging().send({
-              token: userData.fcmToken,
-              notification: { title, body },
-            });
-            return res.json({ success: true, message: "Push sent to specific user" });
+      const sendPushWrapper = async () => {
+        if (recipientId) {
+          // Send to specific user
+          const userDoc = await db.collection("users").doc(recipientId).get();
+          if (userDoc.exists) {
+            const userData = userDoc.data();
+            if (userData && userData.fcmToken) {
+              await admin.messaging().send({
+                token: userData.fcmToken,
+                notification: { title, body },
+              });
+              return;
+            }
           }
+        } else if (targetRole && targetRole !== "ALL") {
+           // Send to users matching role
+           const usersSnap = await db.collection("users").where("role", "==", targetRole).get();
+           const tokens: string[] = [];
+           usersSnap.forEach((doc) => {
+             const userData = doc.data();
+             if (userData.fcmToken) tokens.push(userData.fcmToken);
+           });
+  
+           if (tokens.length > 0) {
+              await admin.messaging().sendEachForMulticast({
+                 tokens,
+                 notification: { title, body },
+              });
+              return;
+           }
         }
-        return res.json({ success: false, message: "No FCM token directly found for user" });
-      } else if (targetRole && targetRole !== "ALL") {
-         // Send to users matching role
-         const usersSnap = await db.collection("users").where("role", "==", targetRole).get();
-         const tokens: string[] = [];
-         usersSnap.forEach((doc) => {
-           const userData = doc.data();
-           if (userData.fcmToken) tokens.push(userData.fcmToken);
-         });
+      };
 
-         if (tokens.length > 0) {
-            await admin.messaging().sendEachForMulticast({
-               tokens,
-               notification: { title, body },
-            });
-            return res.json({ success: true, message: `Push sent to ${tokens.length} users with role ${targetRole}` });
-         }
+      if (delayMs) {
+        // Send a response immediately and setup a delayed push on the server side
+        setTimeout(() => {
+          sendPushWrapper().catch(e => console.error("Delayed push failed:", e));
+        }, delayMs);
+        return res.json({ success: true, message: `Push scheduled to be sent in ${delayMs}ms` });
       }
-      return res.json({ success: false, message: "No target for notification or no tokens found" });
+
+      await sendPushWrapper();
+      return res.json({ success: true, message: "Push attempt completed" });
     } catch (e: any) {
       console.error("Push send error:", e);
       return res.status(500).json({ error: e.message });
