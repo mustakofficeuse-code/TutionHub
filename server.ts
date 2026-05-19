@@ -38,13 +38,15 @@ async function startServer() {
         }
         admin.initializeApp({
           credential: admin.credential.cert(credentials),
+          projectId: firebaseConfig.projectId
         });
         console.log("Firebase Admin initialized with FIREBASE_SERVICE_ACCOUNT");
       } catch(e) {
         console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT:", e);
         try {
           admin.initializeApp({
-            credential: admin.credential.applicationDefault()
+            credential: admin.credential.applicationDefault(),
+            projectId: firebaseConfig.projectId
           });
           console.log("Firebase Admin initialized with Application Default Credentials as fallback");
         } catch (e2) {
@@ -54,7 +56,8 @@ async function startServer() {
     } else {
       try {
         admin.initializeApp({
-          credential: admin.credential.applicationDefault()
+          credential: admin.credential.applicationDefault(),
+          projectId: firebaseConfig.projectId
         });
         console.log("Firebase Admin initialized with Application Default Credentials");
       } catch(e) {

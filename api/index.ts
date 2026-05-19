@@ -5,6 +5,8 @@ import admin from 'firebase-admin';
 // Re-initialize Firebase Admin for Vercel
 if (!admin.apps.length) {
   try {
+    let projectId = process.env.VITE_FIREBASE_PROJECT_ID;
+    
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       let serviceAccount;
       const str = process.env.FIREBASE_SERVICE_ACCOUNT.trim();
@@ -14,20 +16,24 @@ if (!admin.apps.length) {
         serviceAccount = JSON.parse(Buffer.from(str, 'base64').toString('utf-8'));
       }
       admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+        credential: admin.credential.cert(serviceAccount),
+        projectId: projectId || serviceAccount.project_id
       });
       console.log("Firebase Admin initialized on Vercel with FIREBASE_SERVICE_ACCOUNT");
     } else {
       admin.initializeApp({
-        credential: admin.credential.applicationDefault()
+        credential: admin.credential.applicationDefault(),
+        projectId: projectId
       });
       console.log("Firebase Admin initialized on Vercel with Application Default Credentials");
     }
   } catch(e) {
     console.error("Vercel Firebase Admin init error:", e);
     try {
+      let projectId = process.env.VITE_FIREBASE_PROJECT_ID;
       admin.initializeApp({
-        credential: admin.credential.applicationDefault()
+        credential: admin.credential.applicationDefault(),
+        projectId: projectId
       });
     } catch(e2) {
       console.error("Fallback init failed", e2);
