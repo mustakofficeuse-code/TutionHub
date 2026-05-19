@@ -94,24 +94,6 @@ async function startServer() {
           webpush: {
             headers: {
               Urgency: "high"
-            },
-            notification: {
-              title: String(title || "New Notification"),
-              body: String(body || ""),
-              icon: "/vite.svg",
-              actions: [
-                {
-                  action: "reply",
-                  title: "Reply",
-                  type: "text"
-                }
-              ],
-              data: {
-                type: String(req.body.type || "general"),
-                chatId: String(req.body.chatId || ""),
-                senderId: String(req.body.senderId || ""),
-                targetId: String(recipientId || "")
-              }
             }
           }
         };
@@ -250,24 +232,6 @@ async function startServer() {
                  webpush: {
                    headers: {
                      Urgency: "high"
-                   },
-                   notification: {
-                     title: String(`New Message from ${senderName}`),
-                     body: String(text.trim()),
-                     icon: "/vite.svg",
-                     actions: [
-                       {
-                         action: "reply",
-                         title: "Reply",
-                         type: "text"
-                       }
-                     ],
-                     data: {
-                       type: "chat_message",
-                       chatId: String(chatId),
-                       senderId: String(senderId),
-                       targetId: String(recipientId)
-                     }
                    }
                  }
              };

@@ -77,10 +77,19 @@ export default function StudentView() {
       if (event.data && event.data.type === 'NAVIGATE_TO_CHAT') {
         const doubtsTabIndex = TABS.findIndex(t => t.id === 'doubts');
         if (doubtsTabIndex !== -1) {
-          setActiveTab(doubtsTabIndex);
           if (event.data.chatId) {
-             localStorage.setItem('pendingChatId', event.data.chatId);
-             window.dispatchEvent(new CustomEvent('OPEN_CHAT', { detail: { chatId: event.data.chatId } }));
+             // If we are already on the Doubts tab, just fire the event directly.
+             // Otherwise, save it in local storage to be picked up on mount.
+             setActiveTab((prev) => {
+                if (prev === doubtsTabIndex) {
+                   window.dispatchEvent(new CustomEvent('OPEN_CHAT', { detail: { chatId: event.data.chatId } }));
+                } else {
+                   localStorage.setItem('pendingChatId', event.data.chatId);
+                }
+                return doubtsTabIndex;
+             });
+          } else {
+             setActiveTab(doubtsTabIndex);
           }
         }
       }

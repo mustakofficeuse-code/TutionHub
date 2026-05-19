@@ -1,7 +1,48 @@
+// Version 4 - Intercept push completely
+
+self.addEventListener('push', function(event) {
+  // Prevent FCM from receiving this event and showing a duplicate notification
+  event.stopImmediatePropagation();
+
+  if (!event.data) return;
+
+  try {
+    const payload = event.data.json();
+    console.log('[SW] Intercepted push payload:', payload);
+
+    const dataObj = payload.data || {};
+    // Depending on FCM format, the notification might be under payload.notification
+    const title = payload.notification?.title || dataObj.title || 'New Notification';
+    const body = payload.notification?.body || dataObj.body || '';
+
+    const notificationOptions = {
+      body: body,
+      icon: '/vite.svg',
+      vibrate: [100, 50, 100],
+      data: dataObj,
+      requireInteraction: true,
+    };
+
+    if (dataObj.type === 'chat_message' || dataObj.type === 'group_chat_message') {
+      notificationOptions.actions = [
+        {
+          action: 'reply',
+          type: 'text',
+          title: 'Reply'
+        }
+      ];
+    }
+
+    event.waitUntil(
+      self.registration.showNotification(title, notificationOptions)
+    );
+  } catch (err) {
+    console.error('Error handling push event', err);
+  }
+});
+
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
-
-// Version 3 - Fixed double popups and actions
 
 firebase.initializeApp({
   apiKey: "AIzaSyDNC_VlFEwkE32P5CfvvmFI6kB5M3UJNN4",
@@ -14,10 +55,8 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Remove manual messaging.onBackgroundMessage to avoid double popups when FCM native SW displays webpush.notification
-
 self.addEventListener('notificationclick', (event) => {
-  event.stopImmediatePropagation(); // Important! Prevent FCM's default click handler
+  event.stopImmediatePropagation(); // Important! Prevent default click handler
   event.notification.close();
 
   const data = event.notification.data;
@@ -51,7 +90,7 @@ self.addEventListener('notificationclick', (event) => {
     event.waitUntil(
       clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
         for (let i = 0; i < windowClients.length; i++) {
-          if ('focus' in windowClients[i]) {
+          if (windowClients[i].url && windowClients[i].url.includes(self.registration.scope) && 'focus' in windowClients[i]) {
              // Send message to the app to route internally to the chat
              windowClients[i].postMessage({ type: 'NAVIGATE_TO_CHAT', chatId: data?.chatId, msgType: data?.type });
              return windowClients[i].focus();

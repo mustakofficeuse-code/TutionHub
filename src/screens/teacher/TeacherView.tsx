@@ -79,10 +79,17 @@ export default function TeacherView() {
       if (event.data && event.data.type === 'NAVIGATE_TO_CHAT') {
         const doubtsTabIndex = TABS.findIndex(t => t.id === 'doubts');
         if (doubtsTabIndex !== -1) {
-          setActiveTab(doubtsTabIndex);
           if (event.data.chatId) {
-             localStorage.setItem('pendingChatId', event.data.chatId);
-             window.dispatchEvent(new CustomEvent('OPEN_CHAT', { detail: { chatId: event.data.chatId } }));
+             setActiveTab((prev) => {
+                if (prev === doubtsTabIndex) {
+                   window.dispatchEvent(new CustomEvent('OPEN_CHAT', { detail: { chatId: event.data.chatId } }));
+                } else {
+                   localStorage.setItem('pendingChatId', event.data.chatId);
+                }
+                return doubtsTabIndex;
+             });
+          } else {
+             setActiveTab(doubtsTabIndex);
           }
         }
       }
