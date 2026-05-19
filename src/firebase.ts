@@ -2,6 +2,7 @@ import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, doc, getDoc, initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
+import { getMessaging } from 'firebase/messaging';
 import firebaseConfig from '../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
@@ -18,6 +19,10 @@ export const db = (firebaseConfig.firestoreDatabaseId && firebaseConfig.firestor
   : initializeFirestore(app, firestoreSettings);
 
 export const storage = getStorage(app);
+
+// Initialize Firebase Cloud Messaging
+export const messaging = typeof window !== 'undefined' ? getMessaging(app) : null;
+
 
 /**
  * Custom error logger to suppress expected/handled auth errors from the console logs.

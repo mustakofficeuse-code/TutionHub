@@ -19,7 +19,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { signOut } from 'firebase/auth';
-import { subscribeToNotifications, markAsRead, deleteNotification, Notification } from '../../services/notificationService';
+import { subscribeToNotifications, markAsRead, deleteNotification, Notification, setupPushNotifications } from '../../services/notificationService';
 import { writeBatch, doc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import Home from './Home';
@@ -61,6 +61,7 @@ export default function StudentView() {
 
   useEffect(() => {
     if (!profile) return;
+    setupPushNotifications(profile.uid);
     const dept = profile.courseId || profile.courseName || profile.department;
     const unsub = subscribeToNotifications(profile.uid, 'student', (list) => {
         setNotifications(list.filter(n => {

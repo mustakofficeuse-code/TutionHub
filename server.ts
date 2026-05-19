@@ -27,12 +27,69 @@ async function startServer() {
   console.log(`Initializing Firebase Admin for project: ${firebaseConfig.projectId}`);
 
   if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault()
-    });
+    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+      try {
+        const credentials = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        admin.initializeApp({
+          credential: admin.credential.cert(credentials),
+        });
+        console.log("Firebase Admin initialized with FIREBASE_SERVICE_ACCOUNT");
+      } catch(e) {
+        console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT:", e);
+      }
+    } else {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault()
+      });
+      console.log("Firebase Admin initialized with Application Default Credentials");
+    }
   }
 
   app.use(express.json({ limit: '50mb' }));
+
+  // API to send push notification using FCM
+  app.post("/api/send-push", async (req, res) => {
+    try {
+      const { title, body, recipientId, targetRole } = req.body;
+      const db = admin.firestore();
+
+      if (recipientId) {
+        // Send to specific user
+        const userDoc = await db.collection("users").doc(recipientId).get();
+        if (userDoc.exists) {
+          const userData = userDoc.data();
+          if (userData && userData.fcmToken) {
+            await admin.messaging().send({
+              token: userData.fcmToken,
+              notification: { title, body },
+            });
+            return res.json({ success: true, message: "Push sent to specific user" });
+          }
+        }
+        return res.json({ success: false, message: "No FCM token directly found for user" });
+      } else if (targetRole && targetRole !== "ALL") {
+         // Send to users matching role
+         const usersSnap = await db.collection("users").where("role", "==", targetRole).get();
+         const tokens: string[] = [];
+         usersSnap.forEach((doc) => {
+           const userData = doc.data();
+           if (userData.fcmToken) tokens.push(userData.fcmToken);
+         });
+
+         if (tokens.length > 0) {
+            await admin.messaging().sendEachForMulticast({
+               tokens,
+               notification: { title, body },
+            });
+            return res.json({ success: true, message: `Push sent to ${tokens.length} users with role ${targetRole}` });
+         }
+      }
+      return res.json({ success: false, message: "No target for notification or no tokens found" });
+    } catch (e: any) {
+      console.error("Push send error:", e);
+      return res.status(500).json({ error: e.message });
+    }
+  });
 
   // API Route for secure uploads (bypasses browser CORS)
   app.post("/api/upload-capture", async (req, res) => {

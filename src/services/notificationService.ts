@@ -1,7 +1,9 @@
-import { collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc, writeBatch, getDocs, or } from 'firebase/firestore';
-import { db } from '../firebase';
+import { collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot, updateDoc, doc, deleteDoc, writeBatch, getDocs, or, setDoc } from 'firebase/firestore';
+import { db, messaging } from '../firebase';
+import { getToken } from 'firebase/messaging';
 
 export type NotificationType = 
+
   | 'profile_update' 
   | 'schedule_change' 
   | 'doubt_reply' 
@@ -38,6 +40,23 @@ export const sendNotification = async (notification: Omit<Notification, 'id' | '
     createdAt: serverTimestamp(),
     timestamp: serverTimestamp(),
   });
+
+  // Call our own backend API to trigger the push notification!
+  // This replaces the need for paid Firebase Cloud Functions.
+  try {
+    await fetch('/api/send-push', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: notification.title,
+        body: notification.message,
+        recipientId: notification.recipientId,
+        targetRole: notification.targetRole
+      })
+    });
+  } catch (error) {
+    console.error('Failed to trigger background push notification:', error);
+  }
 };
 
 export const subscribeToNotifications = (userId: string, targetRole: string, callback: (notifications: Notification[]) => void, userDept?: string, userSem?: string) => {
@@ -177,3 +196,21 @@ export const deleteNotification = async (notificationId: string) => {
     console.error('Error deleting notification:', error);
   }
 };
+
+export const setupPushNotifications = async (userId: string) => {
+  if (!messaging) return;
+  
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission === 'granted') {
+      const token = await getToken(messaging, { vapidKey: 'BA3-GSCOGTmOeIxzThPkTYtJzKSwE8L0X05g5KEnmipYzQV7Y0YmJcEL-ZY3e-XmBAMQjDJsSuncKXi5N8azs4w' });
+      if (token) {
+        await updateDoc(doc(db, 'users', userId), { fcmToken: token });
+        console.log('Push notifications enabled with FCM token');
+      }
+    }
+  } catch (error) {
+    console.error('Error setting up push notifications:', error);
+  }
+};
+

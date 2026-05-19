@@ -20,7 +20,7 @@ import {
 import { signOut } from 'firebase/auth';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
-import { subscribeToNotifications, markAsRead, deleteNotification, Notification } from '../../services/notificationService';
+import { subscribeToNotifications, markAsRead, deleteNotification, Notification, setupPushNotifications } from '../../services/notificationService';
 import { writeBatch, doc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import TeacherDashboard from './Dashboard';
@@ -64,6 +64,7 @@ export default function TeacherView() {
 
   useEffect(() => {
     if (!profile) return;
+    setupPushNotifications(profile.uid);
     const unsub = subscribeToNotifications(profile.uid, 'teacher', (list) => {
         setNotifications(list.filter(n => {
             if(n.type === 'chat_message' || n.type === 'group_chat_message') {
