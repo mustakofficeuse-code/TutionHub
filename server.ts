@@ -54,6 +54,21 @@ async function startServer() {
       const db = admin.firestore();
 
       const sendPushWrapper = async () => {
+        const payload: any = {
+          data: {
+            title: String(title || "New Notification"),
+            body: String(body || ""),
+            type: String(req.body.type || "general"),
+            chatId: String(req.body.chatId || ""),
+            senderId: String(req.body.senderId || ""),
+            targetId: String(recipientId || "")
+          },
+          notification: { 
+            title: String(title || "New Notification"), 
+            body: String(body || "") 
+          }
+        };
+
         if (recipientId) {
           // Send to specific user
           const userDoc = await db.collection("users").doc(recipientId).get();
@@ -61,8 +76,8 @@ async function startServer() {
             const userData = userDoc.data();
             if (userData && userData.fcmToken) {
               await admin.messaging().send({
+                ...payload,
                 token: userData.fcmToken,
-                notification: { title, body },
               });
               return;
             }
@@ -78,9 +93,9 @@ async function startServer() {
   
            if (tokens.length > 0) {
               await admin.messaging().sendEachForMulticast({
+                 ...payload,
                  tokens,
-                 notification: { title, body },
-              });
+              } as admin.messaging.MulticastMessage);
               return;
            }
         }
@@ -98,6 +113,101 @@ async function startServer() {
       return res.json({ success: true, message: "Push attempt completed" });
     } catch (e: any) {
       console.error("Push send error:", e);
+      return res.status(500).json({ error: e.message });
+    }
+  });
+
+  app.post("/api/chat-reply", async (req, res) => {
+    try {
+      const { text, chatId, recipientId, senderId, originalType } = req.body;
+      if (!text || !chatId || !senderId) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      const db = admin.firestore();
+      const userDoc = await db.collection("users").doc(senderId).get();
+      
+      if (!userDoc.exists) {
+        return res.status(404).json({ error: "User not found" });
+      }
+      
+      const userData = userDoc.data();
+      const senderName = userData?.name || "Unknown";
+      const senderRole = userData?.role || "student";
+      
+      // Attempt to find chatType by checking existing messages in this chat
+      const chatMsgs = await db.collection("chat_messages").where("chatId", "==", chatId).limit(1).get();
+      let chatType = 'private'; // default
+      if (!chatMsgs.empty) {
+        chatType = chatMsgs.docs[0].data().chatType || 'private';
+      } else if (originalType === 'group_chat_message') {
+        chatType = 'group';
+      }
+
+      const newMsgObj: any = {
+          chatId: chatId,
+          chatType: chatType,
+          senderId: senderId,
+          senderName: senderName,
+          senderRole: senderRole,
+          isAnonymous: false,
+          content: text.trim(),
+          attachmentUrl: "",
+          attachmentName: "",
+          attachmentType: "",
+          createdAt: new Date().toISOString(),
+          status: 'sent',
+          seenBy: [],
+          reactions: {},
+          participants: chatType === 'private' && recipientId ? [senderId, recipientId] : []
+      };
+
+      const docRef = await db.collection("chat_messages").add(newMsgObj);
+
+      // Also insert a notification for the recipient!
+      if (chatType === 'private' && recipientId) {
+         await db.collection("notifications").add({
+            title: `New Message from ${senderName}`,
+            message: text.trim(),
+            type: 'chat_message',
+            senderId: senderId,
+            senderName: senderName,
+            recipientId: recipientId,
+            relatedId: chatId,
+            isAnonymous: false,
+            read: false,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            timestamp: admin.firestore.FieldValue.serverTimestamp(),
+         });
+
+         // Trigger push notification to the recipient of this new reply!
+         // (This works nicely with our background fetch setup)
+         const recipientDoc = await db.collection("users").doc(recipientId).get();
+         if (recipientDoc.exists && recipientDoc.data()?.fcmToken) {
+             const payload: any = {
+                 data: {
+                     title: String(`New Message from ${senderName}`),
+                     body: String(text.trim()),
+                     type: "chat_message",
+                     chatId: String(chatId),
+                     senderId: String(senderId),
+                     targetId: String(recipientId)
+                 },
+                 notification: {
+                   title: `New Message from ${senderName}`,
+                   body: text.trim(),
+                 }
+             };
+             await admin.messaging().send({
+                ...payload,
+                token: recipientDoc.data()!.fcmToken
+             });
+         }
+      }
+
+      return res.json({ success: true, messageId: docRef.id });
+    } catch(e: any) {
+      console.error("Chat reply error:", e);
       return res.status(500).json({ error: e.message });
     }
   });

@@ -133,14 +133,17 @@ app.post("/api/send-push", async (req, res) => {
     const sendPushWrapper = async () => {
       const payload: any = {
         data: {
-          title,
-          body,
-          type: req.body.type || "general",
-          chatId: req.body.chatId || "",
-          senderId: req.body.senderId || "",
-          targetId: recipientId || ""
+          title: String(title || "New Notification"),
+          body: String(body || ""),
+          type: String(req.body.type || "general"),
+          chatId: String(req.body.chatId || ""),
+          senderId: String(req.body.senderId || ""),
+          targetId: String(recipientId || "")
         },
-        notification: { title, body }
+        notification: { 
+          title: String(title || "New Notification"), 
+          body: String(body || "") 
+        }
       };
 
       if (recipientId) {
