@@ -11,7 +11,7 @@ if (!admin.apps.length) {
       if (str.startsWith('{')) {
         serviceAccount = JSON.parse(str);
       } else {
-        serviceAccount = JSON.parse(Buffer.from(str, 'base64').toString('ascii'));
+        serviceAccount = JSON.parse(Buffer.from(str, 'base64').toString('utf-8'));
       }
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
@@ -25,6 +25,13 @@ if (!admin.apps.length) {
     }
   } catch(e) {
     console.error("Vercel Firebase Admin init error:", e);
+    try {
+      admin.initializeApp({
+        credential: admin.credential.applicationDefault()
+      });
+    } catch(e2) {
+      console.error("Fallback init failed", e2);
+    }
   }
 }
 

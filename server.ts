@@ -29,19 +29,37 @@ async function startServer() {
   if (!admin.apps.length) {
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
       try {
-        const credentials = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        let credentials;
+        const str = process.env.FIREBASE_SERVICE_ACCOUNT.trim();
+        if (str.startsWith('{')) {
+          credentials = JSON.parse(str);
+        } else {
+          credentials = JSON.parse(Buffer.from(str, 'base64').toString('utf-8'));
+        }
         admin.initializeApp({
           credential: admin.credential.cert(credentials),
         });
         console.log("Firebase Admin initialized with FIREBASE_SERVICE_ACCOUNT");
       } catch(e) {
         console.error("Failed to parse FIREBASE_SERVICE_ACCOUNT:", e);
+        try {
+          admin.initializeApp({
+            credential: admin.credential.applicationDefault()
+          });
+          console.log("Firebase Admin initialized with Application Default Credentials as fallback");
+        } catch (e2) {
+           console.log("Fallback init failed!");
+        }
       }
     } else {
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault()
-      });
-      console.log("Firebase Admin initialized with Application Default Credentials");
+      try {
+        admin.initializeApp({
+          credential: admin.credential.applicationDefault()
+        });
+        console.log("Firebase Admin initialized with Application Default Credentials");
+      } catch(e) {
+        console.log("Init Default Credentials failed!");
+      }
     }
   }
 
