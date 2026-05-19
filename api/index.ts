@@ -5,16 +5,23 @@ import admin from 'firebase-admin';
 // Re-initialize Firebase Admin for Vercel
 if (!admin.apps.length) {
   try {
-    // On Vercel, use FIREBASE_SERVICE_ACCOUNT base64 string or applicationDefault
     if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      const serviceAccount = JSON.parse(Buffer.from(process.env.FIREBASE_SERVICE_ACCOUNT, 'base64').toString('ascii'));
+      let serviceAccount;
+      const str = process.env.FIREBASE_SERVICE_ACCOUNT.trim();
+      if (str.startsWith('{')) {
+        serviceAccount = JSON.parse(str);
+      } else {
+        serviceAccount = JSON.parse(Buffer.from(str, 'base64').toString('ascii'));
+      }
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount)
       });
+      console.log("Firebase Admin initialized on Vercel with FIREBASE_SERVICE_ACCOUNT");
     } else {
       admin.initializeApp({
         credential: admin.credential.applicationDefault()
       });
+      console.log("Firebase Admin initialized on Vercel with Application Default Credentials");
     }
   } catch(e) {
     console.error("Vercel Firebase Admin init error:", e);
@@ -124,14 +131,26 @@ app.post("/api/send-push", async (req, res) => {
     const db = admin.firestore();
 
     const sendPushWrapper = async () => {
+      const payload: any = {
+        data: {
+          title,
+          body,
+          type: req.body.type || "general",
+          chatId: req.body.chatId || "",
+          senderId: req.body.senderId || "",
+          targetId: recipientId || ""
+        },
+        notification: { title, body }
+      };
+
       if (recipientId) {
         const userDoc = await db.collection("users").doc(recipientId).get();
         if (userDoc.exists) {
           const userData = userDoc.data();
           if (userData && userData.fcmToken) {
             await admin.messaging().send({
+              ...payload,
               token: userData.fcmToken,
-              notification: { title, body },
             });
             return;
           }
@@ -146,9 +165,9 @@ app.post("/api/send-push", async (req, res) => {
 
          if (tokens.length > 0) {
             await admin.messaging().sendEachForMulticast({
+               ...payload,
                tokens,
-               notification: { title, body },
-            });
+            } as admin.messaging.MulticastMessage);
             return;
          }
       }
@@ -166,6 +185,96 @@ app.post("/api/send-push", async (req, res) => {
   } catch (e: any) {
     console.error("Push send error:", e);
     return res.status(500).json({ error: e.message });
+  }
+});
+
+app.post("/api/chat-reply", async (req, res) => {
+  try {
+    const { text, chatId, recipientId, senderId, originalType } = req.body;
+    if (!text || !chatId || !senderId) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const db = admin.firestore();
+    const userDoc = await db.collection("users").doc(senderId).get();
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    
+    const userData = userDoc.data();
+    const senderName = userData?.name || "Unknown";
+    const senderRole = userData?.role || "student";
+    
+    // Attempt to find chatType by checking existing messages in this chat
+    const chatMsgs = await db.collection("chat_messages").where("chatId", "==", chatId).limit(1).get();
+    let chatType = 'private'; // default
+    if (!chatMsgs.empty) {
+      chatType = chatMsgs.docs[0].data().chatType || 'private';
+    } else if (originalType === 'group_chat_message') {
+      chatType = 'group';
+    }
+
+    const newMsgObj: any = {
+        chatId: chatId,
+        chatType: chatType,
+        senderId: senderId,
+        senderName: senderName,
+        senderRole: senderRole,
+        isAnonymous: false,
+        content: text.trim(),
+        attachmentUrl: "",
+        attachmentName: "",
+        attachmentType: "",
+        createdAt: new Date().toISOString(),
+        status: 'sent',
+        seenBy: [],
+        reactions: {},
+        participants: chatType === 'private' && recipientId ? [senderId, recipientId] : []
+    };
+
+    const docRef = await db.collection("chat_messages").add(newMsgObj);
+
+    // Also insert a notification for the recipient!
+    if (chatType === 'private' && recipientId) {
+       await db.collection("notifications").add({
+          title: `New Message from ${senderName}`,
+          message: text.trim(),
+          type: 'chat_message',
+          senderId: senderId,
+          senderName: senderName,
+          recipientId: recipientId,
+          relatedId: chatId,
+          isAnonymous: false,
+          read: false,
+          createdAt: admin.firestore.FieldValue.serverTimestamp(),
+          timestamp: admin.firestore.FieldValue.serverTimestamp(),
+       });
+
+       // Trigger push notification to the recipient of this new reply!
+       // (This works nicely with our background fetch setup)
+       const recipientDoc = await db.collection("users").doc(recipientId).get();
+       if (recipientDoc.exists && recipientDoc.data()?.fcmToken) {
+           await admin.messaging().send({
+              token: recipientDoc.data().fcmToken,
+              notification: {
+                title: `New Message from ${senderName}`,
+                body: text.trim(),
+              },
+              data: {
+                 type: "chat_message",
+                 chatId: chatId,
+                 senderId: senderId,
+                 targetId: recipientId
+              }
+           });
+       }
+    }
+
+    res.json({ success: true, messageId: docRef.id });
+  } catch(e: any) {
+    console.error("Chat reply error:", e);
+    res.status(500).json({ error: e.message });
   }
 });
 
