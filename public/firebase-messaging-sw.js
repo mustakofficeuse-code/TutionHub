@@ -26,7 +26,8 @@ self.addEventListener('push', function(event) {
 
     const notificationOptions = {
       body: body,
-      icon: '/vite.svg',
+      icon: '/logo.png',
+      badge: '/logo.png',
       vibrate: [100, 50, 100],
       data: dataObj,
       requireInteraction: true,
@@ -93,7 +94,8 @@ self.addEventListener('notificationclick', (event) => {
            // Show error if failed
            self.registration.showNotification('Reply Failed', {
              body: 'Could not send: ' + err.message,
-             icon: '/vite.svg'
+             icon: '/logo.png',
+             badge: '/logo.png'
            });
         })
       );

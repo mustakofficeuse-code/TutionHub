@@ -117,14 +117,14 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
                        navigator.serviceWorker.ready.then(registration => {
                            registration.showNotification(newNotif.title, {
                                body: newNotif.message,
-                               icon: '/vite.svg',
+                               icon: '/logo.png',
                                vibrate: [100, 50, 100],
                            } as any);
                        });
                    } else {
                        new Notification(newNotif.title, {
                           body: newNotif.message,
-                          icon: '/vite.svg', // generic icon
+                          icon: '/logo.png', // generic icon
                        });
                    }
                 }

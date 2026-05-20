@@ -86,7 +86,8 @@ async function startServer() {
           },
           notification: { 
             title: String(title || "New Notification"), 
-            body: String(body || "") 
+            body: String(body || ""),
+            icon: "/logo.png"
           },
           android: {
             priority: "high"
@@ -94,6 +95,10 @@ async function startServer() {
           webpush: {
             headers: {
               Urgency: "high"
+            },
+            notification: {
+              icon: "/logo.png",
+              badge: "/logo.png"
             }
           }
         };
@@ -104,10 +109,27 @@ async function startServer() {
           if (userDoc.exists) {
             const userData = userDoc.data();
             if (userData && userData.fcmToken) {
-              await admin.messaging().send({
-                ...payload,
-                token: userData.fcmToken,
-              });
+              try {
+                await admin.messaging().send({
+                  ...payload,
+                  token: userData.fcmToken,
+                });
+              } catch (err: any) {
+                console.error("[FCM] Error sending single-cast push:", err);
+                const errMsg = String(err?.message || "").toLowerCase();
+                const errCode = String(err?.code || "").toLowerCase();
+                if (
+                  errCode.includes("not-registered") ||
+                  errCode.includes("invalid-registration-token") ||
+                  errMsg.includes("not-registered") ||
+                  errMsg.includes("invalid") ||
+                  errMsg.includes("bad-token") ||
+                  errMsg.includes("not registered")
+                ) {
+                  console.log(`[FCM] Token is stale/invalid for user ${recipientId}. Resetting fcmToken field to heal the DB.`);
+                  await db.collection("users").doc(recipientId).update({ fcmToken: null });
+                }
+              }
               return;
             }
           }
@@ -137,10 +159,14 @@ async function startServer() {
            });
   
            if (tokens.length > 0) {
-              await admin.messaging().sendEachForMulticast({
-                 ...payload,
-                 tokens,
-              } as admin.messaging.MulticastMessage);
+              try {
+                 await admin.messaging().sendEachForMulticast({
+                    ...payload,
+                    tokens,
+                 } as admin.messaging.MulticastMessage);
+              } catch (err: any) {
+                 console.error("[FCM] Error sending multicast push:", err);
+              }
               return;
            }
         }
@@ -241,6 +267,7 @@ async function startServer() {
                  notification: {
                    title: String(`New Message from ${senderName}`),
                    body: String(text.trim()),
+                   icon: "/logo.png"
                  },
                  android: {
                    priority: "high"
@@ -248,6 +275,10 @@ async function startServer() {
                  webpush: {
                    headers: {
                      Urgency: "high"
+                   },
+                   notification: {
+                     icon: "/logo.png",
+                     badge: "/logo.png"
                    }
                  }
              };
