@@ -57,7 +57,6 @@ const messaging = firebase.messaging();
 
 self.addEventListener('notificationclick', (event) => {
   event.stopImmediatePropagation(); // Important! Prevent default click handler
-  event.notification.close();
 
   const data = event.notification.data;
 
@@ -67,7 +66,7 @@ self.addEventListener('notificationclick', (event) => {
     if (replyText && data) {
       // Send the reply text via an API call
       event.waitUntil(
-        fetch('/api/chat-reply', {
+        fetch(new URL('/api/chat-reply', self.location.origin).href, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -77,10 +76,24 @@ self.addEventListener('notificationclick', (event) => {
             senderId: data.targetId, // The recipient of the previous message is the sender of our reply
             originalType: data.type
           })
+        }).then(response => {
+           if (!response.ok) {
+              return response.text().then(text => { throw new Error(text) });
+           }
+           event.notification.close();
+           return response.json();
+        }).catch(err => {
+           console.error('[SW] Reply error:', err);
+           // Show error if failed
+           self.registration.showNotification('Reply Failed', {
+             body: 'Could not send: ' + err.message,
+             icon: '/vite.svg'
+           });
         })
       );
     }
   } else {
+    event.notification.close();
     // Default open behavior
     let targetUrl = '/';
     if ((data?.type === 'chat_message' || data?.type === 'group_chat_message') && data?.chatId) {
