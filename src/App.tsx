@@ -127,7 +127,7 @@ export default function App() {
                       Tuition<span className="text-sky-400">Hub</span>
                     </h1>
                     <p className="text-xs font-semibold text-sky-400/60 tracking-widest uppercase">
-                      BCA Personal Companion
+                      Smart Classroom Companion
                     </p>
                   </motion.div>
 
