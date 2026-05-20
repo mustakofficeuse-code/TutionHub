@@ -208,7 +208,15 @@ export const setupPushNotifications = async (userId: string) => {
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
-      const token = await getToken(messaging, { vapidKey: 'BA3-GSCOGTmOeIxzThPkTYtJzKSwE8L0X05g5KEnmipYzQV7Y0YmJcEL-ZY3e-XmBAMQjDJsSuncKXi5N8azs4w' });
+      let registration: ServiceWorkerRegistration | undefined = undefined;
+      if ('serviceWorker' in navigator) {
+        registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+        console.log('Service Worker registered successfully with scope: /');
+      }
+      const token = await getToken(messaging, { 
+        vapidKey: 'BA3-GSCOGTmOeIxzThPkTYtJzKSwE8L0X05g5KEnmipYzQV7Y0YmJcEL-ZY3e-XmBAMQjDJsSuncKXi5N8azs4w',
+        serviceWorkerRegistration: registration
+      });
       if (token) {
         await updateDoc(doc(db, 'users', userId), { fcmToken: token });
         console.log('Push notifications enabled with FCM token');

@@ -1,9 +1,6 @@
-// Version 5 - Fix targetId empty in group chats by looking up IndexedDB (skipped for now, just version bump)
+// Version 6 - Hybrid Push Interception (native FCM for general notifications, custom intercept for interactive chat replies)
 
 self.addEventListener('push', function(event) {
-  // Prevent FCM from receiving this event and showing a duplicate notification
-  event.stopImmediatePropagation();
-
   if (!event.data) return;
 
   try {
@@ -11,9 +8,21 @@ self.addEventListener('push', function(event) {
     console.log('[SW] Intercepted push payload:', payload);
 
     const dataObj = payload.data || {};
-    // Depending on FCM format, the notification might be under payload.notification
-    const title = payload.notification?.title || dataObj.title || 'New Notification';
-    const body = payload.notification?.body || dataObj.body || '';
+    const type = dataObj.type || payload.type || '';
+
+    // Only intercept chat messages to add the interactive direct Reply action.
+    // For all other notifications, let FCM SDK show them natively/automatically.
+    // This provides 100% reliability for background / closed app pushes.
+    if (type !== 'chat_message' && type !== 'group_chat_message') {
+      console.log('[SW] Letting native FCM handler display the notification:', payload);
+      return;
+    }
+
+    // Intercept chat messages is required for the custom "Reply" button action
+    event.stopImmediatePropagation();
+
+    const title = payload.notification?.title || dataObj.title || payload.title || 'New Notification';
+    const body = payload.notification?.body || dataObj.body || payload.body || '';
 
     const notificationOptions = {
       body: body,
@@ -21,23 +30,20 @@ self.addEventListener('push', function(event) {
       vibrate: [100, 50, 100],
       data: dataObj,
       requireInteraction: true,
-    };
-
-    if (dataObj.type === 'chat_message' || dataObj.type === 'group_chat_message') {
-      notificationOptions.actions = [
+      actions: [
         {
           action: 'reply',
           type: 'text',
           title: 'Reply'
         }
-      ];
-    }
+      ]
+    };
 
     event.waitUntil(
       self.registration.showNotification(title, notificationOptions)
     );
   } catch (err) {
-    console.error('Error handling push event', err);
+    console.error('Error in custom push interceptor, letting native FCM SDK handle push:', err);
   }
 });
 

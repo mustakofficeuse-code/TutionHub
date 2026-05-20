@@ -577,7 +577,15 @@ export default function AuthGateway() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-4 sm:p-5 sm:p-5 sm:p-6 border border-slate-100 dark:border-slate-800">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-xl p-6 border border-slate-100 dark:border-slate-800">
+        <div className="flex flex-col items-center justify-center mb-6">
+          <img
+            src="/logo.png"
+            alt="TutionHub Logo"
+            className="w-28 h-28 object-cover rounded-full shadow-lg border-2 border-blue-500/20 hover:scale-105 transition-transform duration-300"
+            referrerPolicy="no-referrer"
+          />
+        </div>
         {view === "teacher-setup" && (
           <>
             <div className="text-center mb-4 sm:mb-8">

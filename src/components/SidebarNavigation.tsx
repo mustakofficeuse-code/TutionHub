@@ -30,8 +30,8 @@ export default function SidebarNavigation({ tabs, activeTab, onTabChange, isOpen
         </button>
         {isOpen && (
             <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-wa-teal rounded-lg flex items-center justify-center">
-                    <GraduationCap className="text-white w-5 h-5" />
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
+                    <img src="/logo.png" alt="TuitionHub Logo" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 </div>
                 <h1 className="text-xl font-bold text-slate-800 dark:text-white truncate">TuitionHub</h1>
             </div>
