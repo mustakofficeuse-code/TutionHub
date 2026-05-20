@@ -1,20 +1,20 @@
 {
-  "name": "TutionHub",
-  "short_name": "TutionHub",
+  "name": "TuitionHub",
+  "short_name": "TuitionHub",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#111b21",
   "theme_color": "#00a884",
   "icons": [
     {
-      "src": "/vite.svg",
+      "src": "/logo.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png"
     },
     {
-      "src": "/vite.svg",
+      "src": "/logo.png",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/png"
     }
   ]
 }

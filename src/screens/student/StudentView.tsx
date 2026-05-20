@@ -112,7 +112,7 @@ export default function StudentView() {
       unsub();
       navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage);
     };
-  }, [profile]);
+  }, [profile?.uid, profile?.courseId, profile?.courseName, profile?.department, profile?.semester]);
 
   const changeTab = (newIndex: number) => {
     setDirection(newIndex > activeTab ? 1 : -1);

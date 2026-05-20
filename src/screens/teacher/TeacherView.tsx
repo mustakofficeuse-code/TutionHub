@@ -112,7 +112,7 @@ export default function TeacherView() {
       unsub();
       navigator.serviceWorker?.removeEventListener('message', handleServiceWorkerMessage);
     };
-  }, [profile]);
+  }, [profile?.uid, profile?.role]);
 
   const handleClearNotifications = async () => {
     if (!notifications.length) return;

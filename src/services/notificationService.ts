@@ -205,6 +205,13 @@ export const deleteNotification = async (notificationId: string) => {
 export const setupPushNotifications = async (userId: string) => {
   if (!messaging) return;
   
+  // Prevent redundant requests to FCM servers if we have already successfully registered a token in this browser session/device
+  const cachedToken = localStorage.getItem(`fcm_token_cache_${userId}`);
+  if (cachedToken) {
+    console.log('FCM token found in cache, skipping token fetch to prevent quota limits.');
+    return;
+  }
+  
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
@@ -219,11 +226,16 @@ export const setupPushNotifications = async (userId: string) => {
       });
       if (token) {
         await updateDoc(doc(db, 'users', userId), { fcmToken: token });
+        localStorage.setItem(`fcm_token_cache_${userId}`, token);
         console.log('Push notifications enabled with FCM token');
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error setting up push notifications:', error);
+    // If we hit a quota exceeded or token subscribe failed, cache a placeholder so we don't spam requests
+    if (error?.message && (error.message.includes('Quota exceeded') || error.message.includes('quota'))) {
+      localStorage.setItem(`fcm_token_cache_${userId}`, 'quota_throttled');
+    }
   }
 };
 
