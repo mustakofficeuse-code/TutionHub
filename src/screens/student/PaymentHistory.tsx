@@ -16,6 +16,7 @@ import {
   Info
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { sendNotification } from '../../services/notificationService';
 
 export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean }) {
   const { profile } = useAuth();
@@ -82,12 +83,13 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
         timestamp: new Date().toISOString()
       });
 
-      await addDoc(collection(db, 'notifications'), {
+      await sendNotification({
         title: 'New Fee Payment Submitted',
         message: `${profile.name} has submitted a fee payment of ₹${paymentAmount} (Tx: ${transactionId}) for Sem ${selectedSemester}.`,
         targetRole: 'teacher',
-        timestamp: new Date().toISOString(),
-        read: false
+        type: 'fee_payment',
+        senderId: profile.uid,
+        senderName: profile.name,
       });
 
       setSelectedSemester(null);

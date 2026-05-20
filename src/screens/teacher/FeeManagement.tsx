@@ -28,6 +28,7 @@ import {
   Hash,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { sendNotification } from "../../services/notificationService";
 
 export default function FeeManagement({
   isEmbedded,
@@ -155,14 +156,13 @@ export default function FeeManagement({
   ) => {
     try {
       await updateDoc(doc(db, "payments", paymentId), { status: "confirmed" });
-      await addDoc(collection(db, "notifications"), {
+      await sendNotification({
         title: "Fee Payment Confirmed",
         message: `Your fee payment of ₹${amount} has been successfully confirmed.`,
         targetRole: "student",
-        targetId: studentId,
-        timestamp: new Date().toISOString(),
-        read: false,
-      });
+        recipientId: studentId,
+        type: "fee_confirmed",
+      } as any);
       fetchData();
     } catch (error) {
       console.error("Error confirming payment:", error);

@@ -1,4 +1,4 @@
-// Version 4 - Intercept push completely
+// Version 5 - Fix targetId empty in group chats by looking up IndexedDB (skipped for now, just version bump)
 
 self.addEventListener('push', function(event) {
   // Prevent FCM from receiving this event and showing a duplicate notification

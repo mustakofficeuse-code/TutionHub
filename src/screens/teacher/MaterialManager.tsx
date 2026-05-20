@@ -23,11 +23,14 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
+import { sendNotification } from '../../services/notificationService';
+import { useAuth } from '../../context/AuthContext';
 
 const ROMAN_UNITS = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV'];
 
 export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }) {
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const [materials, setMaterials] = useState<any[]>([]);
   const [departments, setDepartments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -297,14 +300,15 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
       await Promise.all(uploadTasks);
       
       try {
-        await addDoc(collection(db, 'notifications'), {
+        await sendNotification({
           title: 'New Study Material',
           message: `A new study material "${title}" has been uploaded for ${courseId} Sem ${semester}.`,
           targetRole: 'student',
           targetDept: courseId.toUpperCase(),
           targetSem: semester,
-          timestamp: new Date().toISOString(),
-          read: false
+          type: 'material_upload',
+          senderId: profile?.uid || 'auto',
+          senderName: profile?.name || 'Teacher'
         });
       } catch (err) {
         console.warn("Failed to notify students:", err);

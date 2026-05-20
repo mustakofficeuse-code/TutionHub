@@ -140,7 +140,7 @@ app.post("/api/admin/clear-fees", async (req, res) => {
 
 app.post("/api/send-push", async (req, res) => {
   try {
-    const { title, body, recipientId, targetRole, delayMs } = req.body;
+    const { title, body, recipientId, targetRole, delayMs, targetDept, targetSem } = req.body;
     const db = admin.firestore();
 
     const sendPushWrapper = async () => {
@@ -179,12 +179,28 @@ app.post("/api/send-push", async (req, res) => {
             return;
           }
         }
-      } else if (targetRole && targetRole !== "ALL") {
-         const usersSnap = await db.collection("users").where("role", "==", targetRole).get();
+      } else if (targetRole) {
+         let usersSnap;
+         if (targetRole === "ALL") {
+             usersSnap = await db.collection("users").get();
+         } else {
+             usersSnap = await db.collection("users").where("role", "==", targetRole).get();
+         }
          const tokens: string[] = [];
          usersSnap.forEach((doc: any) => {
            const userData = doc.data();
-           if (userData.fcmToken) tokens.push(userData.fcmToken);
+           let shouldSend = true;
+           
+           if (targetDept && userData.courseName !== targetDept && userData.courseId !== (targetDept as string).toUpperCase()) {
+               shouldSend = false;
+           }
+           if (targetSem && userData.semester !== targetSem) {
+               shouldSend = false;
+           }
+           
+           if (shouldSend && userData.fcmToken) {
+               tokens.push(userData.fcmToken);
+           }
          });
 
          if (tokens.length > 0) {

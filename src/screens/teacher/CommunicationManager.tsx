@@ -14,6 +14,7 @@ import {
   Palmtree
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { sendNotification } from '../../services/notificationService';
 
 export default function CommunicationManager() {
   const navigate = useNavigate();
@@ -56,6 +57,15 @@ export default function CommunicationManager() {
         targetCourseId,
         createdAt: new Date().toISOString()
       });
+
+      await sendNotification({
+        title: type === 'urgent' ? `URGENT: ${title}` : `Announcement: ${title}`,
+        message: content,
+        targetRole: 'student',
+        type: 'new_announcement',
+        targetDept: targetCourseId !== 'all' ? targetCourseId : undefined,
+      } as any);
+
       setShowAdd(false);
       setTitle('');
       setContent('');

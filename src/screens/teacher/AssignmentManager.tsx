@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
+import { sendNotification } from '../../services/notificationService';
 
 export default function AssignmentManager() {
   const navigate = useNavigate();
@@ -79,6 +80,15 @@ export default function AssignmentManager() {
         subject,
         createdAt: new Date().toISOString()
       });
+
+      await sendNotification({
+        title: 'New Assignment',
+        message: `A new assignment "${title}" has been added for ${courseId} - ${subject}.`,
+        targetRole: 'student',
+        type: 'new_assignment',
+        targetDept: courseId,
+      } as any);
+
       setShowAdd(false);
       resetForm();
     } catch (error) {

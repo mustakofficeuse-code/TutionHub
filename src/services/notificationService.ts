@@ -55,6 +55,8 @@ export const sendNotification = async (notification: Omit<Notification, 'id' | '
         type: notification.type,
         chatId: notification.relatedId,
         senderId: notification.senderId,
+        targetDept: notification.targetDept,
+        targetSem: notification.targetSem,
       })
     });
   } catch (error) {
