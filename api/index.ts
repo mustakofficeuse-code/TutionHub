@@ -143,6 +143,11 @@ app.post("/api/send-push", async (req, res) => {
     const { title, body, recipientId, targetRole, delayMs, targetDept, targetSem } = req.body;
     const db = admin.firestore();
 
+    const host = req.get("host") || "tuitionhubapp.firebaseapp.com";
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
+    const origin = `${protocol}://${host}`;
+    const absoluteLogo = `${origin}/logo.png`;
+
     const sendPushWrapper = async () => {
       const payload: any = {
         data: {
@@ -156,7 +161,7 @@ app.post("/api/send-push", async (req, res) => {
         notification: { 
           title: String(title || "New Notification"), 
           body: String(body || ""),
-          icon: "/logo.png"
+          icon: absoluteLogo
         },
         android: {
           priority: "high"
@@ -166,8 +171,8 @@ app.post("/api/send-push", async (req, res) => {
             Urgency: "high"
           },
           notification: {
-            icon: "/logo.png",
-            badge: "/logo.png"
+            icon: absoluteLogo,
+            badge: absoluteLogo
           }
         }
       };
@@ -262,6 +267,11 @@ app.post("/api/chat-reply", async (req, res) => {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
+    const host = req.get("host") || "tuitionhubapp.firebaseapp.com";
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
+    const origin = `${protocol}://${host}`;
+    const absoluteLogo = `${origin}/logo.png`;
+
     const db = admin.firestore();
     const userDoc = await db.collection("users").doc(senderId).get();
     
@@ -335,7 +345,7 @@ app.post("/api/chat-reply", async (req, res) => {
               notification: {
                 title: String(`New Message from ${senderName}`),
                 body: String(text.trim()),
-                icon: "/logo.png"
+                icon: absoluteLogo
               },
               android: {
                 priority: "high"
@@ -345,8 +355,8 @@ app.post("/api/chat-reply", async (req, res) => {
                   Urgency: "high"
                 },
                 notification: {
-                  icon: "/logo.png",
-                  badge: "/logo.png"
+                  icon: absoluteLogo,
+                  badge: absoluteLogo
                 }
               }
            } as any);

@@ -26,8 +26,8 @@ self.addEventListener('push', function(event) {
 
     const notificationOptions = {
       body: body,
-      icon: '/logo.png',
-      badge: '/logo.png',
+      icon: self.location.origin + '/logo.png',
+      badge: self.location.origin + '/logo.png',
       vibrate: [100, 50, 100],
       data: dataObj,
       requireInteraction: true,
@@ -94,8 +94,8 @@ self.addEventListener('notificationclick', (event) => {
            // Show error if failed
            self.registration.showNotification('Reply Failed', {
              body: 'Could not send: ' + err.message,
-             icon: '/logo.png',
-             badge: '/logo.png'
+             icon: self.location.origin + '/logo.png',
+             badge: self.location.origin + '/logo.png'
            });
         })
       );

@@ -153,12 +153,29 @@ export default function FeeManagement({
     paymentId: string,
     studentId: string,
     amount: number,
+    expectedAmount?: number,
+    currentPaidAmount?: number,
   ) => {
     try {
       await updateDoc(doc(db, "payments", paymentId), { status: "confirmed" });
+      
+      let message = `Your fee payment of ₹${amount} has been successfully confirmed.`;
+      
+      if (expectedAmount !== undefined && currentPaidAmount !== undefined) {
+        const updatedPaid = currentPaidAmount + amount;
+        const remaining = Math.max(0, expectedAmount - updatedPaid);
+        if (expectedAmount > 0) {
+          if (remaining <= 0) {
+            message = `🎉 Excellent news! Your fee payment of ₹${amount} has been approved. Your semester fees of ₹${expectedAmount.toLocaleString()} are now FULLY PAID! Thank you.`;
+          } else {
+            message = `Your fee payment of ₹${amount} has been approved. This is a PARTIAL PAYMENT. Remaining balance due: ₹${remaining.toLocaleString()}.`;
+          }
+        }
+      }
+
       await sendNotification({
         title: "Fee Payment Confirmed",
-        message: `Your fee payment of ₹${amount} has been successfully confirmed.`,
+        message: message,
         targetRole: "student",
         recipientId: studentId,
         type: "fee_confirmed",
@@ -210,6 +227,44 @@ export default function FeeManagement({
         teacherReceived: true,
         timestamp: new Date().toISOString(),
       });
+
+      // Notify the student of their immediate cash confirmation
+      const targetCourseKey = cleanStr(
+        paymentStudent?.courseId ||
+          paymentStudent?.courseName ||
+          paymentStudent?.department,
+      );
+      const semFee = feeStructure[targetCourseKey]?.[`sem${paymentSemester}`] || 0;
+      
+      const totalPaidPrevious = payments
+        .filter(
+          (p) =>
+            (p.studentId === paymentStudent?.id || p.studentId === paymentStudent?.uid) &&
+            String(p.semester) === String(paymentSemester) &&
+            p.status === "confirmed"
+        )
+        .reduce((sum, p) => sum + Number(p.amount), 0);
+        
+      const newPaid = totalPaidPrevious + Number(paymentAmount);
+      const remaining = Math.max(0, semFee - newPaid);
+      
+      let message = `Your direct cash payment of ₹${Number(paymentAmount).toLocaleString()} for Semester ${paymentSemester} has been received and confirmed.`;
+      if (semFee > 0) {
+        if (remaining <= 0) {
+          message = `🎉 Excellent news! Your direct receipt of ₹${Number(paymentAmount).toLocaleString()} for Semester ${paymentSemester} has been confirmed. Your semester fees of ₹${semFee.toLocaleString()} are now FULLY PAID!`;
+        } else {
+          message = `Your direct receipt of ₹${Number(paymentAmount).toLocaleString()} for Semester ${paymentSemester} has been confirmed. This is a PARTIAL PAYMENT. Remaining balance due: ₹${remaining.toLocaleString()}.`;
+        }
+      }
+
+      await sendNotification({
+        title: "Fee Payment Confirmed",
+        message: message,
+        targetRole: "student",
+        recipientId: paymentStudent.uid || paymentStudent.id,
+        type: "fee_confirmed",
+      } as any);
+
       setShowPaymentModal(false);
       setPaymentAmount("");
       fetchData();
@@ -1290,6 +1345,8 @@ export default function FeeManagement({
                                   p.id,
                                   p.studentId || viewDetailsStudent.id,
                                   p.amount,
+                                  viewDetailsStudent.expectedAmount,
+                                  viewDetailsStudent.paidAmount,
                                 );
                                 setViewDetailsStudent((prev: any) => ({
                                   ...prev,
