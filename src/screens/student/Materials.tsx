@@ -138,7 +138,7 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
                         {m.topic && (
                           <>
                             <div className="w-1 h-1 rounded-full bg-slate-400" />
-                            <span className="text-sm italic font-bold text-slate-500 dark:text-slate-400 tracking-wide truncate max-w-[150px]">{m.topic}</span>
+                            <span className="text-sm italic font-medium text-slate-600 dark:text-slate-300 tracking-wide truncate max-w-[150px]">{m.topic}</span>
                           </>
                         )}
                       </div>

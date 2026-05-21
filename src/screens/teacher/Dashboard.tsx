@@ -556,7 +556,7 @@ export default function TeacherDashboard({
                           <p className="text-lg font-bold text-slate-800 dark:text-[#e9edef] truncate cursor-pointer transition-all hover:text-wa-teal hover:translate-x-1">
                             {s.name}
                           </p>
-                          <p className="text-xs text-slate-500 truncate">
+                          <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
                             {s.studentId || s.email}
                           </p>
                         </div>
@@ -622,7 +622,7 @@ export default function TeacherDashboard({
       {loading && (
         <div className="flex flex-col items-center justify-center py-32">
           <Loader2 className="w-12 h-12 text-wa-teal animate-spin mb-4 sm:mb-6" />
-          <p className="text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal">Synchronizing Uplink...</p>
+          <p className="text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal">Synchronizing Uplink...</p>
         </div>
       )}
 
@@ -719,7 +719,7 @@ export default function TeacherDashboard({
                             </div>
                             <div>
                               <h3 className="font-bold text-lg tracking-normal  italic">{name}</h3>
-                              <p className={`text-sm font-bold tracking-normal mt-1.5 ${isActive ? "text-white/80" : "text-slate-500 dark:text-slate-300"}`}>
+                              <p className={`text-sm font-bold tracking-normal mt-1.5 ${isActive ? "text-white/80" : "text-slate-600 dark:text-slate-400 dark:text-slate-300"}`}>
                                 {count} Active Students
                               </p>
                             </div>
@@ -793,7 +793,7 @@ export default function TeacherDashboard({
                     </div>
                     <div className="text-left">
                        <p className="text-lg font-bold text-slate-800 dark:text-[#e9edef] tracking-normal">Attendance</p>
-                       <p className="text-sm font-bold text-slate-500 dark:text-slate-300 tracking-normal mt-1">Uplink Generator</p>
+                       <p className="text-sm font-bold text-slate-600 dark:text-slate-400 dark:text-slate-300 tracking-normal mt-1">Uplink Generator</p>
                     </div>
                   </button>
                   <button
@@ -805,7 +805,7 @@ export default function TeacherDashboard({
                     </div>
                     <div className="text-left">
                        <p className="text-lg font-bold text-slate-800 dark:text-[#e9edef] tracking-normal">Finance</p>
-                       <p className="text-sm font-bold text-slate-500 dark:text-slate-300 tracking-normal mt-1">Ledger Manager</p>
+                       <p className="text-sm font-bold text-slate-600 dark:text-slate-400 dark:text-slate-300 tracking-normal mt-1">Ledger Manager</p>
                     </div>
                   </button>
                   <button
@@ -849,7 +849,7 @@ export default function TeacherDashboard({
                   {recentAttendance.length === 0 ? (
                     <div className="py-20 text-center opacity-40">
                       <Clock className="w-12 h-12 mx-auto mb-4 text-[#8696a0]" />
-                      <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Void Frequency</p>
+                      <p className="text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300">Void Frequency</p>
                     </div>
                   ) : (
                     recentAttendance.map((rec, idx) => (
@@ -941,7 +941,7 @@ export default function TeacherDashboard({
               <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-2 tracking-normal">
                 Deletion Restricted
               </h3>
-              <p className="text-slate-500 dark:text-[#8696a0] mb-4 sm:mb-8 font-medium leading-relaxed">
+              <p className="text-slate-600 dark:text-slate-400 dark:text-[#8696a0] mb-4 sm:mb-8 font-medium leading-relaxed">
                 Cannot delete the{" "}
                 <span className="font-bold text-slate-900 dark:text-white underline decoration-red-500 decoration-2 underline-offset-4 px-1">
                   {deletionRestriction.deptName}
@@ -1291,7 +1291,7 @@ export default function TeacherDashboard({
                             Note: {s.message}
                           </p>
                         )}
-                        <p className="text-xs text-slate-500 font-bold mt-1">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 font-bold mt-1">
                           {s.department} Sem {s.semester} • {s.date}
                         </p>
                         <p className="text-[11px] text-wa-teal font-bold mt-0.5">

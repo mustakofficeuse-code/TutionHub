@@ -134,7 +134,7 @@ export default function AddStudent() {
         <div className="text-center">
           <Shield className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Access Denied</h1>
-          <p className="text-slate-500 dark:text-slate-400 mt-2">Only teachers can access this page.</p>
+          <p className="text-slate-600 dark:text-slate-300 mt-2">Only teachers can access this page.</p>
           <button 
             onClick={() => navigate('/')}
             className="mt-4 sm:mt-6 px-4 sm:px-6 py-2 bg-blue-600 text-white rounded-xl font-bold"
@@ -289,7 +289,7 @@ export default function AddStudent() {
                       {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
-                  <p className="mt-2 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-[#8696a0] text-center italic">Default password for logging in</p>
+                  <p className="mt-2 text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 text-[#8696a0] text-center italic">Default password for logging in</p>
                 </div>
 
                 <button

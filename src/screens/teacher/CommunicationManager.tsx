@@ -91,7 +91,7 @@ export default function CommunicationManager() {
     <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#111b21] p-4 sm:p-6 sm:p-6 sm:p-10 pb-32 transition-colors">
       <button 
         onClick={() => navigate('/')}
-        className="mb-4 sm:mb-8 flex items-center gap-3 text-slate-500 dark:text-slate-400 font-bold hover:text-wa-teal transition-all  tracking-normal text-xs group"
+        className="mb-4 sm:mb-8 flex items-center gap-3 text-slate-600 dark:text-slate-300 font-bold hover:text-wa-teal transition-all  tracking-normal text-xs group"
       >
         <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#202c33] flex items-center justify-center shadow-sm group-hover:bg-wa-teal group-hover:text-white transition-all border border-slate-100 dark:border-white/5 shrink-0">
           <ArrowLeft className="w-4 h-4" />
@@ -127,7 +127,7 @@ export default function CommunicationManager() {
             </div>
           ) : announcements.length === 0 ? (
             <div className="py-20 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
-              <p className="text-slate-500 dark:text-slate-400">No announcements yet.</p>
+              <p className="text-slate-600 dark:text-slate-300">No announcements yet.</p>
             </div>
           ) : (
             announcements.map((a) => (
@@ -171,7 +171,7 @@ export default function CommunicationManager() {
             <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 sm:mb-8  italic tracking-normal">Post New Announcement</h3>
             <form onSubmit={handleAdd} className="space-y-3 sm:space-y-6">
               <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mb-2.5 ml-1">Title</label>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal mb-2.5 ml-1">Title</label>
                 <input
                   type="text"
                   required
@@ -183,7 +183,7 @@ export default function CommunicationManager() {
               </div>
               
               <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mb-2.5 ml-1">Content</label>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal mb-2.5 ml-1">Content</label>
                 <textarea
                   required
                   rows={4}
@@ -196,7 +196,7 @@ export default function CommunicationManager() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mb-2.5 ml-1">Type</label>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal mb-2.5 ml-1">Type</label>
                   <select
                     className="w-full px-4 sm:px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl text-base font-bold text-slate-800 dark:text-white transition-all outline-none appearance-none cursor-pointer"
                     value={type}
@@ -208,7 +208,7 @@ export default function CommunicationManager() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mb-2.5 ml-1">Target Course</label>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal mb-2.5 ml-1">Target Course</label>
                   <select
                     className="w-full px-4 sm:px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl text-base font-bold text-slate-800 dark:text-white transition-all outline-none appearance-none cursor-pointer"
                     value={targetCourseId}
@@ -224,7 +224,7 @@ export default function CommunicationManager() {
                 <button 
                   type="button"
                   onClick={() => setShowAdd(false)}
-                  className="flex-1 py-3 sm:py-5 text-slate-500 dark:text-slate-400 font-bold  tracking-normal text-xs hover:bg-slate-50 dark:hover:bg-[#111b21] rounded-2xl transition-all"
+                  className="flex-1 py-3 sm:py-5 text-slate-600 dark:text-slate-300 font-bold  tracking-normal text-xs hover:bg-slate-50 dark:hover:bg-[#111b21] rounded-2xl transition-all"
                 >
                   Cancel
                 </button>

@@ -156,7 +156,7 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
                                 badge: window.location.origin + '/logo.png',
                                 vibrate: [100, 50, 100],
                                 tag: newNotif.id
-                             }).catch(e => {
+                             } as any).catch(e => {
                                 console.warn('SW notification failed:', e);
                                 // Fallback for desktop Safari if SW doesn't support showNotification
                                 new Notification(newNotif.title, { body: newNotif.message, icon: window.location.origin + '/logo.png' });

@@ -592,7 +592,7 @@ export default function AuthGateway() {
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Teacher Setup
               </h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-2">
+              <p className="text-slate-600 dark:text-slate-300 mt-2">
                 Initialize TutionHub
               </p>
             </div>
@@ -664,7 +664,7 @@ export default function AuthGateway() {
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Teacher Login
               </h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-2">
+              <p className="text-slate-600 dark:text-slate-300 mt-2">
                 Welcome back, {teacherName}
               </p>
             </div>
@@ -715,14 +715,14 @@ export default function AuthGateway() {
                 <button
                   type="button"
                   onClick={() => setView("student-login")}
-                  className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
+                  className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
                 >
                   Student Login
                 </button>
                 <button
                   type="button"
                   onClick={() => setView("student-enroll")}
-                  className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
+                  className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
                 >
                   Enroll New Student
                 </button>
@@ -737,7 +737,7 @@ export default function AuthGateway() {
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Student Login
               </h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-2">
+              <p className="text-slate-600 dark:text-slate-300 mt-2">
                 Access your TutionHub dashboard
               </p>
             </div>
@@ -805,7 +805,7 @@ export default function AuthGateway() {
                   <button
                     type="button"
                     onClick={() => setView("student-enroll")}
-                    className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
+                    className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
                   >
                     New Student? Enroll Here
                   </button>
@@ -813,7 +813,7 @@ export default function AuthGateway() {
                 <button
                   type="button"
                   onClick={() => setView("teacher-login")}
-                  className={`text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors ${isExistingStudent ? "w-full text-center" : ""}`}
+                  className={`text-xs text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors ${isExistingStudent ? "w-full text-center" : ""}`}
                 >
                   Teacher Login
                 </button>
@@ -828,7 +828,7 @@ export default function AuthGateway() {
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
                 Enroll in TutionHub
               </h1>
-              <p className="text-slate-500 dark:text-slate-400 mt-2">
+              <p className="text-slate-600 dark:text-slate-300 mt-2">
                 Teacher: {teacherName}
               </p>
             </div>
@@ -993,13 +993,13 @@ export default function AuthGateway() {
             <div className="flex justify-between mt-4 sm:mt-6">
               <button
                 onClick={() => setView("student-login")}
-                className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
               >
                 Already have an ID? Login
               </button>
               <button
                 onClick={() => setView("teacher-login")}
-                className="text-xs text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
               >
                 Teacher Login
               </button>

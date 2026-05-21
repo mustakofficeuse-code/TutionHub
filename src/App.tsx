@@ -76,45 +76,9 @@ function AppUpdatePrompt() {
   const [hasUpdate, setHasUpdate] = useState(false);
 
   useEffect(() => {
-    let initialVersion: string | null = null;
     let isMounted = true;
 
-    const checkVersion = async () => {
-      try {
-        const res = await fetch("/api/app-version");
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!data.version) return;
-
-        if (!initialVersion) {
-          initialVersion = data.version;
-          console.log("[Updater] Initial app session version loaded:", initialVersion);
-        } else if (data.version !== initialVersion) {
-          console.log(`[Updater] New version detected! Server: ${data.version}, Initial: ${initialVersion}`);
-          if (isMounted) {
-            setHasUpdate(true);
-          }
-        }
-      } catch (err) {
-        console.error("[Updater] Failed to fetch server app-version:", err);
-      }
-    };
-
-    // 1. Initial check
-    checkVersion();
-
-    // 2. Periodic checks every 10 seconds (optimized for fast local development feedback)
-    const interval = setInterval(checkVersion, 10000);
-
-    // 3. Focus/visibility check to detect changes immediately upon switching back to the browser tab
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") {
-        checkVersion();
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    // 4. Hook into Service Worker registration update listener
+    // Hook into Service Worker registration update listener
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.getRegistration().then((reg) => {
         if (!reg) return;
@@ -142,8 +106,6 @@ function AppUpdatePrompt() {
 
     return () => {
       isMounted = false;
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 

@@ -419,7 +419,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
               <select 
                 value={filterType}
                 onChange={(e) => setFilterType(e.target.value)}
-                className="flex-1 lg:w-48 px-4 sm:px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[1.5rem] border border-transparent focus:border-wa-teal/30 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 outline-none cursor-pointer appearance-none text-center"
+                className="flex-1 lg:w-48 px-4 sm:px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[1.5rem] border border-transparent focus:border-wa-teal/30 text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 outline-none cursor-pointer appearance-none text-center"
               >
                 <option value="all">TYPE: ALL</option>
                 <option value="pdf">TYPE: PDF</option>
@@ -430,7 +430,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
               <select 
                 value={filterDept}
                 onChange={(e) => setFilterDept(e.target.value)}
-                className="flex-1 lg:w-60 px-4 sm:px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[1.5rem] border border-transparent focus:border-wa-teal/30 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 outline-none cursor-pointer appearance-none text-center"
+                className="flex-1 lg:w-60 px-4 sm:px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] rounded-[1.5rem] border border-transparent focus:border-wa-teal/30 text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 outline-none cursor-pointer appearance-none text-center"
               >
                 <option value="all">DEPARTMENT: ALL</option>
                 {departments.map(d => (
@@ -504,7 +504,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                        <span className="text-xs font-bold text-wa-teal  tracking-normal bg-wa-teal/10 px-3 py-1.5 rounded-lg border border-wa-teal/10">
                         {m.type === 'camera' ? 'SCANNED' : m.type.toUpperCase()}
                        </span>
-                       <span className="text-xs font-bold text-slate-400 dark:text-slate-500  tracking-normal italic font-mono truncate max-w-[120px]">
+                       <span className="text-xs font-bold text-slate-400 dark:text-slate-600 dark:text-slate-400  tracking-normal italic font-mono truncate max-w-[120px]">
                         ID_{m.id.substring(0, 8).toUpperCase()}
                        </span>
                     </div>
@@ -626,7 +626,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
             <div className="p-4 sm:p-5 sm:p-5 sm:p-6 bg-[#fcfcfd] dark:bg-[#111b21] border-t border-slate-100 dark:border-white/5 flex flex-wrap gap-3 sm:gap-6 items-center shrink-0">
                <div className="flex-1">
                   <p className="text-xs font-bold text-slate-300  tracking-normal mb-1">METADATA_HEADER</p>
-                  <p className="text-[11px] font-bold text-slate-500  tracking-normal truncate">{viewMaterial.topic || 'NO TOPIC DEFINED'}</p>
+                  <p className="text-[11px] font-bold text-slate-600 dark:text-slate-400  tracking-normal truncate">{viewMaterial.topic || 'NO TOPIC DEFINED'}</p>
                </div>
                <div className="flex gap-4">
                   <span className="px-4 py-2 bg-white dark:bg-[#202c33] rounded-xl text-xs font-bold text-slate-400 border border-slate-100 dark:border-white/5  tracking-normal italic font-mono">DEPT_{viewMaterial.courseId.toUpperCase()}</span>
@@ -779,7 +779,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                         key={t}
                         type="button"
                         onClick={() => { setType(t); if(t !== 'camera') stopCamera(); }}
-                        className={`py-4 sm:py-6 rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all flex flex-col items-center justify-center gap-3 border shadow-sm ${
+                        className={`py-4 sm:py-6 rounded-[1.5rem] text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 transition-all flex flex-col items-center justify-center gap-3 border shadow-sm ${
                           type === t 
                           ? 'bg-wa-teal text-white border-wa-teal shadow-2xl shadow-wa-teal/20 scale-105 active:scale-100' 
                           : 'bg-white dark:bg-[#202c33] text-slate-400 border-slate-100 dark:border-white/5 hover:border-wa-teal/30 hover:text-wa-teal'
@@ -876,7 +876,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                         {files.length > 0 && (
                           <div className="flex flex-wrap gap-3">
                             {files.map((f, i) => (
-                              <div key={i} className="px-5 py-3 bg-white dark:bg-[#111b21] rounded-[1.2rem] border border-slate-100 dark:border-white/5 text-xs font-bold text-slate-500  tracking-normal flex items-center gap-3 shadow-sm animate-in zoom-in-50 duration-300">
+                              <div key={i} className="px-5 py-3 bg-white dark:bg-[#111b21] rounded-[1.2rem] border border-slate-100 dark:border-white/5 text-xs font-bold text-slate-600 dark:text-slate-400  tracking-normal flex items-center gap-3 shadow-sm animate-in zoom-in-50 duration-300">
                                  <FileText className="w-4 h-4 text-wa-teal" />
                                  <span className="truncate max-w-[150px]">{f.name}</span>
                               </div>
@@ -918,7 +918,7 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
                         <button 
                           type="button"
                           onClick={addLinkField}
-                          className="w-full py-3 sm:py-5 bg-white dark:bg-[#111b21] text-wa-teal text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 rounded-[1.5rem] border-2 border-dashed border-wa-teal/30 hover:bg-wa-teal/5 transition-all flex items-center justify-center gap-4 group"
+                          className="w-full py-3 sm:py-5 bg-white dark:bg-[#111b21] text-wa-teal text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 rounded-[1.5rem] border-2 border-dashed border-wa-teal/30 hover:bg-wa-teal/5 transition-all flex items-center justify-center gap-4 group"
                         >
                           <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform" /> ADD_STUB_FIELD
                         </button>

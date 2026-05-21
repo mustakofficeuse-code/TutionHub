@@ -147,7 +147,7 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                 </div>
                 <div className="flex items-baseline gap-2">
                   <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-[#e9edef]">{stats.attendance}</p>
-                  <span className="text-xl font-bold text-slate-500 dark:text-slate-400">%</span>
+                  <span className="text-xl font-medium text-slate-600 dark:text-slate-300">%</span>
                 </div>
                 <div className="mt-4 h-2 bg-[#f0f2f5] dark:bg-[#111b21] rounded-full overflow-hidden">
                   <div className="h-full bg-wa-teal transition-all duration-1000" style={{ width: `${stats.attendance}%` }} />
@@ -164,7 +164,7 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                 </div>
                 <div className="flex items-baseline gap-2">
                   <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 dark:text-[#e9edef]">{stats.assignmentRate}</p>
-                  <span className="text-xl font-bold text-slate-500 dark:text-slate-400">%</span>
+                  <span className="text-xl font-medium text-slate-600 dark:text-slate-300">%</span>
                 </div>
                 <div className="mt-4 h-2 bg-[#f0f2f5] dark:bg-[#111b21] rounded-full overflow-hidden">
                   <div className="h-full bg-wa-green transition-all duration-1000" style={{ width: `${stats.assignmentRate}%` }} />

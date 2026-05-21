@@ -402,7 +402,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                     <stat.icon className="w-4 h-4 lg:w-6 lg:h-6" />
                   </div>
                   <div className="text-left min-w-0">
-                    <p className="text-[9px] sm:text-[10px] lg:text-xs text-slate-500 dark:text-slate-300 font-bold uppercase tracking-wider mb-0.5 truncate">{stat.label}</p>
+                    <p className="text-[9px] sm:text-[10px] lg:text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300 font-bold uppercase tracking-wider mb-0.5 truncate">{stat.label}</p>
                     <p className="text-xs sm:text-sm lg:text-lg font-bold text-slate-900 dark:text-[#e9edef] tracking-tight truncate">{stat.value}</p>
                   </div>
                 </button>
@@ -543,7 +543,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                                 {cls.subject || `${cls.department} Sem ${cls.semester}`}
                               </h4>
                               {cls.message && (
-                                <p className="text-xs text-slate-500 italic mb-2 font-semibold">
+                                <p className="text-xs text-slate-600 dark:text-slate-400 italic mb-2 font-semibold">
                                   Note: {cls.message}
                                 </p>
                               )}
@@ -567,7 +567,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                                  <span className="text-sm font-bold text-wa-green uppercase tracking-wider">Live</span>
                               </div>
                             ) : (
-                               <p className="text-[12px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mt-1.5">Standby</p>
+                               <p className="text-[12px] font-medium text-slate-600 dark:text-slate-300 uppercase tracking-widest mt-1.5">Standby</p>
                             )}
                           </div>
                         </div>
@@ -646,28 +646,28 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
              <div className="w-12 h-12 bg-wa-teal/10 rounded-2xl flex items-center justify-center transition-all group-active:scale-90">
                 <Calendar className="w-6 h-6" />
              </div>
-             <span className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Portal</span>
+             <span className="text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300">Portal</span>
           </button>
           
           <button onClick={() => navigate('/materials/list')} className="flex flex-col items-center gap-1.5 text-[#8696a0] group">
              <div className="w-12 h-12 hover:bg-[#f0f2f5] dark:hover:bg-slate-800 rounded-2xl flex items-center justify-center transition-all group-active:scale-90">
                 <BookOpen className="w-6 h-6 group-hover:text-wa-teal transition-colors" />
              </div>
-             <span className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Library</span>
+             <span className="text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300">Library</span>
           </button>
           
           <button onClick={() => navigate('/doubts')} className="flex flex-col items-center gap-1.5 text-[#8696a0] group">
              <div className="w-12 h-12 hover:bg-[#f0f2f5] dark:hover:bg-slate-800 rounded-2xl flex items-center justify-center transition-all group-active:scale-90">
                 <MessageSquare className="w-6 h-6 group-hover:text-wa-teal transition-colors" />
              </div>
-             <span className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Inquiry</span>
+             <span className="text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300">Inquiry</span>
           </button>
 
           <button onClick={() => navigate('/student/analytics')} className="flex flex-col items-center gap-1.5 text-[#8696a0] group">
              <div className="w-12 h-12 hover:bg-[#f0f2f5] dark:hover:bg-slate-800 rounded-2xl flex items-center justify-center transition-all group-active:scale-90">
                 <TrendingUp className="w-6 h-6 group-hover:text-wa-teal transition-colors" />
              </div>
-             <span className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Ledger</span>
+             <span className="text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300">Ledger</span>
           </button>
 
           <button onClick={() => navigate('/profile')} className="flex flex-col items-center gap-1.5 text-[#8696a0] group">
@@ -678,7 +678,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                   <User className="w-6 h-6 group-hover:text-wa-teal transition-colors" />
                 )}
              </div>
-             <span className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Student</span>
+             <span className="text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300">Student</span>
           </button>
         </nav>
       )}

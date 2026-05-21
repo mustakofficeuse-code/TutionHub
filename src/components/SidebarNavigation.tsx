@@ -25,7 +25,7 @@ export default function SidebarNavigation({ tabs, activeTab, onTabChange, isOpen
       className="hidden md:flex flex-col bg-white dark:bg-[#111b21] border-r border-slate-200 dark:border-white/10 z-[60]"
     >
       <div className="h-16 flex items-center px-4 gap-3 border-b border-slate-200 dark:border-white/10 overflow-hidden">
-        <button onClick={onToggle} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 shrink-0">
+        <button onClick={onToggle} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 shrink-0">
           {isOpen ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
         </button>
         {isOpen && (

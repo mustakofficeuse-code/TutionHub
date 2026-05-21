@@ -309,7 +309,7 @@ export default function FeeManagement({
           {!isEmbedded && (
             <button
               onClick={() => navigate("/")}
-              className="w-fit flex items-center gap-3 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-wa-teal transition-all  tracking-normal bg-white dark:bg-[#202c33] px-4 sm:px-6 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 shrink-0"
+              className="w-fit flex items-center gap-3 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-wa-teal transition-all  tracking-normal bg-white dark:bg-[#202c33] px-4 sm:px-6 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 shrink-0"
             >
               <ArrowLeft className="w-4 h-4" /> REVERT TO TERMINAL
             </button>
@@ -393,14 +393,14 @@ export default function FeeManagement({
                         : departments.map((d) => d.name),
                     )
                   }
-                  className="flex-1 lg:flex-none px-4 sm:px-6 sm:px-10 py-3 sm:py-5 bg-white dark:bg-[#202c33] border border-slate-200 dark:border-white/10 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-slate-600 dark:text-slate-400 rounded-2xl hover:border-wa-teal hover:text-wa-teal transition-all shadow-sm flex items-center justify-center gap-3"
+                  className="flex-1 lg:flex-none px-4 sm:px-6 sm:px-10 py-3 sm:py-5 bg-white dark:bg-[#202c33] border border-slate-200 dark:border-white/10 text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 text-slate-600 dark:text-slate-400 rounded-2xl hover:border-wa-teal hover:text-wa-teal transition-all shadow-sm flex items-center justify-center gap-3"
                 >
                   {expandedDepts.length === departments.length ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />}
                   {expandedDepts.length === departments.length ? "COLLAPSE ALL" : "EXPAND VECTORS"}
                 </button>
                 <button
                   onClick={handleClearData}
-                  className="flex-1 lg:flex-none px-4 sm:px-6 sm:px-10 py-3 sm:py-5 border border-rose-100 text-rose-500 dark:border-rose-900/30 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-2xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all"
+                  className="flex-1 lg:flex-none px-4 sm:px-6 sm:px-10 py-3 sm:py-5 border border-rose-100 text-rose-500 dark:border-rose-900/30 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/10 rounded-2xl text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 transition-all"
                 >
                   PURGE DATA
                 </button>
@@ -449,7 +449,7 @@ export default function FeeManagement({
                         }`}>
                           <BookOpen className="w-6 h-6" />
                         </div>
-                        <span className={`text-sm font-bold tracking-normal ${isExpanded ? "text-slate-300" : "text-slate-500 dark:text-slate-400"}`}>Department</span>
+                        <span className={`text-sm font-bold tracking-normal ${isExpanded ? "text-slate-300" : "text-slate-600 dark:text-slate-300"}`}>Department</span>
                       </div>
                       <span className={`text-2xl font-bold tracking-normal leading-none ${isExpanded ? "text-white" : "text-slate-800 dark:text-white"}`}>
                         {dept}
@@ -461,7 +461,7 @@ export default function FeeManagement({
                         <p className={`text-3xl sm:text-4xl lg:text-5xl font-bold italic tracking-normal ${isExpanded ? "text-white" : "text-slate-800 dark:text-white"}`}>
                           {deptCount}
                         </p>
-                        <span className={`text-sm font-bold tracking-normal ${isExpanded ? "text-slate-300" : "text-slate-500 dark:text-slate-400"}`}>
+                        <span className={`text-sm font-bold tracking-normal ${isExpanded ? "text-slate-300" : "text-slate-600 dark:text-slate-300"}`}>
                           STUDENTS
                         </span>
                       </div>
@@ -555,7 +555,7 @@ export default function FeeManagement({
                               [dept]: { ...searchConfig, sem: e.target.value },
                             }))
                           }
-                          className="w-full sm:w-auto px-4 sm:px-6 py-4 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 outline-none focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-slate-800 dark:text-white appearance-none cursor-pointer"
+                          className="w-full sm:w-auto px-4 sm:px-6 py-4 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 outline-none focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 text-slate-800 dark:text-white appearance-none cursor-pointer"
                         >
                           <option value="ALL">All Semesters</option>
                           {[1, 2, 3, 4, 5, 6, 7, 8].map((sem) => (
@@ -579,7 +579,7 @@ export default function FeeManagement({
                                 },
                               }))
                             }
-                            className="w-full pl-14 pr-6 py-4 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 outline-none focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-slate-800 dark:text-white"
+                            className="w-full pl-14 pr-6 py-4 bg-[#f8f9fa] dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 outline-none focus:ring-4 focus:ring-wa-teal/10 focus:border-wa-teal text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 text-slate-800 dark:text-white"
                           />
                         </div>
                         <button
@@ -645,7 +645,7 @@ export default function FeeManagement({
                               statusColor = "bg-indigo-500/10 text-indigo-500 border-indigo-500/20";
                             } else if (totalExpected === 0) {
                               statusText = "No Config";
-                              statusColor = "bg-slate-500/10 text-slate-500 border-slate-500/20";
+                              statusColor = "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20";
                             }
 
                             return (
@@ -686,7 +686,7 @@ export default function FeeManagement({
                                 <td className="px-5 sm:px-8 py-4 sm:py-6 bg-[#fcfcfd] dark:bg-[#202c33]/30 border-y border-slate-100 dark:border-white/5 whitespace-nowrap">
                                   <div className="flex flex-col gap-2 items-start">
                                     <span
-                                      className={`px-4 py-2 rounded-xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 border ${statusColor}`}
+                                      className={`px-4 py-2 rounded-xl text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 border ${statusColor}`}
                                     >
                                       {statusText}
                                     </span>
@@ -699,7 +699,7 @@ export default function FeeManagement({
                                   </div>
                                 </td>
                                 <td className="px-5 sm:px-8 py-4 sm:py-6 bg-[#fcfcfd] dark:bg-[#202c33]/30 border-y border-slate-100 dark:border-white/5 text-center whitespace-nowrap">
-                                   <p className="font-bold text-lg text-slate-400 dark:text-slate-500 tracking-normal">₹{totalExpected.toLocaleString()}</p>
+                                   <p className="font-bold text-lg text-slate-400 dark:text-slate-600 dark:text-slate-400 tracking-normal">₹{totalExpected.toLocaleString()}</p>
                                 </td>
                                 <td className="px-5 sm:px-8 py-4 sm:py-6 bg-[#fcfcfd] dark:bg-[#202c33]/30 border-y border-slate-100 dark:border-white/5 text-center whitespace-nowrap">
                                    <p className="font-bold text-3xl text-wa-green tracking-normal italic">₹{totalPaid.toLocaleString()}</p>
@@ -739,7 +739,7 @@ export default function FeeManagement({
                   <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
                     No Student Records Found
                   </h3>
-                  <p className="text-slate-500 dark:text-slate-400 max-w-sm mx-auto font-medium">
+                  <p className="text-slate-600 dark:text-slate-300 max-w-sm mx-auto font-medium">
                     We couldn't locate any matching records for your query. Try
                     broadening your terms.
                   </p>
@@ -777,7 +777,7 @@ export default function FeeManagement({
                     : () => setIsEditingStructure(true)
                 }
                 disabled={savingStructure}
-                className={`px-4 sm:px-6 sm:px-10 py-3 sm:py-5 rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 flex items-center gap-3 transition-all shadow-xl disabled:opacity-50 ${
+                className={`px-4 sm:px-6 sm:px-10 py-3 sm:py-5 rounded-[1.5rem] text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 flex items-center gap-3 transition-all shadow-xl disabled:opacity-50 ${
                   isEditingStructure
                     ? "bg-wa-green text-white hover:bg-wa-green/90"
                     : "bg-slate-900 text-white hover:bg-slate-800"
@@ -1148,7 +1148,7 @@ export default function FeeManagement({
                         </div>
                       ) : (
                         <div className="py-4 px-6 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-white/5 text-center">
-                          <p className="text-sm font-bold text-slate-500 dark:text-slate-400">RESTRICTION: No further balance remains to be received.</p>
+                          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">RESTRICTION: No further balance remains to be received.</p>
                         </div>
                       )}
                     </div>
@@ -1254,9 +1254,9 @@ export default function FeeManagement({
                     {viewDetailsStudent.name}
                   </h2>
                   <div className="flex flex-wrap justify-center sm:justify-start gap-3">
-                    <span className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">PRN {viewDetailsStudent.studentId || "0000"}</span>
+                    <span className="px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300">PRN {viewDetailsStudent.studentId || "0000"}</span>
                     <span className="px-4 py-2 bg-wa-teal/10 text-wa-teal border border-wa-teal/10 rounded-xl text-sm font-bold tracking-normal">DEPT {String(viewDetailsStudent.courseName || viewDetailsStudent.department || viewDetailsStudent.courseId || "ASSIGNED").toUpperCase()}</span>
-                    <span className="px-4 py-2 bg-indigo-500/10 text-indigo-500 border border-indigo-500/10 rounded-xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">SEMESTER {viewDetailsStudent.semester || 1}</span>
+                    <span className="px-4 py-2 bg-indigo-500/10 text-indigo-500 border border-indigo-500/10 rounded-xl text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300">SEMESTER {viewDetailsStudent.semester || 1}</span>
                   </div>
                 </div>
               </div>
@@ -1364,7 +1364,7 @@ export default function FeeManagement({
                                   ),
                                 }));
                               }}
-                              className="w-full sm:w-auto px-4 sm:px-6 sm:px-10 py-4 bg-wa-green text-white rounded-xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 shadow-xl hover:shadow-wa-green/20 active:scale-95 transition-all"
+                              className="w-full sm:w-auto px-4 sm:px-6 sm:px-10 py-4 bg-wa-green text-white rounded-xl text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 shadow-xl hover:shadow-wa-green/20 active:scale-95 transition-all"
                             >
                               VERIFY REMITTANCE
                             </button>

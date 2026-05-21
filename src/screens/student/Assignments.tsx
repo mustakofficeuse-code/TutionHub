@@ -191,14 +191,14 @@ export default function StudentAssignments() {
                   </div>
                   <div className="flex items-center gap-4 relative z-10">
                     {submission ? (
-                      <div className="flex items-center gap-3 bg-wa-green/10 text-wa-green px-5 sm:px-8 py-3 rounded-2xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 border border-wa-green/10">
+                      <div className="flex items-center gap-3 bg-wa-green/10 text-wa-green px-5 sm:px-8 py-3 rounded-2xl text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 border border-wa-green/10">
                         <div className="w-2 h-2 bg-wa-green rounded-full animate-pulse" />
                         Transmitted
                       </div>
                     ) : (
                       <button 
                         onClick={() => setSelectedAssignment(a)}
-                        className="w-full md:w-auto bg-wa-teal hover:bg-wa-teal-dark text-white px-4 sm:px-6 sm:px-10 py-4 rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all shadow-lg shadow-wa-teal/20 active:scale-95"
+                        className="w-full md:w-auto bg-wa-teal hover:bg-wa-teal-dark text-white px-4 sm:px-6 sm:px-10 py-4 rounded-[1.5rem] text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 transition-all shadow-lg shadow-wa-teal/20 active:scale-95"
                       >
                         Transmit Now
                       </button>
@@ -229,7 +229,7 @@ export default function StudentAssignments() {
             
             <div id="reader" className="overflow-hidden rounded-2xl border-8 border-slate-50 dark:border-white/5 bg-slate-900 shadow-inner group aspect-square"></div>
             
-            <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-wa-teal mt-4 sm:mt-8 leading-relaxed opacity-60 italic">Scan QR provided by your department</p>
+            <p className="text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 text-wa-teal mt-4 sm:mt-8 leading-relaxed opacity-60 italic">Scan QR provided by your department</p>
           </div>
         </div>
       )}

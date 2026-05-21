@@ -444,7 +444,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       <div className="flex-1 overflow-y-auto custom-scrollbar">
         {profile?.role === 'teacher' ? (
           <>
-            <div className="px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">Group Doubts</div>
+            <div className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Group Doubts</div>
             <div className="space-y-1">
               {departments.map(dept => (
                 <div key={dept.id} className="border-b border-slate-50 dark:border-white/5">
@@ -520,7 +520,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                 </div>
                 <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1 bg-white dark:bg-[#111b21] rounded-lg border border-slate-100 dark:border-white/5 p-1 shadow-inner">
                   {allStudentsList.length === 0 ? (
-                      <div className="p-4 text-center text-xs text-slate-500">No students found</div>
+                      <div className="p-4 text-center text-xs text-slate-600 dark:text-slate-400">No students found</div>
                   ) : (
                     allStudentsList.map((s: any) => (
                       <button key={s.id} onClick={() => startPrivateChat(s.id)} className="w-full flex justify-between items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-[#2a3942] rounded-md transition-all text-left group">
@@ -530,7 +530,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-bold text-slate-800 dark:text-[#e9edef] group-hover:text-wa-teal transition-colors truncate">{s.name}</div>
-                            <div className="text-xs text-slate-500 truncate">{s.courseId} - Sem {s.semester}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400 truncate">{s.courseId} - Sem {s.semester}</div>
                           </div>
                         </div>
                         {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()] > 0 && (
@@ -570,7 +570,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                           </div>
                           <div className="text-left max-w-[120px]">
                             <div className="font-bold text-slate-900 dark:text-[#e9edef] truncate">Anonymous Student</div>
-                            <div className="text-[10px] text-slate-500 truncate">Hidden Identity</div>
+                            <div className="text-[10px] text-slate-600 dark:text-slate-400 truncate">Hidden Identity</div>
                           </div>
                         </div>
                         {unreadCounts[chatId.toLowerCase()] > 0 && (
@@ -596,7 +596,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                        </div>
                        <div className="text-left max-w-[120px]">
                          <div className="font-bold text-slate-900 dark:text-[#e9edef] truncate">{s.name}</div>
-                         <div className="text-[10px] text-slate-500 truncate">{s.courseId} - Sem {s.semester}</div>
+                         <div className="text-[10px] text-slate-600 dark:text-slate-400 truncate">{s.courseId} - Sem {s.semester}</div>
                        </div>
                      </div>
                      <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
@@ -608,7 +608,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
           </>
         ) : (
           <>
-            <div className="px-4 py-2 text-xs font-bold text-slate-500 uppercase tracking-wider">My Group</div>
+            <div className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">My Group</div>
             <button
                onClick={() => setSelectedChat({ 
                 id: `group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`, 
@@ -625,7 +625,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                  </div>
                  <div className="text-left">
                    <div className="font-bold text-slate-900 dark:text-[#e9edef]">{profile?.courseId || profile?.courseName || profile?.department} - Semester {profile?.semester}</div>
-                   <div className="text-xs text-slate-500">Group Doubt Session</div>
+                   <div className="text-xs text-slate-600 dark:text-slate-400">Group Doubt Session</div>
                  </div>
                </div>
                {unreadCounts[`group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`.toLowerCase()] > 0 && (
@@ -654,7 +654,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                 </div>
                 <div className="max-h-60 overflow-y-auto custom-scrollbar space-y-1 bg-white dark:bg-[#111b21] rounded-lg border border-slate-100 dark:border-white/5 p-1 shadow-inner">
                   {peers.length === 0 && !teacherObj ? (
-                      <div className="p-4 text-center text-xs text-slate-500">No users found</div>
+                      <div className="p-4 text-center text-xs text-slate-600 dark:text-slate-400">No users found</div>
                   ) : (
                     (teacherObj && teacherObj.name.toLowerCase().includes(searchQuery.toLowerCase()) ? [teacherObj] : []).concat(peers.filter((p: any) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))).map((person: any) => (
                       <div key={person.id} className="w-full flex justify-between items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-[#2a3942] rounded-md transition-all group">
@@ -664,7 +664,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-bold text-slate-800 dark:text-[#e9edef] group-hover:text-wa-teal transition-colors truncate">{person.name}</div>
-                            <div className="text-xs text-slate-500 truncate">{person.role === 'teacher' ? 'Teacher' : 'Student'}</div>
+                            <div className="text-xs text-slate-600 dark:text-slate-400 truncate">{person.role === 'teacher' ? 'Teacher' : 'Student'}</div>
                           </div>
                         </button>
                         <div className="flex items-center gap-1 shrink-0">
@@ -709,7 +709,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                    </div>
                    <div className="text-left">
                      <div className="font-bold text-slate-900 dark:text-[#e9edef]">{teacherObj.name}</div>
-                     <div className="text-xs text-slate-500">Teacher</div>
+                     <div className="text-xs text-slate-600 dark:text-slate-400">Teacher</div>
                    </div>
                  </div>
                  {unreadCounts[getDMId(profile!.uid, teacherObj.id).toLowerCase()] > 0 && (
@@ -728,12 +728,12 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                  className={`w-full flex items-center justify-between gap-3 p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-all ${selectedChat?.id === getDMId(profile!.uid, peer.id) ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : ''}`}
               >
                  <div className="flex items-center gap-3 flex-1 min-w-0">
-                   <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-slate-500">
+                   <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-slate-600 dark:text-slate-400">
                       {peer.avatarUrl ? <img src={peer.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-6 h-6" />}
                    </div>
                    <div className="text-left flex-1 min-w-0">
                      <div className="font-bold text-slate-900 dark:text-[#e9edef] truncate">{peer.name}</div>
-                     <div className="text-xs text-slate-500 truncate">Student</div>
+                     <div className="text-xs text-slate-600 dark:text-slate-400 truncate">Student</div>
                    </div>
                  </div>
                  {unreadCounts[getDMId(profile!.uid, peer.id).toLowerCase()] > 0 && (
@@ -785,7 +785,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               <div className="bg-white dark:bg-[#202c33] p-6 rounded-2xl shadow-xl flex flex-col items-center pointer-events-none">
                 <Paperclip className="w-12 h-12 text-wa-teal mb-3" />
                 <h3 className="text-xl font-bold text-slate-800 dark:text-[#e9edef]">Drop files here</h3>
-                <p className="text-sm text-slate-500 mt-1">Share images, PDFs, or documents</p>
+                <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">Share images, PDFs, or documents</p>
               </div>
             </div>
           )}
@@ -803,7 +803,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
             <>
               {/* Chat Header */}
               <div className="h-16 bg-[#f0f2f5] dark:bg-[#202c33] px-4 flex items-center gap-3 shrink-0 z-10 border-l border-slate-200 dark:border-slate-700 shadow-sm relative group/header">
-                <button onClick={() => setSelectedChat(null)} className="md:hidden text-slate-500 p-2 -ml-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+                <button onClick={() => setSelectedChat(null)} className="md:hidden text-slate-600 dark:text-slate-400 p-2 -ml-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
                    <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-wa-teal">
@@ -819,7 +819,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate">{selectedChat.name}</h3>
-                  <p className="text-xs text-slate-500 truncate">
+                  <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
                      {selectedChat.type === 'group' ? 'Group Doubt Chat' : 'Private Conversation'}
                   </p>
                 </div>
@@ -838,7 +838,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                 {messages.length > 0 && (
                   <button 
                     onClick={() => setDeleteTarget('all')}
-                    className="p-2 text-slate-500 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors flex items-center justify-center"
+                    className="p-2 text-slate-600 dark:text-slate-400 hover:text-red-500 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors flex items-center justify-center"
                     title="Delete All My Messages"
                   >
                     <Trash2 className="w-5 h-5" />
@@ -982,7 +982,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                                   <div className={`absolute bottom-[-14px] ${isOwn ? 'right-2' : 'left-2'} bg-white dark:bg-[#202c33] shadow-sm rounded-full px-1.5 py-0.5 border border-slate-100 dark:border-white/5 flex gap-1 items-center text-xs z-10`}>
                                      {Object.entries(reactionsMapping).map(([emoji, uids]: any) => (
                                         <span key={emoji} className="flex gap-0.5 items-center">
-                                          {emoji} {uids.length > 1 && <span className="text-[10px] text-slate-500 font-bold">{uids.length}</span>}
+                                          {emoji} {uids.length > 1 && <span className="text-[10px] text-slate-600 dark:text-slate-400 font-bold">{uids.length}</span>}
                                         </span>
                                      ))}
                                   </div>
@@ -1001,12 +1001,12 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                  <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-4 flex flex-col items-center justify-center gap-2 shrink-0 border-t border-slate-200 dark:border-slate-800 text-center">
                     <Shield className="w-8 h-8 text-red-500 mb-1 opacity-80" />
                     <p className="text-sm font-bold text-slate-800 dark:text-[#e9edef]">You are temporarily suspended from chatting</p>
-                    <p className="text-xs text-slate-500">You can still read the messages but cannot send new ones until the teacher restores your access.</p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">You can still read the messages but cannot send new ones until the teacher restores your access.</p>
                  </div>
               ) : (
                 <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-3 flex flex-col gap-2 shrink-0 transition-all">
                    <div className="flex items-center gap-2 sm:gap-4">
-                     <label className="text-slate-500 hover:text-wa-teal transition-colors cursor-pointer p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
+                     <label className="text-slate-600 dark:text-slate-400 hover:text-wa-teal transition-colors cursor-pointer p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
                         <Paperclip className="w-6 h-6" />
                         <input ref={replyInputRef} type="file" className="hidden" onChange={(e) => e.target.files?.[0] && setReplyFile(e.target.files[0])} />
                      </label>
@@ -1018,7 +1018,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                                  <div className="bg-slate-50 dark:bg-[#182229] p-2 sm:p-3 border-l-4 border-wa-teal flex justify-between items-start relative">
                                     <div className="flex-1 min-w-0 pr-4">
                                        <p className="text-xs font-bold text-wa-teal truncate">{replyingTo.senderName}</p>
-                                       <p className="text-sm text-slate-500 dark:text-slate-400 truncate mt-0.5">{replyingTo.content || 'Attachment'}</p>
+                                       <p className="text-sm text-slate-600 dark:text-slate-300 truncate mt-0.5">{replyingTo.content || 'Attachment'}</p>
                                     </div>
                                     <button type="button" onClick={() => setReplyingTo(null)} className="absolute top-1/2 -translate-y-1/2 right-2 text-slate-400 hover:text-red-500 rounded-full p-1"><XIcon className="w-4 h-4" /></button>
                                  </div>
@@ -1112,7 +1112,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               <div className="space-y-2">
                  {deleteTarget === 'resolved' ? (
                     <>
-                      <p className="text-sm text-slate-500 mb-4">This will notify the teacher that your query is resolved.</p>
+                      <p className="text-sm text-slate-600 dark:text-slate-400 mb-4">This will notify the teacher that your query is resolved.</p>
                       <button onClick={async () => {
                          try {
                            await addDoc(collection(db, 'chat_messages'), {
@@ -1175,7 +1175,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                     </>
                  )}
                  
-                 <button onClick={() => setDeleteTarget(null)} className="w-full text-center px-4 py-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-[#2a3942] rounded-xl font-medium mt-2 transition-colors">
+                 <button onClick={() => setDeleteTarget(null)} className="w-full text-center px-4 py-3 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-[#2a3942] rounded-xl font-medium mt-2 transition-colors">
                     Cancel
                  </button>
               </div>

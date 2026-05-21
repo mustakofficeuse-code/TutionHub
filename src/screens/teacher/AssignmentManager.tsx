@@ -119,7 +119,7 @@ export default function AssignmentManager() {
     <div className="min-h-screen bg-[#f8f9fa] dark:bg-[#111b21] p-4 sm:p-6 sm:p-6 sm:p-10 pb-32 transition-colors">
       <button 
         onClick={() => navigate('/')}
-        className="mb-4 sm:mb-8 flex items-center gap-3 text-slate-500 dark:text-slate-400 font-bold hover:text-wa-teal transition-all  tracking-normal text-xs group"
+        className="mb-4 sm:mb-8 flex items-center gap-3 text-slate-600 dark:text-slate-300 font-bold hover:text-wa-teal transition-all  tracking-normal text-xs group"
       >
         <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#202c33] flex items-center justify-center shadow-sm group-hover:bg-wa-teal group-hover:text-white transition-all border border-slate-100 dark:border-white/5 shrink-0">
           <ArrowLeft className="w-4 h-4" />
@@ -155,7 +155,7 @@ export default function AssignmentManager() {
             </div>
           ) : assignments.length === 0 ? (
             <div className="col-span-full py-20 text-center bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800">
-              <p className="text-slate-500 dark:text-slate-400">No assignments created yet.</p>
+              <p className="text-slate-600 dark:text-slate-300">No assignments created yet.</p>
             </div>
           ) : (
             assignments.map((a) => {
@@ -190,7 +190,7 @@ export default function AssignmentManager() {
                         {a.subject} <span className="text-slate-300 dark:text-slate-700 mx-2">|</span> {dept?.name || 'ALL DEPARTMENTS'}
                       </p>
                     </div>
-                    <div className="flex items-center gap-3 text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal pb-6">
+                    <div className="flex items-center gap-3 text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal pb-6">
                       <Calendar className="w-4 h-4 text-wa-teal" />
                       <span>DUE: {new Date(a.dueDate).toLocaleDateString()}</span>
                     </div>
@@ -220,7 +220,7 @@ export default function AssignmentManager() {
             <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-4 sm:mb-8  italic tracking-normal">Create New Assignment</h3>
             <form onSubmit={handleAdd} className="space-y-3 sm:space-y-6">
               <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mb-2.5 ml-1">Title</label>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal mb-2.5 ml-1">Title</label>
                 <input
                   type="text"
                   required
@@ -232,7 +232,7 @@ export default function AssignmentManager() {
               </div>
               
               <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mb-2.5 ml-1">Description</label>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal mb-2.5 ml-1">Description</label>
                 <textarea
                   rows={3}
                   className="w-full px-4 sm:px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl text-base font-bold text-slate-800 dark:text-white transition-all outline-none resize-none"
@@ -244,7 +244,7 @@ export default function AssignmentManager() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-6">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mb-2.5 ml-1">Subject</label>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal mb-2.5 ml-1">Subject</label>
                   <input
                     type="text"
                     required
@@ -255,7 +255,7 @@ export default function AssignmentManager() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mb-2.5 ml-1">Due Date</label>
+                  <label className="block text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal mb-2.5 ml-1">Due Date</label>
                   <div className="relative group">
                     <input
                       type="date"
@@ -277,7 +277,7 @@ export default function AssignmentManager() {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mb-2.5 ml-1">Target Department</label>
+                <label className="block text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal mb-2.5 ml-1">Target Department</label>
                 <select
                   required
                   className="w-full px-4 sm:px-6 py-3 sm:py-5 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl text-base font-bold text-slate-800 dark:text-white transition-all outline-none appearance-none cursor-pointer"
@@ -293,7 +293,7 @@ export default function AssignmentManager() {
                 <button 
                   type="button"
                   onClick={() => setShowAdd(false)}
-                  className="flex-1 py-3 sm:py-5 text-slate-500 dark:text-slate-400 font-bold  tracking-normal text-xs hover:bg-slate-50 dark:hover:bg-[#111b21] rounded-2xl transition-all"
+                  className="flex-1 py-3 sm:py-5 text-slate-600 dark:text-slate-300 font-bold  tracking-normal text-xs hover:bg-slate-50 dark:hover:bg-[#111b21] rounded-2xl transition-all"
                 >
                   Cancel
                 </button>
@@ -315,13 +315,13 @@ export default function AssignmentManager() {
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-slate-900 rounded-3xl p-4 sm:p-5 sm:p-5 sm:p-6 w-full max-w-sm shadow-2xl text-center border border-slate-100 dark:border-slate-800">
             <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Submission QR Code</h3>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 sm:mb-6">{selectedAssignment.title}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-300 mb-4 sm:mb-6">{selectedAssignment.title}</p>
             
             <div className="bg-white dark:bg-slate-900 p-4 rounded-2xl shadow-inner border border-slate-100 dark:border-slate-800 inline-block mb-4 sm:mb-6">
               <QRCodeSVG value={`assignment:${selectedAssignment.id}`} size={200} />
             </div>
 
-            <p className="text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400 mb-4 sm:mb-6">Students can scan this to submit their work directly.</p>
+            <p className="text-xs text-slate-400 dark:text-slate-600 dark:text-slate-300 mb-4 sm:mb-6">Students can scan this to submit their work directly.</p>
 
             <button 
               onClick={() => setSelectedAssignment(null)}
@@ -340,19 +340,19 @@ export default function AssignmentManager() {
             <div className="flex justify-between items-center mb-4 sm:mb-6">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white">Submissions: {viewSubmissions.title}</h3>
               <button onClick={() => setViewSubmissions(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all">
-                <Plus className="w-6 h-6 rotate-45 text-slate-400 dark:text-slate-500 dark:text-slate-400" />
+                <Plus className="w-6 h-6 rotate-45 text-slate-400 dark:text-slate-600 dark:text-slate-300" />
               </button>
             </div>
 
             <div className="space-y-2 sm:space-y-4">
               {submissions.filter(s => s.assignmentId === viewSubmissions.id).length === 0 ? (
-                <p className="text-center py-10 text-slate-500 dark:text-slate-400">No submissions yet.</p>
+                <p className="text-center py-10 text-slate-600 dark:text-slate-300">No submissions yet.</p>
               ) : (
                 submissions.filter(s => s.assignmentId === viewSubmissions.id).map((s) => (
                   <div key={s.id} className="p-4 bg-slate-50 dark:bg-slate-800 border border-slate-100 dark:border-slate-800 dark:border-slate-700 rounded-2xl flex items-center justify-between">
                     <div>
                       <p className="font-bold text-slate-900 dark:text-white">Student ID: {s.studentId.substring(0, 8)}...</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{new Date(s.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric', hour12: true })}</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-300">{new Date(s.timestamp).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric', hour12: true })}</p>
                     </div>
                     <div className="flex items-center gap-3">
                       <a 

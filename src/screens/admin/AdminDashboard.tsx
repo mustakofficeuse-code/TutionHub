@@ -286,7 +286,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
             </div>
             <button
               onClick={() => setShowResetConfirm(true)}
-              className="w-full py-4 bg-red-500 hover:bg-red-600 text-white rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all shadow-lg shadow-red-500/20 active:scale-95"
+              className="w-full py-4 bg-red-500 hover:bg-red-600 text-white rounded-[1.5rem] text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 transition-all shadow-lg shadow-red-500/20 active:scale-95"
             >
               Factory Reset
             </button>
@@ -381,7 +381,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
             <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
               <button 
                 onClick={() => navigate('/admin/students/add')}
-                className="bg-wa-teal hover:bg-wa-teal-dark text-white px-5 sm:px-8 py-4 rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 flex items-center justify-center gap-3 transition-all shadow-lg shadow-wa-teal/20 active:scale-95"
+                className="bg-wa-teal hover:bg-wa-teal-dark text-white px-5 sm:px-8 py-4 rounded-[1.5rem] text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 flex items-center justify-center gap-3 transition-all shadow-lg shadow-wa-teal/20 active:scale-95"
               >
                 <UserPlus className="w-4 h-4" /> Add Student
               </button>
@@ -390,7 +390,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                 <input 
                   type="text" 
                   placeholder="SEARCH..."
-                  className="w-full pl-12 pr-6 py-4 bg-white dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-[1.5rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-slate-900 dark:text-[#e9edef] focus:ring-2 focus:ring-wa-teal outline-none transition-all shadow-sm"
+                  className="w-full pl-12 pr-6 py-4 bg-white dark:bg-[#111b21] border border-slate-100 dark:border-white/5 rounded-[1.5rem] text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 text-slate-900 dark:text-[#e9edef] focus:ring-2 focus:ring-wa-teal outline-none transition-all shadow-sm"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
@@ -456,12 +456,12 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                         </div>
                       </td>
                       <td className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 whitespace-nowrap">
-                        <span className={`px-3 py-1 rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 ${
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 ${
                           user.role === 'admin' 
                             ? 'bg-wa-teal/10 text-wa-teal border border-wa-teal/20' 
                             : user.role === 'teacher'
                             ? 'bg-wa-green/10 text-wa-green border border-wa-green/20'
-                            : 'bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-[#8696a0] border border-transparent'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 dark:text-[#8696a0] border border-transparent'
                         }`}>
                           {user.role}
                         </span>
@@ -486,7 +486,7 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                             {user.phoneNumber}
                           </a>
                         ) : (
-                          <p className="text-[#8696a0]/40 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400">Offline</p>
+                          <p className="text-[#8696a0]/40 text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300">Offline</p>
                         )}
                       </td>
                       <td className="px-4 sm:px-6 sm:px-10 py-4 sm:py-6 text-[11px] text-[#8696a0] font-bold  tracking-normal whitespace-nowrap">

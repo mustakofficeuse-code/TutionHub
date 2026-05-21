@@ -113,7 +113,7 @@ export default function NoticeBoard() {
                       </div>
                     </div>
                     {a.type === 'urgent' && (
-                      <span className="bg-red-500 text-white text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 px-3 py-1 rounded-full animate-pulse shadow-lg shadow-red-500/20">
+                      <span className="bg-red-500 text-white text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 px-3 py-1 rounded-full animate-pulse shadow-lg shadow-red-500/20">
                         Critical
                       </span>
                     )}

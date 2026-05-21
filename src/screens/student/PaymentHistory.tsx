@@ -199,7 +199,7 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                       </div>
                       <div className="flex items-center gap-4">
                         <div className="text-right">
-                           <div className={`px-3 py-1 rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 mb-2 ${
+                           <div className={`px-3 py-1 rounded-full text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 mb-2 ${
                               payment.status === 'confirmed' ? 'bg-wa-green/10 text-wa-green' :
                               payment.status === 'rejected' ? 'bg-red-50 text-red-500' :
                               'bg-orange-50 text-orange-500'
@@ -293,7 +293,7 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                     <div className="space-y-3 sm:space-y-6">
                         <div key={sem} className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 space-y-2 sm:space-y-4 sm:space-y-8 relative overflow-hidden group">
                             <div className="absolute top-0 right-0 p-4">
-                                <span className={`px-4 py-1.5 rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 ${paidAmount > 0 ? 'bg-wa-teal/10 text-wa-teal' : 'bg-red-50 text-red-600'}`}>
+                                <span className={`px-4 py-1.5 rounded-full text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 ${paidAmount > 0 ? 'bg-wa-teal/10 text-wa-teal' : 'bg-red-50 text-red-600'}`}>
                                     {paidAmount > 0 ? 'Partly Paid' : 'Due Notification'}
                                 </span>
                             </div>
@@ -436,7 +436,7 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                 </div>
                 <button 
                   onClick={() => setPaymentMethod(null)}
-                  className="w-full py-4 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-[#8696a0] hover:bg-[#f0f2f5] rounded-2xl transition-all"
+                  className="w-full py-4 text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 text-[#8696a0] hover:bg-[#f0f2f5] rounded-2xl transition-all"
                 >
                   Back to Hub
                 </button>
@@ -499,7 +499,7 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                     <button 
                       type="button"
                       onClick={() => setPaymentMethod(null)}
-                      className="flex-1 py-4 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 text-[#8696a0] bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 hover:bg-slate-100 transition-all"
+                      className="flex-1 py-4 text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 text-[#8696a0] bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 hover:bg-slate-100 transition-all"
                     >
                       Back
                     </button>

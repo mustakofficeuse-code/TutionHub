@@ -116,7 +116,7 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
           {!isEmbedded && (
             <button 
               onClick={() => navigate('/')}
-              className="w-fit flex items-center gap-3 text-xs font-bold text-slate-500 dark:text-slate-400 hover:text-wa-teal transition-all  tracking-normal bg-white dark:bg-[#202c33] px-4 sm:px-6 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5"
+              className="w-fit flex items-center gap-3 text-xs font-medium text-slate-600 dark:text-slate-300 hover:text-wa-teal transition-all  tracking-normal bg-white dark:bg-[#202c33] px-4 sm:px-6 py-4 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5"
             >
               <ArrowLeft className="w-4 h-4" /> REVERT TO TERMINAL
             </button>

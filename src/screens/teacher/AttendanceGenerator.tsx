@@ -409,7 +409,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
         {!isEmbedded && (
           <button 
             onClick={() => navigate('/')}
-            className="mb-4 sm:mb-8 flex items-center gap-3 text-slate-500 dark:text-slate-400 font-bold hover:text-wa-teal transition-all  tracking-normal text-xs group"
+            className="mb-4 sm:mb-8 flex items-center gap-3 text-slate-600 dark:text-slate-300 font-bold hover:text-wa-teal transition-all  tracking-normal text-xs group"
           >
             <div className="w-10 h-10 rounded-xl bg-white dark:bg-[#202c33] flex items-center justify-center shadow-sm group-hover:bg-wa-teal group-hover:text-white transition-all border border-slate-100 dark:border-white/5 shrink-0">
               <ArrowLeft className="w-4 h-4" />
@@ -444,7 +444,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                 <QRCodeSVG value={STATIC_QR_VALUE} size={240} level="H" includeMargin={true} className="mx-auto max-w-full h-auto" />
                 
                 {activeSchedules.filter(isScheduleActive).length > 0 && (
-                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-wa-green text-white px-5 sm:px-8 py-2.5 rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 shadow-xl shadow-wa-green/20 dark:shadow-none whitespace-nowrap animate-bounce">
+                  <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-wa-green text-white px-5 sm:px-8 py-2.5 rounded-full text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 shadow-xl shadow-wa-green/20 dark:shadow-none whitespace-nowrap animate-bounce">
                      LIVE
                   </div>
                 )}
@@ -456,7 +456,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                     <div key={sched.id} className="p-4 sm:p-5 bg-wa-teal/5 dark:bg-wa-teal/10 rounded-[1.5rem] border border-wa-teal/10 animate-in fade-in duration-500">
                       <p className="text-xs font-bold text-wa-teal  tracking-normal mb-1.5">Live Class</p>
                       <p className="text-base font-bold text-slate-800 dark:text-[#e9edef] leading-tight">{sched.subject || 'Standard Class'}</p>
-                      <p className="text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal mt-2">{sched.department} • SEMESTER {sched.semester}</p>
+                      <p className="text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal mt-2">{sched.department} • SEMESTER {sched.semester}</p>
                     </div>
                   ))
                 ) : (
@@ -490,7 +490,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
               <div className="space-y-3 sm:space-y-6">
                 <div className="grid grid-cols-1 gap-4">
                   <div>
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal block mb-2.5 ml-1">Subject / Objective</label>
+                    <label className="text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal block mb-2.5 ml-1">Subject / Objective</label>
                     <input 
                       type="text" 
                       placeholder="e.g. Data Structures"
@@ -500,7 +500,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                     />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400  tracking-normal block mb-2.5 ml-1">Current Topic</label>
+                    <label className="text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal block mb-2.5 ml-1">Current Topic</label>
                     <input 
                       type="text" 
                       placeholder="e.g. Hash Tables"
@@ -607,7 +607,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                 <div className="grid grid-cols-2 gap-4">
                     <button 
                     onClick={() => setNewSchedule({...newSchedule, requireGPS: !newSchedule.requireGPS})}
-                    className={`h-14 rounded-2xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all flex items-center justify-center gap-2 border-2 ${newSchedule.requireGPS ? 'bg-wa-teal border-wa-teal text-white shadow-lg shadow-wa-teal/20' : 'bg-[#f8f9fa] border-slate-100 text-slate-400 dark:bg-[#111b21] dark:border-white/5'}`}
+                    className={`h-14 rounded-2xl text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center gap-2 border-2 ${newSchedule.requireGPS ? 'bg-wa-teal border-wa-teal text-white shadow-lg shadow-wa-teal/20' : 'bg-[#f8f9fa] border-slate-100 text-slate-400 dark:bg-[#111b21] dark:border-white/5'}`}
                   >
                     <MapPin className="w-3.5 h-3.5" />
                     GPS {newSchedule.requireGPS ? 'REQUIRED' : 'NOT REQUIRED'}
@@ -650,11 +650,11 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                   <div className="space-y-3 sm:space-y-6">
                     <div className="p-4 sm:p-5 bg-white/5 rounded-2xl backdrop-blur-md border border-white/5 space-y-2">
                        <div>
-                        <p className="text-[8px] font-bold text-slate-500  tracking-normal mb-1">LATITUDE ACCURACY</p>
+                        <p className="text-[8px] font-bold text-slate-600 dark:text-slate-400  tracking-normal mb-1">LATITUDE ACCURACY</p>
                         <p className="text-xs font-mono text-wa-teal">{tuitionLocation.lat.toFixed(8)}</p>
                        </div>
                        <div>
-                        <p className="text-[8px] font-bold text-slate-500  tracking-normal mb-1">LONGITUDE ACCURACY</p>
+                        <p className="text-[8px] font-bold text-slate-600 dark:text-slate-400  tracking-normal mb-1">LONGITUDE ACCURACY</p>
                         <p className="text-xs font-mono text-wa-teal">{tuitionLocation.lng.toFixed(8)}</p>
                        </div>
                     </div>
@@ -676,13 +676,13 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
               <div className="flex bg-[#f8f9fa] dark:bg-[#111b21] p-2 rounded-xl border border-slate-100 dark:border-white/5 shadow-inner relative z-20">
                 <button 
                   onClick={() => setActiveTab('monitor')}
-                  className={`flex-1 py-3 sm:py-5 rounded-[1.25rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all flex items-center justify-center gap-3 ${activeTab === 'monitor' ? 'bg-wa-teal text-white shadow-xl shadow-wa-teal/20 dark:shadow-none' : 'text-slate-500 dark:text-slate-400 hover:text-wa-teal'}`}
+                  className={`flex-1 py-3 sm:py-5 rounded-[1.25rem] text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center gap-3 ${activeTab === 'monitor' ? 'bg-wa-teal text-white shadow-xl shadow-wa-teal/20 dark:shadow-none' : 'text-slate-600 dark:text-slate-300 hover:text-wa-teal'}`}
                 >
                   <Activity className="w-4 h-4" /> LIVE MONITOR
                 </button>
                 <button 
                   onClick={() => setActiveTab('history')}
-                  className={`flex-1 py-3 sm:py-5 rounded-[1.25rem] text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all flex items-center justify-center gap-3 ${activeTab === 'history' ? 'bg-wa-teal text-white shadow-xl shadow-wa-teal/20 dark:shadow-none' : 'text-slate-500 dark:text-slate-400 hover:text-wa-teal'}`}
+                  className={`flex-1 py-3 sm:py-5 rounded-[1.25rem] text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center gap-3 ${activeTab === 'history' ? 'bg-wa-teal text-white shadow-xl shadow-wa-teal/20 dark:shadow-none' : 'text-slate-600 dark:text-slate-300 hover:text-wa-teal'}`}
                 >
                   <FileText className="w-4 h-4" /> History
                 </button>
@@ -702,7 +702,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                       <p className="text-xs font-bold text-slate-400  tracking-normal mt-1">Live Operational Windows</p>
                     </div>
                     {saveStatus.type && (
-                      <div className={`px-4 py-2 rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 animate-in fade-in slide-in-from-right-2 duration-300 ${saveStatus.type === 'success' ? 'bg-wa-green/10 text-wa-green' : 'bg-red-500/10 text-red-500'}`}>
+                      <div className={`px-4 py-2 rounded-full text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 animate-in fade-in slide-in-from-right-2 duration-300 ${saveStatus.type === 'success' ? 'bg-wa-green/10 text-wa-green' : 'bg-red-500/10 text-red-500'}`}>
                         {saveStatus.message.includes('successfully') || saveStatus.message.includes('removed') ? 'Success' : 'Error'}
                       </div>
                     )}
@@ -762,7 +762,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                   <button 
                     onClick={() => setShowClearFeedConfirm(true)}
                     disabled={recentAttendance.length === 0 || saving || isClearingFeed}
-                    className="flex items-center gap-2 text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 transition-all px-5 py-3 rounded-2xl text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 disabled:opacity-30"
+                    className="flex items-center gap-2 text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 transition-all px-5 py-3 rounded-2xl text-red-500 hover:bg-red-500 hover:text-white border border-red-500/20 disabled:opacity-30"
                   >
                     <Trash2 className="w-3.5 h-3.5" /> 
                     {isClearingFeed ? 'CLEARING...' : 'CLEAR FEED'}
@@ -918,7 +918,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                                   </div>
                                 </td>
                                 <td className="px-5 sm:px-8 py-4 sm:py-6 whitespace-nowrap">
-                                  <span className="px-3 py-1.5 bg-[#f8f9fa] dark:bg-[#111b21] text-slate-500 dark:text-slate-400 rounded-xl text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 border border-slate-100 dark:border-white/5">SEMESTER {student.sem}</span>
+                                  <span className="px-3 py-1.5 bg-[#f8f9fa] dark:bg-[#111b21] text-slate-600 dark:text-slate-300 rounded-xl text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 border border-slate-100 dark:border-white/5">SEMESTER {student.sem}</span>
                                 </td>
                                 <td className="px-5 sm:px-8 py-4 sm:py-6 whitespace-nowrap">
                                   <p className="text-xs font-bold text-slate-800 dark:text-[#e9edef]">

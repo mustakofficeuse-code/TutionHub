@@ -338,7 +338,7 @@ export default function TeacherView() {
                               <h4 className="text-sm font-bold text-slate-900 dark:text-[#e9edef] tracking-normal group-hover:text-wa-teal transition-colors truncate pr-2">{notif.title}</h4>
                               {!notif.read && <div className="w-2 h-2 rounded-full bg-wa-teal shrink-0 mt-1.5 animate-pulse" />}
                             </div>
-                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+                            <p className="text-xs font-semibold text-slate-600 dark:text-slate-300 leading-relaxed mb-3">
                               {notif.isAnonymous ? notif.message.replace(notif.senderName, 'A student') : notif.message}
                             </p>
                             <div className="flex justify-between items-center pt-2.5 border-t border-slate-100 dark:border-white/5">
@@ -405,7 +405,7 @@ export default function TeacherView() {
             className={`flex flex-col items-center justify-center flex-1 md:flex-initial md:min-w-[90px] py-1 px-0.5 sm:px-1 relative transition-all duration-300 rounded-xl ${
               isActive 
                 ? 'text-wa-teal dark:text-wa-green bg-slate-50 dark:bg-slate-800/50' 
-                : 'text-slate-500 dark:text-[#8696a0] hover:text-wa-teal hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                : 'text-slate-600 dark:text-slate-400 dark:text-[#8696a0] hover:text-wa-teal hover:bg-slate-50 dark:hover:bg-slate-800/50'
             }`}
           >
             <div className="relative">

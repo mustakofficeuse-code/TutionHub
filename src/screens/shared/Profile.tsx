@@ -349,7 +349,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
               <div className="w-24 h-24 bg-white dark:bg-[#202c33] rounded-3xl p-1 shadow-lg">
                 <div 
                   onClick={() => avatarUrl && !isEditing && setZoomedImage(avatarUrl)}
-                  className={`w-full h-full bg-slate-100 dark:bg-[#111b21] rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-500 relative group overflow-hidden ${!isEditing && avatarUrl ? 'cursor-pointer hover:scale-[1.02] transition-transform' : ''}`}
+                  className={`w-full h-full bg-slate-100 dark:bg-[#111b21] rounded-2xl flex items-center justify-center text-slate-400 dark:text-slate-600 dark:text-slate-400 relative group overflow-hidden ${!isEditing && avatarUrl ? 'cursor-pointer hover:scale-[1.02] transition-transform' : ''}`}
                 >
                   {avatarUrl ? (
                     <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover rounded-2xl" referrerPolicy="no-referrer" />
@@ -383,7 +383,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
           <div className="pt-20 p-6 sm:p-8 md:p-10">
             {isEditing && (
               <div className="mb-10 bg-slate-50 dark:bg-[#111b21] p-6 rounded-2xl border border-slate-200 dark:border-white/5 shadow-inner">
-                <label className="text-sm font-bold text-slate-500 dark:text-slate-400 tracking-normal block mb-4">PROFILE IMAGE CUSTOMIZATION</label>
+                <label className="text-sm font-medium text-slate-600 dark:text-slate-300 tracking-normal block mb-4">PROFILE IMAGE CUSTOMIZATION</label>
                 <div className="flex flex-wrap gap-3 mb-6">
                   <button 
                     type="button"
@@ -425,14 +425,14 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                     onChange={(e) => setAvatarUrl(e.target.value)}
                   />
                 </div>
-                <p className="mt-2 text-xs text-slate-400 dark:text-slate-500 italic">Pro-tip: PNG or JPG works best for profile photos.</p>
+                <p className="mt-2 text-xs text-slate-400 dark:text-slate-600 dark:text-slate-400 italic">Pro-tip: PNG or JPG works best for profile photos.</p>
               </div>
             )}
 
             <div className="my-10 flex flex-col md:flex-row justify-between items-start gap-6">
               <div className="flex-1">
                 <h1 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white tracking-tight">{profile?.name}</h1>
-                <p className="text-lg text-slate-500 dark:text-slate-400 capitalize mt-1 font-medium">{profile?.role} Account {profile?.role === 'student' && `• ${profile?.courseName} Sem ${profile?.semester}`}</p>
+                <p className="text-lg text-slate-600 dark:text-slate-300 capitalize mt-1 font-medium">{profile?.role} Account {profile?.role === 'student' && `• ${profile?.courseName} Sem ${profile?.semester}`}</p>
                 
                 {!isEditing && (
                   <button 
@@ -527,7 +527,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                       if (val.length <= 10) setPhoneNumber(val);
                     }}
                   />
-                  <p className="text-xs text-slate-400 dark:text-slate-500 dark:text-slate-400">
+                  <p className="text-xs text-slate-400 dark:text-slate-600 dark:text-slate-300">
                     {phoneNumber.length}/10 digits
                   </p>
                 </div>
@@ -544,7 +544,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                     value={realEmail}
                     onChange={(e) => setRealEmail(e.target.value)}
                   />
-                  <p className="text-xs text-slate-400 dark:text-slate-500">
+                  <p className="text-xs text-slate-400 dark:text-slate-600 dark:text-slate-400">
                     This is your personal contact email.
                   </p>
                 </div>
@@ -702,7 +702,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
               <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
                 <Bell className="w-5 h-5 text-indigo-500" /> Background Push Notifications
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+              <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
                 Receive important class schedule, payment, and double-chat alerts directly on your device screen even when the browser is completely closed or the app is running in the background.
               </p>
 
@@ -832,7 +832,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
                   <Key className="w-5 h-5 text-blue-600" /> Invite Students
                 </h3>
-                <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+                <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
                   Share this code with your students so they can access TutionHub.
                 </p>
                 <div className="flex items-center gap-4">

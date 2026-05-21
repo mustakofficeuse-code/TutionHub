@@ -359,10 +359,6 @@ async function startServer() {
     res.json({ status: "ok" });
   });
 
-  app.get("/api/app-version", (req, res) => {
-    res.json({ version: SERVER_BOOT_VERSION });
-  });
-
   // API to create a student user (Admin only would be better, but for simplicity we'll just implement it)
   app.post("/api/admin/create-student", async (req, res) => {
     try {
