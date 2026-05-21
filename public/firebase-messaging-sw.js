@@ -1,4 +1,4 @@
-// Version 8 - Synced & Highly Durable Background Push Service Worker
+// Synced & Highly Durable Background Push Service Worker
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
@@ -13,63 +13,28 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Map to prevent rapid-fire dual popup duplications
-const recentlyShownNotifications = new Map();
+// Cache to prevent duplicate simultaneous popups in short timeframes
+const recentlyShown = new Set();
 
-// Listening to the push event to intercept the background messages
-self.addEventListener('push', function(event) {
-  let title = 'New Notification';
-  let body = '';
-  let dataObj = {};
+// Handle background messages with Firebase's optimized compat SDK handler
+messaging.onBackgroundMessage((payload) => {
+  console.log('[SW] Background notification received:', payload);
+  
+  const title = payload.notification?.title || payload.data?.title || 'New TuitionHub Alert';
+  const body = payload.notification?.body || payload.data?.body || '';
+  
+  const hashKey = `${title}|${body}`;
+  if (recentlyShown.has(hashKey)) return;
+  recentlyShown.add(hashKey);
+  setTimeout(() => recentlyShown.delete(hashKey), 4000);
 
-  try {
-    if (event.data) {
-      const rawText = event.data.text();
-      try {
-        const payload = JSON.parse(rawText);
-        console.log('[SW] Intercepted push payload:', payload);
-
-        dataObj = payload.data || {};
-        const type = dataObj.type || payload.type || '';
-
-        // Safely extract message details
-        title = payload.notification?.title || dataObj.title || payload.title || 'New Notification';
-        body = payload.notification?.body || dataObj.body || payload.body || '';
-      } catch (jsonErr) {
-        // Fallback for non-JSON text payloads
-        body = rawText || '';
-      }
-    }
-  } catch (err) {
-    console.error('[SW] Extraction failed, using safe defaults:', err);
-  }
-
-  // --- DUPLICATE PREVENTION ENGINE ---
-  const dedupeKey = `${title}|${body}`;
-  const now = Date.now();
-  if (recentlyShownNotifications.has(dedupeKey)) {
-    const lastShown = recentlyShownNotifications.get(dedupeKey);
-    if (now - lastShown < 3000) {
-      console.log('[SW] Prevented duplicate browser banner:', title);
-      event.stopImmediatePropagation();
-      return;
-    }
-  }
-  recentlyShownNotifications.set(dedupeKey, now);
-
-  // Prune cache to keep footprint tiny
-  if (recentlyShownNotifications.size > 100) {
-    for (const [key, time] of recentlyShownNotifications.entries()) {
-      if (now - time > 15000) recentlyShownNotifications.delete(key);
-    }
-  }
-
-  const notificationTag = dataObj.chatId ? `chat_${dataObj.chatId}` : `notification_${now}`;
+  const dataObj = payload.data || {};
+  const notificationTag = dataObj.chatId ? `chat_${dataObj.chatId}` : `notification_${Date.now()}`;
 
   const notificationOptions = {
     body: body,
-    icon: self.location.origin + '/logo.png',
-    badge: self.location.origin + '/logo.png',
+    icon: '/logo.png',
+    badge: '/logo.png',
     vibrate: [100, 50, 100],
     data: dataObj,
     tag: notificationTag,
@@ -77,25 +42,54 @@ self.addEventListener('push', function(event) {
     requireInteraction: true
   };
 
-  // --- SYSTEM BANNER GENERATION ENGINE ---
-  // Always trigger the OS system banner to guarantee it displays 
-  // whether the browser tab is focused, backgrounded, or completely closed.
-  const displayPromise = self.registration.showNotification(title, notificationOptions);
-
-  event.waitUntil(displayPromise);
+  return self.registration.showNotification(title, notificationOptions);
 });
 
-// Handling notification action clicks!
+// Fallback manual push event handler for non-FCM browsers
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+  
+  try {
+    const rawText = event.data.text();
+    const payload = JSON.parse(rawText);
+    
+    // If it's a standard FCM direct background push, FCM will handle it via onBackgroundMessage.
+    // If it's a legacy system push, we handle it here.
+    const title = payload.notification?.title || payload.data?.title || payload.title || 'New Alert';
+    const body = payload.notification?.body || payload.data?.body || payload.body || '';
+
+    const hashKey = `${title}|${body}`;
+    if (recentlyShown.has(hashKey)) return;
+    recentlyShown.add(hashKey);
+    setTimeout(() => recentlyShown.delete(hashKey), 4000);
+
+    const notificationOptions = {
+      body: body,
+      icon: '/logo.png',
+      badge: '/logo.png',
+      vibrate: [100, 50, 100],
+      data: payload.data || {},
+      requireInteraction: true
+    };
+
+    event.waitUntil(self.registration.showNotification(title, notificationOptions));
+  } catch (e) {
+    console.log('[SW] Handled raw push message stream:', event.data.text());
+  }
+});
+
+// Handle background notification clicks to focus or open the correct window
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const data = event.notification.data || {};
 
   let targetUrl = '/';
-  if ((data.type === 'chat_message' || data.type === 'group_chat_message') && data.chatId) {
+  if (data.chatId) {
     targetUrl = `/?openChatId=${data.chatId}`; 
   }
 
   const navigatePromise = clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+    // Search for any existing open tab of TutionHub
     for (let i = 0; i < windowClients.length; i++) {
       const client = windowClients[i];
       if (client.url && client.url.includes(self.registration.scope) && 'focus' in client) {

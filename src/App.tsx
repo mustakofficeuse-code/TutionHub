@@ -20,7 +20,6 @@ import TeacherView from './screens/teacher/TeacherView';
 import TeacherAnalytics from './screens/teacher/Analytics';
 import AdminDashboard from './screens/admin/AdminDashboard';
 import AddStudent from './screens/admin/AddStudent';
-import NotificationToastStack from './components/NotificationToastStack';
 
 function AppRoutes() {
   const { user, profile, loading, role } = useAuth();
@@ -211,7 +210,6 @@ export default function App() {
       <AuthProvider>
         <Router>
           <AppUpdatePrompt />
-          <NotificationToastStack />
           <AnimatePresence mode="wait">
             {showSplash && (
               <motion.div

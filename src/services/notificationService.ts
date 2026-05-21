@@ -138,12 +138,12 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
                 }
 
                 // Dispatch a custom event to trigger custom UI in-app dynamic Toast popups!
-                window.dispatchEvent(new CustomEvent('NEW_INAPP_NOTIFICATION', { detail: newNotif }));
+                // In-app visual popup dispatch removed per user request
 
                 // Robust browser-native notification popup fallback!
                 // This triggers standard OS notification popups when the browser tab is running,
                 // serving as a bulletproof backup even if FCM is blocked or service-worker registrations are sandboxed.
-                if ('Notification' in window && Notification.permission === 'granted') {
+                if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState === 'hidden') {
                    try {
                      new Notification(newNotif.title, {
                         body: newNotif.message,
