@@ -25,7 +25,8 @@ import {
   QrCode,
   Edit2,
   X,
-  AlertCircle
+  AlertCircle,
+  Bell
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
@@ -55,6 +56,21 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl || '');
   const [isEditing, setIsEditing] = useState(false);
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
+
+  // Push notification diagnostics state
+  const [notificationPermission, setNotificationPermission] = useState<string>(
+    typeof window !== 'undefined' ? (window.Notification?.permission || 'default') : 'default'
+  );
+  const [swRegistered, setSwRegistered] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(registrations => {
+        const activeSW = registrations.some(reg => reg.active && reg.active.scriptURL.includes('sw'));
+        setSwRegistered(activeSW || registrations.length > 0);
+      });
+    }
+  }, []);
 
   const triggerUpload = () => {
     hiddenFileInput.current?.click();
@@ -683,34 +699,132 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
             </div>
 
             <div className="mt-4 sm:mt-8 pt-8 border-t border-slate-100 dark:border-white/5">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                 Background Notification Test
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                <Bell className="w-5 h-5 text-indigo-500" /> Background Push Notifications
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
-                Test if push notifications arrive when the app is fully closed. Click the button below, then immediately close the app completely (swipe it away from recent apps / close the browser tab). Wait 10 seconds.
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
+                Receive important class schedule, payment, and double-chat alerts directly on your device screen even when the browser is completely closed or the app is running in the background.
               </p>
-              <button 
-                onClick={async () => {
-                  try {
-                    await fetch('/api/send-push', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({
-                        title: 'Test Background Push',
-                        body: 'This notification arrived while the app was closed!',
-                        recipientId: profile?.uid,
-                        delayMs: 10000 // 10 seconds delay
-                      })
-                    });
-                    setMessage({ type: 'success', text: 'Scheduled! Close the app completely within 10 seconds.' });
-                  } catch (e) {
-                    setMessage({ type: 'error', text: 'Failed to schedule push.' });
-                  }
-                }}
-                className="bg-purple-600 text-white font-bold py-3 px-4 sm:px-6 rounded-xl transition-all flex items-center justify-center hover:bg-purple-700 w-full sm:w-auto"
-              >
-                Schedule Test Push (10s Delay)
-              </button>
+
+              {/* Status Section */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="p-4 bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Permission</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                      {notificationPermission === 'granted' ? 'Allowed ✓' : notificationPermission === 'denied' ? 'Blocked ✗' : 'Default (?)'}
+                    </span>
+                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${notificationPermission === 'granted' ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-red-500 shadow-sm shadow-red-500/50'}`} />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Background Sync</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                      {swRegistered ? 'Active ✓' : 'Registering...'}
+                    </span>
+                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${swRegistered ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Push Token</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
+                      {profile?.fcmToken ? 'Registered ✓' : 'Setup Pending'}
+                    </span>
+                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${profile?.fcmToken ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                  </div>
+                </div>
+              </div>
+
+              {/* Actions Section */}
+              <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                {notificationPermission !== 'granted' && (
+                  <button
+                    onClick={async () => {
+                      if ('Notification' in window) {
+                        const perm = await window.Notification.requestPermission();
+                        setNotificationPermission(perm);
+                        if (perm === 'granted') {
+                          // Try triggering service worker registrations
+                          const { setupPushNotifications } = await import('../../services/notificationService');
+                          if (profile?.uid) await setupPushNotifications(profile.uid);
+                          setMessage({ type: 'success', text: 'System notifications allowed successfully!' });
+                        } else {
+                          setMessage({ type: 'error', text: 'Permission denied. Please reset standard permissions in site settings.' });
+                        }
+                      }
+                    }}
+                    className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                  >
+                    <Bell className="w-5 h-5 animate-pulse" />
+                    Enable Banners (Grant Permission)
+                  </button>
+                )}
+
+                <button 
+                  onClick={async () => {
+                    try {
+                      setMessage({ type: 'success', text: 'Scheduled! Now close the app/tab completely & wait.' });
+                      
+                      const { setupPushNotifications } = await import('../../services/notificationService');
+                      if (profile?.uid && !profile?.fcmToken) {
+                         await setupPushNotifications(profile.uid);
+                      }
+
+                      await fetch('/api/send-push', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          title: 'TutionHub Background Test',
+                          body: 'This background banner alert was delivered successfully while the app was closed!',
+                          recipientId: profile?.uid,
+                          delayMs: 10000 // 10 seconds delay
+                        })
+                      });
+                    } catch (e) {
+                      setMessage({ type: 'error', text: 'Failed to schedule push.' });
+                    }
+                  }}
+                  className="bg-purple-600 text-white font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center hover:bg-purple-700 shadow-md shadow-purple-600/10 gap-2 font-medium"
+                >
+                  Schedule Background Test Push (10s Delay)
+                </button>
+              </div>
+
+              {/* Troubleshooting Instructions */}
+              <div className="p-5 bg-indigo-50/40 dark:bg-slate-900 border border-indigo-100/30 dark:border-slate-800 rounded-2xl">
+                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-indigo-500" /> Troubleshooting OS Background Policies:
+                </h4>
+                <ul className="space-y-4 text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+                  <li className="flex gap-2">
+                    <span className="text-indigo-500 font-mono font-bold shrink-0">1.</span>
+                    <span>
+                      <strong>Chrome / Firefox / Edge:</strong> If permissions are set to "Allow" but notifications aren't showing, check your Operating System's Focus Assist (Windows/macOS). Make sure the OS Notification Center is not hiding system banners.
+                    </span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-indigo-500 font-mono font-bold shrink-0">2.</span>
+                    <span>
+                      <strong>iPhone & iPad (iOS):</strong> Apple restricts push notifications inside Safari. To turn them on:
+                      <ol className="list-decimal ml-5 mt-1.5 space-y-1">
+                        <li>Tap the <strong className="text-indigo-500">Share</strong> button in Safari (bottom/top bar).</li>
+                        <li>Select <strong>Add to Home Screen</strong> and name the application.</li>
+                        <li>Open the newly added TutionHub app from your phone home screen, navigate back here to Profile, and click <strong className="text-indigo-500">Enable Banners</strong>.</li>
+                      </ol>
+                    </span>
+                  </li>
+                  <li className="flex gap-2">
+                    <span className="text-indigo-500 font-mono font-bold shrink-0">3.</span>
+                    <span>
+                      <strong>Android:</strong> Long press the Chrome / TutionHub icon on your home screen, tap "App Info" / ⓘ, click "Notifications", and guarantee "All Notifications" are toggled ON. Ensure "Battery Saver" is disabled or set to "Unrestricted" so OS does not sleep background tasks.
+                    </span>
+                  </li>
+                </ul>
+              </div>
             </div>
 
             {profile?.role === 'teacher' && (

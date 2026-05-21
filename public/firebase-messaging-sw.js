@@ -77,19 +77,10 @@ self.addEventListener('push', function(event) {
     requireInteraction: true
   };
 
-  // --- COMPREHENSIVE WINDOW STATE CHECK ---
-  // Works flawlessly when tab is focused, in background, or completely closed
-  const displayPromise = clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-    const isVisibleInForeground = windowClients.some(client => client.visibilityState === 'visible');
-    
-    if (isVisibleInForeground) {
-      console.log('[SW] App is currently visible & open. Relying on live app interface for notification state.');
-      return;
-    }
-
-    // Displays the system banner reliably if backgrounded or closed!
-    return self.registration.showNotification(title, notificationOptions);
-  });
+  // --- SYSTEM BANNER GENERATION ENGINE ---
+  // Always trigger the OS system banner to guarantee it displays 
+  // whether the browser tab is focused, backgrounded, or completely closed.
+  const displayPromise = self.registration.showNotification(title, notificationOptions);
 
   event.waitUntil(displayPromise);
 });
