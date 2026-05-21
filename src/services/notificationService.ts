@@ -141,17 +141,30 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
                 // In-app visual popup dispatch removed per user request
 
                 // Robust browser-native notification popup fallback!
-                // This triggers standard OS notification popups when the browser tab is running,
-                // serving as a bulletproof backup even if FCM is blocked or service-worker registrations are sandboxed.
-                if ('Notification' in window && Notification.permission === 'granted' && document.visibilityState === 'hidden') {
-                   try {
-                     new Notification(newNotif.title, {
-                        body: newNotif.message,
-                        icon: window.location.origin + '/logo.png',
-                        badge: window.location.origin + '/logo.png'
-                     });
-                   } catch (e) {
-                     console.warn('Native notification instantiation failed: ', e);
+                if ('Notification' in window && Notification.permission === 'granted') {
+                   // Only show if the app is hidden or user specifically wants outer notification
+                   if (document.visibilityState === 'hidden' || true) {
+                     try {
+                        if ('serviceWorker' in navigator) {
+                           navigator.serviceWorker.ready.then(registration => {
+                             registration.showNotification(newNotif.title, {
+                                body: newNotif.message,
+                                icon: window.location.origin + '/logo.png',
+                                badge: window.location.origin + '/logo.png',
+                                vibrate: [100, 50, 100],
+                                tag: newNotif.id
+                             }).catch(e => {
+                                console.warn('SW notification failed:', e);
+                                // Fallback for desktop Safari if SW doesn't support showNotification
+                                new Notification(newNotif.title, { body: newNotif.message, icon: window.location.origin + '/logo.png' });
+                             });
+                           });
+                        } else {
+                           new Notification(newNotif.title, { body: newNotif.message, icon: window.location.origin + '/logo.png' });
+                        }
+                     } catch (e) {
+                       console.warn('Native notification instantiation failed: ', e);
+                     }
                    }
                 }
              }

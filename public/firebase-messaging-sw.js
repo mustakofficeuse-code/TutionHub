@@ -13,31 +13,19 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Cache to prevent duplicate simultaneous popups in short timeframes
-const recentlyShown = new Set();
-
-// Handle background messages with Firebase's optimized compat SDK handler
 messaging.onBackgroundMessage((payload) => {
   console.log('[SW] Background notification received:', payload);
   
   const title = payload.notification?.title || payload.data?.title || 'New TuitionHub Alert';
   const body = payload.notification?.body || payload.data?.body || '';
-  
-  const hashKey = `${title}|${body}`;
-  if (recentlyShown.has(hashKey)) return;
-  recentlyShown.add(hashKey);
-  setTimeout(() => recentlyShown.delete(hashKey), 4000);
-
-  const dataObj = payload.data || {};
-  const notificationTag = dataObj.chatId ? `chat_${dataObj.chatId}` : `notification_${Date.now()}`;
 
   const notificationOptions = {
     body: body,
     icon: '/logo.png',
     badge: '/logo.png',
     vibrate: [100, 50, 100],
-    data: dataObj,
-    tag: notificationTag,
+    data: payload.data || {},
+    tag: payload.data?.chatId ? `chat_${payload.data.chatId}` : `notification_${Date.now()}`,
     renotify: true,
     requireInteraction: true
   };
@@ -45,40 +33,7 @@ messaging.onBackgroundMessage((payload) => {
   return self.registration.showNotification(title, notificationOptions);
 });
 
-// Fallback manual push event handler for non-FCM browsers
-self.addEventListener('push', (event) => {
-  if (!event.data) return;
-  
-  try {
-    const rawText = event.data.text();
-    const payload = JSON.parse(rawText);
-    
-    // If it's a standard FCM direct background push, FCM will handle it via onBackgroundMessage.
-    // If it's a legacy system push, we handle it here.
-    const title = payload.notification?.title || payload.data?.title || payload.title || 'New Alert';
-    const body = payload.notification?.body || payload.data?.body || payload.body || '';
-
-    const hashKey = `${title}|${body}`;
-    if (recentlyShown.has(hashKey)) return;
-    recentlyShown.add(hashKey);
-    setTimeout(() => recentlyShown.delete(hashKey), 4000);
-
-    const notificationOptions = {
-      body: body,
-      icon: '/logo.png',
-      badge: '/logo.png',
-      vibrate: [100, 50, 100],
-      data: payload.data || {},
-      requireInteraction: true
-    };
-
-    event.waitUntil(self.registration.showNotification(title, notificationOptions));
-  } catch (e) {
-    console.log('[SW] Handled raw push message stream:', event.data.text());
-  }
-});
-
-// Handle background notification clicks to focus or open the correct window
+// Handle notification interaction (opening correct tab)
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const data = event.notification.data || {};
