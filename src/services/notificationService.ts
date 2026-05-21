@@ -111,9 +111,6 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
              const newNotif = { id: change.doc.id, ...change.doc.data() } as Notification;
              const isForMe = notifications.some(n => n.id === newNotif.id);
              if (isForMe && !newNotif.read) {
-                // OS-level notification popups are securely handled exclusively by the FCM Service Worker Push event
-                // to prevent dual popups. Here in the foreground, we just play a pleasant sound chime.
-                
                 // Play Sound
                 try {
                    const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
@@ -138,6 +135,24 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
                    }
                 } catch(e) {
                    console.log('Audio could not be played', e);
+                }
+
+                // Dispatch a custom event to trigger custom UI in-app dynamic Toast popups!
+                window.dispatchEvent(new CustomEvent('NEW_INAPP_NOTIFICATION', { detail: newNotif }));
+
+                // Robust browser-native notification popup fallback!
+                // This triggers standard OS notification popups when the browser tab is running,
+                // serving as a bulletproof backup even if FCM is blocked or service-worker registrations are sandboxed.
+                if ('Notification' in window && Notification.permission === 'granted') {
+                   try {
+                     new Notification(newNotif.title, {
+                        body: newNotif.message,
+                        icon: window.location.origin + '/logo.png',
+                        badge: window.location.origin + '/logo.png'
+                     });
+                   } catch (e) {
+                     console.warn('Native notification instantiation failed: ', e);
+                   }
                 }
              }
           }
