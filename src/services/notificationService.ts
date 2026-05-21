@@ -90,6 +90,9 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
       // Always show direct messages to the user
       if (n.recipientId === userId) return true;
       
+      // If the notification targets a specific recipient and it's not the current user, hide it.
+      if (n.recipientId && n.recipientId !== userId) return false;
+      
       // Filter role base
       if (n.targetRole === targetRole || n.targetRole === 'ALL') {
         // If there are department constraints on the notification and the user has a department to check against

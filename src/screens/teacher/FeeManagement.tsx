@@ -211,30 +211,12 @@ export default function FeeManagement({
     if (!paymentStudent || !paymentSemester || !paymentAmount) return;
 
     try {
-      await addDoc(collection(db, "payments"), {
-        studentId: paymentStudent.uid || paymentStudent.id,
-        semester: paymentSemester,
-        courseId:
-          paymentStudent.courseId ||
-          paymentStudent.department ||
-          paymentStudent.courseName ||
-          "",
-        amount: Number(paymentAmount),
-        transactionId:
-          "CASH_RECEIPT_" +
-          Math.random().toString(36).substring(2, 9).toUpperCase(),
-        status: "confirmed",
-        teacherReceived: true,
-        timestamp: new Date().toISOString(),
-      });
-
-      // Notify the student of their immediate cash confirmation
-      const targetCourseKey = cleanStr(
+      const targetCourseKey = isManualPayment ? cleanStr(modalDepartment) : cleanStr(
         paymentStudent?.courseId ||
           paymentStudent?.courseName ||
           paymentStudent?.department,
       );
-      const semFee = feeStructure[targetCourseKey]?.[`sem${paymentSemester}`] || 0;
+      const semFee = feeStructure[targetCourseKey]?.[paymentSemester] || 0;
       
       const totalPaidPrevious = payments
         .filter(
@@ -245,6 +227,25 @@ export default function FeeManagement({
         )
         .reduce((sum, p) => sum + Number(p.amount), 0);
         
+      if (semFee > 0 && Number(paymentAmount) > (semFee - totalPaidPrevious)) {
+        alert(`Amount exceeds maximum allowed limit of ₹${semFee - totalPaidPrevious}.`);
+        return;
+      }
+
+      await addDoc(collection(db, "payments"), {
+        studentId: paymentStudent.uid || paymentStudent.id,
+        semester: paymentSemester,
+        courseId: targetCourseKey,
+        amount: Number(paymentAmount),
+        transactionId:
+          "CASH_RECEIPT_" +
+          Math.random().toString(36).substring(2, 9).toUpperCase(),
+        status: "confirmed",
+        teacherReceived: true,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Notify the student of their immediate cash confirmation
       const newPaid = totalPaidPrevious + Number(paymentAmount);
       const remaining = Math.max(0, semFee - newPaid);
       

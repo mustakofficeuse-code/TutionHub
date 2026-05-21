@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { collection, query, where, getDocs, addDoc, getDoc, doc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc, getDoc, doc, onSnapshot, deleteDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { 
@@ -13,7 +13,8 @@ import {
   Hash,
   XCircle,
   User,
-  Info
+  Info,
+  Trash2
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { sendNotification } from '../../services/notificationService';
@@ -106,6 +107,17 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
     }
   };
 
+  const handleDeletePayment = async (paymentId: string) => {
+    if (!window.confirm("Are you sure you want to delete this payment record from your history?")) return;
+    try {
+      await deleteDoc(doc(db, 'payments', paymentId));
+      fetchPayments();
+    } catch (error) {
+      console.error("Error deleting payment:", error);
+      alert("Failed to delete the payment record.");
+    }
+  };
+
   // Helper to extract clean dept name
   const cleanStr = (str: string) => String(str || '').toUpperCase().replace(/[^A-Z]/g, '');
   const dept = cleanStr(profile?.courseId) || cleanStr(profile?.courseName) || cleanStr(profile?.department) || 'BCA';
@@ -185,17 +197,26 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                           </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                         <div className={`px-3 py-1 rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 mb-2 ${
-                            payment.status === 'confirmed' ? 'bg-wa-green/10 text-wa-green' :
-                            payment.status === 'rejected' ? 'bg-red-50 text-red-500' :
-                            'bg-orange-50 text-orange-500'
-                          }`}>
-                            {payment.status}
-                          </div>
-                          <p className="text-xs text-[#8696a0] font-bold">
-                            {new Date(payment.timestamp || payment.date).toLocaleDateString()}
-                          </p>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                           <div className={`px-3 py-1 rounded-full text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 mb-2 ${
+                              payment.status === 'confirmed' ? 'bg-wa-green/10 text-wa-green' :
+                              payment.status === 'rejected' ? 'bg-red-50 text-red-500' :
+                              'bg-orange-50 text-orange-500'
+                            }`}>
+                              {payment.status}
+                            </div>
+                            <p className="text-xs text-[#8696a0] font-bold">
+                              {new Date(payment.timestamp || payment.date).toLocaleDateString()}
+                            </p>
+                        </div>
+                        <button 
+                          onClick={() => handleDeletePayment(payment.id)} 
+                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                          title="Delete Record"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
                       </div>
                     </div>
                   ))}
