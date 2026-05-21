@@ -111,24 +111,8 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
              const newNotif = { id: change.doc.id, ...change.doc.data() } as Notification;
              const isForMe = notifications.some(n => n.id === newNotif.id);
              if (isForMe && !newNotif.read) {
-                // Show standard OS-level Notification
-                if ('Notification' in window && Notification.permission === 'granted') {
-                   if ('serviceWorker' in navigator) {
-                       navigator.serviceWorker.ready.then(registration => {
-                           registration.showNotification(newNotif.title, {
-                               body: newNotif.message,
-                               icon: window.location.origin + '/logo.png',
-                               badge: window.location.origin + '/logo.png',
-                               vibrate: [100, 50, 100],
-                           } as any);
-                       });
-                   } else {
-                       new Notification(newNotif.title, {
-                          body: newNotif.message,
-                          icon: window.location.origin + '/logo.png', // generic icon
-                       });
-                   }
-                }
+                // OS-level notification popups are securely handled exclusively by the FCM Service Worker Push event
+                // to prevent dual popups. Here in the foreground, we just play a pleasant sound chime.
                 
                 // Play Sound
                 try {

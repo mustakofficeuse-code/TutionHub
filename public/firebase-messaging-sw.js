@@ -1,7 +1,13 @@
-// Version 6 - Hybrid Push Interception (native FCM for general notifications, custom intercept for interactive chat replies)
+// Version 7 - Advanced Push Interception (Deduplicated & Absolutely Reliable Background Pushes)
+
+// In-memory set to prevent rapid-fire duplicate popups (Duplicate Prevention Engine)
+const recentlyShownNotifications = new Map(); // key -> timestamp
 
 self.addEventListener('push', function(event) {
   if (!event.data) return;
+
+  // Intercept push notification immediately to stop FCM's native listener from showing a duplicate popup
+  event.stopImmediatePropagation();
 
   try {
     const payload = event.data.json();
@@ -10,19 +16,34 @@ self.addEventListener('push', function(event) {
     const dataObj = payload.data || {};
     const type = dataObj.type || payload.type || '';
 
-    // Only intercept chat messages to add the interactive direct Reply action.
-    // For all other notifications, let FCM SDK show them natively/automatically.
-    // This provides 100% reliability for background / closed app pushes.
-    if (type !== 'chat_message' && type !== 'group_chat_message') {
-      console.log('[SW] Letting native FCM handler display the notification:', payload);
-      return;
-    }
-
-    // Intercept chat messages is required for the custom "Reply" button action
-    event.stopImmediatePropagation();
-
+    // Extract title and body robustly from any structural configuration
     const title = payload.notification?.title || dataObj.title || payload.title || 'New Notification';
     const body = payload.notification?.body || dataObj.body || payload.body || '';
+
+    // --- DUPLICATE PREVENTION ENGINE ---
+    const dedupeKey = `${title}|${body}`;
+    const now = Date.now();
+    if (recentlyShownNotifications.has(dedupeKey)) {
+      const lastShown = recentlyShownNotifications.get(dedupeKey);
+      if (now - lastShown < 3000) { // If received within 3 seconds, discard as a duplicate
+        console.log('[SW] Prevented dual popup for duplicate payload:', title);
+        return;
+      }
+    }
+    recentlyShownNotifications.set(dedupeKey, now);
+
+    // Garbage collection of recentlyShownMap to prevent memory issues
+    if (recentlyShownNotifications.size > 100) {
+      for (const [key, time] of recentlyShownNotifications.entries()) {
+        if (now - time > 10000) {
+          recentlyShownNotifications.delete(key);
+        }
+      }
+    }
+
+    // Assign a native coalescence 'tag' based on chat group or notification type.
+    // This instructs the operating system/browser itself to merge any identical items.
+    const notificationTag = dataObj.chatId ? `chat_${dataObj.chatId}` : `notification_${type || 'general'}`;
 
     const notificationOptions = {
       body: body,
@@ -30,21 +51,28 @@ self.addEventListener('push', function(event) {
       badge: self.location.origin + '/logo.png',
       vibrate: [100, 50, 100],
       data: dataObj,
-      requireInteraction: true,
-      actions: [
-        {
-          action: 'reply',
-          type: 'text',
-          title: 'Reply'
-        }
-      ]
+      tag: notificationTag,
+      renotify: true, // Renotifies if it's a new message in the same category
+      requireInteraction: true
     };
 
-    event.waitUntil(
-      self.registration.showNotification(title, notificationOptions)
-    );
+    // --- FOREGROUND INTELLIGENT DE-DUPLICATION ---
+    // If the app is open and visible in the foreground, we can skip showing the OS-level system banner
+    // to avoid bothering the user since onSnapshot plays live chime sound and updates the UI real-time.
+    const displayPromise = clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      const isForeground = windowClients.some(client => client.visibilityState === 'visible');
+      if (isForeground) {
+        console.log('[SW] App is active in foreground. Skipping OS-level banner to prevent dual popups in UI.');
+        return;
+      }
+
+      // If app is closed, or backgrounded, draw the OS-level notification banner flawlessly and reliably
+      return self.registration.showNotification(title, notificationOptions);
+    });
+
+    event.waitUntil(displayPromise);
   } catch (err) {
-    console.error('Error in custom push interceptor, letting native FCM SDK handle push:', err);
+    console.error('[SW] Custom push event processing failed:', err);
   }
 });
 
@@ -63,62 +91,29 @@ firebase.initializeApp({
 const messaging = firebase.messaging();
 
 self.addEventListener('notificationclick', (event) => {
-  event.stopImmediatePropagation(); // Important! Prevent default click handler
+  event.stopImmediatePropagation();
+  event.notification.close();
 
   const data = event.notification.data;
 
-  if (event.action === 'reply') {
-    const replyText = event.reply;
-    
-    if (replyText && data) {
-      // Send the reply text via an API call
-      event.waitUntil(
-        fetch(new URL('/api/chat-reply', self.location.origin).href, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            text: replyText,
-            chatId: data.chatId,
-            recipientId: data.senderId, // The sender of the previous message is the recipient of our reply
-            senderId: data.targetId, // The recipient of the previous message is the sender of our reply
-            originalType: data.type
-          })
-        }).then(response => {
-           if (!response.ok) {
-              return response.text().then(text => { throw new Error(text) });
-           }
-           event.notification.close();
-           return response.json();
-        }).catch(err => {
-           console.error('[SW] Reply error:', err);
-           // Show error if failed
-           self.registration.showNotification('Reply Failed', {
-             body: 'Could not send: ' + err.message,
-             icon: self.location.origin + '/logo.png',
-             badge: self.location.origin + '/logo.png'
-           });
-        })
-      );
-    }
-  } else {
-    event.notification.close();
-    // Default open behavior
-    let targetUrl = '/';
-    if ((data?.type === 'chat_message' || data?.type === 'group_chat_message') && data?.chatId) {
-      targetUrl = `/?openChatId=${data.chatId}`; 
-    }
-
-    event.waitUntil(
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-        for (let i = 0; i < windowClients.length; i++) {
-          if (windowClients[i].url && windowClients[i].url.includes(self.registration.scope) && 'focus' in windowClients[i]) {
-             // Send message to the app to route internally to the chat
-             windowClients[i].postMessage({ type: 'NAVIGATE_TO_CHAT', chatId: data?.chatId, msgType: data?.type });
-             return windowClients[i].focus();
-          }
-        }
-        return clients.openWindow(targetUrl);
-      })
-    );
+  // Build target app path
+  let targetUrl = '/';
+  if ((data?.type === 'chat_message' || data?.type === 'group_chat_message') && data?.chatId) {
+    targetUrl = `/?openChatId=${data.chatId}`; 
   }
+
+  const navigatePromise = clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+    // Focus existing opened app instance if available
+    for (let i = 0; i < windowClients.length; i++) {
+      const client = windowClients[i];
+      if (client.url && client.url.includes(self.registration.scope) && 'focus' in client) {
+         client.postMessage({ type: 'NAVIGATE_TO_CHAT', chatId: data?.chatId, msgType: data?.type });
+         return client.focus();
+      }
+    }
+    // Otherwise open a new window instance of the app
+    return clients.openWindow(targetUrl);
+  });
+
+  event.waitUntil(navigatePromise);
 });
