@@ -10,6 +10,9 @@ import { v2 as cloudinary } from "cloudinary";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Dynamic session version tag that changes on server restart (which happens automatically on file edits)
+const SERVER_BOOT_VERSION = "build_" + Date.now();
+
 // Configure Cloudinary globally
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "dgutw0ygj",
@@ -346,6 +349,10 @@ async function startServer() {
 
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok" });
+  });
+
+  app.get("/api/app-version", (req, res) => {
+    res.json({ version: SERVER_BOOT_VERSION });
   });
 
   // API to create a student user (Admin only would be better, but for simplicity we'll just implement it)

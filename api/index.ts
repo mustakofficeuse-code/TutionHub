@@ -51,6 +51,17 @@ cloudinary.config({
 const app = express();
 app.use(express.json({ limit: '50mb' }));
 
+// Dynamic session version tag that changes on server restart (which happens automatically on file edits)
+const SERVER_BOOT_VERSION = "build_" + Date.now();
+
+app.get("/api/app-version", (req, res) => {
+  res.json({ version: SERVER_BOOT_VERSION });
+});
+
+app.get("/api/health", (req, res) => {
+  res.json({ status: "ok" });
+});
+
 app.post("/api/upload-capture", async (req, res) => {
     try {
       const { base64, fileName, contentType } = req.body;

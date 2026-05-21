@@ -6,6 +6,7 @@
 import { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
+import { RefreshCw } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import AuthGateway from './screens/auth/AuthGateway';
@@ -71,6 +72,127 @@ function AppRoutes() {
   );
 }
 
+function AppUpdatePrompt() {
+  const [hasUpdate, setHasUpdate] = useState(false);
+
+  useEffect(() => {
+    let initialVersion: string | null = null;
+    let isMounted = true;
+
+    const checkVersion = async () => {
+      try {
+        const res = await fetch("/api/app-version");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.version) return;
+
+        if (!initialVersion) {
+          initialVersion = data.version;
+          console.log("[Updater] Initial app session version loaded:", initialVersion);
+        } else if (data.version !== initialVersion) {
+          console.log(`[Updater] New version detected! Server: ${data.version}, Initial: ${initialVersion}`);
+          if (isMounted) {
+            setHasUpdate(true);
+          }
+        }
+      } catch (err) {
+        console.error("[Updater] Failed to fetch server app-version:", err);
+      }
+    };
+
+    // 1. Initial check
+    checkVersion();
+
+    // 2. Periodic checks every 10 seconds (optimized for fast local development feedback)
+    const interval = setInterval(checkVersion, 10000);
+
+    // 3. Focus/visibility check to detect changes immediately upon switching back to the browser tab
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        checkVersion();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    // 4. Hook into Service Worker registration update listener
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.getRegistration().then((reg) => {
+        if (!reg) return;
+
+        const handleUpdate = () => {
+          const installing = reg.installing;
+          if (installing) {
+            installing.onstatechange = () => {
+              if (installing.state === "installed" && navigator.serviceWorker.controller) {
+                console.log("[Updater] SW update found and installed in background");
+                if (isMounted) setHasUpdate(true);
+              }
+            };
+          }
+        };
+
+        reg.onupdatefound = handleUpdate;
+
+        if (reg.waiting) {
+          console.log("[Updater] Active waiting service worker detected");
+          if (isMounted) setHasUpdate(true);
+        }
+      });
+    }
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, []);
+
+  const handleUpdate = async () => {
+    try {
+      if ("serviceWorker" in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const reg of registrations) {
+          await reg.unregister();
+        }
+      }
+      window.location.reload();
+    } catch (e) {
+      window.location.reload();
+    }
+  };
+
+  if (!hasUpdate) return null;
+
+  return (
+    <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[2000] w-full max-w-sm md:max-w-md px-4">
+      <motion.div
+        initial={{ opacity: 0, y: -20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: -20, scale: 0.95 }}
+        className="bg-sky-500 dark:bg-sky-600 text-white shadow-2xl rounded-2xl p-4 flex items-center justify-between gap-4 border border-sky-400 dark:border-sky-500 backdrop-blur-md"
+      >
+        <div className="flex items-center gap-3 w-full">
+          <div className="bg-white/10 p-2.5 rounded-xl flex items-center justify-center animate-spin shrink-0">
+            <RefreshCw className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h4 className="font-bold text-sm tracking-tight text-white">App Update Available</h4>
+            <p className="text-[11px] text-sky-100 mt-0.5 leading-tight font-medium">
+              A new version with revisions has been deployed.
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={handleUpdate}
+          className="flex items-center gap-1.5 px-3 py-2 bg-white text-sky-600 hover:bg-sky-50 dark:hover:bg-slate-100 rounded-xl font-bold text-xs shadow-md transition-all active:scale-95 shrink-0"
+        >
+          Update Now
+        </button>
+      </motion.div>
+    </div>
+  );
+}
+
 export default function App() {
   const [showSplash, setShowSplash] = useState(true);
 
@@ -87,6 +209,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router>
+          <AppUpdatePrompt />
           <AnimatePresence mode="wait">
             {showSplash && (
               <motion.div

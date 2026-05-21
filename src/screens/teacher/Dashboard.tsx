@@ -314,10 +314,32 @@ export default function TeacherDashboard({
   };
 
   const handleDeleteSchedule = async (id: string) => {
+    const scheduleItem = schedules.find((s) => s.id === id);
+    const label = scheduleItem
+      ? `${scheduleItem.subject || "Class"} (${scheduleItem.department} Sem ${scheduleItem.semester})`
+      : "this class schedule";
+
+    if (!window.confirm(`Are you sure you want to delete the schedule for "${label}"? This action cannot be undone.`)) {
+      return;
+    }
+
     try {
       await deleteDoc(doc(db, "schedules", id));
       await deleteDoc(doc(db, "attendance_schedules", `ATT_SCHED_${id}`));
       setScheduleToDelete(null);
+
+      if (scheduleItem) {
+        await sendNotification({
+          title: "Schedule Cancelled",
+          message: `The scheduled class for "${scheduleItem.subject}" (${scheduleItem.department} Sem ${scheduleItem.semester}) has been cancelled.`,
+          type: "schedule_change",
+          senderId: auth.currentUser?.uid || "auto",
+          senderName: "Teacher",
+          targetRole: "student",
+          targetDept: scheduleItem.department.toUpperCase(),
+          targetSem: scheduleItem.semester,
+        });
+      }
     } catch (err) {
       alert("Failed to delete schedule");
     }
