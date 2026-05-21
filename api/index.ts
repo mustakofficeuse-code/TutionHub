@@ -233,12 +233,20 @@ app.post("/api/send-push", async (req, res) => {
            const userData = doc.data();
            let shouldSend = true;
            
-           if (targetDept && userData.courseName !== targetDept && userData.courseId !== (targetDept as string).toUpperCase()) {
-               shouldSend = false;
-           }
-           if (targetSem && userData.semester !== targetSem) {
-               shouldSend = false;
-           }
+           if (targetDept) {
+                const searchDept = String(targetDept).trim().toUpperCase();
+                const userDept = String(userData.courseId || userData.courseName || userData.department || "").trim().toUpperCase();
+                if (searchDept !== "ALL" && userDept !== "ALL" && userDept && userDept !== searchDept) {
+                  shouldSend = false;
+                }
+              }
+              if (targetSem) {
+                const searchSem = String(targetSem).trim();
+                const userSem = String(userData.semester || "").trim();
+                if (searchSem !== "ALL" && userSem !== "ALL" && userSem && userSem !== searchSem) {
+                  shouldSend = false;
+                }
+              }
            
            if (shouldSend && userData.fcmToken) {
                tokens.push(userData.fcmToken);
