@@ -212,7 +212,7 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
                         </div>
                         <button 
                           onClick={() => handleDeletePayment(payment.id)} 
-                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                          className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
                           title="Delete Record"
                         >
                           <Trash2 className="w-5 h-5" />

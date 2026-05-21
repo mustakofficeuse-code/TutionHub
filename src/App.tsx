@@ -76,7 +76,31 @@ function AppUpdatePrompt() {
   const [hasUpdate, setHasUpdate] = useState(false);
 
   useEffect(() => {
+    let initialVersion: string | null = null;
     let isMounted = true;
+
+    const checkVersion = async () => {
+      try {
+        const res = await fetch("/api/app-version");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data.version) return;
+
+        if (!initialVersion) {
+          initialVersion = data.version;
+        } else if (data.version !== initialVersion) {
+          if (isMounted && !sessionStorage.getItem("update_dismissed_" + data.version)) {
+            setHasUpdate(true);
+            sessionStorage.setItem("pending_update_version", data.version);
+          }
+        }
+      } catch (err) {
+        // ignore
+      }
+    };
+
+    checkVersion();
+    const interval = setInterval(checkVersion, 60000); // Check every minute
 
     // Hook into Service Worker registration update listener
     if ("serviceWorker" in navigator) {
@@ -88,8 +112,7 @@ function AppUpdatePrompt() {
           if (installing) {
             installing.onstatechange = () => {
               if (installing.state === "installed" && navigator.serviceWorker.controller) {
-                console.log("[Updater] SW update found and installed in background");
-                if (isMounted) setHasUpdate(true);
+                if (isMounted && !sessionStorage.getItem("update_dismissed_sw")) setHasUpdate(true);
               }
             };
           }
@@ -98,16 +121,23 @@ function AppUpdatePrompt() {
         reg.onupdatefound = handleUpdate;
 
         if (reg.waiting) {
-          console.log("[Updater] Active waiting service worker detected");
-          if (isMounted) setHasUpdate(true);
+          if (isMounted && !sessionStorage.getItem("update_dismissed_sw")) setHasUpdate(true);
         }
       });
     }
 
     return () => {
       isMounted = false;
+      clearInterval(interval);
     };
   }, []);
+
+  const handleDismiss = () => {
+    const v = sessionStorage.getItem("pending_update_version");
+    if (v) sessionStorage.setItem("update_dismissed_" + v, "true");
+    sessionStorage.setItem("update_dismissed_sw", "true");
+    setHasUpdate(false);
+  };
 
   const handleUpdate = async () => {
     try {
@@ -131,25 +161,31 @@ function AppUpdatePrompt() {
         initial={{ opacity: 0, y: -20, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: -20, scale: 0.95 }}
-        className="bg-sky-500 dark:bg-sky-600 text-white shadow-2xl rounded-2xl p-4 flex items-center justify-between gap-4 border border-sky-400 dark:border-sky-500 backdrop-blur-md"
+        className="bg-sky-500 dark:bg-sky-600 text-white shadow-2xl rounded-2xl p-4 border border-sky-400 dark:border-sky-500 backdrop-blur-md flex flex-col gap-3"
       >
         <div className="flex items-center gap-3 w-full">
           <div className="bg-white/10 p-2.5 rounded-xl flex items-center justify-center animate-spin shrink-0">
             <RefreshCw className="w-5 h-5 text-white" />
           </div>
-          <div>
-            <h4 className="font-bold text-sm tracking-tight text-white">App Update Available</h4>
-            <p className="text-[11px] text-sky-100 mt-0.5 leading-tight font-medium">
-              A new version with revisions has been deployed.
-            </p>
+          <div className="flex-1 text-left">
+            <h4 className="font-bold text-sm tracking-tight text-white mb-0.5">App Update Available</h4>
+            <p className="text-[11px] text-sky-100 font-medium leading-tight">New version deployed and ready.</p>
           </div>
         </div>
-        <button
-          onClick={handleUpdate}
-          className="flex items-center gap-1.5 px-3 py-2 bg-white text-sky-600 hover:bg-sky-50 dark:hover:bg-slate-100 rounded-xl font-bold text-xs shadow-md transition-all active:scale-95 shrink-0"
-        >
-          Update Now
-        </button>
+        <div className="flex w-full gap-2 mt-1">
+          <button
+            onClick={handleDismiss}
+            className="flex-1 py-2 text-sky-100 font-bold text-xs bg-sky-600 dark:bg-sky-700 hover:bg-sky-700 dark:hover:bg-sky-800 rounded-xl transition-all"
+          >
+            Dismiss
+          </button>
+          <button
+            onClick={handleUpdate}
+            className="flex-1 py-2 bg-white text-sky-600 hover:bg-sky-50 dark:hover:bg-slate-100 rounded-xl font-bold text-xs shadow-md transition-all active:scale-95"
+          >
+            Update Now
+          </button>
+        </div>
       </motion.div>
     </div>
   );

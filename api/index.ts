@@ -168,21 +168,12 @@ app.post("/api/send-push", async (req, res) => {
           senderId: String(req.body.senderId || ""),
           targetId: String(recipientId || "")
         },
-        notification: { 
-          title: String(title || "New Notification"), 
-          body: String(bodyWithTime),
-          icon: absoluteLogo
-        },
         android: {
           priority: "high"
         },
         webpush: {
           headers: {
             Urgency: "high"
-          },
-          notification: {
-            icon: absoluteLogo,
-            badge: absoluteLogo
           }
         }
       };

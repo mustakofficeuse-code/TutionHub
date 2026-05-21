@@ -1076,7 +1076,7 @@ export default function FeeManagement({
                       paymentStudent?.department,
                   );
                   const targetDept = isManualPayment
-                    ? modalDepartment
+                    ? cleanStr(modalDepartment)
                     : studentDept;
                   const targetSemFee =
                     feeStructure[targetDept]?.[paymentSemester] || 0;
@@ -1165,7 +1165,7 @@ export default function FeeManagement({
                         paymentStudent?.department,
                     );
                     const targetDept = isManualPayment
-                      ? modalDepartment
+                      ? cleanStr(modalDepartment)
                       : studentDept;
                     const targetSemFee =
                       feeStructure[targetDept]?.[paymentSemester] || 0;

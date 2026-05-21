@@ -198,7 +198,7 @@ export default function StudentAnalytics({ isEmbedded }: { isEmbedded?: boolean 
                   <span className="text-xs font-bold text-[#8696a0]  bg-[#f0f2f5] dark:bg-[#111b21] px-3 py-1 rounded-full">Overall</span>
                 </div>
                 <div className="h-64 w-full relative">
-                  <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                  <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
                     <PieChart>
                       <Pie
                         data={[
