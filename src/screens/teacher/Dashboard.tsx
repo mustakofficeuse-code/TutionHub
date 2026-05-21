@@ -134,6 +134,7 @@ export default function TeacherDashboard({
   const [isSavingSchedule, setIsSavingSchedule] = useState(false);
   const [scheduleForm, setScheduleForm] = useState({
     subject: "",
+    message: "",
     department: "BCA",
     semester: "1",
     startTime: "10:00",
@@ -273,7 +274,7 @@ export default function TeacherDashboard({
         await updateDoc(doc(db, "schedules", editingScheduleId), data);
         await sendNotification({
           title: "Schedule Updated",
-          message: `Your class schedule for ${scheduleForm.subject} has been updated.`,
+          message: `Your class schedule for ${scheduleForm.subject} has been updated.${scheduleForm.message ? ' Note: ' + scheduleForm.message : ''}`,
           type: 'schedule_change',
           senderId: auth.currentUser?.uid || 'auto',
           senderName: 'Teacher',
@@ -294,7 +295,7 @@ export default function TeacherDashboard({
         });
         await sendNotification({
           title: "New Class Scheduled",
-          message: `A new class for ${scheduleForm.subject} has been scheduled on ${scheduleForm.date}.`,
+          message: `A new class for ${scheduleForm.subject} has been scheduled on ${scheduleForm.date}.${scheduleForm.message ? ' Note: ' + scheduleForm.message : ''}`,
           type: 'schedule_change',
           senderId: auth.currentUser?.uid || 'auto',
           senderName: 'Teacher',
@@ -303,9 +304,8 @@ export default function TeacherDashboard({
           targetSem: scheduleForm.semester,
         });
       }
-      setShowScheduleModal(false);
       setEditingScheduleId(null);
-      setScheduleForm((p) => ({ ...p, subject: "" }));
+      setScheduleForm((p) => ({ ...p, subject: "", message: "" }));
     } catch (err) {
       alert("Failed to save schedule");
     } finally {
@@ -1122,6 +1122,17 @@ export default function TeacherDashboard({
                   className="w-full p-4 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-wa-teal"
                   placeholder="Subject Name (e.g. Data Science)"
                 />
+                <input
+                  value={scheduleForm.message}
+                  onChange={(e) =>
+                    setScheduleForm({
+                      ...scheduleForm,
+                      message: e.target.value,
+                    })
+                  }
+                  className="w-full p-4 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-wa-teal"
+                  placeholder="Optional Message (e.g. Bring your laptop - optional)"
+                />
                 <div className="grid grid-cols-2 gap-4">
                   <select
                     value={scheduleForm.department}
@@ -1225,6 +1236,18 @@ export default function TeacherDashboard({
                     </>
                   )}
                 </button>
+                {editingScheduleId && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditingScheduleId(null);
+                      setScheduleForm((p) => ({ ...p, subject: "", message: "" }));
+                    }}
+                    className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-2xl transition-all text-xs"
+                  >
+                    Cancel Editing (Plan New Instead)
+                  </button>
+                )}
               </form>
 
               <div>
@@ -1241,10 +1264,15 @@ export default function TeacherDashboard({
                         <p className="text-sm font-bold text-slate-800 dark:text-white truncate">
                           {s.subject}
                         </p>
-                        <p className="text-xs text-slate-500 font-bold ">
+                        {s.message && (
+                          <p className="text-[11px] text-slate-400 italic mt-0.5 max-w-[200px] truncate" title={s.message}>
+                            Note: {s.message}
+                          </p>
+                        )}
+                        <p className="text-xs text-slate-500 font-bold mt-1">
                           {s.department} Sem {s.semester} • {s.date}
                         </p>
-                        <p className="text-xs text-wa-teal font-bold">
+                        <p className="text-[11px] text-wa-teal font-bold mt-0.5">
                           {formatTime12h(s.startTime)} -{" "}
                           {formatTime12h(s.endTime)}
                         </p>
@@ -1255,6 +1283,7 @@ export default function TeacherDashboard({
                             setEditingScheduleId(s.id);
                             setScheduleForm({
                               ...s,
+                              message: s.message || "",
                               date:
                                 s.date ||
                                 new Date().toISOString().split("T")[0],

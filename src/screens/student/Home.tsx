@@ -539,9 +539,14 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                               <p className={`text-[12px] font-bold uppercase tracking-wider mb-1.5 ${cls.type === 'active' ? 'text-wa-green' : 'text-wa-teal'}`}>
                                 {cls.type === 'active' ? 'Active Frequency' : 'Pending Schedule'}
                               </p>
-                              <h4 className="font-bold text-slate-900 dark:text-[#e9edef] text-xl tracking-tight leading-none mb-2 truncate">
+                               <h4 className="font-bold text-slate-900 dark:text-[#e9edef] text-xl tracking-tight leading-none mb-2 truncate">
                                 {cls.subject || `${cls.department} Sem ${cls.semester}`}
                               </h4>
+                              {cls.message && (
+                                <p className="text-xs text-slate-500 italic mb-2 font-semibold">
+                                  Note: {cls.message}
+                                </p>
+                              )}
                               <div className="flex flex-wrap items-center gap-3">
                                  <p className="text-sm text-slate-600 dark:text-slate-300 font-semibold flex items-center gap-1.5">
                                    <User className="w-4 h-4 text-wa-teal" /> {cls.teacherName || 'Instructor'}

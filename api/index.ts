@@ -149,10 +149,13 @@ app.post("/api/send-push", async (req, res) => {
     const absoluteLogo = `${origin}/logo.png`;
 
     const sendPushWrapper = async () => {
+      const formattedTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const bodyWithTime = body ? `${body} (${formattedTime})` : formattedTime;
+
       const payload: any = {
         data: {
           title: String(title || "New Notification"),
-          body: String(body || ""),
+          body: String(bodyWithTime),
           type: String(req.body.type || "general"),
           chatId: String(req.body.chatId || ""),
           senderId: String(req.body.senderId || ""),
@@ -160,7 +163,7 @@ app.post("/api/send-push", async (req, res) => {
         },
         notification: { 
           title: String(title || "New Notification"), 
-          body: String(body || ""),
+          body: String(bodyWithTime),
           icon: absoluteLogo
         },
         android: {

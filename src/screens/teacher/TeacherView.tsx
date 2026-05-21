@@ -15,7 +15,10 @@ import {
   X,
   Trash2,
   GraduationCap,
-  LogOut
+  LogOut,
+  Clock,
+  Megaphone,
+  Calendar
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '../../context/AuthContext';
@@ -56,6 +59,16 @@ export default function TeacherView() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [isClearingNotifs, setIsClearingNotifs] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
+  const formatNotifTime = (notif: Notification) => {
+    if (!notif.createdAt) return 'Just now';
+    const date = notif.createdAt.toDate ? notif.createdAt.toDate() : new Date(notif.createdAt);
+    if (isNaN(date.getTime())) return 'Just now';
+    const today = new Date();
+    const isToday = date.toDateString() === today.toDateString();
+    const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (isToday) return `Today, ${timeStr}`;
+    return `${date.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${timeStr}`;
+  };
   // Calculate unread chat messages for badges
   const unreadChatCount = notifications.filter(n => !n.read && (n.type === 'chat_message' || n.type === 'group_chat_message')).length;
   const badges: Record<string, number> = {
@@ -206,7 +219,7 @@ export default function TeacherView() {
               onClick={() => setShowNotifications(true)}
               className="relative w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-2xl transition-all active:scale-95 border border-white/5"
             >
-              <Bell className="w-5 h-5" />
+              <Megaphone className="w-5 h-5 text-amber-300" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-wa-green text-xs font-bold flex items-center justify-center rounded-full text-white ring-4 ring-wa-teal dark:ring-[#202c33] animate-bounce">
                   {unreadCount}
@@ -229,7 +242,7 @@ export default function TeacherView() {
         </div>
       </header>
 
-      {/* Notifications Modal */}
+       {/* Notifications Modal */}
       <AnimatePresence>
         {showNotifications && (
           <div className="fixed inset-0 z-[100] flex items-center justify-end p-0 sm:p-6 bg-black/60 backdrop-blur-xl">
@@ -239,14 +252,14 @@ export default function TeacherView() {
               exit={{ x: 400, opacity: 0 }}
               className="w-full sm:w-[450px] h-full sm:h-auto sm:max-h-[85vh] bg-[#f0f2f5] dark:bg-[#111b21] sm:rounded-3xl shadow-[0_0_50px_rgba(0,0,0,0.3)] flex flex-col overflow-hidden border border-white/5"
             >
-              <div className="p-4 sm:p-5 sm:p-5 sm:p-6 bg-wa-teal dark:bg-[#202c33] flex justify-between items-center text-white border-b border-wa-teal/10">
+              <div className="p-4 sm:p-5 sm:p-6 bg-wa-teal dark:bg-[#202c33] flex justify-between items-center text-white border-b border-wa-teal/10">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                    <Bell className="w-6 h-6" />
+                    <Megaphone className="w-6 h-6 text-amber-300 animate-pulse" />
                   </div>
                   <div>
-                    <h3 className="text-xl font-bold tracking-normal  italic">Bulletin <span className="opacity-70">Feed</span></h3>
-                    <p className="text-xs font-bold  tracking-normal text-slate-500 dark:text-slate-400 opacity-60 mt-1">System Broadcasts</p>
+                    <h3 className="text-xl font-bold tracking-normal italic">Bulletin <span className="opacity-70">Feed</span></h3>
+                    <p className="text-xs font-bold tracking-normal text-white/60 mt-1">System Broadcasts</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
@@ -270,50 +283,76 @@ export default function TeacherView() {
                 {notifications.length === 0 ? (
                   <div className="py-24 text-center">
                     <div className="w-20 h-20 bg-[#f0f2f5] dark:bg-slate-800/10 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                      <Bell className="w-10 h-10 text-[#8696a0]/30" />
+                      <Megaphone className="w-10 h-10 text-[#8696a0]/30" />
                     </div>
-                    <p className="text-xs font-bold text-[#8696a0]  tracking-normal">Void frequency detected</p>
+                    <p className="text-xs font-bold text-[#8696a0] tracking-normal">Void frequency detected</p>
                   </div>
                 ) : (
-                  notifications.map((notif) => (
-                    <motion.div 
-                      layout
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      key={notif.id} 
-                      className={`p-4 sm:p-6 rounded-2xl border transition-all cursor-pointer group ${
-                        !notif.read 
-                          ? 'bg-white dark:bg-[#202c33] border-wa-teal shadow-md' 
-                          : 'bg-white/50 dark:bg-slate-800/20 border-transparent hover:bg-white dark:hover:bg-[#202c33]'
-                      }`}
-                      onClick={() => {
-                        markAsRead(notif.id!);
-                        setShowNotifications(false);
-                        if (['doubt_reply', 'doubt_raised', 'chat_message', 'group_chat_message'].includes(notif.type)) {
-                           changeTab(3);
-                           if (notif.relatedId) {
-                             setTimeout(() => {
-                               window.dispatchEvent(new CustomEvent('OPEN_CHAT', { detail: { chatId: notif.relatedId } }));
-                             }, 100);
-                           }
-                        }
-                      }}
-                    >
-                      <div className="flex justify-between items-start mb-3">
-                        <h4 className="text-sm font-bold text-slate-900 dark:text-[#e9edef] tracking-normal group-hover:text-wa-teal transition-colors">{notif.title}</h4>
-                        <div className="w-2 h-2 rounded-full bg-wa-teal" />
-                      </div>
-                      <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-relaxed">
-                        {notif.isAnonymous ? notif.message.replace(notif.senderName, 'A student') : notif.message}
-                      </p>
-                      <div className="flex justify-between items-center mt-4 pt-4 border-t border-slate-50 dark:border-white/5">
-                        <p className="text-xs font-bold text-wa-teal  tracking-normal leading-none">{notif.type.replace('_', ' ')}</p>
-                        <p className="text-xs font-bold text-[#8696a0]  tracking-normal flex items-center gap-1.5 leading-none">
-                          {notif.createdAt?.toDate ? notif.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                    </motion.div>
-                  ))
+                  notifications.map((notif) => {
+                    let NotifIcon = Bell;
+                    let iconColor = "text-wa-teal bg-wa-teal/10 dark:bg-wa-teal/20";
+                    if (notif.type === 'schedule_change') {
+                      NotifIcon = Calendar;
+                      iconColor = "text-sky-500 bg-sky-500/10 dark:bg-sky-500/20";
+                    } else if (notif.type === 'fee_confirmed' || notif.type === 'fee_payment') {
+                      NotifIcon = CreditCard;
+                      iconColor = "text-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/20";
+                    } else if (notif.type === 'doubt_reply' || notif.type === 'doubt_raised') {
+                      NotifIcon = MessageSquare;
+                      iconColor = "text-amber-500 bg-amber-500/10 dark:bg-amber-500/20";
+                    } else if (notif.type === 'material_upload') {
+                      NotifIcon = BookOpen;
+                      iconColor = "text-purple-500 bg-purple-500/10 dark:bg-purple-500/20";
+                    }
+
+                    return (
+                      <motion.div 
+                        layout
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        key={notif.id} 
+                        className={`p-4 sm:p-5 rounded-2xl border transition-all cursor-pointer group ${
+                          !notif.read 
+                            ? 'bg-white dark:bg-[#202c33] border-wa-teal/40 shadow-md' 
+                            : 'bg-white/50 dark:bg-[#202c33]/40 border-transparent hover:bg-white dark:hover:bg-[#202c33]'
+                        }`}
+                        onClick={() => {
+                          markAsRead(notif.id!);
+                          setShowNotifications(false);
+                          if (['doubt_reply', 'doubt_raised', 'chat_message', 'group_chat_message'].includes(notif.type)) {
+                             changeTab(3);
+                             if (notif.relatedId) {
+                               setTimeout(() => {
+                                 window.dispatchEvent(new CustomEvent('OPEN_CHAT', { detail: { chatId: notif.relatedId } }));
+                               }, 100);
+                             }
+                          }
+                        }}
+                      >
+                        <div className="flex gap-4">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${iconColor}`}>
+                            <NotifIcon className="w-5 h-5" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex justify-between items-start mb-1">
+                              <h4 className="text-sm font-bold text-slate-900 dark:text-[#e9edef] tracking-normal group-hover:text-wa-teal transition-colors truncate pr-2">{notif.title}</h4>
+                              {!notif.read && <div className="w-2 h-2 rounded-full bg-wa-teal shrink-0 mt-1.5 animate-pulse" />}
+                            </div>
+                            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+                              {notif.isAnonymous ? notif.message.replace(notif.senderName, 'A student') : notif.message}
+                            </p>
+                            <div className="flex justify-between items-center pt-2.5 border-t border-slate-100 dark:border-white/5">
+                              <p className="text-[10px] font-bold text-wa-teal uppercase tracking-wider leading-none">{notif.type.replace('_', ' ')}</p>
+                              <p className="text-[10px] font-bold text-[#8696a0] tracking-normal flex items-center gap-1 leading-none">
+                                <Clock className="w-3.5 h-3.5" />
+                                {formatNotifTime(notif)}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </motion.div>
+                    );
+                  })
                 )}
               </div>
             </motion.div>
