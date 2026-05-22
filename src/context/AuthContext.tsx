@@ -78,14 +78,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         };
 
         if (blacklistByEmail) {
-          const unsubEmail = onSnapshot(blacklistByEmail, checkBlock);
-          const unsubUid = onSnapshot(blacklistByUid, checkBlock);
+          const unsubEmail = onSnapshot(blacklistByEmail, checkBlock, (e) => {
+            if (e.code !== 'permission-denied') console.error('Blacklist email listener error:', e);
+          });
+          const unsubUid = onSnapshot(blacklistByUid, checkBlock, (e) => {
+            if (e.code !== 'permission-denied') console.error('Blacklist uid listener error:', e);
+          });
           unsubscribeBlacklist = () => {
             unsubEmail();
             unsubUid();
           };
         } else {
-          unsubscribeBlacklist = onSnapshot(blacklistByUid, checkBlock);
+          unsubscribeBlacklist = onSnapshot(blacklistByUid, checkBlock, (e) => {
+            if (e.code !== 'permission-denied') console.error('Blacklist uid listener error:', e);
+          });
         }
 
         unsubscribeProfile = onSnapshot(docRef, (docSnap) => {
@@ -100,7 +106,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
           setLoading(false);
         }, (error: any) => {
-          if (error.code !== 'auth/invalid-credential' && !error.message?.includes('auth/invalid-credential')) {
+          if (error.code !== 'auth/invalid-credential' && !error.message?.includes('auth/invalid-credential') && error.code !== 'permission-denied') {
             console.error("Error listening to profile:", error);
           }
           setLoading(false);
@@ -110,7 +116,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setRole(null);
         setLoading(false);
       }
-    });
+    }, (e: any) => { /* ignore */ });
 
     return () => {
       unsubscribeAuth();

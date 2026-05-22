@@ -71,14 +71,16 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
       setMaterials(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     }, (error) => {
-      console.error("Error listening to materials:", error);
+      if (error.code !== 'permission-denied') {
+        console.error("Error listening to materials:", error);
+      }
       setLoading(false);
     });
 
     // Real-time departments listener
     const unsubscribeDepts = onSnapshot(collection(db, 'departments'), (snap) => {
       setDepartments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    }, (e: any) => { /* ignore */ });
 
     return () => {
       unsubscribeMaterials();

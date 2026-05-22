@@ -42,9 +42,11 @@ export default function AuthGateway() {
   const [teacherName, setTeacherName] = useState("Barun Maity");
   const [teacherPhone, setTeacherPhone] = useState("");
   const [teacherEmail, setTeacherEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState("Barun@123");
+  const [confirmPassword, setConfirmPassword] = useState("Barun@123");
   const [inviteCode, setInviteCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Student fields
   const [studentName, setStudentName] = useState("");
@@ -78,7 +80,7 @@ export default function AuthGateway() {
       if (depts.length > 0 && !department) {
         setDepartment(depts[0]);
       }
-    });
+    }, (e: any) => { /* ignore */ });
 
     // Auto-recover deleted profile if user is already authenticated
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -109,7 +111,8 @@ export default function AuthGateway() {
               email: user.email,
               role:
                 user.email === "teacher@tutionhub.com" ||
-                user.email === "admin@tutionhub.com"
+                user.email === "admin@tutionhub.com" ||
+                user.email === "mustak.office.use@gmail.com"
                   ? "teacher"
                   : "student",
               semester: "1",
@@ -125,15 +128,17 @@ export default function AuthGateway() {
           // Be very silent about auto-recovery errors unless they aren't auth/network related
           const isExpected =
             e.code?.startsWith("auth/") ||
+            e.code === "permission-denied" ||
             e.message?.includes("offline") ||
-            e.message?.includes("failed-precondition");
+            e.message?.includes("failed-precondition") ||
+            e.message?.includes("Missing or insufficient permissions");
 
           if (!isExpected) {
             logError("Auto recovery system note:", e);
           }
         }
       }
-    });
+    }, (e: any) => { /* ignore */ });
 
     return () => unsubscribe();
   }, [navigate, refreshProfile]);
@@ -141,7 +146,6 @@ export default function AuthGateway() {
   const checkSetup = async () => {
     try {
       const docRef = doc(db, "config", "appSettings");
-      // Using a standard getDoc which will try to use cache if server is temporarily unreachable
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
@@ -160,13 +164,20 @@ export default function AuthGateway() {
         setView("teacher-setup");
       }
     } catch (err: any) {
+      // If we hit a permission error, it's likely NOT a new setup situation, 
+      // but rather a security rule or auth state issue.
+      if (err.message && (err.message.includes("permission") || err.message.includes("Insufficient permissions"))) {
+        console.warn("Setup check permission issue (ignoring):", err.message);
+        setView("student-login"); // Default to student login as it's safe
+        return;
+      }
+
       console.warn("Setup check deferred or failed:", err.message);
-      // If it's a connection issue, we might want to wait or just fall back to login
-      // instead of forcing setup view if it might actually exist
       if (err.message && err.message.includes("offline")) {
-        setView("student-login"); // Assume it exists and let login handle the connectivity error
+        setView("student-login"); 
       } else {
-        setView("teacher-setup"); // Fallback for new projects
+        // Only show setup if it's likely a missing document/new project
+        setView("teacher-setup"); 
       }
     }
   };
@@ -176,13 +187,41 @@ export default function AuthGateway() {
     setLoading(true);
     setError("");
     try {
+      const trimmedName = teacherName.trim();
+      const trimmedEmail = teacherEmail.trim().toLowerCase();
+      const trimmedPhone = teacherPhone.trim();
+
+      if (!trimmedName) {
+        throw new Error("Teacher Name is required");
+      }
+
+      if (!trimmedEmail) {
+        throw new Error("Email Address is required");
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(trimmedEmail)) {
+        throw new Error("Please enter a valid email address");
+      }
+
+      if (!trimmedPhone || !/^\d{10}$/.test(trimmedPhone)) {
+        throw new Error("Phone Number must be exactly 10 digits");
+      }
+
+      if (password.length < 6) {
+        throw new Error("Password must be at least 6 characters long");
+      }
+
+      if (password !== confirmPassword) {
+        throw new Error("Passwords do not match");
+      }
+
       // Create teacher account
-      const email = "teacher@tutionhub.com";
       let userCredential;
       try {
         userCredential = await signInWithEmailAndPassword(
           auth,
-          email,
+          trimmedEmail,
           password,
         );
       } catch (err: any) {
@@ -192,7 +231,7 @@ export default function AuthGateway() {
         ) {
           userCredential = await createUserWithEmailAndPassword(
             auth,
-            email,
+            trimmedEmail,
             password,
           );
         } else {
@@ -202,11 +241,12 @@ export default function AuthGateway() {
 
       const user = userCredential.user;
 
-      // Save teacher profile
+      // Save teacher profile first (making them Admin instantly in firestore.rules)
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
-        name: teacherName,
-        email: email,
+        name: trimmedName,
+        email: trimmedEmail,
+        phoneNumber: trimmedPhone,
         role: "teacher",
         createdAt: new Date().toISOString(),
         profileComplete: true,
@@ -220,7 +260,9 @@ export default function AuthGateway() {
 
       // Save app settings
       await setDoc(doc(db, "config", "appSettings"), {
-        teacherName,
+        teacherName: trimmedName,
+        teacherPhone: trimmedPhone,
+        teacherEmail: trimmedEmail,
         setupComplete: true,
         inviteCode: newInviteCode,
       });
@@ -240,7 +282,8 @@ export default function AuthGateway() {
     setLoading(true);
     setError("");
     try {
-      await signInWithEmailAndPassword(auth, "teacher@tutionhub.com", password);
+      const emailToUse = teacherEmail.trim().toLowerCase() || "teacher@tutionhub.com";
+      await signInWithEmailAndPassword(auth, emailToUse, password);
       await refreshProfile();
       navigate("/");
     } catch (err: any) {
@@ -274,42 +317,7 @@ export default function AuthGateway() {
         emailsToTry.push(cleanId);
       }
 
-      // 2. Try to find the student in the database to get their registered email
-      try {
-        const studentsSnap = await getDocs(
-          query(collection(db, "users"), where("role", "==", "student")),
-        );
-        const matchedUser = studentsSnap.docs.find((doc) => {
-          const data = doc.data();
-          const sId = (data.studentId || "").toLowerCase();
-          const sName = (data.name || "").toLowerCase();
-          const sEmail = (data.email || "").toLowerCase();
-          const sRealEmail = (data.realEmail || "").toLowerCase();
-          const sPhone = (data.phoneNumber || "").toLowerCase();
-          return (
-            sId === cleanId ||
-            sName === cleanId ||
-            sEmail === cleanId ||
-            sRealEmail === cleanId ||
-            sPhone === cleanId
-          );
-        });
-
-        if (
-          matchedUser &&
-          matchedUser.data().email &&
-          !emailsToTry.includes(matchedUser.data().email)
-        ) {
-          emailsToTry.push(matchedUser.data().email);
-        }
-      } catch (dbErr) {
-        console.warn(
-          "DB search failed, falling back to pattern matching",
-          dbErr,
-        );
-      }
-
-      // 3. Fallback patterns
+      // 2. Fallback patterns (deterministic)
       if (!emailsToTry.length || !cleanId.includes("@")) {
         // If it's just numbers (e.g., 84921) -> th84921
         if (/^\d+$/.test(cleanId)) {
@@ -369,14 +377,19 @@ export default function AuthGateway() {
           const userDocRef = doc(db, "users", user.uid);
           const userDocSnap = await getDoc(userDocRef);
           if (!userDocSnap.exists()) {
+            const isTeacher = 
+              user.email === "teacher@tutionhub.com" || 
+              user.email === "admin@tutionhub.com" || 
+              user.email === "mustak.office.use@gmail.com";
+
             await setDoc(userDocRef, {
               uid: user.uid,
               studentId: cleanId.startsWith("th")
                 ? cleanId.toUpperCase()
                 : cleanId,
-              name: "Student (Recovered)", // They can update this in profile
+              name: isTeacher ? "Teacher" : "Student (Recovered)",
               email: email,
-              role: "student",
+              role: isTeacher ? "teacher" : "student",
               semester: "1",
               courseName: "BCA",
               courseId: "BCA",
@@ -611,21 +624,64 @@ export default function AuthGateway() {
                   <input
                     type="text"
                     required
+                    placeholder="e.g. Barun Maity"
                     className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                     value={teacherName}
                     onChange={(e) => setTeacherName(e.target.value)}
                   />
                 </div>
               </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Access Password
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <input
+                    type="email"
+                    required
+                    placeholder="e.g. teacher@tutionhub.com"
+                    className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={teacherEmail}
+                    onChange={(e) => setTeacherEmail(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Phone Number
+                </label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <input
+                    type="tel"
+                    required
+                    maxLength={10}
+                    placeholder="10-digit number"
+                    className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={teacherPhone}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "");
+                      if (val.length <= 10) {
+                        setTeacherPhone(val);
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Password
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
                   <input
                     type={showPassword ? "text" : "password"}
                     required
+                    placeholder="Min 6 characters"
                     className="w-full pl-10 pr-12 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -643,6 +699,35 @@ export default function AuthGateway() {
                   </button>
                 </div>
               </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    required
+                    placeholder="Re-enter password"
+                    className="w-full pl-10 pr-12 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+              </div>
+
               <button
                 type="submit"
                 disabled={loading}
@@ -676,7 +761,7 @@ export default function AuthGateway() {
             <form onSubmit={handleTeacherLogin} className="space-y-2 sm:space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
-                  Access Password
+                  Password
                 </label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-5 h-5" />

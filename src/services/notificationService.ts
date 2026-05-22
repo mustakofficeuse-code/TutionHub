@@ -178,7 +178,9 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
     isInitialLoad = false;
     callback(notifications);
   }, (error) => {
-    console.error('Error subscribing to notifications:', error);
+    if (error.code !== 'permission-denied') {
+      console.error('Error subscribing to notifications:', error);
+    }
   });
 };
 

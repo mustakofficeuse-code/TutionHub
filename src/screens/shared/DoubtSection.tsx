@@ -162,7 +162,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
 
     const unsubDepts = onSnapshot(collection(db, 'departments'), (snap) => {
       setDepartments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    }, (e: any) => {});
 
     const unsubUsers = onSnapshot(collection(db, 'users'), (snap) => {
       const uMap: Record<string, any> = {};
@@ -171,7 +171,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       });
       setAllUsers(uMap);
       setLoading(false);
-    });
+    }, (e: any) => {});
 
     const qAnon = query(
       collection(db, 'chat_messages'),
@@ -186,7 +186,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         }
       });
       setHistoricalAnonChats(Array.from(anonIds));
-    });
+    }, (e: any) => {});
 
     const unsubSuspended = onSnapshot(collection(db, 'suspended_users'), (snap) => {
       const sMap: Record<string, boolean> = {};
@@ -196,7 +196,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         }
       });
       setSuspendedUsers(sMap);
-    });
+    }, (e: any) => {});
 
     const isStudent = profile.role === 'student';
     const dept = isStudent ? (profile.courseId || profile.courseName || profile.department) : undefined;
@@ -256,7 +256,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
-    });
+    }, (e: any) => {});
     return unsub;
   }, [selectedChat]);
 

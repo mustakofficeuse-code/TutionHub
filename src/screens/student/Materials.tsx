@@ -34,7 +34,6 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
       setMaterials(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
     }, (error) => {
-      console.error("Error listening to materials:", error);
       setLoading(false);
     });
 

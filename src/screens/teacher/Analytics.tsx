@@ -46,7 +46,7 @@ export default function TeacherAnalytics({ isEmbedded }: { isEmbedded?: boolean 
       const deptList = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setDepartments(deptList);
       fetchData(deptList);
-    });
+    }, (e: any) => { /* ignore */ });
 
     return () => unsubDepts();
   }, []);

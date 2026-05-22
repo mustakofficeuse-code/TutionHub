@@ -49,7 +49,7 @@ export default function StudentAssignments() {
           });
         setAssignments(assignmentsData);
         setLoading(false);
-      });
+      }, (e: any) => {});
 
       fetchSubmissions();
       return () => unsubscribe();

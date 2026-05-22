@@ -41,11 +41,11 @@ export default function AssignmentManager() {
     const unsubscribeAssignments = onSnapshot(q, (snapshot) => {
       setAssignments(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
-    });
+    }, (e: any) => {});
 
     const unsubscribeDepts = onSnapshot(collection(db, 'departments'), (snap) => {
       setDepartments(snap.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
+    }, (e: any) => {});
 
     fetchSubmissions();
     return () => {

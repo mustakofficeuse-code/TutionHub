@@ -185,7 +185,7 @@ export default function TeacherDashboard({
         setAllStudents(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
         setStatsLoading((p) => ({ ...p, students: false }));
         setLoading(false);
-      },
+      }, (e: any) => {}
     );
     const unsubAttendance = onSnapshot(
       query(
@@ -195,7 +195,7 @@ export default function TeacherDashboard({
       (snap) => {
         setTodayAttendanceCount(snap.size);
         setStatsLoading((p) => ({ ...p, attendance: false }));
-      },
+      }, (e: any) => {}
     );
     const unsubFees = onSnapshot(
       query(collection(db, "payments"), where("status", "==", "pending")),
@@ -204,7 +204,7 @@ export default function TeacherDashboard({
           snap.docs.reduce((acc, d) => acc + (d.data().amount || 0), 0),
         );
         setStatsLoading((p) => ({ ...p, fees: false }));
-      },
+      }, (e: any) => {}
     );
     const unsubRecent = onSnapshot(
       query(
@@ -214,16 +214,16 @@ export default function TeacherDashboard({
       ),
       (snap) => {
         setRecentAttendance(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      },
+      }, (e: any) => {}
     );
     const unsubDepts = onSnapshot(collection(db, "departments"), (snap) => {
       setDepartments(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-    });
+    }, (e: any) => { /* ignore perm errors on logout */ });
     const unsubSchedules = onSnapshot(
       query(collection(db, "schedules"), orderBy("date", "desc"), limit(20)),
       (snap) => {
         setSchedules(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      },
+      }, (e: any) => {}
     );
     const unsubNotifs = onSnapshot(
       query(
@@ -241,7 +241,7 @@ export default function TeacherDashboard({
                 new Date(a.timestamp).getTime(),
             ),
         );
-      },
+      }, (e:any) => {}
     );
 
     return () => {

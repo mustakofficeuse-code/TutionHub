@@ -50,24 +50,6 @@ export const logError = (prefix: string, error: any) => {
   console.error(prefix, error);
 };
 
-// Connection test - Non-blocking and more resilient
-async function testConnection() {
-  if (typeof window === 'undefined') return;
-  
-  try {
-    // Try a standard getDoc on a non-existent path to warm up connection
-    // This will use the cache if available or try the server
-    const testDoc = doc(db, '_connection_check_', 'test');
-    await getDoc(testDoc);
-    console.log("Firestore initialized successfully");
-  } catch (error: any) {
-    // We only log if it's clearly a config error
-    if (error.code === 'failed-precondition' || (error.message && error.message.includes('apiKey'))) {
-      console.warn("Firestore connection check warning:", error.message);
-    }
-  }
-}
-
-testConnection();
+// Connection test removed to avoid permission warnings on startup
 
 export default app;

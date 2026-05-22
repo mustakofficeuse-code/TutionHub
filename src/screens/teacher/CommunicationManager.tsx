@@ -35,7 +35,7 @@ export default function CommunicationManager() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setAnnouncements(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
       setLoading(false);
-    });
+    }, (e: any) => {});
 
     fetchCourses();
     return () => unsubscribe();

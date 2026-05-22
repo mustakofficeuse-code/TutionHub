@@ -107,7 +107,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
   };
 
   useEffect(() => {
-    if (!user?.uid) {
+    if (!user?.uid || !profile) {
       setLoading(false);
       return;
     }
@@ -127,7 +127,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
         });
       }
     }, (err) => {
-      console.error("Error fetching teacher info:", err);
+      logError("Error fetching teacher info:", err);
     });
 
     // 1. Attendance Count
@@ -229,7 +229,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
             });
           return combined;
         });
-      }
+      }, (e: any) => {}
     );
 
     // We removed Notification Listener from here because StudentView top bar handles it.

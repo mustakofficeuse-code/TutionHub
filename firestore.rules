@@ -13,20 +13,19 @@ service cloud.firestore {
     
     function isAdmin() {
       return isAuthenticated() && (
-        request.auth.token.email == "mustak.office.use@gmail.com" ||
-        request.auth.token.email == "teacher@tutionhub.com" ||
+        request.auth.token.get('email', '') == "mustak.office.use@gmail.com" ||
+        request.auth.token.get('email', '') == "teacher@tutionhub.com" ||
+        request.auth.token.get('email', '') == "admin@tutionhub.com" ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['teacher', 'admin'])
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', '') == 'teacher')
       );
     }
-
+    
     function isBlacklisted() {
-      let data = request.resource.data;
-      let hasPhone = 'phoneNumber' in data && data.phoneNumber != null && data.phoneNumber != "";
-      let hasEmail = 'realEmail' in data && data.realEmail != null && data.realEmail != "";
-      
-      return (hasPhone && exists(/databases/$(database)/documents/blacklist_phones/$(data.phoneNumber))) ||
-             (hasEmail && exists(/databases/$(database)/documents/blacklist_emails/$(data.realEmail.lower())));
+      return isAuthenticated() && (
+        (request.resource.data.get('phoneNumber', '') != '' && exists(/databases/$(database)/documents/blacklist_phones/$(request.resource.data.get('phoneNumber', '')))) ||
+        (request.resource.data.get('realEmail', '') != '' && exists(/databases/$(database)/documents/blacklist_emails/$(request.resource.data.get('realEmail', '').lower())))
+      );
     }
 
     function hasOnlyAllowedFields(fields) {
@@ -34,17 +33,13 @@ service cloud.firestore {
     }
 
     function isValidString(field, maxLen) {
-      return request.resource.data[field] is string && request.resource.data[field].size() <= maxLen;
+      return !(field in request.resource.data) || (request.resource.data[field] is string && request.resource.data[field].size() <= maxLen);
     }
 
     // User Profiles
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && (request.auth.uid == userId || isAdmin()) && 
-                      !isBlacklisted() &&
-                      hasOnlyAllowedFields(['uid', 'studentId', 'name', 'email', 'role', 'createdAt', 'profileComplete', 'phoneNumber', 'rollNumber', 'semester', 'courseId', 'courseName', 'realEmail']) &&
-                      isValidString('name', 100) &&
-                      isValidString('email', 100) &&
                       request.resource.data.role in ['student', 'teacher'];
       allow update, delete: if isOwner(userId) || isAdmin();
     }
@@ -68,18 +63,17 @@ service cloud.firestore {
     // Config
     match /config/{configId} {
       allow read: if true;
+      allow write: if isAdmin() || (configId == 'appSettings' && isAuthenticated());
+    }
+
+    // Departments
+    match /departments/{deptId} {
+      allow read: if true;
       allow write: if isAdmin();
     }
 
     // Courses
     match /courses/{courseId} {
-      allow read: if isAuthenticated();
-      allow write: if isAdmin();
-    }
-
-    // Attendance
-    // Global Config (Tuition Location etc)
-    match /config/{configId} {
       allow read: if isAuthenticated();
       allow write: if isAdmin();
     }

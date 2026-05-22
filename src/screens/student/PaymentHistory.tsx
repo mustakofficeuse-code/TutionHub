@@ -40,7 +40,9 @@ export default function PaymentHistory({ isEmbedded }: { isEmbedded?: boolean })
       (snapshot) => {
         if (snapshot.exists()) setFeeStructure(snapshot.data());
       },
-      (error) => console.error("Error fetching fee structure:", error)
+      (error) => {
+        if (error.code !== 'permission-denied') console.error("Error fetching fee structure:", error);
+      }
     );
 
     fetchPayments();

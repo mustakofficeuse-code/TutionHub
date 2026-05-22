@@ -35,7 +35,7 @@ export default function AddStudent() {
       if (depts.length > 0 && !department) {
         setDepartment(depts[0]);
       }
-    });
+    }, (e: any) => { /* ignore */ });
 
     return () => unsubDepts();
   }, [department]);

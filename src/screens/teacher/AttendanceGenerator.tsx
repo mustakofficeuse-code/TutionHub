@@ -90,7 +90,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
     // Departments listener
     const unsubDepts = onSnapshot(collection(db, 'departments'), (snap) => {
       setDepartments(snap.docs.map(doc => doc.data().name));
-    });
+    }, (e: any) => {});
 
     // History listener - all time records for this teacher
     const qHistory = query(
@@ -146,7 +146,9 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
       const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setActiveSchedules(list);
     }, (error) => {
-      console.error("[Teacher] Schedules listener error:", error);
+      if (error.code !== 'permission-denied') {
+        console.error("[Teacher] Schedules listener error:", error);
+      }
     });
   };
 
@@ -165,7 +167,9 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
       setRecentAttendance(list);
       setIndexError(false);
     }, (error: any) => {
-      console.error("[Teacher] Attendance feed error:", error);
+      if (error.code !== 'permission-denied') {
+        console.error("[Teacher] Attendance feed error:", error);
+      }
       if (error.code === 'failed-precondition' || error.message?.includes('index')) {
         setIndexError(true);
       }

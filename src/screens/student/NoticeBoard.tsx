@@ -31,7 +31,7 @@ export default function NoticeBoard() {
       );
       setAnnouncements(filtered);
       setLoading(false);
-    });
+    }, (e: any) => { /* ignore */ });
 
     return () => unsubscribe();
   }, [profile?.courseId]);

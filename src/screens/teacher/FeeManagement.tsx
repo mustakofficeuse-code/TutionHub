@@ -81,7 +81,7 @@ export default function FeeManagement({
           (a.name || "").localeCompare(b.name || ""),
         ),
       );
-    });
+    }, (e: any) => { /* ignore */ });
 
     return () => unsubDepts();
   }, []); // Only on mount
