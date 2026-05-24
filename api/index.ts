@@ -76,6 +76,10 @@ app.get("/api/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
+app.get("/api/app-version", (req, res) => {
+  res.json({ version: SERVER_BOOT_VERSION });
+});
+
 app.post("/api/upload-capture", async (req, res) => {
     try {
       const { base64, fileName, contentType } = req.body;

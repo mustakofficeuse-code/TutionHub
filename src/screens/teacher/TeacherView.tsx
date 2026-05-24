@@ -206,8 +206,8 @@ export default function TeacherView() {
       <header className="bg-wa-teal dark:bg-[#202c33] text-white pt-2 px-4 sm:px-6 shadow-lg z-[60] border-b border-wa-teal/10">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-4">
-            <div className="w-11 h-11 rounded-2xl flex items-center justify-center overflow-hidden bg-white/10 backdrop-blur-md shadow-inner border border-white/10 group">
-              <img src="/logo.png" alt="TuitionHub Logo" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" referrerPolicy="no-referrer" />
+            <div className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-white/10 backdrop-blur-md shadow-inner border border-white/10 group">
+              <img src="/logo.png" alt="TuitionHub Logo" className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300" referrerPolicy="no-referrer" />
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-normal leading-none italic">Tuition<span className="text-wa-green">Hub</span></h1>

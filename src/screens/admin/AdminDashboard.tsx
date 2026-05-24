@@ -192,8 +192,8 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-[1rem] flex items-center justify-center overflow-hidden border border-slate-100 dark:border-white/10 shadow-lg bg-white/5">
-                <img src="/logo.png" alt="TuitionHub Logo" className="w-full h-full object-cover hover:scale-105 transition-transform" referrerPolicy="no-referrer" />
+              <div className="w-12 h-12 rounded-full flex items-center justify-center overflow-hidden border border-slate-100 dark:border-white/10 shadow-lg bg-white/5">
+                <img src="/logo.png" alt="TuitionHub Logo" className="w-full h-full object-cover rounded-full hover:scale-105 transition-transform" referrerPolicy="no-referrer" />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-slate-900 dark:text-[#e9edef] leading-tight tracking-normal">Access <span className="text-wa-teal">Control</span></h1>
