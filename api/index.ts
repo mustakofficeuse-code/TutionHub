@@ -154,6 +154,7 @@ app.post("/api/send-push", async (req, res) => {
     const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
     const origin = `${protocol}://${host}`;
     const absoluteLogo = `${origin}/logo.png`;
+    const absoluteBadge = `${origin}/notification-badge.png`;
 
     const sendPushWrapper = async () => {
       const formattedTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -280,6 +281,7 @@ app.post("/api/chat-reply", async (req, res) => {
     const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
     const origin = `${protocol}://${host}`;
     const absoluteLogo = `${origin}/logo.png`;
+    const absoluteBadge = `${origin}/notification-badge.png`;
 
     const db = admin.firestore();
     const userDoc = await db.collection("users").doc(senderId).get();
@@ -365,7 +367,7 @@ app.post("/api/chat-reply", async (req, res) => {
                 },
                 notification: {
                   icon: absoluteLogo,
-                  badge: absoluteLogo
+                  badge: absoluteBadge
                 }
               }
            } as any);

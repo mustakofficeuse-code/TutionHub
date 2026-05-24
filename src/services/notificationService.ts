@@ -153,7 +153,7 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
                              registration.showNotification(newNotif.title, {
                                 body: newNotif.message,
                                 icon: window.location.origin + '/logo.png',
-                                badge: window.location.origin + '/logo.png',
+                                badge: window.location.origin + '/notification-badge.png',
                                 vibrate: [100, 50, 100],
                                 tag: newNotif.id
                              } as any).catch(e => {

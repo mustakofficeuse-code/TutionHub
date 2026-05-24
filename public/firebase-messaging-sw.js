@@ -22,7 +22,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationOptions = {
     body: body,
     icon: '/logo.png',
-    badge: '/logo.png',
+    badge: '/notification-badge.png',
     vibrate: [100, 50, 100],
     data: payload.data || {},
     tag: payload.data?.chatId ? `chat_${payload.data.chatId}` : `notification_${Date.now()}`,
