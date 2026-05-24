@@ -275,6 +275,11 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
 
   const handleLogout = async () => {
     try {
+      if (profile?.role === 'teacher') {
+        localStorage.setItem("postLogoutView", "teacher-login");
+      } else {
+        localStorage.setItem("postLogoutView", "student-login");
+      }
       await signOut(auth);
       navigate('/login');
     } catch (error) {

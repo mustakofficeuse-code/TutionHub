@@ -13,6 +13,7 @@ import {
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  signOut,
 } from "firebase/auth";
 import { auth, db, logError } from "../../firebase";
 import { useAuth } from "../../context/AuthContext";
@@ -28,7 +29,9 @@ import {
   EyeOff,
   Mail,
   Phone,
+  Trash2,
 } from "lucide-react";
+import { deleteDoc } from "firebase/firestore";
 
 export default function AuthGateway() {
   const [view, setView] = useState<
@@ -39,20 +42,21 @@ export default function AuthGateway() {
     | "student-login"
     | "student-blocked"
   >("loading");
-  const [teacherName, setTeacherName] = useState("Barun Maity");
+  const [teacherName, setTeacherName] = useState("");
   const [teacherPhone, setTeacherPhone] = useState("");
   const [teacherEmail, setTeacherEmail] = useState("");
-  const [password, setPassword] = useState("Barun@123");
-  const [confirmPassword, setConfirmPassword] = useState("Barun@123");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resetting, setResetting] = useState(false);
 
   // Student fields
   const [studentName, setStudentName] = useState("");
   const [semester, setSemester] = useState("1");
-  const [department, setDepartment] = useState("");
-  const [departments, setDepartments] = useState<string[]>([]);
+  const [department, setDepartment] = useState("BCA");
+  const [departments, setDepartments] = useState<string[]>(["BCA", "BSC", "BTECH", "MCA"]);
   const [studentInviteCode, setStudentInviteCode] = useState("");
   const [studentRealEmail, setStudentRealEmail] = useState("");
   const [studentPhoneNumber, setStudentPhoneNumber] = useState("");
@@ -73,14 +77,7 @@ export default function AuthGateway() {
     }
     checkSetup();
 
-    // Departments listener
-    const unsubDepts = onSnapshot(collection(db, "departments"), (snap) => {
-      const depts = snap.docs.map((doc) => doc.data().name);
-      setDepartments(depts);
-      if (depts.length > 0 && !department) {
-        setDepartment(depts[0]);
-      }
-    }, (e: any) => { /* ignore */ });
+// Departments listener removed from AuthGateway to prevent early unauthorized reads
 
     // Auto-recover deleted profile if user is already authenticated
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -143,6 +140,46 @@ export default function AuthGateway() {
     return () => unsubscribe();
   }, [navigate, refreshProfile]);
 
+  const handleResetProject = async () => {
+    if (!window.confirm("ARE YOU SURE? This will delete all users, config, and settings from Firestore. You will need to setup the teacher account again.")) return;
+    
+    setResetting(true);
+    try {
+      // 1. Delete app settings
+      await deleteDoc(doc(db, "config", "appSettings"));
+      
+      // 2. Delete users (iterate through current local list if possible, or just delete common paths)
+      // Since we don't have a list of all users easily, we at least delete the current settings
+      // to trigger the setup view.
+      
+      // Also delete some common collections
+      const collectionsToClear = [
+        "users", "notifications", "departments", "blacklist", "attendance", "fees", 
+        "exams", "notes", "attendance_schedules", "attendance_sessions", "payments", 
+        "materials", "announcements", "schedules", "assignments", "submissions", 
+        "doubts", "replies", "chat_messages", "sessions", "suspended_users", "blacklist_phones", "blacklist_emails"
+      ];
+      
+      for (const coll of collectionsToClear) {
+        try {
+          const snap = await getDocs(collection(db, coll));
+          for (const d of snap.docs) {
+            await deleteDoc(doc(db, coll, d.id));
+          }
+        } catch (e) {
+          console.warn(`Failed to clear collection ${coll}:`, e);
+        }
+      }
+
+      await signOut(auth);
+      window.location.reload();
+    } catch (err: any) {
+      alert("Reset failed: " + err.message);
+    } finally {
+      setResetting(false);
+    }
+  };
+
   const checkSetup = async () => {
     try {
       const docRef = doc(db, "config", "appSettings");
@@ -158,25 +195,28 @@ export default function AuthGateway() {
           sessionStorage.removeItem("wasBlocked");
           setView("student-blocked");
         } else {
-          setView("student-login");
+          const postLogoutView = localStorage.getItem("postLogoutView");
+          if (postLogoutView === "teacher-login") {
+            setView("teacher-login");
+          } else {
+            setView("student-login");
+          }
         }
       } else {
+        console.log("Config not found, showing setup.");
         setView("teacher-setup");
       }
     } catch (err: any) {
-      // If we hit a permission error, it's likely NOT a new setup situation, 
-      // but rather a security rule or auth state issue.
-      if (err.message && (err.message.includes("permission") || err.message.includes("Insufficient permissions"))) {
-        console.warn("Setup check permission issue (ignoring):", err.message);
-        setView("student-login"); // Default to student login as it's safe
-        return;
-      }
-
-      console.warn("Setup check deferred or failed:", err.message);
-      if (err.message && err.message.includes("offline")) {
-        setView("student-login"); 
+      console.warn("Setup check error:", err);
+      // Detailed error reporting for the user
+      const errMessage = err.message || JSON.stringify(err);
+      
+      if (errMessage.includes("permission") || errMessage.includes("Insufficient permissions")) {
+        setError(`Database permission error: ${errMessage}. This usually means Firestore rules need to propagate or are blocking the connection.`);
+        // Don't fall back to login if we can't check setup, stay on loading or show error
       } else {
-        // Only show setup if it's likely a missing document/new project
+        // For other errors (like doc not found, which should be handled by .exists()), 
+        // fallback to setup as it's likely a new project.
         setView("teacher-setup"); 
       }
     }
@@ -267,6 +307,7 @@ export default function AuthGateway() {
         inviteCode: newInviteCode,
       });
 
+      localStorage.removeItem("postLogoutView");
       await refreshProfile();
       navigate("/");
     } catch (err: any) {
@@ -284,6 +325,7 @@ export default function AuthGateway() {
     try {
       const emailToUse = teacherEmail.trim().toLowerCase() || "teacher@tutionhub.com";
       await signInWithEmailAndPassword(auth, emailToUse, password);
+      localStorage.removeItem("postLogoutView");
       await refreshProfile();
       navigate("/");
     } catch (err: any) {
@@ -317,8 +359,24 @@ export default function AuthGateway() {
         emailsToTry.push(cleanId);
       }
 
-      // 2. Fallback patterns (deterministic)
+      // 2. Fallback patterns (deterministic and database lookup)
       if (!emailsToTry.length || !cleanId.includes("@")) {
+        // Look up by name in the users collection dynamically
+        if (!/^\d+$/.test(cleanId) && !(cleanId.startsWith("th") && /^\d+$/.test(cleanId.substring(2)))) {
+          try {
+            const usersRef = collection(db, "users");
+            const snap = await getDocs(query(usersRef, where("role", "==", "student")));
+            snap.forEach(doc => {
+              const u = doc.data();
+              if (u.name && u.name.toLowerCase().trim() === cleanId && u.email) {
+                emailsToTry.push(u.email.toLowerCase().trim());
+              }
+            });
+          } catch (err) {
+            console.warn("Failed resolving student by name:", err);
+          }
+        }
+
         // If it's just numbers (e.g., 84921) -> th84921
         if (/^\d+$/.test(cleanId)) {
           emailsToTry.push(`th${cleanId}@student.tutionhub.com`);
@@ -423,6 +481,7 @@ export default function AuthGateway() {
       }
 
       localStorage.setItem("isExistingStudent", "true");
+      localStorage.removeItem("postLogoutView");
       await refreshProfile();
       navigate("/");
     } catch (err: any) {
@@ -582,8 +641,32 @@ export default function AuthGateway() {
 
   if (view === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950">
-        <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+      <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
+        {error ? (
+          <div className="flex flex-col items-center gap-4 text-center max-w-md">
+            <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center">
+              <User className="w-6 h-6" />
+            </div>
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Connection Error</h2>
+            <p className="text-red-500 text-sm">{error}</p>
+            <div className="flex gap-4 mt-4">
+              <button 
+                onClick={() => { setError(""); setView("teacher-setup"); }} 
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700"
+              >
+                Force Setup View
+              </button>
+              <button 
+                onClick={() => window.location.reload()} 
+                className="px-4 py-2 bg-slate-200 text-slate-800 rounded-lg text-sm hover:bg-slate-300"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        ) : (
+          <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+        )}
       </div>
     );
   }
@@ -886,19 +969,17 @@ export default function AuthGateway() {
                 )}
               </button>
               <div className="flex justify-between mt-4">
-                {!isExistingStudent && (
-                  <button
-                    type="button"
-                    onClick={() => setView("student-enroll")}
-                    className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
-                  >
-                    New Student? Enroll Here
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setView("student-enroll")}
+                  className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
+                >
+                  New Student? Enroll Here
+                </button>
                 <button
                   type="button"
                   onClick={() => setView("teacher-login")}
-                  className={`text-xs text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors ${isExistingStudent ? "w-full text-center" : ""}`}
+                  className="text-xs text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-medium transition-colors"
                 >
                   Teacher Login
                 </button>
@@ -1156,6 +1237,26 @@ export default function AuthGateway() {
           </div>
         )}
       </div>
+
+      {auth.currentUser?.email === "mustak.office.use@gmail.com" && (
+        <div className="mt-8 flex flex-col items-center gap-2">
+          <button
+            onClick={handleResetProject}
+            disabled={resetting}
+            className="flex items-center gap-2 text-xs text-red-500/50 hover:text-red-500 transition-colors"
+          >
+            {resetting ? (
+              <Loader2 className="w-3 h-3 animate-spin" />
+            ) : (
+              <Trash2 className="w-3 h-3" />
+            )}
+            Nuclear Reset (Developer Only)
+          </button>
+          <p className="text-[10px] text-slate-400">
+            Visible only to {auth.currentUser.email}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

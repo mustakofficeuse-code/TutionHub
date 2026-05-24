@@ -8,12 +8,14 @@ import firebaseConfig from '../firebase-applet-config.json';
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
-// Initialize Firestore with settings that might help in a proxied environment
+// Initialize Firestore with long polling to prevent proxy-related connection/token drops
 const firestoreSettings: any = {
   experimentalForceLongPolling: true,
   useFetchStreams: false
 };
 
+
+// We export db using initializeFirestore to ensure settings apply
 export const db = (firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)' && firebaseConfig.firestoreDatabaseId !== '') 
   ? initializeFirestore(app, firestoreSettings, firebaseConfig.firestoreDatabaseId) 
   : initializeFirestore(app, firestoreSettings);
