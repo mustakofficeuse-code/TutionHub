@@ -96,12 +96,21 @@ async function startServer() {
             senderId: String(req.body.senderId || ""),
             targetId: String(recipientId || "")
           },
+          notification: {
+            title: String(title || "New Notification"),
+            body: String(bodyWithTime),
+            icon: absoluteLogo
+          },
           android: {
             priority: "high"
           },
           webpush: {
             headers: {
               Urgency: "high"
+            },
+            notification: {
+              icon: absoluteLogo,
+              badge: absoluteBadge
             }
           }
         };

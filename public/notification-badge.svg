@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96">
+  <!-- Pure white silhouette, completely transparent background -->
+  <!-- Skull cap underneath -->
+  <path d="M24 50 v13 c0 7 10 11 24 11 s24 -4 24 -11 v-13 l-24 9.5 z" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round" />
+  
+  <!-- Diamond top board -->
+  <polygon points="48,14 88,31 48,48 8,31" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round" />
+  
+  <!-- Ribbon/Tassel hanging on the right side -->
+  <path d="M48,31 L80,41 v16 c0 2 -1.5 3 -3 3 s-3 -1 -3 -3 v-14.5 z" fill="#ffffff" stroke="#ffffff" stroke-width="1" stroke-linejoin="round" />
+</svg>
