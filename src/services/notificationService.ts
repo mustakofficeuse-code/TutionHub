@@ -223,21 +223,22 @@ export const deleteNotification = async (notificationId: string) => {
 export const setupPushNotifications = async (userId: string) => {
   if (!messaging) return;
   
-  // Prevent redundant requests to FCM servers if we have already successfully registered a token in this browser session/device
-  const cachedToken = localStorage.getItem(`fcm_token_cache_${userId}`);
-  if (cachedToken) {
-    console.log('FCM token found in cache, skipping token fetch to prevent quota limits.');
-    return;
-  }
-  
   try {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       let registration: ServiceWorkerRegistration | undefined = undefined;
       if ('serviceWorker' in navigator) {
         registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
-        console.log('Service Worker registered successfully with scope: /');
+        console.log('Service Worker registered and verified active with scope: /');
       }
+      
+      // Cache-bypass for Firestore updates to avoid quota limits, but SW is guaranteed registered
+      const cachedToken = localStorage.getItem(`fcm_token_cache_${userId}`);
+      if (cachedToken) {
+        console.log('FCM token found in cache, skipping token fetch to prevent quota limits.');
+        return;
+      }
+      
       const token = await getToken(messaging, { 
         vapidKey: 'BA3-GSCOGTmOeIxzThPkTYtJzKSwE8L0X05g5KEnmipYzQV7Y0YmJcEL-ZY3e-XmBAMQjDJsSuncKXi5N8azs4w',
         serviceWorkerRegistration: registration
