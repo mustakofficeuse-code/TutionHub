@@ -307,6 +307,28 @@ export default function AuthGateway() {
         inviteCode: newInviteCode,
       });
 
+      // Seed default departments
+      const defaultDepts = [
+        { name: "BCA", semesters: 6 },
+        { name: "BSC", semesters: 6 },
+        { name: "BTECH", semesters: 8 },
+        { name: "MCA", semesters: 4 },
+      ];
+
+      for (const d of defaultDepts) {
+        try {
+          await setDoc(doc(db, "departments", d.name), {
+            name: d.name,
+            totalSemesters: d.semesters,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            teacherId: user.uid,
+          });
+        } catch (seedErr) {
+          console.warn(`Failed seeding department ${d.name}:`, seedErr);
+        }
+      }
+
       localStorage.removeItem("postLogoutView");
       await refreshProfile();
       navigate("/");
@@ -512,18 +534,22 @@ export default function AuthGateway() {
     setLoading(true);
     setError("");
     try {
+      const trimmedEmail = studentRealEmail.trim();
+      const trimmedPhone = studentPhoneNumber.trim();
+      const trimmedName = studentName.trim();
+
       if (studentInviteCode !== inviteCode) {
         throw new Error("Invalid Invite Code");
       }
 
       // Basic validation
-      if (!/^\d{10}$/.test(studentPhoneNumber)) {
+      if (!/^\d{10}$/.test(trimmedPhone)) {
         throw new Error("Please enter a valid 10-digit phone number");
       }
 
       // Stronger email regex
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(studentRealEmail)) {
+      if (!emailRegex.test(trimmedEmail)) {
         throw new Error(
           "Please enter a valid email address (e.g. name@gmail.com)",
         );
@@ -534,13 +560,13 @@ export default function AuthGateway() {
       const isBlacklisted = blacklistSnap.docs.some((doc) => {
         const data = doc.data();
         const nameMatch =
-          (data.name || "").toLowerCase() === studentName.toLowerCase();
+          (data.name || "").toLowerCase() === trimmedName.toLowerCase();
         const phoneMatch =
-          studentPhoneNumber && data.phoneNumber === studentPhoneNumber;
+          trimmedPhone && data.phoneNumber === trimmedPhone;
         const emailMatch =
-          studentRealEmail &&
+          trimmedEmail &&
           (data.realEmail || "").toLowerCase() ===
-            studentRealEmail.toLowerCase();
+            trimmedEmail.toLowerCase();
         return nameMatch || phoneMatch || emailMatch;
       });
 
@@ -557,7 +583,7 @@ export default function AuthGateway() {
       const isDuplicate = studentsSnap.docs.some((doc) => {
         const data = doc.data();
         return (
-          (data.name || "").toLowerCase() === studentName.toLowerCase() &&
+          (data.name || "").toLowerCase() === trimmedName.toLowerCase() &&
           data.courseName === department &&
           data.semester === semester
         );
@@ -585,10 +611,10 @@ export default function AuthGateway() {
       await setDoc(doc(db, "users", user.uid), {
         uid: user.uid,
         studentId: uniqueId,
-        name: studentName,
+        name: trimmedName,
         email: generatedEmail,
-        realEmail: studentRealEmail || null,
-        phoneNumber: studentPhoneNumber || null,
+        realEmail: trimmedEmail || null,
+        phoneNumber: trimmedPhone || null,
         role: "student",
         semester,
         courseName: department,
@@ -596,6 +622,25 @@ export default function AuthGateway() {
         createdAt: new Date().toISOString(),
         profileComplete: true,
       });
+
+      // Ensure the department exists in the departments collection
+      try {
+        const deptRef = doc(db, "departments", department.toUpperCase());
+        const deptSnap = await getDoc(deptRef);
+        if (!deptSnap.exists()) {
+          let defaultSem = 6;
+          if (department.toUpperCase() === "BTECH") defaultSem = 8;
+          if (department.toUpperCase() === "MCA") defaultSem = 4;
+          await setDoc(deptRef, {
+            name: department.toUpperCase(),
+            totalSemesters: defaultSem,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+        }
+      } catch (deptErr) {
+        console.warn("Auto-creating department document failed:", deptErr);
+      }
 
       // Create notification for teacher
       const notifId = `enroll_${user.uid}`;
