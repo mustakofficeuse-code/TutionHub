@@ -3,6 +3,7 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import admin from "firebase-admin";
+import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 
 import { v2 as cloudinary } from "cloudinary";
@@ -26,6 +27,7 @@ async function startServer() {
 
   // Initialize Firebase Admin
   const firebaseConfig = JSON.parse(fs.readFileSync("./firebase-applet-config.json", "utf-8"));
+  const getDb = () => getFirestore(undefined, firebaseConfig.firestoreDatabaseId);
   
   console.log(`Initializing Firebase Admin for project: ${firebaseConfig.projectId}`);
 
@@ -75,7 +77,7 @@ async function startServer() {
   app.post("/api/send-push", async (req, res) => {
     try {
       const { title, body, recipientId, targetRole, delayMs, targetDept, targetSem } = req.body;
-      const db = admin.firestore();
+      const db = getDb();
 
       const host = req.get("host") || "tuitionhubapp.firebaseapp.com";
       const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
@@ -221,7 +223,7 @@ async function startServer() {
       const absoluteLogo = `${origin}/logo.png`;
       const absoluteBadge = `${origin}/notification-badge.png`;
 
-      const db = admin.firestore();
+      const db = getDb();
       const userDoc = await db.collection("users").doc(senderId).get();
       
       if (!userDoc.exists) {
@@ -382,7 +384,7 @@ async function startServer() {
       });
 
       // Save student profile to Firestore
-      const db = admin.firestore();
+      const db = getDb();
       await db.collection('users').doc(userRecord.uid).set({
         uid: userRecord.uid,
         studentId: uniqueId,
@@ -421,7 +423,7 @@ async function startServer() {
   // Temporary endpoint to clear fee data
   app.post("/api/admin/clear-fees", async (req, res) => {
     try {
-      const db = admin.firestore();
+      const db = getDb();
       const feeSnap = await db.collection('fees').get();
       const paymentSnap = await db.collection('payments').get();
       

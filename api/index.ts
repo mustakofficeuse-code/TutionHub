@@ -1,6 +1,24 @@
 import express from "express";
 import { v2 as cloudinary } from 'cloudinary';
 import admin from 'firebase-admin';
+import { getFirestore } from "firebase-admin/firestore";
+import fs from "fs";
+import path from "path";
+
+let cachedDbId: string | undefined;
+try {
+  const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+  if (fs.existsSync(configPath)) {
+    const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+    cachedDbId = config.firestoreDatabaseId;
+  }
+} catch (e) {
+  console.error("Failed to read firebase-applet-config.json:", e);
+}
+
+function getDb() {
+  return getFirestore(undefined, cachedDbId);
+}
 
 // Re-initialize Firebase Admin for Vercel
 if (!admin.apps.length) {
@@ -99,7 +117,7 @@ app.post("/api/admin/create-student", async (req, res) => {
         displayName: name,
       });
 
-      const db = admin.firestore();
+      const db = getDb();
       await db.collection('users').doc(userRecord.uid).set({
         uid: userRecord.uid,
         studentId: uniqueId,
@@ -130,7 +148,7 @@ app.post("/api/admin/create-student", async (req, res) => {
 
 app.post("/api/admin/clear-fees", async (req, res) => {
     try {
-      const db = admin.firestore();
+      const db = getDb();
       const feeSnap = await db.collection('fees').get();
       const paymentSnap = await db.collection('payments').get();
       
@@ -148,7 +166,7 @@ app.post("/api/admin/clear-fees", async (req, res) => {
 app.post("/api/send-push", async (req, res) => {
   try {
     const { title, body, recipientId, targetRole, delayMs, targetDept, targetSem } = req.body;
-    const db = admin.firestore();
+    const db = getDb();
 
     const host = req.get("host") || "tuitionhubapp.firebaseapp.com";
     const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
@@ -292,7 +310,7 @@ app.post("/api/chat-reply", async (req, res) => {
     const absoluteLogo = `${origin}/logo.png`;
     const absoluteBadge = `${origin}/notification-badge.png`;
 
-    const db = admin.firestore();
+    const db = getDb();
     const userDoc = await db.collection("users").doc(senderId).get();
     
     if (!userDoc.exists) {
