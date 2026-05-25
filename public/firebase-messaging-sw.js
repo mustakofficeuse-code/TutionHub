@@ -57,3 +57,6 @@ self.addEventListener('notificationclick', (event) => {
 
   event.waitUntil(navigatePromise);
 });
+
+// Dummy fetch handler to satisfy PWA installability requirements
+self.addEventListener('fetch', function(event) {});

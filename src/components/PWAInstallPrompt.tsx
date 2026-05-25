@@ -14,12 +14,6 @@ export const PWAInstallPrompt = () => {
 
     if (standalone) return;
 
-    const timer = setTimeout(() => {
-      if (!sessionStorage.getItem('pwa_install_dismissed')) {
-        setShowPrompt(true);
-      }
-    }, 3000);
-
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -31,7 +25,6 @@ export const PWAInstallPrompt = () => {
     window.addEventListener('beforeinstallprompt', handler);
 
     return () => {
-      clearTimeout(timer);
       window.removeEventListener('beforeinstallprompt', handler);
     };
   }, []);
@@ -44,8 +37,6 @@ export const PWAInstallPrompt = () => {
         setDeferredPrompt(null);
         setShowPrompt(false);
       }
-    } else {
-      alert("To install manually: Tap the Share icon (or browser menu icon) and select 'Add to Home Screen'.");
     }
   };
 
