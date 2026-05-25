@@ -18,7 +18,7 @@ import {
   QrCode, 
   BookOpen, 
   CreditCard, 
-  Bell, 
+// Removed Bell 
   CheckCircle2, 
   Clock, 
   Calendar,
