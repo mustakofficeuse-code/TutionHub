@@ -14,6 +14,13 @@ export const PWAInstallPrompt = () => {
 
     if (standalone) return;
 
+    // Force show the banner after a delay regardless of event, so users know it's an option.
+    const timer = setTimeout(() => {
+      if (!sessionStorage.getItem('pwa_install_dismissed')) {
+        setShowPrompt(true);
+      }
+    }, 2500);
+
     const handler = (e: any) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -25,18 +32,28 @@ export const PWAInstallPrompt = () => {
     window.addEventListener('beforeinstallprompt', handler);
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('beforeinstallprompt', handler);
     };
   }, []);
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
+      // Browser is ready to show the native UI
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
         setDeferredPrompt(null);
         setShowPrompt(false);
       }
+    } else {
+      // Fallback instruction if the browser hides the native prompt (Incognito, caching, or already installed)
+      alert(`To install the application:
+
+1. Tap your browser's menu (⋮ on Android/Chrome or Action Button ⇧ on iOS/Safari).
+2. Select 'Install App' or 'Add to Home Screen'.
+
+Note: Browsers may disable the native prompt in Incognito Mode or inside iframes.`);
     }
   };
 
