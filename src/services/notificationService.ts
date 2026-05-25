@@ -240,7 +240,7 @@ export const setupPushNotifications = async (userId: string) => {
       }
       
       // Use env-defined VAPID Key if available, otherwise fallback to the default key
-      const vapidKey = (import.meta as any).env?.VITE_FIREBASE_VAPID_KEY || 'BA3-GSCOGTmOeIxzThPkTYtJzKSwE8L0X05g5KEnmipYzQV7Y0YmJcEL-ZY3e-XmBAMQjDJsSuncKXi5N8azs4w';
+      const vapidKey = (import.meta as any).env?.VITE_FIREBASE_VAPID_KEY || 'BMzJTHuiL8lmkzLMZo54ogPfPzJdyz5Kpsoxv7kAXdVBVp_rFeDB5vRdRwhdXnGpYu9Vehsc8c8qRfylEZTO6A8';
       
       const token = await getToken(messaging, { 
         vapidKey: vapidKey,
