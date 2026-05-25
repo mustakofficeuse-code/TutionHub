@@ -26,7 +26,7 @@ import {
   Edit2,
   X,
   AlertCircle,
-// Removed Bell
+  Bell
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
@@ -705,7 +705,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
 
             <div className="mt-4 sm:mt-8 pt-8 border-t border-slate-100 dark:border-white/5">
               <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-                <GraduationCap className="w-5 h-5 text-indigo-500" /> Background Push Notifications
+                <Bell className="w-5 h-5 text-indigo-500" /> Background Push Notifications
               </h3>
               <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
                 Receive important class schedule, payment, and double-chat alerts directly on your device screen even when the browser is completely closed or the app is running in the background.
@@ -764,7 +764,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                     }}
                     className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
                   >
-                    <GraduationCap className="w-5 h-5 animate-pulse" />
+                    <Bell className="w-5 h-5 animate-pulse" />
                     Enable Banners (Grant Permission)
                   </button>
                 )}

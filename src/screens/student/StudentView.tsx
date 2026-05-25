@@ -8,7 +8,6 @@ import {
   CreditCard, 
   User,
   Shield,
-  GraduationCap,
   Bell,
   Moon,
   Sun,
@@ -202,7 +201,7 @@ export default function StudentView() {
               onClick={() => setShowNotifications(true)}
               className="relative w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-2xl transition-all active:scale-95 border border-white/5"
             >
-              <GraduationCap className="w-5 h-5 text-wa-teal dark:text-wa-teal" />
+              <Bell className="w-5 h-5 text-amber-300" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-5 h-5 bg-wa-green text-xs font-bold flex items-center justify-center rounded-full text-white ring-4 ring-wa-teal dark:ring-[#202c33] animate-bounce">
                   {unreadCount}
@@ -241,7 +240,7 @@ export default function StudentView() {
               <div className="p-4 sm:p-5 sm:p-6 bg-wa-teal dark:bg-[#202c33] flex justify-between items-center text-white border-b border-wa-teal/10">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center">
-                    <GraduationCap className="w-6 h-6 text-white animate-pulse" />
+                    <Bell className="w-6 h-6 text-white animate-pulse" />
                   </div>
                   <div>
                     <h3 className="text-xl font-bold tracking-normal">Bulletin <span className="opacity-70">Feed</span></h3>
@@ -276,13 +275,13 @@ export default function StudentView() {
                 {notifications.length === 0 ? (
                   <div className="py-24 text-center">
                     <div className="w-20 h-20 bg-[#f0f2f5] dark:bg-slate-800/10 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
-                      <GraduationCap className="w-10 h-10 text-[#8696a0]/30" />
+                      <Bell className="w-10 h-10 text-[#8696a0]/30" />
                     </div>
                     <p className="text-xs font-bold text-[#8696a0] tracking-normal">Void frequency detected</p>
                   </div>
                 ) : (
                   notifications.map((notif) => {
-                    let NotifIcon = GraduationCap;
+                    let NotifIcon = Bell;
                     let iconColor = "text-wa-teal bg-wa-teal/10 dark:bg-wa-teal/20";
                     if (notif.type === 'schedule_change') {
                       NotifIcon = Calendar;

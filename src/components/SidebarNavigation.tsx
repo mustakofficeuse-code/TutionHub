@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { GraduationCap, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { Logo } from './Logo';
 
 interface Tab {
