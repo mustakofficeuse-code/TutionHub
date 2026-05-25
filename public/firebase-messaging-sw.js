@@ -58,5 +58,69 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(navigatePromise);
 });
 
-// Dummy fetch handler to satisfy PWA installability requirements
-self.addEventListener('fetch', function(event) {});
+// Active real service worker cache implementation to satisfy guide and remove console warnings of no-op fetch handler
+const CACHE_NAME = 'tuitionhub-static-cache-v1';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/logo.png',
+  '/logo-192.png',
+  '/logo-512.png',
+  '/manifest.json'
+];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE);
+    }).catch((err) => {
+      console.warn('[SW] Cache installation skipped/failed:', err);
+    })
+  );
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('[SW] Deleting old cache:', cache);
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
+});
+
+self.addEventListener('fetch', (event) => {
+  // Only intercept same-origin HTTP/S GET requests to prevent external resource conflict
+  if (event.request.url.startsWith(self.location.origin) && event.request.method === 'GET') {
+    event.respondWith(
+      caches.match(event.request).then((cachedResponse) => {
+        if (cachedResponse) {
+          // Serve from cache, then silently update in background
+          fetch(event.request).then((networkResponse) => {
+            if (networkResponse.status === 200) {
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
+            }
+          }).catch(() => {});
+          return cachedResponse;
+        }
+
+        return fetch(event.request).then((networkResponse) => {
+          if (networkResponse.status === 200 && networkResponse.type === 'basic') {
+            const responseToCache = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
+          return networkResponse;
+        }).catch(() => {
+          return caches.match('/index.html');
+        });
+      })
+    );
+  }
+});
