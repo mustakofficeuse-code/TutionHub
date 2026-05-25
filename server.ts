@@ -1,15 +1,12 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
-import { fileURLToPath } from "url";
 import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 
 import { v2 as cloudinary } from "cloudinary";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Dynamic session version tag that changes on server restart (which happens automatically on file edits)
 const SERVER_BOOT_VERSION = "build_" + Date.now();
@@ -107,12 +104,13 @@ async function startServer() {
             priority: "high"
           },
           webpush: {
-            headers: {
-              Urgency: "high"
-            },
+            headers: { Urgency: "high" },
             notification: {
               icon: absoluteLogo,
               badge: absoluteBadge
+            },
+            fcm_options: {
+              link: origin + "/"
             }
           }
         };
@@ -301,14 +299,15 @@ async function startServer() {
                    priority: "high"
                  },
                  webpush: {
-                   headers: {
-                     Urgency: "high"
-                   },
-                   notification: {
-                     icon: absoluteLogo,
-                     badge: absoluteBadge
-                   }
-                 }
+            headers: { Urgency: "high" },
+            notification: {
+              icon: absoluteLogo,
+              badge: absoluteBadge
+            },
+            fcm_options: {
+              link: origin + "/"
+            }
+          }
              };
              await admin.messaging().send({
                 ...payload,
