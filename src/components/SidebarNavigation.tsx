@@ -1,5 +1,6 @@
 import { motion } from 'motion/react';
 import { GraduationCap, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { Logo } from './Logo';
 
 interface Tab {
   id: string;
@@ -30,8 +31,8 @@ export default function SidebarNavigation({ tabs, activeTab, onTabChange, isOpen
         </button>
         {isOpen && (
             <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden border border-slate-200 dark:border-white/10 shadow-sm">
-                    <img src="/logo.png" alt="TuitionHub Logo" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
+                <div className="w-9 h-9 rounded-full flex items-center justify-center overflow-hidden shadow-sm">
+                    <Logo size="100%" />
                 </div>
                 <h1 className="text-xl font-bold text-slate-800 dark:text-white truncate">TuitionHub</h1>
             </div>

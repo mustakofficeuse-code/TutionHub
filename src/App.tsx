@@ -20,6 +20,7 @@ import TeacherView from './screens/teacher/TeacherView';
 import TeacherAnalytics from './screens/teacher/Analytics';
 import AdminDashboard from './screens/admin/AdminDashboard';
 import AddStudent from './screens/admin/AddStudent';
+import { Logo } from './components/Logo';
 
 function AppRoutes() {
   const { user, profile, loading, role } = useAuth();
@@ -28,8 +29,8 @@ function AppRoutes() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
         <div className="relative flex flex-col items-center">
-          <div className="w-16 h-16 rounded-full overflow-hidden border border-slate-200 dark:border-white/10 shadow-md mb-4 bg-transparent p-1 animate-pulse">
-            <img src="/logo.png" alt="TuitionHub" className="w-full h-full object-cover rounded-full" referrerPolicy="no-referrer" />
+          <div className="w-16 h-16 rounded-full overflow-hidden shadow-md mb-4 bg-transparent p-0 flex items-center justify-center">
+            <Logo size="100%" />
           </div>
           <div className="w-12 h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden absolute -bottom-4">
             <div className="w-1/2 h-full bg-blue-500 rounded-full animate-[shimmer_1.5s_infinite]" style={{
@@ -226,15 +227,10 @@ export default function App() {
                     initial={{ scale: 0.6, opacity: 0, rotate: -8 }}
                     animate={{ scale: [0.6, 1.05, 1], opacity: 1, rotate: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
-                    className="relative w-36 h-36 rounded-full overflow-hidden shadow-[0_0_40px_rgba(56,189,248,0.25)] border-2 border-sky-400/20 bg-transparent flex items-center justify-center"
+                    className="relative w-36 h-36 rounded-full overflow-hidden shadow-[0_0_40px_rgba(223,183,60,0.15)] bg-transparent flex items-center justify-center"
                   >
-                    <img 
-                      src="/logo.png" 
-                      alt="TuitionHub Logo" 
-                      className="w-full h-full object-cover rounded-full"
-                      referrerPolicy="no-referrer"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-tr from-sky-500/10 to-transparent pointer-events-none" />
+                    <Logo size="100%" />
+                    <div className="absolute inset-0 bg-gradient-to-tr from-yellow-500/10 to-transparent pointer-events-none" />
                   </motion.div>
 
                   {/* Styled application title & subtitle */}
