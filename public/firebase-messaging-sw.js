@@ -63,9 +63,8 @@ const CACHE_NAME = 'tuitionhub-static-cache-v1';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/logo.png',
-  '/logo-192.png',
-  '/logo-512.png',
+  '/logo.svg',
+  '/notification-badge.svg',
   '/manifest.json'
 ];
 
