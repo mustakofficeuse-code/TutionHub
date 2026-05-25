@@ -8,6 +8,14 @@
     <link rel="apple-touch-icon" href="/logo.png" />
     <meta name="theme-color" content="#00a884" />
     <title>TuitionHub</title>
+    <script>
+      window.deferredPWAInstallPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredPWAInstallPrompt = e;
+        window.dispatchEvent(new Event('pwa-prompt-ready'));
+      });
+    </script>
   </head>
   <body>
     <div id="root"></div>
