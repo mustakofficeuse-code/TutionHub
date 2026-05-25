@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { RefreshCw } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { PWAInstallPrompt } from './components/PWAInstallPrompt';
 import AuthGateway from './screens/auth/AuthGateway';
 import StudentView from './screens/student/StudentView';
 import AttendanceScanner from './screens/student/AttendanceScanner';
@@ -208,6 +209,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <Router>
+          <PWAInstallPrompt />
           <AppUpdatePrompt />
           <AnimatePresence mode="wait">
             {showSplash && (
