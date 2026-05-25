@@ -6,15 +6,23 @@ import { Logo } from './Logo';
 export const PWAInstallPrompt = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showPrompt, setShowPrompt] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(true);
 
   useEffect(() => {
+    const standalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone || document.referrer.includes('android-app://');
+    setIsStandalone(!!standalone);
+
+    if (standalone) return;
+
+    const timer = setTimeout(() => {
+      if (!sessionStorage.getItem('pwa_install_dismissed')) {
+        setShowPrompt(true);
+      }
+    }, 3000);
+
     const handler = (e: any) => {
-      // Prevent the mini-infobar from appearing on mobile
       e.preventDefault();
-      // Stash the event so it can be triggered later.
       setDeferredPrompt(e);
-      // Update UI notify the user they can install the PWA
-      // Do not show immediately if previously dismissed
       if (!sessionStorage.getItem('pwa_install_dismissed')) {
         setShowPrompt(true);
       }
@@ -23,28 +31,22 @@ export const PWAInstallPrompt = () => {
     window.addEventListener('beforeinstallprompt', handler);
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('beforeinstallprompt', handler);
     };
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    
-    // Show the install prompt
-    deferredPrompt.prompt();
-    
-    // Wait for the user to respond to the prompt
-    const { outcome } = await deferredPrompt.userChoice;
-    
-    if (outcome === 'accepted') {
-      console.log('User accepted the install prompt');
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+        setShowPrompt(false);
+      }
     } else {
-      console.log('User dismissed the install prompt');
+      alert("To install manually: Tap the Share icon (or browser menu icon) and select 'Add to Home Screen'.");
     }
-    
-    // We've used the prompt, and can't use it again, throw it away
-    setDeferredPrompt(null);
-    setShowPrompt(false);
   };
 
   const handleDismiss = () => {
@@ -52,7 +54,7 @@ export const PWAInstallPrompt = () => {
     sessionStorage.setItem('pwa_install_dismissed', 'true');
   };
 
-  if (!showPrompt) return null;
+  if (!showPrompt || isStandalone) return null;
 
   return (
     <AnimatePresence>
