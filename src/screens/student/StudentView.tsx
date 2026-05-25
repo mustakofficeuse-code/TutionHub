@@ -33,6 +33,7 @@ import Profile from '../shared/Profile';
 import AttendanceScanner from './AttendanceScanner';
 import { QrCode } from 'lucide-react';
 import SidebarNavigation from '../../components/SidebarNavigation';
+import { Logo } from '../../components/Logo';
 
 const TABS = [
   { id: 'home', label: 'Home', icon: Calendar, component: Home, hidden: false },
@@ -189,7 +190,7 @@ export default function StudentView() {
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-4">
             <div className="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden bg-white/10 backdrop-blur-md shadow-inner border border-white/10 group">
-              <img src="/logo.png" alt="TuitionHub Logo" className="w-full h-full object-cover rounded-full group-hover:scale-110 transition-transform duration-300" referrerPolicy="no-referrer" />
+              <Logo className="group-hover:scale-110 transition-transform duration-300" />
             </div>
             <div>
               <h1 className="text-2xl font-bold tracking-normal leading-none">Tuition<span className="opacity-80">Hub</span></h1>
