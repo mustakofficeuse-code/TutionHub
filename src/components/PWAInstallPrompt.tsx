@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Download, X } from 'lucide-react';
+import { X, Star } from 'lucide-react';
 import { Logo } from './Logo';
 
 export const PWAInstallPrompt = () => {
@@ -14,12 +14,12 @@ export const PWAInstallPrompt = () => {
 
     if (standalone) return;
 
-    // Force show the banner after a delay regardless of event, so users know it's an option.
+    // Show after a brief delay
     const timer = setTimeout(() => {
       if (!sessionStorage.getItem('pwa_install_dismissed')) {
         setShowPrompt(true);
       }
-    }, 2500);
+    }, 1500);
 
     const handler = (e: any) => {
       e.preventDefault();
@@ -39,7 +39,6 @@ export const PWAInstallPrompt = () => {
 
   const handleInstallClick = async () => {
     if (deferredPrompt) {
-      // Browser is ready to show the native UI
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
       if (outcome === 'accepted') {
@@ -47,7 +46,6 @@ export const PWAInstallPrompt = () => {
         setShowPrompt(false);
       }
     } else {
-      // Fallback instruction if the browser hides the native prompt (Incognito, caching, or already installed)
       alert(`To install the application:
 
 1. Tap your browser's menu (⋮ on Android/Chrome or Action Button ⇧ on iOS/Safari).
@@ -66,38 +64,46 @@ Note: Browsers may disable the native prompt in Incognito Mode or inside iframes
 
   return (
     <AnimatePresence>
+      {/* Mobile Sticky Bottom Banner (Like Reddit/Twitter/Instagram) */}
       <motion.div
-        initial={{ y: -100, opacity: 0 }}
+        initial={{ y: 150, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        exit={{ y: -100, opacity: 0 }}
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-[2000] w-[90%] max-w-sm px-4"
+        exit={{ y: 150, opacity: 0 }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className="fixed bottom-0 left-0 right-0 z-[5000] bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-10px_30px_rgba(0,0,0,0.1)] dark:shadow-[0_-10px_30px_rgba(0,0,0,0.5)] p-3 pb-safe flex items-center gap-3"
       >
-        <div className="bg-slate-900 border border-slate-700 shadow-2xl rounded-2xl p-4 flex flex-col gap-3 relative">
-          <button 
-            onClick={handleDismiss}
-            className="absolute top-2 right-2 text-slate-400 hover:text-white"
-          >
-            <X className="w-5 h-5" />
-          </button>
-          
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl overflow-hidden shadow-lg shrink-0 border border-slate-700 bg-slate-800 flex items-center justify-center p-1">
-              <Logo size="100%" />
-            </div>
-            <div className="flex-1 pr-6">
-              <h4 className="font-bold text-white text-sm">Install TuitionHub</h4>
-              <p className="text-[11px] text-slate-400 leading-tight">Add to your home screen for quick access, push notifications, and a full-screen experience.</p>
-            </div>
-          </div>
-          
-          <button
-            onClick={handleInstallClick}
-            className="w-full flex items-center justify-center gap-2 py-2.5 bg-gradient-to-r from-sky-500 to-indigo-500 hover:from-sky-400 hover:to-indigo-400 text-white rounded-xl font-bold text-sm shadow-md transition-all active:scale-[0.98]"
-          >
-            <Download className="w-4 h-4" />
-            Install App
-          </button>
+        <button 
+          onClick={handleDismiss}
+          className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 -ml-1 transition-colors"
+          aria-label="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
+        
+        <div className="w-11 h-11 rounded-lg overflow-hidden shrink-0 shadow-sm border border-slate-100 dark:border-slate-800 bg-slate-50 flex items-center justify-center">
+          <Logo size="100%" />
         </div>
+        
+        <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <h4 className="font-semibold text-slate-900 dark:text-white text-sm truncate leading-tight">TuitionHub</h4>
+          <div className="flex items-center gap-1 mt-0.5">
+            <div className="flex items-center text-amber-400">
+              <Star className="w-3 h-3 fill-current" />
+              <Star className="w-3 h-3 fill-current" />
+              <Star className="w-3 h-3 fill-current" />
+              <Star className="w-3 h-3 fill-current" />
+              <Star className="w-3 h-3 fill-current" />
+            </div>
+            <span className="text-[11px] text-slate-500 dark:text-slate-400 leading-none">FREE</span>
+          </div>
+        </div>
+        
+        <button
+          onClick={handleInstallClick}
+          className="shrink-0 px-5 py-1.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white rounded-full font-bold text-[13px] uppercase tracking-wide transition-colors"
+        >
+          Get
+        </button>
       </motion.div>
     </AnimatePresence>
   );
