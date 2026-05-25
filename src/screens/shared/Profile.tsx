@@ -783,7 +783,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                          title: 'TutionHub Background Test',
+                          title: 'TuitionHub Background Test',
                           body: 'This background banner alert was delivered successfully while the app was closed!',
                           recipientId: profile?.uid,
                           delayMs: 10000 // 10 seconds delay
@@ -818,14 +818,14 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                       <ol className="list-decimal ml-5 mt-1.5 space-y-1">
                         <li>Tap the <strong className="text-indigo-500">Share</strong> button in Safari (bottom/top bar).</li>
                         <li>Select <strong>Add to Home Screen</strong> and name the application.</li>
-                        <li>Open the newly added TutionHub app from your phone home screen, navigate back here to Profile, and click <strong className="text-indigo-500">Enable Banners</strong>.</li>
+                        <li>Open the newly added TuitionHub app from your phone home screen, navigate back here to Profile, and click <strong className="text-indigo-500">Enable Banners</strong>.</li>
                       </ol>
                     </span>
                   </li>
                   <li className="flex gap-2">
                     <span className="text-indigo-500 font-mono font-bold shrink-0">3.</span>
                     <span>
-                      <strong>Android:</strong> Long press the Chrome / TutionHub icon on your home screen, tap "App Info" / ⓘ, click "Notifications", and guarantee "All Notifications" are toggled ON. Ensure "Battery Saver" is disabled or set to "Unrestricted" so OS does not sleep background tasks.
+                      <strong>Android:</strong> Long press the Chrome / TuitionHub icon on your home screen, tap "App Info" / ⓘ, click "Notifications", and guarantee "All Notifications" are toggled ON. Ensure "Battery Saver" is disabled or set to "Unrestricted" so OS does not sleep background tasks.
                     </span>
                   </li>
                 </ul>
@@ -838,7 +838,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                   <Key className="w-5 h-5 text-blue-600" /> Invite Students
                 </h3>
                 <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
-                  Share this code with your students so they can access TutionHub.
+                  Share this code with your students so they can access TuitionHub.
                 </p>
                 <div className="flex items-center gap-4">
                   <div className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-lg font-mono font-bold text-slate-900 dark:text-white tracking-normal text-center">

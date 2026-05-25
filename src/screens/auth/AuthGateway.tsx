@@ -732,7 +732,7 @@ export default function AuthGateway() {
                 Teacher Setup
               </h1>
               <p className="text-slate-600 dark:text-slate-300 mt-2">
-                Initialize TutionHub
+                Initialize TuitionHub
               </p>
             </div>
             {error && (
@@ -949,7 +949,7 @@ export default function AuthGateway() {
                 Student Login
               </h1>
               <p className="text-slate-600 dark:text-slate-300 mt-2">
-                Access your TutionHub dashboard
+                Access your TuitionHub dashboard
               </p>
             </div>
             {error && (
@@ -1035,7 +1035,7 @@ export default function AuthGateway() {
           <>
             <div className="text-center mb-4 sm:mb-8">
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-                Enroll in TutionHub
+                Enroll in TuitionHub
               </h1>
               <p className="text-slate-600 dark:text-slate-300 mt-2">
                 Teacher: {teacherName}
