@@ -21,6 +21,7 @@ import { db, auth, logError } from "../../firebase";
 import { sendNotification } from "../../services/notificationService";
 import { useAuth } from "../../context/AuthContext";
 import { useTheme } from "../../context/ThemeContext";
+import { ClassCountdown } from "../../components/ClassCountdown";
 import {
   Users,
   Calendar,
@@ -1294,10 +1295,11 @@ export default function TeacherDashboard({
                         <p className="text-xs text-slate-600 dark:text-slate-400 font-bold mt-1">
                           {s.department} Sem {s.semester} • {s.date}
                         </p>
-                        <p className="text-[11px] text-wa-teal font-bold mt-0.5">
+                        <p className="text-[11px] text-wa-teal font-bold mt-0.5 mb-2">
                           {formatTime12h(s.startTime)} -{" "}
                           {formatTime12h(s.endTime)}
                         </p>
+                        <ClassCountdown date={s.date} startTime={s.startTime} endTime={s.endTime} />
                       </div>
                       <div className="flex gap-2">
                         <button

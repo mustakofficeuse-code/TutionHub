@@ -68,6 +68,201 @@ async function startServer() {
     }
   }
 
+  // Background Class Schedule Reminder task
+  async function checkScheduleNotifications(db: admin.firestore.Firestore) {
+    try {
+      const now = new Date();
+      const nowMs = now.getTime();
+      
+      const schedulesSnap = await db.collection("schedules").get();
+      
+      for (const doc of schedulesSnap.docs) {
+        const schedule = doc.data();
+        const scheduleId = doc.id;
+        
+        const { date, startTime, endTime, subject, department, semester, teacherId } = schedule;
+        if (!date || !startTime) continue;
+        
+        // Standardize YYYY-MM-DD
+        let formattedDate = date;
+        if (date.includes("-")) {
+          const parts = date.split("-");
+          if (parts[0].length === 2) {
+            formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          }
+        }
+        
+        const startStr = `${formattedDate}T${startTime}`;
+        const classStart = new Date(startStr);
+        const classStartMs = classStart.getTime();
+        
+        if (isNaN(classStartMs)) {
+          continue;
+        }
+        
+        const diffMs = classStartMs - nowMs;
+        const twentyFourHoursMs = 24 * 60 * 60 * 1000;
+        
+        // Only trigger reminders within the 24 hours before class starts
+        if (diffMs > 0 && diffMs <= twentyFourHoursMs) {
+          let lastNotifiedMs = 0;
+          if (schedule.lastNotifiedAt) {
+            lastNotifiedMs = new Date(schedule.lastNotifiedAt).getTime();
+          }
+          
+          // Trigger a notification every 30 minutes inside this window
+          const thirtyMinutesMs = 30 * 60 * 1000;
+          
+          if (nowMs - lastNotifiedMs >= thirtyMinutesMs) {
+            console.log(`[Scheduler] Reminding for class "${subject}" on ${date} at ${startTime}`);
+            
+            const timeForDiff = Math.round(diffMs / 60000);
+            const hoursLeft = Math.floor(timeForDiff / 60);
+            const minsLeft = timeForDiff % 60;
+            let timeMsg = "";
+            if (hoursLeft > 0) {
+              timeMsg = `${hoursLeft}h ${minsLeft}m`;
+            } else {
+              timeMsg = `${minsLeft}m`;
+            }
+            
+            const title = `Upcoming Class: ${subject}`;
+            const body = `Class is starting in ${timeMsg} (at ${startTime}).`;
+            
+            // Build absolute URLs for FCM payload
+            const host = "tuitionhubapp.firebaseapp.com";
+            const origin = `https://${host}`;
+            const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
+            const absoluteBadge = `${origin}/notification-badge.png`;
+            
+            const payload: any = {
+              data: {
+                title,
+                body,
+                type: "class_reminder",
+                scheduleId,
+                subject: String(subject || ""),
+                startTime: String(startTime || ""),
+                endTime: String(endTime || "")
+              },
+              notification: {
+                title,
+                body,
+                icon: absoluteLogo
+              },
+              android: {
+                priority: "high"
+              },
+              webpush: {
+                headers: { Urgency: "high" },
+                notification: {
+                  title,
+                  body,
+                  icon: absoluteLogo,
+                  badge: absoluteBadge,
+                  requireInteraction: true
+                },
+                fcm_options: {
+                  link: origin + "/"
+                }
+              }
+            };
+
+            // Notify Teacher
+            const teachId = teacherId || schedule.teacherUid;
+            if (teachId) {
+              const teachDoc = await db.collection("users").doc(teachId).get();
+              if (teachDoc.exists) {
+                const teachData = teachDoc.data();
+                if (teachData && teachData.fcmToken) {
+                  try {
+                    await admin.messaging().send({
+                      ...payload,
+                      token: teachData.fcmToken
+                    } as any);
+                    console.log(`[Scheduler] Sent push to teacher ${teachId}`);
+                  } catch (e) {
+                    console.error(`[Scheduler] Error sending to teacher:`, e);
+                  }
+                }
+              }
+            }
+            
+            // Notify Students matching department and semester
+            const studentsSnap = await db.collection("users").where("role", "==", "student").get();
+            const tokens: string[] = [];
+            
+            const searchDept = String(department || "").trim().toUpperCase();
+            const searchSem = String(semester || "").trim();
+            
+            studentsSnap.forEach((sDoc: any) => {
+              const sData = sDoc.data();
+              let matches = true;
+              
+              if (searchDept && searchDept !== "ALL") {
+                const uDept = String(sData.courseId || sData.courseName || sData.department || "").trim().toUpperCase();
+                if (uDept && uDept !== searchDept) {
+                  matches = false;
+                }
+              }
+              if (searchSem && searchSem !== "ALL") {
+                const uSem = String(sData.semester || "").trim();
+                if (uSem && uSem !== searchSem) {
+                  matches = false;
+                }
+              }
+              
+              if (matches && sData.fcmToken) {
+                tokens.push(sData.fcmToken);
+              }
+            });
+            
+            if (tokens.length > 0) {
+              try {
+                await admin.messaging().sendEachForMulticast({
+                  ...payload,
+                  tokens
+                } as any);
+                console.log(`[Scheduler] Multicast push to ${tokens.length} students`);
+              } catch (e) {
+                console.error(`[Scheduler] Error sending multicast:`, e);
+              }
+            }
+
+            // Record this in "notifications" collection so it is visible inside the UI Notification Inbox too
+            const notifyId = `remind_${scheduleId}_${nowMs}`;
+            await db.collection("notifications").doc(notifyId).set({
+              recipientId: "all_matched",
+              targetDept: searchDept,
+              targetSem: searchSem,
+              teacherId: teachId || "auto",
+              senderId: "system",
+              senderName: "Class System",
+              title,
+              message: body,
+              type: "class_reminder",
+              read: false,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              relatedId: scheduleId
+            });
+
+            // Persist the lastNotifiedAt timestamp on the schedule doc to prevent double triggering
+            await db.collection("schedules").doc(scheduleId).update({
+              lastNotifiedAt: now.toISOString()
+            });
+          }
+        }
+      }
+    } catch (error) {
+      console.error("[Scheduler] checkScheduleNotifications failed:", error);
+    }
+  }
+
+  // Start the background cron-like checking interval every 30 seconds
+  setInterval(() => {
+    checkScheduleNotifications(getDb()).catch(e => console.error("Schedule notification task error:", e));
+  }, 30000);
+
   app.use(express.json({ limit: '50mb' }));
 
   // API to send push notification using FCM

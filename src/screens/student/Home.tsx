@@ -14,6 +14,7 @@ import {
 import { db, auth, logError } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { ClassCountdown } from '../../components/ClassCountdown';
 import { 
   QrCode, 
   BookOpen, 
@@ -561,6 +562,9 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                           </div>
                           <div className="text-right shrink-0 mt-4 sm:mt-0 w-full sm:w-auto border-t sm:border-0 border-slate-50 pt-4 sm:pt-0">
                             <p className="text-2xl font-bold text-wa-teal tracking-tight">{formatTime12h(cls.startTime)}</p>
+                            <div className="my-2 flex justify-end">
+                              <ClassCountdown date={cls.date} startTime={cls.startTime} endTime={cls.endTime} />
+                            </div>
                             {cls.type === 'active' ? (
                               <div className="flex items-center justify-end gap-1.5 mt-1.5">
                                  <span className="w-2.5 h-2.5 bg-wa-green rounded-full animate-pulse shadow-[0_0_8px_rgba(37,211,102,0.5)]"></span>
