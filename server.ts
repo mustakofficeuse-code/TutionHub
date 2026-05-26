@@ -113,6 +113,8 @@ async function startServer() {
               Urgency: "high" 
             },
             notification: {
+              title: String(title || "New Notification"),
+              body: String(bodyWithTime),
               icon: absoluteLogo,
               badge: absoluteBadge,
               requireInteraction: true
@@ -307,15 +309,18 @@ async function startServer() {
                    priority: "high"
                  },
                  webpush: {
-            headers: { Urgency: "high" },
-            notification: {
-              icon: absoluteLogo,
-              badge: absoluteBadge
-            },
-            fcm_options: {
-              link: origin + "/"
-            }
-          }
+                    headers: { Urgency: "high" },
+                    notification: {
+                      title: String(`New Message from ${senderName}`),
+                      body: String(text.trim()),
+                      icon: absoluteLogo,
+                      badge: absoluteBadge,
+                      requireInteraction: true
+                    },
+                    fcm_options: {
+                      link: origin + "/"
+                    }
+                  }
              };
              await admin.messaging().send({
                 ...payload,

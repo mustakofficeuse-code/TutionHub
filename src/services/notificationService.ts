@@ -229,6 +229,11 @@ export const setupPushNotifications = async (userId: string) => {
       let registration: ServiceWorkerRegistration | undefined = undefined;
       if ('serviceWorker' in navigator) {
         registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+        try {
+          await registration.update();
+        } catch (e) {
+          console.warn('SW registration update failed:', e);
+        }
         console.log('Service Worker registered and verified active with scope: /');
       }
       

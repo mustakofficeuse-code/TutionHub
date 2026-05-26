@@ -209,8 +209,14 @@ app.post("/api/send-push", async (req, res) => {
             Urgency: "high"
           },
           notification: {
+            title: String(title || "New Notification"),
+            body: String(bodyWithTime),
             icon: absoluteLogo,
-            badge: absoluteBadge
+            badge: absoluteBadge,
+            requireInteraction: true
+          },
+          fcm_options: {
+            link: origin + "/"
           }
         }
       };
@@ -402,8 +408,14 @@ app.post("/api/chat-reply", async (req, res) => {
                   Urgency: "high"
                 },
                 notification: {
+                  title: String(`New Message from ${senderName}`),
+                  body: String(text.trim()),
                   icon: absoluteLogo,
-                  badge: absoluteBadge
+                  badge: absoluteBadge,
+                  requireInteraction: true
+                },
+                fcm_options: {
+                  link: origin + "/"
                 }
               }
            } as any);
