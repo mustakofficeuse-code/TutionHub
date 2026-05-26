@@ -1,5 +1,5 @@
-import { useState, useEffect, Fragment } from 'react';
-import { doc, getDoc, setDoc, deleteDoc, collection, query, orderBy, onSnapshot, limit, where, writeBatch } from 'firebase/firestore';
+import React, { useState, useEffect, Fragment } from 'react';
+import { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, query, orderBy, onSnapshot, limit, where, writeBatch, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../../context/AuthContext';
@@ -22,8 +22,11 @@ import {
   Activity,
   FileText,
   Search,
-  TrendingUp
+  TrendingUp,
+  Plus,
+  Edit2
 } from 'lucide-react';
+import { sendNotification } from '../../services/notificationService';
 import { useNavigate } from 'react-router-dom';
 
 const STATIC_QR_VALUE = "TUITIONHUB_WALL_QR_2026_SECURE";
@@ -51,22 +54,30 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
   
   const [tuitionLocation, setTuitionLocation] = useState<{lat: number, lng: number} | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [isClearingFeed, setIsClearingFeed] = useState(false);
   const [activeSchedules, setActiveSchedules] = useState<any[]>([]);
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
   const [indexError, setIndexError] = useState(false);
   
-  const [newSchedule, setNewSchedule] = useState({
-    department: 'BCA',
-    semester: '1',
-    subject: '',
-    topic: '',
-    startTime: '',
-    endTime: '',
+  // Schedule state replacements
+  const [globalRequireGPS, setGlobalRequireGPS] = useState(true);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+  const [allSchedules, setAllSchedules] = useState<any[]>([]);
+  const [editingScheduleId, setEditingScheduleId] = useState<string | null>(null);
+  const [isCustomMode, setIsCustomMode] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const [scheduleForm, setScheduleForm] = useState({
+    subject: "",
+    message: "",
+    department: "BCA",
+    semester: "1",
+    startTime: "10:00",
+    endTime: "11:00",
+    date: getTodayString(),
     requireGPS: true,
-    gracePeriod: '15', // Default 15 minutes grace period
-    date: getTodayString()
+    gracePeriod: "15",
   });
 
   const [searchQuery, setSearchQuery] = useState({
@@ -92,6 +103,20 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
       setDepartments(snap.docs.map(doc => doc.data().name));
     }, (e: any) => {});
 
+    // All schedules listener for the popup/dialog box
+    const qAllSchedules = query(
+      collection(db, 'schedules'),
+      where('teacherId', '==', user.uid)
+    );
+    const unsubAllSchedules = onSnapshot(qAllSchedules, (snapshot) => {
+      const list = snapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+      setAllSchedules(list);
+    }, (err) => {
+      console.error("Error listening to all schedules:", err);
+    });
+
     // History listener - all time records for this teacher
     const qHistory = query(
       collection(db, 'attendance'), 
@@ -112,6 +137,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
       unsubAttendance();
       unsubHistory();
       unsubDepts();
+      unsubAllSchedules();
     };
   }, [user]);
 
@@ -137,7 +163,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
     console.log(`[Teacher] Listening for schedules: Date=${today}, Teacher=${user.uid}`);
     
     const q = query(
-      collection(db, 'attendance_schedules'), 
+      collection(db, 'schedules'), 
       where('teacherId', '==', user.uid),
       where('date', '==', today)
     );
@@ -185,13 +211,27 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
   }, []);
 
   const isScheduleActive = (sched: any) => {
-    const now = currentTime;
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const timeStr = `${hours}:${minutes}`;
-    
-    // Schedule is active if current time is between start and end
-    return timeStr >= sched.startTime && timeStr <= sched.endTime;
+    try {
+      const now = currentTime;
+      let formattedDate = sched.date;
+      if (formattedDate && formattedDate.includes("-")) {
+        const parts = formattedDate.split("-");
+        if (parts[0].length === 2) {
+          formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+        }
+      }
+      
+      const startObj = new Date(`${formattedDate}T${sched.startTime}:00`);
+      const endObj = new Date(`${formattedDate}T${sched.endTime}:00`);
+      
+      const activeStart = new Date(startObj.getTime() - 15 * 60 * 1000);
+      const activeEnd = new Date(endObj.getTime() + 60 * 60 * 1000);
+      
+      const nowMs = now.getTime();
+      return nowMs >= activeStart.getTime() && nowMs <= activeEnd.getTime();
+    } catch (e) {
+      return false;
+    }
   };
 
   const getLiveAttendance = () => {
@@ -203,9 +243,6 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
     });
   };
 
-  const [customDuration, setCustomDuration] = useState('');
-  const [isCustomMode, setIsCustomMode] = useState(false);
-
   const calculateEndTime = (startTime: string, minutes: number) => {
     if (!startTime) return '';
     const [h, m] = startTime.split(':').map(Number);
@@ -216,95 +253,138 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
     return `${eh}:${em}`;
   };
 
-  const createSchedule = async () => {
-    console.log("[Teacher] createSchedule triggered");
+  const formatTime12h = (timeStr: string) => {
+    if (!timeStr) return '';
+    const [hStr, mStr] = timeStr.split(':');
+    const h = parseInt(hStr, 10);
+    const m = parseInt(mStr, 10);
+    if (isNaN(h) || isNaN(m)) return timeStr;
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const displayH = h % 12 === 0 ? 12 : h % 12;
+    const displayM = String(m).padStart(2, '0');
+    return `${displayH}:${displayM} ${ampm}`;
+  };
+
+  const getNextDays = () => {
+    const today = new Date();
+    const suggestions = [
+      {
+        label: "Today",
+        date: today.toISOString().split("T")[0],
+      }
+    ];
+
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+    suggestions.push({
+      label: "Tomorrow",
+      date: tomorrow.toISOString().split("T")[0],
+    });
+
+    const dayAfter = new Date(today);
+    dayAfter.setDate(today.getDate() + 2);
+    suggestions.push({
+      label: "Day After",
+      date: dayAfter.toISOString().split("T")[0],
+    });
+
+    return suggestions;
+  };
+
+  const handleAddSchedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingSchedule(true);
     setSaveStatus({ type: null, message: '' });
-
-    if (!user) {
-      setSaveStatus({ type: 'error', message: "Please log in to set schedules." });
-      return;
-    }
-    if (!newSchedule.startTime || !newSchedule.endTime) {
-      setSaveStatus({ type: 'error', message: "Please set both start and end times." });
-      return;
-    }
-
-    // Validate 5-hour maximum (increased from 1 hour)
-    const start = new Date(`2000-01-01T${newSchedule.startTime}:00`);
-    const end = new Date(`2000-01-01T${newSchedule.endTime}:00`);
-    let diffMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
-    
-    // Handle midnight crossing
-    if (diffMinutes < 0) diffMinutes += 24 * 60;
-
-    if (diffMinutes > 300) {
-      setSaveStatus({ type: 'error', message: "Maximum schedule window is 5 hours." });
-      return;
-    }
-
-    if (diffMinutes <= 0) {
-      setSaveStatus({ type: 'error', message: "End time must be after start time." });
-      return;
-    }
-    
-    setSaving(true);
     try {
-      const scheduleId = `SCHED_${Date.now()}`;
-      const scheduleDate = newSchedule.date;
-      const scheduleData = {
-        ...newSchedule,
-        department: newSchedule.department.toUpperCase(),
-        date: scheduleDate,
-        id: scheduleId,
-        teacherId: user.uid,
-        teacherName: profile?.name || 'Teacher',
-        createdAt: new Date().toISOString()
+      const data = {
+        ...scheduleForm,
+        courseId: scheduleForm.department.toUpperCase(),
+        department: scheduleForm.department.toUpperCase(),
+        teacherId: user?.uid,
+        updatedAt: serverTimestamp(),
       };
+      const durationStr = `${formatTime12h(scheduleForm.startTime)} - ${formatTime12h(scheduleForm.endTime)}`;
       
-      console.log("[Teacher] Writing schedule to Firestore:", scheduleData);
-      
-      await setDoc(doc(db, 'attendance_schedules', scheduleId), scheduleData);
-      console.log("[Teacher] Schedule written successfully");
-      setSaveStatus({ 
-        type: 'success', 
-        message: `Active window for ${scheduleData.department} (Sem ${scheduleData.semester}) set successfully!` 
-      });
-      
-      // Reset status after 3 seconds
+      if (editingScheduleId) {
+        await updateDoc(doc(db, "schedules", editingScheduleId), data);
+        await updateDoc(doc(db, "attendance_schedules", `ATT_SCHED_${editingScheduleId}`), data);
+        await sendNotification({
+          title: "Schedule Updated",
+          message: `Your class schedule for ${scheduleForm.subject} (${durationStr}) has been updated for ${scheduleForm.date}.${scheduleForm.message ? ' Note: ' + scheduleForm.message : ''}`,
+          type: 'schedule_change',
+          senderId: user?.uid || 'auto',
+          senderName: 'Teacher',
+          targetRole: "student",
+          targetDept: scheduleForm.department.toUpperCase(),
+          targetSem: scheduleForm.semester,
+        });
+        setSaveStatus({ type: 'success', message: "Schedule updated successfully!" });
+      } else {
+        const dr = await addDoc(collection(db, "schedules"), {
+          ...data,
+          createdAt: serverTimestamp(),
+        });
+        const attId = `ATT_SCHED_${dr.id}`;
+        await setDoc(doc(db, "attendance_schedules", attId), {
+          ...data,
+          id: attId,
+          createdAt: serverTimestamp(),
+        });
+        await sendNotification({
+          title: "New Class Scheduled",
+          message: `A new class for ${scheduleForm.subject} (${durationStr}) has been scheduled on ${scheduleForm.date}.${scheduleForm.message ? ' Note: ' + scheduleForm.message : ''}`,
+          type: 'schedule_change',
+          senderId: user?.uid || 'auto',
+          senderName: 'Teacher',
+          targetRole: "student",
+          targetDept: scheduleForm.department.toUpperCase(),
+          targetSem: scheduleForm.semester,
+        });
+        setSaveStatus({ type: 'success', message: "Schedule created successfully!" });
+      }
+      setEditingScheduleId(null);
+      setScheduleForm((p) => ({ ...p, subject: "", message: "" }));
       setTimeout(() => setSaveStatus({ type: null, message: '' }), 3000);
-    } catch (error) {
-      console.error("[Teacher] Error creating schedule:", error);
-      setSaveStatus({ 
-        type: 'error', 
-        message: "Failed to create schedule. Error: " + (error instanceof Error ? error.message : String(error)) 
-      });
+    } catch (err) {
+      console.error(err);
+      setSaveStatus({ type: 'error', message: "Failed to save schedule" });
     } finally {
-      setSaving(false);
+      setIsSavingSchedule(false);
     }
   };
 
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{id: string, dept: string} | null>(null);
-  const [showClearFeedConfirm, setShowClearFeedConfirm] = useState(false);
+  const handleDeleteSchedule = async (id: string) => {
+    const scheduleItem = allSchedules.find((s) => s.id === id);
+    const label = scheduleItem
+      ? `${scheduleItem.subject || "Class"} (${scheduleItem.department} Sem ${scheduleItem.semester})`
+      : "this class schedule";
 
-  const deleteSchedule = async (id: string, dept: string) => {
-    setSaving(true);
-    setSaveStatus({ type: null, message: '' });
+    if (!window.confirm(`Are you sure you want to delete the schedule for "${label}"? This action cannot be undone.`)) {
+      return;
+    }
 
     try {
-      await deleteDoc(doc(db, 'attendance_schedules', id));
-      setSaveStatus({ type: 'success', message: `Attendance window for ${dept} removed.` });
-      setTimeout(() => setSaveStatus({ type: null, message: '' }), 3000);
-      setShowDeleteConfirm(null);
-    } catch (error) {
-      console.error("[Teacher] Error deleting schedule:", error);
-      setSaveStatus({ 
-        type: 'error', 
-        message: "Failed to remove window."
-      });
-    } finally {
-      setSaving(false);
+      await deleteDoc(doc(db, "schedules", id));
+      await deleteDoc(doc(db, "attendance_schedules", `ATT_SCHED_${id}`));
+
+      if (scheduleItem) {
+        await sendNotification({
+          title: "Schedule Cancelled",
+          message: `The scheduled class for "${scheduleItem.subject}" (${scheduleItem.department} Sem ${scheduleItem.semester}) has been cancelled.`,
+          type: "schedule_change",
+          senderId: user?.uid || "auto",
+          senderName: "Teacher",
+          targetRole: "student",
+          targetDept: scheduleItem.department.toUpperCase(),
+          targetSem: scheduleItem.semester,
+        });
+      }
+    } catch (err) {
+      alert("Failed to delete schedule");
     }
   };
+
+  const [showClearFeedConfirm, setShowClearFeedConfirm] = useState(false);
 
   const deleteAllAttendance = async () => {
     if (recentAttendance.length === 0) return;
@@ -409,7 +489,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
 
   return (
     <div className={`min-h-screen ${isEmbedded ? '' : 'bg-[#f0f2f5] dark:bg-[#111b21] p-4 sm:p-5 sm:p-5 sm:p-6'} transition-colors font-sans print:p-0 print:bg-white`}>
-      <div className="max-w-7xl mx-auto print:max-w-none">
+      <div className="w-full max-w-none mx-auto px-1 md:px-4 print:max-w-none">
         {!isEmbedded && (
           <button 
             onClick={() => navigate('/')}
@@ -425,7 +505,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-4 sm:gap-8 items-start">
           
           {/* LEFT: Scheduling & Static QR */}
-          <div className="lg:col-span-4 space-y-2 sm:space-y-4 sm:space-y-8 print:col-span-12 print:space-y-0">
+          <div className="lg:col-span-3 space-y-2 sm:space-y-4 sm:space-y-8 print:col-span-12 print:space-y-0">
             
             {/* The Wall QR Code (Static) */}
             <div 
@@ -479,167 +559,37 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
               </button>
             </div>
 
-            {/* Set New Schedule */}
+            {/* Class Schedule Section */}
             <div className="bg-white dark:bg-[#202c33] p-4 sm:p-5 sm:p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-white/5 print:hidden">
               <div className="flex items-center gap-4 mb-4 sm:mb-8">
                 <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center">
                   <Calendar className="text-indigo-500 w-6 h-6" />
                 </div>
                 <div>
-                   <h3 className="text-lg font-bold text-slate-800 dark:text-[#e9edef] tracking-normal">Set Schedule</h3>
-                   <p className="text-xs font-bold text-slate-400  tracking-normal">Create an attendance window</p>
+                   <h3 className="text-lg font-bold text-slate-800 dark:text-[#e9edef] tracking-normal">Class Schedule</h3>
+                   <p className="text-xs font-bold text-slate-400 tracking-normal">Manage attendance window</p>
                 </div>
               </div>
               
-              <div className="space-y-3 sm:space-y-6">
-                <div className="grid grid-cols-1 gap-4">
-                  <div>
-                    <label className="text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal block mb-2.5 ml-1">Subject / Objective</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Data Structures"
-                      value={newSchedule.subject}
-                      onChange={(e) => setNewSchedule({...newSchedule, subject: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl py-3 sm:py-5 px-4 sm:px-6 text-base font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]  tracking-wide placeholder:text-slate-300"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-medium text-slate-600 dark:text-slate-300  tracking-normal block mb-2.5 ml-1">Current Topic</label>
-                    <input 
-                      type="text" 
-                      placeholder="e.g. Hash Tables"
-                      value={newSchedule.topic}
-                      onChange={(e) => setNewSchedule({...newSchedule, topic: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/30 focus:ring-4 focus:ring-wa-teal/5 rounded-2xl py-3 sm:py-5 px-4 sm:px-6 text-base font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]  tracking-wide placeholder:text-slate-300"
-                    />
-                  </div>
-                </div>
+              <div className="space-y-4">
+                <button 
+                  onClick={() => setShowScheduleModal(true)}
+                  className="w-full py-3 sm:py-5 bg-wa-teal hover:bg-wa-teal/90 text-white rounded-[1.5rem] font-bold shadow-xl shadow-wa-teal/20 dark:shadow-none transition-all flex items-center justify-center gap-2 transform active:scale-95 group"
+                >
+                  <Clock className="w-5 h-5 group-hover:rotate-12 transition-transform" /> Set Schedule Dialog
+                </button>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold text-slate-400  tracking-normal block mb-2 ml-1">Department</label>
-                    <select 
-                      value={newSchedule.department}
-                      onChange={(e) => setNewSchedule({...newSchedule, department: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]"
-                    >
-                      {departments.length > 0 ? (
-                        departments.map(dept => (
-                          <option key={dept} value={dept}>{dept}</option>
-                        ))
-                      ) : (
-                        ['BCA', 'BSC', 'BTECH', 'MCA'].map(d => <option key={d} value={d}>{d}</option>)
-                      )}
-                      <option value="ALL">UNIFIED</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-400  tracking-normal block mb-2 ml-1">Semester</label>
-                    <select 
-                      value={newSchedule.semester}
-                      onChange={(e) => setNewSchedule({...newSchedule, semester: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]"
-                    >
-                      {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={String(s)}>SEMESTER {s}</option>)}
-                      <option value="ALL">GLOBAL</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold text-slate-400  tracking-normal block mb-2 ml-1">Window Size</label>
-                    <select 
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val === 'custom') { setIsCustomMode(true); return; }
-                        setIsCustomMode(false);
-                        if (!val) return;
-                        let currentStart = newSchedule.startTime || `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`;
-                        const end = calculateEndTime(currentStart, parseInt(val));
-                        setNewSchedule({...newSchedule, startTime: currentStart, endTime: end});
-                      }}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]"
-                    >
-                      <option value="">MANUAL</option>
-                      <option value="30">30 MINS</option>
-                      <option value="60">1 HOUR</option>
-                      <option value="120">2 HOURS</option>
-                      <option value="custom">CUSTOM...</option>
-                    </select>
-                  </div>
-                  <div className="flex items-end">
-                    {isCustomMode && (
-                      <input 
-                        type="number"
-                        placeholder="MINS"
-                        className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-wa-teal/30 rounded-2xl py-4 px-5 text-sm font-bold outline-none"
-                        onChange={(e) => {
-                          const mins = e.target.value;
-                          if (mins) {
-                            let currentStart = newSchedule.startTime || `${String(new Date().getHours()).padStart(2, '0')}:${String(new Date().getMinutes()).padStart(2, '0')}`;
-                            const end = calculateEndTime(currentStart, parseInt(mins));
-                            setNewSchedule({...newSchedule, startTime: currentStart, endTime: end});
-                          }
-                        }}
-                      />
-                    )}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-bold text-slate-400  tracking-normal block mb-2 ml-1">Start T-Minus</label>
-                    <input 
-                      type="time"
-                      value={newSchedule.startTime}
-                      onChange={(e) => setNewSchedule({...newSchedule, startTime: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-xs font-bold text-slate-400  tracking-normal block mb-2 ml-1">End T-Plus</label>
-                    <input 
-                      type="time"
-                      value={newSchedule.endTime}
-                      onChange={(e) => setNewSchedule({...newSchedule, endTime: e.target.value})}
-                      className="w-full bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent focus:border-wa-teal/50 rounded-2xl py-4 px-5 text-sm font-bold transition-all outline-none text-slate-800 dark:text-[#e9edef]"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <button 
-                    onClick={() => setNewSchedule({...newSchedule, requireGPS: !newSchedule.requireGPS})}
-                    className={`h-14 rounded-2xl text-xs font-medium tracking-normal text-slate-600 dark:text-slate-300 transition-all flex items-center justify-center gap-2 border-2 ${newSchedule.requireGPS ? 'bg-wa-teal border-wa-teal text-white shadow-lg shadow-wa-teal/20' : 'bg-[#f8f9fa] border-slate-100 text-slate-400 dark:bg-[#111b21] dark:border-white/5'}`}
+                {/* Keep GPS Required button inside this class schedule section */}
+                <div className="pt-2 border-t border-slate-100 dark:border-white/5">
+                  <p className="text-[10px] font-bold text-slate-400 mb-2">GPS SETTING</p>
+                  <button 
+                    onClick={() => setGlobalRequireGPS(!globalRequireGPS)}
+                    className={`w-full h-14 rounded-2xl text-xs font-bold tracking-normal transition-all flex items-center justify-center gap-2 border-2 ${globalRequireGPS ? 'bg-wa-teal border-wa-teal text-white shadow-lg shadow-wa-teal/20' : 'bg-[#f8f9fa] border-slate-100 text-slate-400 dark:bg-[#111b21] dark:border-white/5'}`}
                   >
                     <MapPin className="w-3.5 h-3.5" />
-                    GPS {newSchedule.requireGPS ? 'REQUIRED' : 'NOT REQUIRED'}
+                    GPS {globalRequireGPS ? 'REQUIRED' : 'NOT REQUIRED'}
                   </button>
-                  <div className="relative group">
-                    <input 
-                      type="date"
-                      value={newSchedule.date}
-                      onChange={(e) => setNewSchedule({...newSchedule, date: e.target.value})}
-                      className="w-full h-14 bg-[#f8f9fa] dark:bg-[#111b21] border border-transparent rounded-2xl px-5 text-sm font-bold outline-none"
-                    />
-                  </div>
                 </div>
-
-                {saveStatus.type && (
-                  <div className={`p-4 rounded-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-300 ${saveStatus.type === 'success' ? 'bg-wa-green/10 text-wa-green border border-wa-green/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'}`}>
-                    {saveStatus.type === 'success' ? <CheckCircle className="w-5 h-5 shrink-0" /> : <AlertCircle className="w-5 h-5 shrink-0" />}
-                    <p className="text-xs font-bold  leading-tight tracking-normal">{saveStatus.message}</p>
-                  </div>
-                )}
-
-                <button 
-                  onClick={createSchedule}
-                  disabled={saving}
-                  className="w-full py-3 sm:py-5 bg-wa-teal hover:bg-wa-teal/90 text-white rounded-[1.5rem] font-bold shadow-xl shadow-wa-teal/20 dark:shadow-none transition-all flex items-center justify-center gap-2 transform active:scale-95 group mt-2"
-                >
-                  {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <div className="flex items-center gap-2"><Clock className="w-6 h-6 group-hover:rotate-12 transition-transform" /> Start Session</div>}
-                </button>
               </div>
             </div>
 
@@ -674,7 +624,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
           </div>
 
           {/* RIGHT: Monitor / History Tabs */}
-          <div className="lg:col-span-8 space-y-2 sm:space-y-4 sm:space-y-8 print:hidden">
+          <div className="lg:col-span-9 space-y-2 sm:space-y-4 sm:space-y-8 print:hidden">
             
             {/* Tab Selection */}
               <div className="flex bg-[#f8f9fa] dark:bg-[#111b21] p-2 rounded-xl border border-slate-100 dark:border-white/5 shadow-inner relative z-20">
@@ -737,7 +687,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                       </div>
                       <div className="flex items-center shrink-0">
                         <button 
-                          onClick={() => setShowDeleteConfirm({id: sched.id, dept: sched.department})}
+                          onClick={() => handleDeleteSchedule(sched.id)}
                           disabled={saving}
                           className="w-10 h-10 flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all"
                           title="Purge Window"
@@ -982,36 +932,6 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
           />
         </div>
       )}
-      {/* Delete Schedule Confirmation */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[100]">
-          <div className="bg-white dark:bg-[#202c33] rounded-3xl p-4 sm:p-5 sm:p-5 sm:p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 border border-slate-100 dark:border-white/10">
-            <div className="w-16 h-16 bg-red-50 dark:bg-red-900/20 rounded-2xl flex items-center justify-center mb-4 sm:mb-6 mx-auto">
-              <Trash2 className="w-8 h-8 text-red-600" />
-            </div>
-            <h3 className="text-2xl font-bold text-slate-900 dark:text-[#e9edef] text-center mb-2">Delete Window?</h3>
-            <p className="text-[#8696a0] text-center mb-4 sm:mb-8">
-              Are you sure you want to stop attendance for <span className="font-bold text-slate-900 dark:text-[#e9edef]">{showDeleteConfirm.dept}</span>? 
-              Students will no longer be able to mark attendance.
-            </p>
-            <div className="flex gap-3">
-              <button 
-                onClick={() => setShowDeleteConfirm(null)}
-                className="flex-1 py-3 text-[#8696a0] font-bold hover:bg-[#f0f2f5] dark:hover:bg-[#111b21] rounded-2xl transition-all"
-              >
-                Cancel
-              </button>
-              <button 
-                onClick={() => deleteSchedule(showDeleteConfirm.id, showDeleteConfirm.dept)}
-                disabled={saving}
-                className="flex-1 py-3 bg-red-600 text-white font-bold rounded-2xl hover:bg-red-700 transition-all shadow-lg flex items-center justify-center gap-2"
-              >
-                {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Clear Feed Confirmation */}
       {showClearFeedConfirm && (
@@ -1069,6 +989,310 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
         )}
       </AnimatePresence>
 
+      {/* Class Schedule Dialog Box */}
+      <AnimatePresence>
+        {showScheduleModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[110] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-[#1f2c34] w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl p-4 sm:p-6 shadow-2xl border border-white/5 custom-scrollbar"
+            >
+              <div className="flex justify-between items-center mb-6 sm:mb-8">
+                <h3 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
+                  <Calendar className="w-6 h-6 text-wa-teal" /> Class Schedule Dialog
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowScheduleModal(false);
+                    setEditingScheduleId(null);
+                    setScheduleForm((p) => ({ ...p, subject: "", message: "" }));
+                  }}
+                  className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all"
+                >
+                  <X className="w-6 h-6 text-slate-400" />
+                </button>
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-10">
+                <form onSubmit={handleAddSchedule} className="space-y-4">
+                  <p className="text-xs font-bold text-wa-teal tracking-normal uppercase">
+                    {editingScheduleId ? "Edit Session Details" : "Plan New Class Session"}
+                  </p>
+                  <input
+                    value={scheduleForm.subject}
+                    onChange={(e) =>
+                      setScheduleForm({
+                        ...scheduleForm,
+                        subject: e.target.value,
+                      })
+                    }
+                    required
+                    className="w-full p-4 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-wa-teal"
+                    placeholder="Subject Name (e.g. Data Science)"
+                  />
+                  <input
+                    value={scheduleForm.message}
+                    onChange={(e) =>
+                      setScheduleForm({
+                        ...scheduleForm,
+                        message: e.target.value,
+                      })
+                    }
+                    className="w-full p-4 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-wa-teal"
+                    placeholder="Optional Message (e.g. Bring your laptop - optional)"
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <select
+                      value={scheduleForm.department}
+                      onChange={(e) =>
+                        setScheduleForm({
+                          ...scheduleForm,
+                          department: e.target.value,
+                        })
+                      }
+                      className="w-full p-4 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-wa-teal"
+                    >
+                      {departments.map((d) => (
+                        <option key={d} value={d}>
+                          {d}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={scheduleForm.semester}
+                      onChange={(e) =>
+                        setScheduleForm({
+                          ...scheduleForm,
+                          semester: e.target.value,
+                        })
+                      }
+                      className="w-full p-4 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-wa-teal"
+                    >
+                      {[1, 2, 3, 4, 5, 6, 7, 8].map((s) => (
+                        <option key={s} value={String(s)}>
+                          Sem {s}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {getNextDays().map((s) => (
+                      <button
+                        key={s.label}
+                        type="button"
+                        onClick={() =>
+                          setScheduleForm({ ...scheduleForm, date: s.date })
+                        }
+                        className={`px-3 py-1.5 text-xs font-bold tracking-normal rounded-full transition-all ${
+                          scheduleForm.date === s.date
+                            ? "bg-wa-teal text-white shadow-md"
+                            : "bg-slate-50 dark:bg-[#111b21] text-slate-400 hover:text-wa-teal border border-slate-100 dark:border-white/5"
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                  <input
+                    type="date"
+                    value={scheduleForm.date}
+                    onChange={(e) =>
+                      setScheduleForm({ ...scheduleForm, date: e.target.value })
+                    }
+                    required
+                    className="w-full p-4 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-wa-teal"
+                  />
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      type="time"
+                      value={scheduleForm.startTime}
+                      onChange={(e) =>
+                        setScheduleForm({
+                          ...scheduleForm,
+                          startTime: e.target.value,
+                        })
+                      }
+                      required
+                      className="w-full p-4 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-wa-teal"
+                    />
+                    <input
+                      type="time"
+                      value={scheduleForm.endTime}
+                      onChange={(e) =>
+                        setScheduleForm({
+                          ...scheduleForm,
+                          endTime: e.target.value,
+                        })
+                      }
+                      required
+                      className="w-full p-4 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-wa-teal"
+                    />
+                  </div>
+                  <div className="pt-2">
+                    <button
+                      type="submit"
+                      disabled={isSavingSchedule}
+                      className="w-full py-4 bg-wa-teal text-white font-bold rounded-2xl shadow-xl shadow-wa-teal/20 active:scale-95 transition-all flex items-center justify-center gap-2 tracking-normal text-xs uppercase"
+                    >
+                      {isSavingSchedule ? (
+                        <Loader2 className="w-5 h-5 animate-spin" />
+                      ) : (
+                        <>
+                          <Plus className="w-5 h-5" />{" "}
+                          {editingScheduleId
+                            ? "Update Schedule"
+                            : "Confirm Schedule"}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                  {editingScheduleId && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingScheduleId(null);
+                        setScheduleForm((p) => ({ ...p, subject: "", message: "" }));
+                      }}
+                      className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-2xl transition-all text-xs"
+                    >
+                      Cancel Editing
+                    </button>
+                  )}
+                </form>
+
+                <div>
+                  <p className="text-xs font-bold text-slate-400 tracking-normal mb-4 uppercase">
+                    Upcoming & Planned Classes ({allSchedules.length})
+                  </p>
+                  <div className="space-y-3 max-h-[450px] overflow-y-auto custom-scrollbar pr-2">
+                    {allSchedules.map((s) => (
+                      <div
+                        key={s.id}
+                        className="p-4 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 flex justify-between items-center group relative shadow-sm"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-bold text-slate-800 dark:text-white truncate">
+                            {s.subject}
+                          </p>
+                          {s.message && (
+                            <p className="text-[11px] text-slate-400 italic mt-0.5 max-w-[200px] truncate" title={s.message}>
+                              Note: {s.message}
+                            </p>
+                          )}
+                          <p className="text-xs text-slate-600 dark:text-slate-400 font-bold mt-1">
+                            {s.department} Sem {s.semester} • {s.date}
+                          </p>
+                          <p className="text-[11px] text-wa-teal font-bold mt-0.5 mb-2">
+                            {formatTime12h(s.startTime)} -{" "}
+                            {formatTime12h(s.endTime)}
+                          </p>
+                          <ClassCountdown date={s.date} startTime={s.startTime} endTime={s.endTime} />
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <button
+                            onClick={() => {
+                              setEditingScheduleId(s.id);
+                              setScheduleForm({
+                                ...s,
+                                message: s.message || "",
+                                date: s.date || getTodayString(),
+                              });
+                            }}
+                            className="p-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-xl transition-all"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteSchedule(s.id)}
+                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-all"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    {allSchedules.length === 0 && (
+                      <p className="text-center py-20 text-slate-400 text-xs italic">
+                        No scheduled classes planned.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
     </div>
+  );
+}
+
+function ClassCountdown({ date, startTime, endTime }: { date: string; startTime: string; endTime: string }) {
+  const [msg, setMsg] = useState("");
+  useEffect(() => {
+    const update = () => {
+      try {
+        const now = new Date();
+        let formattedDate = date;
+        if (formattedDate && formattedDate.includes("-")) {
+          const parts = formattedDate.split("-");
+          if (parts[0].length === 2) {
+            formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+          }
+        }
+        const startObj = new Date(`${formattedDate}T${startTime}:00`);
+        const endObj = new Date(`${formattedDate}T${endTime}:00`);
+        const diffStart = startObj.getTime() - now.getTime();
+        const diffEnd = endObj.getTime() - now.getTime();
+
+        if (diffEnd < 0) {
+          setMsg("Finished");
+        } else if (diffStart < 0) {
+          setMsg("In Progress");
+        } else {
+          const totalSecs = Math.floor(diffStart / 1000);
+          if (totalSecs < 0) {
+            setMsg("In Progress");
+            return;
+          }
+          const days = Math.floor(totalSecs / 86400);
+          const hours = Math.floor((totalSecs % 86400) / 3600);
+          const mins = Math.floor((totalSecs % 3600) / 60);
+          const secs = totalSecs % 60;
+          
+          let parts = [];
+          if (days > 0) {
+            parts.push(`${days}d`);
+          }
+          if (hours > 0 || days > 0) {
+            parts.push(`${hours}h`);
+          }
+          if (mins > 0 || hours > 0 || days > 0) {
+            parts.push(`${mins}m`);
+          }
+          parts.push(`${secs}s`);
+          
+          setMsg(`Starts in ${parts.join(" ")}`);
+        }
+      } catch (e) {
+        setMsg("");
+      }
+    };
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [date, startTime, endTime]);
+
+  if (!msg) return null;
+  return (
+    <span className={`text-[11px] font-bold px-2 py-1 rounded-full ${
+      msg === "In Progress" ? "bg-wa-green/10 text-wa-green animate-pulse" :
+      msg === "Finished" ? "bg-slate-100 text-slate-400 dark:bg-white/5" :
+      "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/25 dark:text-indigo-400"
+    }`}>
+      {msg}
+    </span>
   );
 }

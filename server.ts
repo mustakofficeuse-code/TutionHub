@@ -113,6 +113,127 @@ async function startServer() {
         if (isNaN(classStartMs)) {
           continue;
         }
+
+        const endStr = `${formattedDate}T${endTime || startTime}`;
+        const classEnd = new Date(endStr);
+        let classEndMs = classEnd.getTime();
+        if (isNaN(classEndMs)) {
+          classEndMs = classStartMs + 2 * 60 * 60 * 1000;
+        }
+
+        // Check if the attendance system is now active (15 mins before starting class up to 1 hour after class end)
+        // If it was not notified yet, we notify students to mark attendance and attend.
+        const activeStartVal = classStartMs - 15 * 60 * 1000;
+        const activeEndVal = classEndMs + 60 * 60 * 1000;
+        
+        if (nowMs >= activeStartVal && nowMs <= activeEndVal) {
+          if (!schedule.attendanceActiveNotified) {
+            console.log(`[Scheduler] Attendance active for class "${subject}". Sending reminders...`);
+            const durationStr = `${formatTime12h(startTime)} - ${formatTime12h(endTime)}`;
+            const title = `📋 Attendance System ACTIVE - ${subject}`;
+            const body = `Class is starting soon (${durationStr}). The attendance system is now active! Please log in, scan the QR code to mark your attendance, and make sure to attend. Let's make today's class incredible! 🚀`;
+            
+            const host = "tuitionhubapp.firebaseapp.com";
+            const origin = `https://${host}`;
+            const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
+            const absoluteBadge = `${origin}/notification-badge.png`;
+            
+            const activePayload: any = {
+              data: {
+                title,
+                body,
+                type: "attendance_active",
+                scheduleId,
+                subject: String(subject || ""),
+                startTime: String(startTime || ""),
+                endTime: String(endTime || "")
+              },
+              notification: {
+                title,
+                body,
+                icon: absoluteLogo
+              },
+              android: {
+                priority: "high"
+              },
+              webpush: {
+                headers: { Urgency: "high" },
+                notification: {
+                  title,
+                  body,
+                  icon: absoluteLogo,
+                  badge: absoluteBadge,
+                  requireInteraction: true
+                },
+                fcm_options: {
+                  link: origin + "/"
+                }
+              }
+            };
+            
+            // Send push to matching students
+            const studentsSnap = await db.collection("users").where("role", "==", "student").get();
+            const tokens: string[] = [];
+            const searchDept = String(department || "").trim().toUpperCase();
+            const searchSem = String(semester || "").trim();
+            
+            studentsSnap.forEach((sDoc: any) => {
+              const sData = sDoc.data();
+              let matches = true;
+              
+              if (searchDept && searchDept !== "ALL") {
+                const uDept = String(sData.courseId || sData.courseName || sData.department || "").trim().toUpperCase();
+                if (uDept && uDept !== searchDept) {
+                  matches = false;
+                }
+              }
+              if (searchSem && searchSem !== "ALL") {
+                const uSem = String(sData.semester || "").trim();
+                if (uSem && uSem !== searchSem) {
+                  matches = false;
+                }
+              }
+              
+              if (matches && sData.fcmToken) {
+                tokens.push(sData.fcmToken);
+              }
+            });
+            
+            if (tokens.length > 0) {
+              try {
+                await admin.messaging().sendEachForMulticast({
+                  ...activePayload,
+                  tokens
+                } as any);
+                console.log(`[Scheduler] Multicast active attendance push sent to ${tokens.length} students`);
+              } catch (e) {
+                console.error(`[Scheduler] Error sending active attendance multicast:`, e);
+              }
+            }
+            
+            // Record this in the "notifications" collection
+            const notifyId = `active_attn_${scheduleId}_${nowMs}`;
+            await db.collection("notifications").doc(notifyId).set({
+              recipientId: "all_matched",
+              targetDept: searchDept,
+              targetSem: searchSem,
+              teacherId: teacherId || schedule.teacherUid || "auto",
+              senderId: "system",
+              senderName: "Class System",
+              title,
+              message: body,
+              type: "attendance_active",
+              read: false,
+              createdAt: admin.firestore.FieldValue.serverTimestamp(),
+              relatedId: scheduleId
+            });
+            
+            // Mark as notified in DB
+            await db.collection("schedules").doc(scheduleId).update({
+              attendanceActiveNotified: true
+            });
+          }
+        }
         
         const diffMs = classStartMs - nowMs;
         const twentyFourHoursMs = 24 * 60 * 60 * 1000;

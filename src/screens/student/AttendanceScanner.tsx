@@ -111,21 +111,28 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
         const semMatch = sched.semester === 'ALL' || String(sched.semester) === studentSem;
 
         if (deptMatch && semMatch) {
-          // Check Time Window
-          const start = new Date(`2000-01-01T${sched.startTime}:00`);
-          const graceMin = parseInt(sched.gracePeriod || '15');
-          const graceEnd = new Date(start.getTime() + graceMin * 60000);
-          
-          const hoursGrace = String(graceEnd.getHours()).padStart(2, '0');
-          const minutesGrace = String(graceEnd.getMinutes()).padStart(2, '0');
-          const graceEndTimeStr = `${hoursGrace}:${minutesGrace}`;
+          // Check New Attendance Window: active 15 minutes before start to 1 hour after class end
+          let formattedDate = sched.date;
+          if (formattedDate && formattedDate.includes("-")) {
+            const parts = formattedDate.split("-");
+            if (parts[0].length === 2) {
+              formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+          }
+          const startDateTime = new Date(`${formattedDate}T${sched.startTime}:00`);
+          const endDateTime = new Date(`${formattedDate}T${sched.endTime}:00`);
 
-          // Student must scan BETWEEN startTime and graceEndTime
-          if (currentTimeStr >= sched.startTime && currentTimeStr <= graceEndTimeStr) {
+          const activeStart = new Date(startDateTime.getTime() - 15 * 60 * 1000);
+          const activeEnd = new Date(endDateTime.getTime() + 60 * 60 * 1000);
+
+          const nowMs = now.getTime();
+          if (nowMs >= activeStart.getTime() && nowMs <= activeEnd.getTime()) {
             matchingSchedule = sched;
             break;
-          } else if (currentTimeStr > graceEndTimeStr && currentTimeStr <= sched.endTime) {
-            throw new Error(`Validation failed. You are past the ${graceMin}-minute grace period for this session.`);
+          } else {
+            const activeStartStr = activeStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const activeEndStr = activeEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            throw new Error(`Attendance system is inactive. For this class (${sched.subject || 'Class'}), attendance is active from ${activeStartStr} to ${activeEndStr} (15 mins before to 1 hour after).`);
           }
         }
       }

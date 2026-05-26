@@ -38,7 +38,7 @@ import { Logo } from '../../components/Logo';
 
 const TABS = [
   { id: 'dashboard', label: 'Home', icon: Home, component: TeacherDashboard },
-  { id: 'attendance', label: 'Attendance', icon: QrCode, component: AttendanceGenerator },
+  { id: 'attendance', label: 'Attendance / class schedule', icon: QrCode, component: AttendanceGenerator },
   { id: 'materials', label: 'Materials', icon: BookOpen, component: MaterialManager },
   { id: 'doubts', label: 'Doubts', icon: MessageSquare, component: DoubtSection },
   { id: 'stats', label: 'Stats', icon: TrendingUp, component: TeacherAnalytics },
@@ -421,9 +421,16 @@ export default function TeacherView() {
             </div>
             
             <span 
-              className={`text-[9px] sm:text-xs font-bold tracking-wide truncate w-full text-center ${isActive ? 'text-wa-teal dark:text-wa-green' : 'text-slate-600 dark:text-slate-300'}`}
+              className={`text-[9px] sm:text-xs font-bold tracking-wide text-center leading-tight flex flex-col items-center justify-center w-full min-h-[22px] ${isActive ? 'text-wa-teal dark:text-wa-green' : 'text-slate-600 dark:text-slate-300'}`}
             >
-              {tab.label}
+              {tab.label.includes(' / ') ? (
+                <>
+                  <span className="block leading-none truncate max-w-full">{tab.label.split(' / ')[0]}</span>
+                  <span className="block text-[7.5px] opacity-90 mt-0.5 leading-none tracking-normal truncate max-w-full font-medium">{tab.label.split(' / ')[1]}</span>
+                </>
+              ) : (
+                <span className="truncate max-w-full">{tab.label}</span>
+              )}
             </span>
           </button>
         )})}
