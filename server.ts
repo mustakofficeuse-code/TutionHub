@@ -79,7 +79,7 @@ async function startServer() {
       const host = req.get("host") || "tuitionhubapp.firebaseapp.com";
       const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
       const origin = `${protocol}://${host}`;
-      const absoluteLogo = `${origin}/logo.png`;
+      const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
       const absoluteBadge = `${origin}/notification-badge.png`;
 
       const sendPushWrapper = async () => {
@@ -103,11 +103,19 @@ async function startServer() {
           android: {
             priority: "high"
           },
+          apns: {
+            headers: {
+              "apns-priority": "10"
+            }
+          },
           webpush: {
-            headers: { Urgency: "high" },
+            headers: { 
+              Urgency: "high" 
+            },
             notification: {
               icon: absoluteLogo,
-              badge: absoluteBadge
+              badge: absoluteBadge,
+              requireInteraction: true
             },
             fcm_options: {
               link: origin + "/"
@@ -218,7 +226,7 @@ async function startServer() {
       const host = req.get("host") || "tuitionhubapp.firebaseapp.com";
       const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
       const origin = `${protocol}://${host}`;
-      const absoluteLogo = `${origin}/logo.png`;
+      const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
       const absoluteBadge = `${origin}/notification-badge.png`;
 
       const db = getDb();

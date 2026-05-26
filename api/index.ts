@@ -180,7 +180,7 @@ app.post("/api/send-push", async (req, res) => {
     const host = req.get("host") || "tuitionhubapp.firebaseapp.com";
     const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
     const origin = `${protocol}://${host}`;
-    const absoluteLogo = `${origin}/logo.png`;
+    const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
     const absoluteBadge = `${origin}/notification-badge.png`;
 
     const sendPushWrapper = async () => {
@@ -316,7 +316,7 @@ app.post("/api/chat-reply", async (req, res) => {
     const host = req.get("host") || "tuitionhubapp.firebaseapp.com";
     const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
     const origin = `${protocol}://${host}`;
-    const absoluteLogo = `${origin}/logo.png`;
+    const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
     const absoluteBadge = `${origin}/notification-badge.png`;
 
     const db = getDb();
