@@ -31,9 +31,9 @@
       "purpose": "maskable"
     },
     {
-      "src": "/notification-badge.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "/notification-badge.png",
+      "sizes": "96x96",
+      "type": "image/png",
       "purpose": "monochrome"
     }
   ]
