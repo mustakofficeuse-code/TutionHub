@@ -271,11 +271,12 @@ export default function TeacherDashboard({
         teacherId: auth.currentUser?.uid,
         updatedAt: serverTimestamp(),
       };
+      const durationStr = `${formatTime12h(scheduleForm.startTime)} - ${formatTime12h(scheduleForm.endTime)}`;
       if (editingScheduleId) {
         await updateDoc(doc(db, "schedules", editingScheduleId), data);
         await sendNotification({
           title: "Schedule Updated",
-          message: `Your class schedule for ${scheduleForm.subject} has been updated.${scheduleForm.message ? ' Note: ' + scheduleForm.message : ''}`,
+          message: `Your class schedule for ${scheduleForm.subject} (${durationStr}) has been updated for ${scheduleForm.date}.${scheduleForm.message ? ' Note: ' + scheduleForm.message : ''}`,
           type: 'schedule_change',
           senderId: auth.currentUser?.uid || 'auto',
           senderName: 'Teacher',
@@ -296,7 +297,7 @@ export default function TeacherDashboard({
         });
         await sendNotification({
           title: "New Class Scheduled",
-          message: `A new class for ${scheduleForm.subject} has been scheduled on ${scheduleForm.date}.${scheduleForm.message ? ' Note: ' + scheduleForm.message : ''}`,
+          message: `A new class for ${scheduleForm.subject} (${durationStr}) has been scheduled on ${scheduleForm.date}.${scheduleForm.message ? ' Note: ' + scheduleForm.message : ''}`,
           type: 'schedule_change',
           senderId: auth.currentUser?.uid || 'auto',
           senderName: 'Teacher',

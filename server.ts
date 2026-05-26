@@ -70,6 +70,20 @@ async function startServer() {
 
   // Background Class Schedule Reminder task
   async function checkScheduleNotifications(db: admin.firestore.Firestore) {
+    const formatTime12h = (timeStr: string) => {
+      if (!timeStr) return "";
+      try {
+        const [hours, minutes] = timeStr.split(":");
+        let h = parseInt(hours);
+        const ampm = h >= 12 ? "PM" : "AM";
+        h = h % 12;
+        h = h ? h : 12;
+        return `${h}:${minutes} ${ampm}`;
+      } catch (e) {
+        return timeStr;
+      }
+    };
+
     try {
       const now = new Date();
       const nowMs = now.getTime();
@@ -126,8 +140,9 @@ async function startServer() {
               timeMsg = `${minsLeft}m`;
             }
             
+            const durationStr = `${formatTime12h(startTime)} - ${formatTime12h(endTime)}`;
             const title = `Upcoming Class: ${subject}`;
-            const body = `Class is starting in ${timeMsg} (at ${startTime}).`;
+            const body = `Class schedule: ${durationStr}. Starting in ${timeMsg}.`;
             
             // Build absolute URLs for FCM payload
             const host = "tuitionhubapp.firebaseapp.com";

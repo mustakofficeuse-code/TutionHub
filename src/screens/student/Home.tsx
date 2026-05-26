@@ -561,7 +561,9 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                             </div>
                           </div>
                           <div className="text-right shrink-0 mt-4 sm:mt-0 w-full sm:w-auto border-t sm:border-0 border-slate-50 pt-4 sm:pt-0">
-                            <p className="text-2xl font-bold text-wa-teal tracking-tight">{formatTime12h(cls.startTime)}</p>
+                            <p className="text-lg sm:text-xl font-bold text-wa-teal tracking-tight">
+                              {formatTime12h(cls.startTime)} - {formatTime12h(cls.endTime)}
+                            </p>
                             <div className="my-2 flex justify-end">
                               <ClassCountdown date={cls.date} startTime={cls.startTime} endTime={cls.endTime} />
                             </div>
