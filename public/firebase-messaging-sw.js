@@ -21,7 +21,7 @@ messaging.onBackgroundMessage((payload) => {
 
   const notificationOptions = {
     body: body,
-    icon: '/notification-badge.png',
+    icon: '/gold_tuitionhub_logo_1779680854835.png',
     badge: '/notification-badge.png',
     vibrate: [100, 50, 100],
     data: payload.data || {},
@@ -31,6 +31,65 @@ messaging.onBackgroundMessage((payload) => {
   };
 
   return self.registration.showNotification(title, notificationOptions);
+});
+
+// A resilient, robust native 'push' event listener that forces the browser / OS 
+// to keep the background process open and fully render notifications even if the app 
+// tab has been closed, killed, or removed from the multitasking/background view tray.
+self.addEventListener('push', (event) => {
+  console.log('[SW] Native direct push event received.', event);
+  
+  let payload = {};
+  if (event.data) {
+    try {
+      payload = event.data.json();
+    } catch (e) {
+      try {
+        const textPl = event.data.text();
+        if (textPl.startsWith('{')) {
+          payload = JSON.parse(textPl);
+        } else {
+          payload = { notification: { body: textPl } };
+        }
+      } catch (err) {
+        console.warn('[SW] Non-JSON payload content format received:', err);
+      }
+    }
+  }
+
+  // Support both standard FCM formats, nested notification object, and custom data blocks
+  const notifObj = payload.notification || {};
+  const dataObj = payload.data || {};
+
+  const title = notifObj.title || dataObj.title || payload.title || 'New TuitionHub Alert';
+  const body = notifObj.body || dataObj.body || payload.body || '';
+  const chatId = dataObj.chatId || notifObj.chatId || payload.chatId || '';
+  const senderId = dataObj.senderId || notifObj.senderId || payload.senderId || '';
+
+  // Use matching tags to trigger native browser-side notification deduplication
+  const tag = chatId ? `chat_${chatId}` : `notif_${Date.now()}`;
+
+  const notificationOptions = {
+    body: body,
+    icon: '/gold_tuitionhub_logo_1779680854835.png',
+    badge: '/notification-badge.png',
+    vibrate: [100, 50, 100],
+    data: {
+      chatId: chatId,
+      senderId: senderId,
+      ...dataObj,
+      ...notifObj
+    },
+    tag: tag,
+    renotify: true,
+    requireInteraction: true
+  };
+
+  // Calling event.waitUntil() guarantees that the Service Worker is kept alive
+  // by the OS/Browser to complete drawing the visually rich notification alert.
+  event.waitUntil(
+    self.registration.showNotification(title, notificationOptions)
+  );
 });
 
 // Handle notification interaction (opening correct tab)
@@ -78,20 +137,26 @@ self.addEventListener('install', (event) => {
       console.warn('[SW] Cache installation skipped/failed:', err);
     })
   );
+  // Take control of the page immediately
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cache) => {
-          if (cache !== CACHE_NAME) {
-            console.log('[SW] Deleting old cache:', cache);
-            return caches.delete(cache);
-          }
-        })
-      );
-    })
+    Promise.all([
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cache) => {
+            if (cache !== CACHE_NAME) {
+              console.log('[SW] Deleting old cache:', cache);
+              return caches.delete(cache);
+            }
+          })
+        );
+      }),
+      // Forcefully claim any uncontrolled clients/tabs instantly
+      self.clients.claim()
+    ])
   );
 });
 
