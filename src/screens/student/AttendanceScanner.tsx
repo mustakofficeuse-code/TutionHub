@@ -111,7 +111,7 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
         const semMatch = sched.semester === 'ALL' || String(sched.semester) === studentSem;
 
         if (deptMatch && semMatch) {
-          // Check New Attendance Window: active 15 minutes before start to 1 hour after class end
+          // Check New Attendance Window: active 15 minutes before start to 1 hour before class end
           let formattedDate = sched.date;
           if (formattedDate && formattedDate.includes("-")) {
             const parts = formattedDate.split("-");
@@ -123,7 +123,7 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
           const endDateTime = new Date(`${formattedDate}T${sched.endTime}:00`);
 
           const activeStart = new Date(startDateTime.getTime() - 15 * 60 * 1000);
-          const activeEnd = new Date(endDateTime.getTime() + 60 * 60 * 1000);
+          const activeEnd = new Date(endDateTime.getTime() - 60 * 60 * 1000);
 
           const nowMs = now.getTime();
           if (nowMs >= activeStart.getTime() && nowMs <= activeEnd.getTime()) {
@@ -132,7 +132,7 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
           } else {
             const activeStartStr = activeStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             const activeEndStr = activeEnd.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            throw new Error(`Attendance system is inactive. For this class (${sched.subject || 'Class'}), attendance is active from ${activeStartStr} to ${activeEndStr} (15 mins before to 1 hour after).`);
+            throw new Error(`Attendance system is inactive. For this class (${sched.subject || 'Class'}), attendance is active from ${activeStartStr} to ${activeEndStr} (15 mins before starting to 1 hour before class end).`);
           }
         }
       }

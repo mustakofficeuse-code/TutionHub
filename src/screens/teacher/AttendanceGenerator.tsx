@@ -178,6 +178,87 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
     });
   };
 
+  useEffect(() => {
+    if (!activeSchedules || activeSchedules.length === 0) return;
+    
+    const checkActiveClasses = async () => {
+      const now = new Date();
+      const todayVal = getTodayString();
+      
+      for (const sched of activeSchedules) {
+        if (sched.date === todayVal && !sched.attendanceNotified) {
+          try {
+            let formattedDate = sched.date;
+            if (formattedDate && formattedDate.includes("-")) {
+              const parts = formattedDate.split("-");
+              if (parts[0].length === 2) {
+                formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+              }
+            }
+            const startDateTime = new Date(`${formattedDate}T${sched.startTime}:00`);
+            const endDateTime = new Date(`${formattedDate}T${sched.endTime}:00`);
+            
+            const activeStart = new Date(startDateTime.getTime() - 15 * 60 * 1000);
+            const activeEnd = new Date(endDateTime.getTime() - 60 * 60 * 1000); // 1 hour before end of class
+            
+            const nowMs = now.getTime();
+            if (nowMs >= activeStart.getTime() && nowMs <= activeEnd.getTime()) {
+              sched.attendanceNotified = true;
+              
+              const schedId = sched.id;
+              
+              try {
+                const schedRef = doc(db, 'schedules', schedId);
+                const attRef = doc(db, 'attendance_schedules', `ATT_SCHED_${schedId}`);
+                
+                await updateDoc(schedRef, { attendanceNotified: true }).catch(() => {});
+                await updateDoc(attRef, { attendanceNotified: true }).catch(() => {});
+                
+                const ampmStart = formatTime12h(sched.startTime);
+                const ampmEnd = formatTime12h(sched.endTime);
+                
+                await addDoc(collection(db, 'notifications'), {
+                  title: `⚡ Attendance System Active: ${sched.subject || 'Class'}`,
+                  message: `The attendance system for ${sched.subject || 'Class'} (${sched.department} Sem ${sched.semester}) is now active (${ampmStart} - ${ampmEnd}). Mark attendance immediately!`,
+                  type: 'schedule_change',
+                  senderId: sched.teacherId || 'system',
+                  senderName: sched.teacherName || 'System',
+                  targetRole: 'ALL',
+                  targetDept: sched.department.toUpperCase(),
+                  targetSem: sched.semester,
+                  read: false,
+                  createdAt: new Date().toISOString()
+                });
+                
+                await fetch('/api/send-push', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    title: `⚡ Attendance Active: ${sched.subject || 'Class'}`,
+                    body: `The attendance/class schedule is active. Check-in now!`,
+                    targetRole: 'ALL',
+                    type: 'schedule_change',
+                    targetDept: sched.department.toUpperCase(),
+                    targetSem: sched.semester,
+                    senderId: sched.teacherId || 'system',
+                  })
+                }).catch(() => {});
+              } catch (err) {
+                console.error("Error setting notification:", err);
+              }
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+    };
+    
+    checkActiveClasses();
+    const interval = setInterval(checkActiveClasses, 15000);
+    return () => clearInterval(interval);
+  }, [activeSchedules]);
+
   const listenToRecentAttendance = () => {
     if (!user?.uid) return () => {};
 
@@ -225,7 +306,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
       const endObj = new Date(`${formattedDate}T${sched.endTime}:00`);
       
       const activeStart = new Date(startObj.getTime() - 15 * 60 * 1000);
-      const activeEnd = new Date(endObj.getTime() + 60 * 60 * 1000);
+      const activeEnd = new Date(endObj.getTime() - 60 * 60 * 1000);
       
       const nowMs = now.getTime();
       return nowMs >= activeStart.getTime() && nowMs <= activeEnd.getTime();

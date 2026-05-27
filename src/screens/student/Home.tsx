@@ -9,7 +9,9 @@ import {
   limit, 
   doc, 
   getDoc,
-  writeBatch
+  writeBatch,
+  addDoc,
+  updateDoc
 } from 'firebase/firestore';
 import { db, auth, logError } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -246,6 +248,88 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
       unsubActiveSchedules();
     };
   }, [user?.uid, profile?.courseId, profile?.courseName, profile?.semester, profile?.department]);
+
+  useEffect(() => {
+    if (!upcomingClasses || upcomingClasses.length === 0) return;
+    
+    const checkActiveClasses = async () => {
+      const now = new Date();
+      const todayVal = new Date().toISOString().split('T')[0];
+      
+      for (const cls of upcomingClasses) {
+        if (cls.date === todayVal && !cls.attendanceNotified) {
+          try {
+            let formattedDate = cls.date;
+            if (formattedDate && formattedDate.includes("-")) {
+              const parts = formattedDate.split("-");
+              if (parts[0].length === 2) {
+                formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+              }
+            }
+            const startDateTime = new Date(`${formattedDate}T${cls.startTime}:00`);
+            const endDateTime = new Date(`${formattedDate}T${cls.endTime}:00`);
+            
+            const activeStart = new Date(startDateTime.getTime() - 15 * 60 * 1000);
+            const activeEnd = new Date(endDateTime.getTime() - 60 * 60 * 1000); // 1 hour before end of class
+            
+            const nowMs = now.getTime();
+            if (nowMs >= activeStart.getTime() && nowMs <= activeEnd.getTime()) {
+              cls.attendanceNotified = true;
+              
+              const baseId = cls.id ? cls.id.replace('ATT_SCHED_', '') : '';
+              if (!baseId) continue;
+              
+              try {
+                const schedRef = doc(db, 'schedules', baseId);
+                const attRef = doc(db, 'attendance_schedules', `ATT_SCHED_${baseId}`);
+                
+                await updateDoc(schedRef, { attendanceNotified: true }).catch(() => {});
+                await updateDoc(attRef, { attendanceNotified: true }).catch(() => {});
+                
+                const ampmStart = formatTime12h(cls.startTime);
+                const ampmEnd = formatTime12h(cls.endTime);
+                
+                await addDoc(collection(db, 'notifications'), {
+                  title: `⚡ Attendance System Active: ${cls.subject || 'Class'}`,
+                  message: `The attendance system for ${cls.subject || 'Class'} (${cls.department || profile?.department} Sem ${cls.semester || profile?.semester}) is now active (${ampmStart} - ${ampmEnd}). Mark attendance immediately!`,
+                  type: 'schedule_change',
+                  senderId: cls.teacherId || 'system',
+                  senderName: cls.teacherName || 'System',
+                  targetRole: 'ALL',
+                  targetDept: (cls.department || profile?.department || '').toUpperCase(),
+                  targetSem: cls.semester || profile?.semester || 'ALL',
+                  read: false,
+                  createdAt: new Date().toISOString()
+                });
+                
+                await fetch('/api/send-push', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    title: `⚡ Attendance Active: ${cls.subject || 'Class'}`,
+                    body: `The attendance/class schedule is active. Check-in now!`,
+                    targetRole: 'ALL',
+                    type: 'schedule_change',
+                    targetDept: (cls.department || profile?.department || '').toUpperCase(),
+                    targetSem: cls.semester || profile?.semester || 'ALL',
+                    senderId: cls.teacherId || 'system',
+                  })
+                }).catch(() => {});
+              } catch (innerErr) {
+                console.error("Error writing active notification documents:", innerErr);
+              }
+            }
+          } catch (e) {
+            console.error(e);
+          }
+        }
+      }
+    };
+    
+    checkActiveClasses();
+    const timer = setInterval(checkActiveClasses, 15000);
+    return () => clearInterval(timer);
+  }, [upcomingClasses, profile?.department, profile?.semester]);
 
   useEffect(() => {
     // Calculate Fee Stats
