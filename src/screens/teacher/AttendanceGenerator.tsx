@@ -77,7 +77,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
     endTime: "11:00",
     date: getTodayString(),
     requireGPS: true,
-    gracePeriod: "15",
+    gracePeriod: "until_end",
   });
 
   const [searchQuery, setSearchQuery] = useState({
@@ -305,8 +305,20 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
       const startObj = new Date(`${formattedDate}T${sched.startTime}:00`);
       const endObj = new Date(`${formattedDate}T${sched.endTime}:00`);
       
-      const activeStart = new Date(startObj.getTime() - 15 * 60 * 1000);
-      const activeEnd = new Date(endObj.getTime() - 60 * 60 * 1000);
+      const activeStart = new Date(startObj.getTime() - 15 * 60 * 1000); // 15 minutes before start
+      
+      let activeEnd: Date;
+      const gp = sched.gracePeriod || "until_end";
+      if (gp === "until_end") {
+        activeEnd = endObj;
+      } else {
+        const minutes = parseInt(gp, 10);
+        if (!isNaN(minutes)) {
+          activeEnd = new Date(startObj.getTime() + minutes * 60 * 1000);
+        } else {
+          activeEnd = endObj;
+        }
+      }
       
       const nowMs = now.getTime();
       return nowMs >= activeStart.getTime() && nowMs <= activeEnd.getTime();
@@ -1135,7 +1147,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                   onClick={() => {
                     setShowScheduleModal(false);
                     setEditingScheduleId(null);
-                    setScheduleForm((p) => ({ ...p, subject: "", message: "" }));
+                    setScheduleForm((p) => ({ ...p, subject: "", message: "", gracePeriod: "until_end" }));
                   }}
                   className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-all"
                 >
@@ -1257,6 +1269,72 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                       className="w-full p-4 bg-slate-50 dark:bg-[#111b21] rounded-2xl border border-slate-100 dark:border-white/5 text-slate-800 dark:text-white outline-none focus:ring-2 focus:ring-wa-teal"
                     />
                   </div>
+                  
+                  {/* Attendance Active Duration Selector */}
+                  <div className="space-y-2 bg-slate-50/50 dark:bg-[#111b21]/30 p-4 rounded-2xl border border-slate-100/60 dark:border-white/5">
+                    <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block mb-1">
+                      Attendance Scanner Active Till:
+                    </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <select
+                        value={["until_end", "15", "30", "45", "60"].includes(scheduleForm.gracePeriod) ? scheduleForm.gracePeriod : "custom"}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === "custom") {
+                            setScheduleForm({
+                              ...scheduleForm,
+                              gracePeriod: "20", // Default custom value
+                            });
+                          } else {
+                            setScheduleForm({
+                              ...scheduleForm,
+                              gracePeriod: val,
+                            });
+                          }
+                        }}
+                        className="w-full p-3.5 bg-white dark:bg-[#111b21] rounded-xl border border-slate-200 dark:border-white/10 text-slate-850 dark:text-white outline-none focus:ring-2 focus:ring-wa-teal text-xs font-semibold"
+                      >
+                        <option value="until_end">Until class ends</option>
+                        <option value="15">First 15 minutes of class</option>
+                        <option value="30">First 30 minutes of class</option>
+                        <option value="45">First 45 minutes of class</option>
+                        <option value="60">First 60 minutes of class</option>
+                        <option value="custom">Custom duration in mins</option>
+                      </select>
+                      
+                      {!["until_end", "15", "30", "45", "60"].includes(scheduleForm.gracePeriod) ? (
+                        <div className="flex gap-2 items-center">
+                          <input
+                            type="number"
+                            placeholder="Minutes"
+                            value={scheduleForm.gracePeriod}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setScheduleForm({
+                                ...scheduleForm,
+                                gracePeriod: val || "1",
+                              });
+                            }}
+                            required
+                            min="1"
+                            max="360"
+                            className="w-24 p-3.5 bg-white dark:bg-[#111b21] rounded-xl border border-slate-200 dark:border-white/10 text-slate-850 dark:text-white outline-none focus:ring-2 focus:ring-wa-teal text-xs font-semibold text-center"
+                          />
+                          <span className="text-xs text-slate-500 dark:text-slate-400 font-bold">minutes after start</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center text-[11px] text-slate-500 dark:text-slate-400 bg-white/50 dark:bg-[#111b21]/50 px-3 py-2 rounded-xl border border-slate-150 dark:border-white/5 font-semibold">
+                          {scheduleForm.gracePeriod === "until_end" 
+                            ? "✓ Active for full class duration" 
+                            : `✓ Active first ${scheduleForm.gracePeriod} mins of class`}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-slate-400 dark:text-slate-500 italic mt-1 leading-normal">
+                      Note: System allows student scan 15 mins before starting until selected duration limit.
+                    </p>
+                  </div>
+
                   <div className="pt-2">
                     <button
                       type="submit"
@@ -1280,7 +1358,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                       type="button"
                       onClick={() => {
                         setEditingScheduleId(null);
-                        setScheduleForm((p) => ({ ...p, subject: "", message: "" }));
+                        setScheduleForm((p) => ({ ...p, subject: "", message: "", gracePeriod: "until_end" }));
                       }}
                       className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-2xl transition-all text-xs"
                     >
