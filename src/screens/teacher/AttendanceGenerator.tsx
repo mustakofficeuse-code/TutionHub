@@ -435,7 +435,12 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
   };
 
   const handleDeleteSchedule = async (id: string) => {
-    const scheduleItem = allSchedules.find((s) => s.id === id);
+    const cleanId = id.startsWith('ATT_SCHED_') ? id.replace('ATT_SCHED_', '') : id;
+    const attId = id.startsWith('ATT_SCHED_') ? id : `ATT_SCHED_${id}`;
+
+    const scheduleItem = allSchedules.find((s) => s.id === cleanId || s.id === attId)
+      || activeSchedules.find((s) => s.id === cleanId || s.id === attId);
+
     const label = scheduleItem
       ? `${scheduleItem.subject || "Class"} (${scheduleItem.department} Sem ${scheduleItem.semester})`
       : "this class schedule";
@@ -444,14 +449,15 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
       return;
     }
 
+    setSaving(true);
     try {
-      await deleteDoc(doc(db, "schedules", id));
-      await deleteDoc(doc(db, "attendance_schedules", `ATT_SCHED_${id}`));
+      await deleteDoc(doc(db, "schedules", cleanId));
+      await deleteDoc(doc(db, "attendance_schedules", attId));
 
       if (scheduleItem) {
         await sendNotification({
           title: "Schedule Cancelled",
-          message: `The scheduled class for "${scheduleItem.subject}" (${scheduleItem.department} Sem ${scheduleItem.semester}) has been cancelled.`,
+          message: `The scheduled class for "${scheduleItem.subject || 'Class'}" (${scheduleItem.department} Sem ${scheduleItem.semester}) has been cancelled.`,
           type: "schedule_change",
           senderId: user?.uid || "auto",
           senderName: "Teacher",
@@ -460,8 +466,13 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
           targetSem: scheduleItem.semester,
         });
       }
+      setSaveStatus({ type: 'success', message: "Schedule deleted successfully!" });
+      setTimeout(() => setSaveStatus({ type: null, message: '' }), 3000);
     } catch (err) {
+      console.error("Error deleting schedule:", err);
       alert("Failed to delete schedule");
+    } finally {
+      setSaving(false);
     }
   };
 
