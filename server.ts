@@ -4,6 +4,7 @@ import path from "path";
 import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
+import { checkScheduleNotifications } from "./api/cron-helper";
 
 import { v2 as cloudinary } from "cloudinary";
 
@@ -68,8 +69,8 @@ async function startServer() {
     }
   }
 
-  // Background Class Schedule Reminder task
-  async function checkScheduleNotifications(db: admin.firestore.Firestore) {
+  // Background Class Schedule Reminder task is imported and run via interval
+  async function checkScheduleNotificationsOld(db: admin.firestore.Firestore) {
     const formatTime12h = (timeStr: string) => {
       if (!timeStr) return "";
       try {
@@ -663,6 +664,18 @@ async function startServer() {
   }, 30000);
 
   app.use(express.json({ limit: '50mb' }));
+
+  // Vercel / serverless cron endpoint to manually trigger a schedule-notifications check
+  app.all("/api/cron/check-schedules", async (req, res) => {
+    try {
+      console.log("[Scheduler Endpoint] Triggered manual check via API endpoint");
+      await checkScheduleNotifications(getDb());
+      return res.json({ success: true, message: "Scheduler task completed successfully" });
+    } catch (e: any) {
+      console.error("[Scheduler Endpoint] Task failed:", e);
+      return res.status(500).json({ error: e.message || e });
+    }
+  });
 
   // API to send push notification using FCM
   app.post("/api/send-push", async (req, res) => {

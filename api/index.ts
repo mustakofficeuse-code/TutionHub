@@ -4,6 +4,7 @@ import admin from 'firebase-admin';
 import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 import path from "path";
+import { checkScheduleNotifications } from "./cron-helper";
 
 let cachedDbId: string | undefined;
 let cachedProjectId: string | undefined;
@@ -426,6 +427,19 @@ app.post("/api/chat-reply", async (req, res) => {
   } catch(e: any) {
     console.error("Chat reply error:", e);
     res.status(500).json({ error: e.message });
+  }
+});
+
+// Vercel Cron compatible endpoint
+app.all("/api/cron/check-schedules", async (req, res) => {
+  try {
+    console.log("[Vercel Cron] Triggered scheduler check");
+    const db = getDb();
+    await checkScheduleNotifications(db);
+    return res.json({ success: true, message: "Scheduler checklist completed successfully" });
+  } catch (e: any) {
+    console.error("[Vercel Cron] Failed checking schedules:", e);
+    return res.status(500).json({ error: e.message || e });
   }
 });
 
