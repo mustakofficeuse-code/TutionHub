@@ -62,6 +62,57 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
     typeof window !== 'undefined' ? (window.Notification?.permission || 'default') : 'default'
   );
   const [swRegistered, setSwRegistered] = useState<boolean>(false);
+  const [repairing, setRepairing] = useState<boolean>(false);
+
+  const handleRepairNotifications = async () => {
+    setRepairing(true);
+    try {
+      setMessage({ type: 'success', text: 'Repairing... Unregistering current background workers...' });
+      
+      // 1. Unregister existing SWs
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const reg of registrations) {
+          await reg.unregister();
+          console.log('[Repair] Unregistered service worker:', reg.scope);
+        }
+      }
+      
+      // 2. Clear cached FCM tokens from localStorage to force renegotiating a handshake
+      if (profile?.uid) {
+        localStorage.removeItem(`fcm_token_cache_${profile.uid}`);
+      }
+      localStorage.removeItem('fcm_token_cache');
+      
+      setMessage({ type: 'success', text: 'Re-registering new high-priority Web Push container...' });
+      
+      // 3. Register fresh Service Worker
+      if ('serviceWorker' in navigator) {
+        const newReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
+        await newReg.update();
+        console.log('[Repair] Brand new Service Worker active scope:', newReg.scope);
+        setSwRegistered(true);
+      }
+      
+      // 4. Request fresh token & update DB
+      const { setupPushNotifications } = await import('../../services/notificationService');
+      if (profile?.uid) {
+        await setupPushNotifications(profile.uid);
+      }
+      
+      // Update local state permissions
+      if ('Notification' in window) {
+        setNotificationPermission(window.Notification.permission);
+      }
+      
+      setMessage({ type: 'success', text: 'Notification Service successfully cleared, upgraded, and synchronized!' });
+    } catch (e: any) {
+      console.error('[Repair] Service Worker repair failed:', e);
+      setMessage({ type: 'error', text: `Repair failed: ${e.message || e}` });
+    } finally {
+      setRepairing(false);
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
@@ -712,7 +763,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
               </p>
 
               {/* Status Section */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="p-4 bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
                   <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Permission</span>
                   <div className="flex items-center justify-between">
@@ -742,10 +793,20 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                     <span className={`inline-block w-2.5 h-2.5 rounded-full ${profile?.fcmToken ? 'bg-emerald-500' : 'bg-amber-500'}`} />
                   </div>
                 </div>
+
+                <div className="p-4 bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
+                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Web Push Protocol</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate pr-1">
+                      {(import.meta as any).env?.VITE_FIREBASE_VAPID_KEY ? 'Custom Handshake ✓' : 'Sandbox (Default)'}
+                    </span>
+                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${(import.meta as any).env?.VITE_FIREBASE_VAPID_KEY ? 'bg-emerald-500' : 'bg-indigo-400'}`} />
+                  </div>
+                </div>
               </div>
 
               {/* Actions Section */}
-              <div className="flex flex-col sm:flex-row gap-3 mb-6">
+              <div className="flex flex-col xl:flex-row gap-3 mb-6">
                 {notificationPermission !== 'granted' && (
                   <button
                     onClick={async () => {
@@ -762,12 +823,27 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                         }
                       }
                     }}
-                    className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-2"
+                    className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 text-sm"
                   >
                     <Bell className="w-5 h-5 animate-pulse" />
                     Enable Banners (Grant Permission)
                   </button>
                 )}
+
+                <button 
+                  onClick={handleRepairNotifications}
+                  disabled={repairing}
+                  className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-75 text-white font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-emerald-500/10"
+                >
+                  {repairing ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 6H16" />
+                    </svg>
+                  )}
+                  Repair & Upgrade background channel
+                </button>
 
                 <button 
                   onClick={async () => {
@@ -793,7 +869,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                       setMessage({ type: 'error', text: 'Failed to schedule push.' });
                     }
                   }}
-                  className="bg-purple-600 text-white font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center hover:bg-purple-700 shadow-md shadow-purple-600/10 gap-2 font-medium"
+                  className="bg-purple-600 text-white font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center hover:bg-purple-700 shadow-md shadow-purple-600/10 gap-2 font-medium text-sm"
                 >
                   Schedule Background Test Push (10s Delay)
                 </button>

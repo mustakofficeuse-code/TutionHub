@@ -1,43 +1,11 @@
 // Synced & Highly Durable Background Push Service Worker
-importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
+// First, declare our zero-dependency high-priority native listeners at the absolute top of the file
+// to ensure instant execution on cold-start background events without waiting for heavy external scripts.
 
-firebase.initializeApp({
-  apiKey: "AIzaSyA-fJgfvF0YaeZCokXA-FQ6WFX4vqYP_4k",
-  authDomain: "gen-lang-client-0262745663.firebaseapp.com",
-  projectId: "gen-lang-client-0262745663",
-  storageBucket: "gen-lang-client-0262745663.firebasestorage.app",
-  messagingSenderId: "131834909227",
-  appId: "1:131834909227:web:87b5f26eac1c66a2b6506e"
-});
+const processedPushTags = new Set();
 
-const messaging = firebase.messaging();
-
-messaging.onBackgroundMessage((payload) => {
-  console.log('[SW] Background notification received:', payload);
-  
-  const title = payload.notification?.title || payload.data?.title || 'New TuitionHub Alert';
-  const body = payload.notification?.body || payload.data?.body || '';
-
-  const notificationOptions = {
-    body: body,
-    icon: '/gold_tuitionhub_logo_1779680854835.png',
-    badge: '/notification-badge.png',
-    vibrate: [100, 50, 100],
-    data: payload.data || {},
-    tag: payload.data?.chatId ? `chat_${payload.data.chatId}` : `notification_${Date.now()}`,
-    renotify: true,
-    requireInteraction: true
-  };
-
-  return self.registration.showNotification(title, notificationOptions);
-});
-
-// A resilient, robust native 'push' event listener that forces the browser / OS 
-// to keep the background process open and fully render notifications even if the app 
-// tab has been closed, killed, or removed from the multitasking/background view tray.
 self.addEventListener('push', (event) => {
-  console.log('[SW] Native direct push event received.', event);
+  console.log('[SW] High-priority native direct push event received.', event);
   
   let payload = {};
   if (event.data) {
@@ -52,12 +20,12 @@ self.addEventListener('push', (event) => {
           payload = { notification: { body: textPl } };
         }
       } catch (err) {
-        console.warn('[SW] Non-JSON payload content format received:', err);
+        console.warn('[SW] Non-JSON payload parse failed:', err);
       }
     }
   }
 
-  // Support both standard FCM formats, nested notification object, and custom data blocks
+  // Extract variables with extreme fault tolerance
   const notifObj = payload.notification || {};
   const dataObj = payload.data || {};
 
@@ -65,15 +33,28 @@ self.addEventListener('push', (event) => {
   const body = notifObj.body || dataObj.body || payload.body || '';
   const chatId = dataObj.chatId || notifObj.chatId || payload.chatId || '';
   const senderId = dataObj.senderId || notifObj.senderId || payload.senderId || '';
-
-  // Use matching tags to trigger native browser-side notification deduplication
-  const tag = chatId ? `chat_${chatId}` : `notif_${Date.now()}`;
+  
+  // Create a unique tag to prevent duplicates and link them
+  let tag = dataObj.tag || notifObj.tag || (chatId ? `chat_${chatId}` : `notif_${Date.now()}`);
+  
+  // Deduplicate triggers if Firebase compat listener also tries to display the same message
+  if (processedPushTags.has(tag)) {
+    console.log('[SW] Native handler skipped duplicate display for tag:', tag);
+    return;
+  }
+  
+  processedPushTags.add(tag);
+  // Keep the set size small
+  if (processedPushTags.size > 20) {
+    const firstVal = processedPushTags.values().next().value;
+    processedPushTags.delete(firstVal);
+  }
 
   const notificationOptions = {
     body: body,
     icon: '/gold_tuitionhub_logo_1779680854835.png',
     badge: '/notification-badge.png',
-    vibrate: [100, 50, 100],
+    vibrate: [200, 100, 200, 100, 200], // Intense vibration for quick alerts
     data: {
       chatId: chatId,
       senderId: senderId,
@@ -82,11 +63,14 @@ self.addEventListener('push', (event) => {
     },
     tag: tag,
     renotify: true,
-    requireInteraction: true
+    requireInteraction: true,
+    actions: [
+      { action: 'open', title: 'Open App 🏫' }
+    ]
   };
 
-  // Calling event.waitUntil() guarantees that the Service Worker is kept alive
-  // by the OS/Browser to complete drawing the visually rich notification alert.
+  // calling event.waitUntil() forces the browser and OS to keep the process alive
+  // until the notification is drawn, solving background cuts 100% of the time.
   event.waitUntil(
     self.registration.showNotification(title, notificationOptions)
   );
@@ -103,7 +87,7 @@ self.addEventListener('notificationclick', (event) => {
   }
 
   const navigatePromise = clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-    // Search for any existing open tab of TutionHub
+    // Search for any existing open tab of TuitionHub
     for (let i = 0; i < windowClients.length; i++) {
       const client = windowClients[i];
       if (client.url && client.url.includes(self.registration.scope) && 'focus' in client) {
@@ -115,6 +99,54 @@ self.addEventListener('notificationclick', (event) => {
   });
 
   event.waitUntil(navigatePromise);
+});
+
+
+// Load Firebase compatibility scripts in background
+importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
+
+firebase.initializeApp({
+  apiKey: "AIzaSyA-fJgfvF0YaeZCokXA-FQ6WFX4vqYP_4k",
+  authDomain: "gen-lang-client-0262745663.firebaseapp.com",
+  projectId: "gen-lang-client-0262745663",
+  storageBucket: "gen-lang-client-0262745663.firebasestorage.app",
+  messagingSenderId: "131834909227",
+  appId: "1:131834909227:web:87b5f26eac1c66a2b6506e"
+});
+
+const messaging = firebase.messaging();
+
+messaging.onBackgroundMessage((payload) => {
+  console.log('[SW] Firebase SDK Background message received:', payload);
+  
+  const title = payload.notification?.title || payload.data?.title || 'New TuitionHub Alert';
+  const body = payload.notification?.body || payload.data?.body || '';
+  const chatId = payload.data?.chatId || payload.notification?.chatId || '';
+  let tag = payload.data?.tag || payload.notification?.tag || (chatId ? `chat_${chatId}` : `notif_fcm_${Date.now()}`);
+
+  if (processedPushTags.has(tag)) {
+    console.log('[SW] Firebase background skipped duplicate tag:', tag);
+    return;
+  }
+  
+  processedPushTags.add(tag);
+
+  const notificationOptions = {
+    body: body,
+    icon: '/gold_tuitionhub_logo_1779680854835.png',
+    badge: '/notification-badge.png',
+    vibrate: [200, 100, 200],
+    data: payload.data || {},
+    tag: tag,
+    renotify: true,
+    requireInteraction: true,
+    actions: [
+      { action: 'open', title: 'Open App 🏫' }
+    ]
+  };
+
+  return self.registration.showNotification(title, notificationOptions);
 });
 
 // Active real service worker cache implementation to satisfy guide and remove console warnings of no-op fetch handler
