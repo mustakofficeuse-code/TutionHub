@@ -230,8 +230,15 @@ async function startServer() {
             
             // Mark as notified in DB
             await db.collection("schedules").doc(scheduleId).update({
-              attendanceActiveNotified: true
-            });
+              attendanceActiveNotified: true,
+              attendanceNotified: true
+            }).catch(() => {});
+
+            // Mirror to attendance_schedules so student client-side snapshots receive it
+            await db.collection("attendance_schedules").doc(`ATT_SCHED_${scheduleId}`).update({
+              attendanceActiveNotified: true,
+              attendanceNotified: true
+            }).catch(() => {});
           }
         }
         
@@ -385,7 +392,11 @@ async function startServer() {
             // Persist the lastNotifiedAt timestamp on the schedule doc to prevent double triggering
             await db.collection("schedules").doc(scheduleId).update({
               lastNotifiedAt: now.toISOString()
-            });
+            }).catch(() => {});
+
+            await db.collection("attendance_schedules").doc(`ATT_SCHED_${scheduleId}`).update({
+              lastNotifiedAt: now.toISOString()
+            }).catch(() => {});
           }
         }
       }
