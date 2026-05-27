@@ -1,5 +1,5 @@
 import React, { useState, useEffect, Fragment } from 'react';
-import { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, query, orderBy, onSnapshot, limit, where, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { doc, getDoc, setDoc, addDoc, updateDoc, deleteDoc, collection, query, orderBy, onSnapshot, limit, where, writeBatch, serverTimestamp, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../../context/AuthContext';
@@ -110,7 +110,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
     );
     const unsubAllSchedules = onSnapshot(qAllSchedules, (snapshot) => {
       const list = snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .map(doc => ({ ...doc.data(), id: doc.id }))
         .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
       setAllSchedules(list);
     }, (err) => {
@@ -169,7 +169,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
     );
     return onSnapshot(q, (snapshot) => {
       console.log(`[Teacher] Found ${snapshot.docs.length} schedules in listener`);
-      const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const list = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id }));
       setActiveSchedules(list);
     }, (error) => {
       if (error.code !== 'permission-denied') {
@@ -451,10 +451,46 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
 
     setSaving(true);
     try {
+      // 1. Primary deletion by document IDs
       await deleteDoc(doc(db, "schedules", cleanId));
       await deleteDoc(doc(db, "attendance_schedules", attId));
+      
+      // Fallback deletions in case IDs are swapped or loaded differently
+      await deleteDoc(doc(db, "attendance_schedules", cleanId)).catch(() => {});
+      await deleteDoc(doc(db, "schedules", attId)).catch(() => {});
 
+      // 2. Secondary Deletion: Query and purge any matching records in both collections
+      // to eliminate any duplicates or remnants
       if (scheduleItem) {
+        const { subject, department, semester, startTime, date } = scheduleItem;
+        const targetTeacherId = scheduleItem.teacherId || user?.uid;
+        
+        if (subject && department && semester && startTime && date) {
+          const qSched = query(
+            collection(db, "schedules"),
+            where("subject", "==", subject),
+            where("department", "==", department),
+            where("semester", "==", semester),
+            where("startTime", "==", startTime),
+            where("date", "==", date),
+            where("teacherId", "==", targetTeacherId)
+          );
+          const snapSched = await getDocs(qSched);
+          await Promise.all(snapSched.docs.map(d => deleteDoc(doc(db, "schedules", d.id)))).catch(() => {});
+
+          const qAttSched = query(
+            collection(db, "attendance_schedules"),
+            where("subject", "==", subject),
+            where("department", "==", department),
+            where("semester", "==", semester),
+            where("startTime", "==", startTime),
+            where("date", "==", date),
+            where("teacherId", "==", targetTeacherId)
+          );
+          const snapAttSched = await getDocs(qAttSched);
+          await Promise.all(snapAttSched.docs.map(d => deleteDoc(doc(db, "attendance_schedules", d.id)))).catch(() => {});
+        }
+
         await sendNotification({
           title: "Schedule Cancelled",
           message: `The scheduled class for "${scheduleItem.subject || 'Class'}" (${scheduleItem.department} Sem ${scheduleItem.semester}) has been cancelled.`,
