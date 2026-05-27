@@ -1335,6 +1335,31 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                     </p>
                   </div>
 
+                  {/* GPS Verification Toggle */}
+                  <div className="space-y-2 bg-slate-50/50 dark:bg-[#111b21]/30 p-4 rounded-2xl border border-slate-100/60 dark:border-white/5 flex items-center justify-between">
+                    <div className="pr-4">
+                      <label className="text-xs font-bold text-slate-500 dark:text-slate-400 block">
+                        Geo-Location Lock (GPS Validation)
+                      </label>
+                      <p className="text-[10px] text-slate-450 dark:text-slate-500 italic mt-0.5 leading-normal max-w-[280px]">
+                        When enabled, students can only scan within 200m of the tuition center. Turn off to allow scanning from anywhere (GPS Bypass).
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setScheduleForm({ ...scheduleForm, requireGPS: !scheduleForm.requireGPS })}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        scheduleForm.requireGPS ? 'bg-wa-teal' : 'bg-slate-300 dark:bg-slate-700'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          scheduleForm.requireGPS ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
                   <div className="pt-2">
                     <button
                       type="submit"

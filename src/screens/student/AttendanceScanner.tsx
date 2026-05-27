@@ -173,8 +173,8 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
           centerConfig.lng
         );
 
-        if (distance > 0.3) { // 300m for better tolerance
-          throw new Error(`Location mismatch. You are ${Math.round(distance * 1000)}m away. You must be at the tuition center.`);
+        if (distance > 0.20) { // Max 200 meters from center
+          throw new Error(`Location mismatch. You are ${Math.round(distance * 1000)}m away. You must be within 200m of the tuition center to scan.`);
         }
         studentPos = { lat: position.coords.latitude, lng: position.coords.longitude };
       }
