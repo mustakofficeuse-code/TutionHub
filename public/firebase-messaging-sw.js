@@ -107,12 +107,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js'
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey: "AIzaSyA-fJgfvF0YaeZCokXA-FQ6WFX4vqYP_4k",
-  authDomain: "gen-lang-client-0262745663.firebaseapp.com",
-  projectId: "gen-lang-client-0262745663",
-  storageBucket: "gen-lang-client-0262745663.firebasestorage.app",
-  messagingSenderId: "131834909227",
-  appId: "1:131834909227:web:87b5f26eac1c66a2b6506e"
+  apiKey: "AIzaSyBKkmzN2fWlpDIoBPcRVP5dt6oKXfOL2AI",
+  authDomain: "tutionhub-e41cd.firebaseapp.com",
+  projectId: "tutionhub-e41cd",
+  storageBucket: "tutionhub-e41cd.firebasestorage.app",
+  messagingSenderId: "327044071382",
+  appId: "1:327044071382:web:9c4d14d0d6c6650b456e77"
 });
 
 const messaging = firebase.messaging();
@@ -215,8 +215,13 @@ self.addEventListener('fetch', (event) => {
             });
           }
           return networkResponse;
-        }).catch(() => {
-          return caches.match('/index.html');
+        }).catch((err) => {
+          // Only fallback to /index.html if the request is for an HTML page or navigation
+          const acceptHeader = event.request.headers.get('accept');
+          if (event.request.mode === 'navigate' || (acceptHeader && acceptHeader.includes('text/html'))) {
+            return caches.match('/index.html');
+          }
+          throw err;
         });
       })
     );
