@@ -4,6 +4,26 @@ import admin from 'firebase-admin';
 import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 import path from "path";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+// Custom multi-line parser for raw JSON in FIREBASE_SERVICE_ACCOUNT inside .env (unquoted multiline raw json)
+try {
+  if (fs.existsSync(".env")) {
+    const envContent = fs.readFileSync(".env", "utf-8");
+    let match = envContent.match(/FIREBASE_SERVICE_ACCOUNT\s*=\s*({[\s\S]*?"universe_domain"\s*:\s*"[^"]*"\s*\n})/);
+    if (!match) {
+      match = envContent.match(/FIREBASE_SERVICE_ACCOUNT\s*=\s*({[\s\S]*?\n})/);
+    }
+    if (match) {
+      process.env.FIREBASE_SERVICE_ACCOUNT = match[1];
+    }
+  }
+} catch (e) {
+  console.error("[EnvParser] Custom .env parser failed:", e);
+}
+
 import { checkScheduleNotifications } from "./cron-helper";
 
 let cachedDbId: string | undefined;

@@ -4,6 +4,27 @@ import path from "path";
 import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
+import dotenv from "dotenv";
+
+// Load standard dotenv variables
+dotenv.config();
+
+// Custom multi-line parser for raw JSON in FIREBASE_SERVICE_ACCOUNT inside .env (unquoted multiline raw json)
+try {
+  if (fs.existsSync(".env")) {
+    const envContent = fs.readFileSync(".env", "utf-8");
+    let match = envContent.match(/FIREBASE_SERVICE_ACCOUNT\s*=\s*({[\s\S]*?"universe_domain"\s*:\s*"[^"]*"\s*\n})/);
+    if (!match) {
+      match = envContent.match(/FIREBASE_SERVICE_ACCOUNT\s*=\s*({[\s\S]*?\n})/);
+    }
+    if (match) {
+      process.env.FIREBASE_SERVICE_ACCOUNT = match[1];
+    }
+  }
+} catch (e) {
+  console.error("[EnvParser] Custom .env parser failed:", e);
+}
+
 import { checkScheduleNotifications } from "./api/cron-helper";
 
 import { v2 as cloudinary } from "cloudinary";
@@ -25,7 +46,12 @@ async function startServer() {
 
   // Initialize Firebase Admin
   const firebaseConfig = JSON.parse(fs.readFileSync("./firebase-applet-config.json", "utf-8"));
-  const getDb = () => getFirestore(undefined, firebaseConfig.firestoreDatabaseId);
+  const getDb = () => {
+    const dbId = firebaseConfig.firestoreDatabaseId;
+    return (dbId && dbId !== '(default)' && dbId !== '') 
+      ? getFirestore(undefined, dbId) 
+      : getFirestore();
+  };
   
   console.log(`Initializing Firebase Admin for project: ${firebaseConfig.projectId}`);
 

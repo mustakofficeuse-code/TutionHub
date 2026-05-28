@@ -1,10 +1,10 @@
 {
-  "projectId": "gen-lang-client-0262745663",
-  "appId": "1:131834909227:web:87b5f26eac1c66a2b6506e",
-  "apiKey": "AIzaSyA-fJgfvF0YaeZCokXA-FQ6WFX4vqYP_4k",
-  "authDomain": "gen-lang-client-0262745663.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-c343c29b-7b6d-4980-a8b5-17ec82ae60fb",
-  "storageBucket": "gen-lang-client-0262745663.firebasestorage.app",
-  "messagingSenderId": "131834909227",
-  "measurementId": ""
+  "projectId": "tutionhub-e41cd",
+  "appId": "1:327044071382:web:9c4d14d0d6c6650b456e77",
+  "apiKey": "AIzaSyBKkmzN2fWlpDIoBPcRVP5dt6oKXfOL2AI",
+  "authDomain": "tutionhub-e41cd.firebaseapp.com",
+  "firestoreDatabaseId": "",
+  "storageBucket": "tutionhub-e41cd.firebasestorage.app",
+  "messagingSenderId": "327044071382",
+  "measurementId": "G-SY8C3FX3TR"
 }
