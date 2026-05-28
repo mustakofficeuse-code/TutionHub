@@ -150,7 +150,7 @@ messaging.onBackgroundMessage((payload) => {
 });
 
 // Active real service worker cache implementation to satisfy guide and remove console warnings of no-op fetch handler
-const CACHE_NAME = 'tuitionhub-static-cache-v1';
+const CACHE_NAME = 'tuitionhub-static-cache-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -193,8 +193,42 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  // Do not intercept API requests or Firebase internal endpoints (/__/)
+  const url = event.request.url;
+  if (url.includes('/api/') || url.includes('/__/') || url.includes('identitytoolkit.googleapis.com')) {
+    return;
+  }
+
   // Only intercept same-origin HTTP/S GET requests to prevent external resource conflict
-  if (event.request.url.startsWith(self.location.origin) && event.request.method === 'GET') {
+  if (url.startsWith(self.location.origin) && event.request.method === 'GET') {
+    const acceptHeader = event.request.headers.get('accept');
+    const isHtml = event.request.mode === 'navigate' || 
+                   (acceptHeader && acceptHeader.includes('text/html')) || 
+                   url === self.location.origin || 
+                   url === self.location.origin + '/';
+
+    if (isHtml) {
+      // Network-first strategy for HTML pages to guarantee immediate updates while online
+      event.respondWith(
+        fetch(event.request)
+          .then((networkResponse) => {
+            if (networkResponse.status === 200) {
+              const respClone = networkResponse.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, respClone));
+            }
+            return networkResponse;
+          })
+          .catch(() => {
+            return caches.match(event.request).then((cachedResponse) => {
+              if (cachedResponse) return cachedResponse;
+              return caches.match('/index.html');
+            });
+          })
+      );
+      return;
+    }
+
+    // Cache-first (stale-while-revalidate) for other static assets (images, manifest, etc.)
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         if (cachedResponse) {
@@ -216,11 +250,6 @@ self.addEventListener('fetch', (event) => {
           }
           return networkResponse;
         }).catch((err) => {
-          // Only fallback to /index.html if the request is for an HTML page or navigation
-          const acceptHeader = event.request.headers.get('accept');
-          if (event.request.mode === 'navigate' || (acceptHeader && acceptHeader.includes('text/html'))) {
-            return caches.match('/index.html');
-          }
           throw err;
         });
       })
