@@ -35,7 +35,7 @@ import { deleteDoc } from "firebase/firestore";
 import { Logo } from "../../components/Logo";
 
 export default function AuthGateway() {
-  const [view, setView] = useState<
+  const [view, setViewOriginal] = useState<
     | "loading"
     | "teacher-setup"
     | "teacher-login"
@@ -43,6 +43,15 @@ export default function AuthGateway() {
     | "student-login"
     | "student-blocked"
   >("loading");
+
+  const setView = (newView: typeof view) => {
+    setViewOriginal(newView);
+    if (newView === "teacher-login") {
+      localStorage.setItem("preferredLoginView", "teacher-login");
+    } else if (newView === "student-login") {
+      localStorage.setItem("preferredLoginView", "student-login");
+    }
+  };
   const [teacherName, setTeacherName] = useState("");
   const [teacherPhone, setTeacherPhone] = useState("");
   const [teacherEmail, setTeacherEmail] = useState("");
@@ -196,7 +205,7 @@ export default function AuthGateway() {
           sessionStorage.removeItem("wasBlocked");
           setView("student-blocked");
         } else {
-          const postLogoutView = localStorage.getItem("postLogoutView");
+          const postLogoutView = localStorage.getItem("postLogoutView") || localStorage.getItem("preferredLoginView");
           if (postLogoutView === "teacher-login") {
             setView("teacher-login");
           } else {
@@ -331,6 +340,7 @@ export default function AuthGateway() {
         }
       }
 
+      localStorage.setItem("preferredLoginView", "teacher-login");
       localStorage.removeItem("postLogoutView");
       await refreshProfile();
       navigate("/");
@@ -349,6 +359,7 @@ export default function AuthGateway() {
     try {
       const emailToUse = teacherEmail.trim().toLowerCase() || "teacher@tutionhub.com";
       await signInWithEmailAndPassword(auth, emailToUse, password);
+      localStorage.setItem("preferredLoginView", "teacher-login");
       localStorage.removeItem("postLogoutView");
       await refreshProfile();
       navigate("/");
@@ -505,6 +516,7 @@ export default function AuthGateway() {
       }
 
       localStorage.setItem("isExistingStudent", "true");
+      localStorage.setItem("preferredLoginView", "student-login");
       localStorage.removeItem("postLogoutView");
       await refreshProfile();
       navigate("/");

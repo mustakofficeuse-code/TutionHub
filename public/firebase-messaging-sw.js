@@ -150,7 +150,7 @@ messaging.onBackgroundMessage((payload) => {
 });
 
 // Active real service worker cache implementation to satisfy guide and remove console warnings of no-op fetch handler
-const CACHE_NAME = 'tuitionhub-static-cache-v4';
+const CACHE_NAME = 'tuitionhub-static-cache-v10';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -193,66 +193,84 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Do not intercept API requests or Firebase internal endpoints (/__/)
   const url = event.request.url;
-  if (url.includes('/api/') || url.includes('/__/') || url.includes('identitytoolkit.googleapis.com')) {
+
+  // Do not intercept API requests, Firebase internal endpoints, or external auth domains
+  if (
+    url.includes('/api/') || 
+    url.includes('/__/') || 
+    url.includes('identitytoolkit.googleapis.com') ||
+    url.includes('securetoken.googleapis.com') ||
+    url.includes('googleapis') ||
+    url.includes('firebase')
+  ) {
     return;
   }
 
-  // Only intercept same-origin HTTP/S GET requests to prevent external resource conflict
+  // Only handle same-origin GET requests
   if (url.startsWith(self.location.origin) && event.request.method === 'GET') {
-    const acceptHeader = event.request.headers.get('accept');
-    const isHtml = event.request.mode === 'navigate' || 
-                   (acceptHeader && acceptHeader.includes('text/html')) || 
-                   url === self.location.origin || 
-                   url === self.location.origin + '/';
+    try {
+      const urlObj = new URL(url);
+      const path = urlObj.pathname;
 
-    if (isHtml) {
-      // Network-first strategy for HTML pages to guarantee immediate updates while online
+      // We ONLY intercept documents (/) or assets explicitly in our static cache to avoid stale bundle issues
+      const isDoc = path === '/' || path === '/index.html';
+      const isStaticAsset = ASSETS_TO_CACHE.includes(path) || ASSETS_TO_CACHE.includes(urlObj.pathname);
+
+      if (!isDoc && !isStaticAsset) {
+        // Bypass service worker and fetch directly from network
+        return;
+      }
+
+      if (isDoc) {
+        // Network-first strategy for HTML pages to guarantee immediate updates while online
+        event.respondWith(
+          fetch(event.request)
+            .then((networkResponse) => {
+              if (networkResponse.status === 200) {
+                const respClone = networkResponse.clone();
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, respClone));
+              }
+              return networkResponse;
+            })
+            .catch(() => {
+              return caches.match(event.request).then((cachedResponse) => {
+                if (cachedResponse) return cachedResponse;
+                return caches.match('/index.html');
+              });
+            })
+        );
+        return;
+      }
+
+      // Cache-first (stale-while-revalidate) for other static assets (images, manifest, etc.)
       event.respondWith(
-        fetch(event.request)
-          .then((networkResponse) => {
-            if (networkResponse.status === 200) {
-              const respClone = networkResponse.clone();
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, respClone));
+        caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            // Serve from cache, then silently update in background
+            fetch(event.request).then((networkResponse) => {
+              if (networkResponse.status === 200) {
+                caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
+              }
+            }).catch(() => {});
+            return cachedResponse;
+          }
+
+          return fetch(event.request).then((networkResponse) => {
+            if (networkResponse.status === 200 && networkResponse.type === 'basic') {
+              const responseToCache = networkResponse.clone();
+              caches.open(CACHE_NAME).then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
             }
             return networkResponse;
-          })
-          .catch(() => {
-            return caches.match(event.request).then((cachedResponse) => {
-              if (cachedResponse) return cachedResponse;
-              return caches.match('/index.html');
-            });
-          })
+          }).catch((err) => {
+            throw err;
+          });
+        })
       );
-      return;
+    } catch (e) {
+      // Fallback natively on URL parse failures
     }
-
-    // Cache-first (stale-while-revalidate) for other static assets (images, manifest, etc.)
-    event.respondWith(
-      caches.match(event.request).then((cachedResponse) => {
-        if (cachedResponse) {
-          // Serve from cache, then silently update in background
-          fetch(event.request).then((networkResponse) => {
-            if (networkResponse.status === 200) {
-              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
-            }
-          }).catch(() => {});
-          return cachedResponse;
-        }
-
-        return fetch(event.request).then((networkResponse) => {
-          if (networkResponse.status === 200 && networkResponse.type === 'basic') {
-            const responseToCache = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return networkResponse;
-        }).catch((err) => {
-          throw err;
-        });
-      })
-    );
   }
 });

@@ -149,6 +149,10 @@ function AppUpdatePrompt() {
           await reg.unregister();
         }
       }
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((key) => caches.delete(key)));
+      }
       window.location.reload();
     } catch (e) {
       window.location.reload();
