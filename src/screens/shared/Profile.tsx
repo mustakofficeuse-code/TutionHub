@@ -251,7 +251,8 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
             teacherName: name,
             teacherPhone: phoneNumber,
             teacherEmail: cleanEmail,
-            teacherAvatarUrl: avatarUrl
+            teacherAvatarUrl: avatarUrl,
+            teacherAuthEmail: auth.currentUser?.email || cleanEmail
           });
         } catch (err) {
           console.warn("Failed to update appSettings, might not exist yet:", err);
@@ -324,6 +325,16 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
             email: targetEmail
           });
           console.log("Successfully updated Auth login email and Firestore email to:", targetEmail);
+
+          // ALSO update global app settings teacherAuthEmail
+          try {
+            const appSettingsRef = doc(db, 'config', 'appSettings');
+            await updateDoc(appSettingsRef, {
+              teacherAuthEmail: targetEmail
+            });
+          } catch (settingsErr) {
+            console.warn("Failed to update appSettings auth email:", settingsErr);
+          }
         } catch (emailErr: any) {
           console.warn("Could not change auth email during password update:", emailErr);
         }

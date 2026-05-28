@@ -357,14 +357,14 @@ export default function AuthGateway() {
     setLoading(true);
     setError("");
     try {
-      let emailToUse = teacherEmail.trim().toLowerCase() || "teacher@tutionhub.com";
-      
-      // Look up if a teacher or admin exists in Firestore with this realEmail or login email
+      const emailToUse = teacherEmail.trim().toLowerCase() || "teacher@tutionhub.com";
+      const candidates: string[] = [];
+
+      // 1. Add resolved email from Firestore users collection scan
+      let resolvedFromUsers = "";
       try {
         const usersRef = collection(db, "users");
         const snap = await getDocs(usersRef);
-        
-        let foundAuthEmail = "";
         snap.forEach((doc) => {
           const u = doc.data();
           if (u.role === "teacher" || u.role === "admin") {
@@ -372,21 +372,70 @@ export default function AuthGateway() {
             const docEmail = (u.email || "").trim().toLowerCase();
             if (docRealEmail === emailToUse || docEmail === emailToUse) {
               if (u.email) {
-                foundAuthEmail = u.email.trim().toLowerCase();
+                resolvedFromUsers = u.email.trim().toLowerCase();
               }
             }
           }
         });
-        
-        if (foundAuthEmail) {
-          console.log(`Teacher login: resolved input '${emailToUse}' to Auth email '${foundAuthEmail}'`);
-          emailToUse = foundAuthEmail;
-        }
       } catch (lookupErr) {
-        console.warn("Failed resolving teacher email via Firestore lookup, falling back directly:", lookupErr);
+        console.warn("Failed resolving teacher email via users lookup:", lookupErr);
+      }
+      if (resolvedFromUsers) {
+        candidates.push(resolvedFromUsers);
       }
 
-      await signInWithEmailAndPassword(auth, emailToUse, password);
+      // 2. Add resolved email from config/appSettings (very reliable, bypasses list users permission)
+      try {
+        const appSettingsRef = doc(db, 'config', 'appSettings');
+        const settingsSnap = await getDoc(appSettingsRef);
+        if (settingsSnap.exists()) {
+          const s = settingsSnap.data();
+          const teacherEmailInSettings = (s.teacherEmail || "").trim().toLowerCase();
+          const teacherAuthEmailInSettings = (s.teacherAuthEmail || "").trim().toLowerCase();
+          
+          if (teacherEmailInSettings === emailToUse && teacherAuthEmailInSettings) {
+            candidates.push(teacherAuthEmailInSettings);
+          }
+        }
+      } catch (settingsErr) {
+        console.warn("Failed resolving teacher email via appSettings:", settingsErr);
+      }
+
+      // 3. Add explicit bidirectional fallback mappings for Barun Maity
+      if (emailToUse === "barunmaity@gmail.com") {
+        candidates.push("barun@gmail.com");
+      } else if (emailToUse === "barun@gmail.com") {
+        candidates.push("barunmaity@gmail.com");
+      }
+
+      // 4. Always add the input email itself and the default template email
+      candidates.push(emailToUse);
+      candidates.push("teacher@tutionhub.com");
+
+      // Filter to unique, non-empty candidate emails
+      const uniqueCandidates = Array.from(new Set(candidates.map(c => c.trim().toLowerCase()).filter(Boolean)));
+      
+      console.log("Teacher login email candidates to attempt:", uniqueCandidates);
+
+      let lastErr: any = null;
+      let loginSuccess = false;
+
+      for (const candidateEmail of uniqueCandidates) {
+        try {
+          console.log(`Trying login with email: ${candidateEmail}`);
+          await signInWithEmailAndPassword(auth, candidateEmail, password);
+          loginSuccess = true;
+          break;
+        } catch (authErr: any) {
+          lastErr = authErr;
+          // Keep trying other candidates
+        }
+      }
+
+      if (!loginSuccess) {
+        throw lastErr || new Error("Failed to sign in with any resolved credentials.");
+      }
+
       localStorage.setItem("preferredLoginView", "teacher-login");
       localStorage.removeItem("postLogoutView");
       await refreshProfile();
@@ -397,10 +446,11 @@ export default function AuthGateway() {
         err.code === "auth/invalid-credential" ||
         err.code === "auth/wrong-password" ||
         err.code === "auth/user-not-found" ||
-        err.message?.includes("auth/invalid-credential")
+        err.message?.includes("auth/invalid-credential") ||
+        err.message?.includes("auth/wrong-password")
       ) {
         setError(
-          "Invalid email or password. Please check your credentials and try again. Note: If you changed your email in the profile, try using your original setup email (e.g. teacher@tutionhub.com).",
+          "Invalid email or password. Please check your credentials and try again. Note: If you changed your email in the profile, try using your original setup email (e.g. barun@gmail.com).",
         );
       } else {
         setError(err.message || "Teacher account not found.");
