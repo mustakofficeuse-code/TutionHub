@@ -359,25 +359,21 @@ export default function AuthGateway() {
     try {
       let emailToUse = teacherEmail.trim().toLowerCase() || "teacher@tutionhub.com";
       
-      // Look up if a teacher exists in Firestore with this realEmail or login email
+      // Look up if a teacher or admin exists in Firestore with this realEmail or login email
       try {
         const usersRef = collection(db, "users");
-        const teacherSnap = await getDocs(
-          query(
-            usersRef,
-            where("role", "==", "teacher")
-          )
-        );
+        const snap = await getDocs(usersRef);
         
         let foundAuthEmail = "";
-        teacherSnap.forEach((doc) => {
+        snap.forEach((doc) => {
           const u = doc.data();
-          if (
-            (u.realEmail && u.realEmail.toLowerCase().trim() === emailToUse) ||
-            (u.email && u.email.toLowerCase().trim() === emailToUse)
-          ) {
-            if (u.email) {
-              foundAuthEmail = u.email.toLowerCase().trim();
+          if (u.role === "teacher" || u.role === "admin") {
+            const docRealEmail = (u.realEmail || "").trim().toLowerCase();
+            const docEmail = (u.email || "").trim().toLowerCase();
+            if (docRealEmail === emailToUse || docEmail === emailToUse) {
+              if (u.email) {
+                foundAuthEmail = u.email.trim().toLowerCase();
+              }
             }
           }
         });

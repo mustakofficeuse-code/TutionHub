@@ -214,11 +214,14 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
     setMessage({ type: '', text: '' });
 
     try {
+      const cleanEmail = realEmail.trim().toLowerCase();
+      setRealEmail(cleanEmail);
+
       const userRef = doc(db, 'users', profile.uid);
       const updates: any = {
         name,
         phoneNumber,
-        realEmail,
+        realEmail: cleanEmail,
         avatarUrl,
         profileComplete: true
       };
@@ -232,9 +235,9 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
       await updateDoc(userRef, updates);
 
       // Try to keep Firebase Auth credentials in sync with the updated profile email
-      if (auth.currentUser && realEmail && auth.currentUser.email !== realEmail.trim().toLowerCase()) {
+      if (auth.currentUser && cleanEmail && auth.currentUser.email !== cleanEmail) {
         try {
-          await updateEmail(auth.currentUser, realEmail.trim().toLowerCase());
+          await updateEmail(auth.currentUser, cleanEmail);
         } catch (emailErr: any) {
           console.warn("Best-effort auth email update skipped (requires recent login / re-authentication):", emailErr);
         }
@@ -247,7 +250,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
           await updateDoc(appSettingsRef, {
             teacherName: name,
             teacherPhone: phoneNumber,
-            teacherEmail: realEmail,
+            teacherEmail: cleanEmail,
             teacherAvatarUrl: avatarUrl
           });
         } catch (err) {
