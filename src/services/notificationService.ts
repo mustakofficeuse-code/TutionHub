@@ -258,18 +258,23 @@ export const setupPushNotifications = async (userId: string) => {
       }
     }
   } catch (error: any) {
-    console.error('Error setting up push notifications:', error);
-    
-    // Check for mismatched VAPID key or project credential mismatch errors
-    if (error?.code === 'messaging/token-subscribe-failed' || 
-        error?.message?.includes('authentication credential') || 
-        error?.message?.includes('credential') ||
-        error?.message?.includes('subscribe-failed')) {
-      console.warn('FCM Subscription Note: A Web Push registration issue was detected. To enable Firebase Cloud Messaging (FCM) push notifications on your custom Firebase project, please generate a Web Push Certificate (VAPID Key) in the Firebase Console (Project Settings > Cloud Messaging > Web configuration) and configure the environment variable VITE_FIREBASE_VAPID_KEY with its value. Local system notifications remain active.');
+    const isAuthOrVapidMismatch = 
+      error?.code === 'messaging/token-subscribe-failed' || 
+      error?.message?.includes('authentication credential') || 
+      error?.message?.includes('credential') ||
+      error?.message?.includes('subscribe-failed') ||
+      error?.message?.includes('OAuth 2 access token');
+
+    if (isAuthOrVapidMismatch) {
+      console.warn(
+        'FCM Subscription Notice: Since a custom Firebase project is active, push notifications require generating a Web Push Certificate (VAPID Key) in the Firebase Console (Project Settings > Cloud Messaging > Web Push certificates). Please configure the environment variable VITE_FIREBASE_VAPID_KEY with this certificate value. In-app and browser notifications will continue to function normally.'
+      );
+    } else {
+      console.error('Error setting up push notifications:', error);
     }
     
     // If we hit a quota exceeded or token subscribe failed, cache a placeholder so we don't spam requests
-    if (error?.message && (error.message.includes('Quota exceeded') || error.message.includes('quota') || error.message.includes('subscribe'))) {
+    if (isAuthOrVapidMismatch || (error?.message && (error.message.includes('Quota exceeded') || error.message.includes('quota') || error.message.includes('subscribe')))) {
       localStorage.setItem(`fcm_token_cache_${userId}`, 'registration_throttled');
     }
   }
