@@ -50,7 +50,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
   // Form state
   const [name, setName] = useState(profile?.name || '');
   const [phoneNumber, setPhoneNumber] = useState(profile?.phoneNumber || '');
-  const [realEmail, setRealEmail] = useState(profile?.realEmail || '');
+  const [realEmail, setRealEmail] = useState(profile?.realEmail || (profile?.role === 'teacher' ? profile?.email : '') || '');
   const [semester, setSemester] = useState(profile?.semester || '');
   const [courseId, setCourseId] = useState(profile?.courseId || '');
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl || '');
@@ -137,7 +137,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
     if (profile) {
       setName(profile.name || '');
       setPhoneNumber(profile.phoneNumber || '');
-      setRealEmail(profile.realEmail || '');
+      setRealEmail(profile.realEmail || (profile.role === 'teacher' ? profile.email : '') || '');
       setSemester(profile.semester || '');
       setCourseId(profile.courseId || '');
       setAvatarUrl(profile.avatarUrl || '');
@@ -596,7 +596,7 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                     type="email" 
                     disabled={!isEditing}
                     className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all disabled:opacity-50"
-                    placeholder="student@gmail.com"
+                    placeholder={profile?.role === 'teacher' || profile?.role === 'admin' ? "teacher@gmail.com" : "student@gmail.com"}
                     value={realEmail}
                     onChange={(e) => setRealEmail(e.target.value)}
                   />

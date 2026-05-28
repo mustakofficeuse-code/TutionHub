@@ -287,6 +287,7 @@ export default function AuthGateway() {
         uid: user.uid,
         name: trimmedName,
         email: trimmedEmail,
+        realEmail: trimmedEmail,
         phoneNumber: trimmedPhone,
         role: "teacher",
         createdAt: new Date().toISOString(),
