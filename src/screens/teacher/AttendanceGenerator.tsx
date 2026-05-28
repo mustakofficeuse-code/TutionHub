@@ -262,15 +262,22 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
   const listenToRecentAttendance = () => {
     if (!user?.uid) return () => {};
 
+    // Standard single-attribute filter does not require composite index
     const q = query(
       collection(db, 'attendance'), 
       where('teacherId', '==', user.uid), 
-      orderBy('timestamp', 'desc'), 
-      limit(50)
+      limit(200)
     );
 
     return onSnapshot(q as any, (snapshot: any) => {
-      const list = snapshot.docs.map((doc: any) => ({ id: doc.id, ...doc.data() }));
+      const list = snapshot.docs
+        .map((doc: any) => ({ id: doc.id, ...doc.data() }))
+        .sort((a: any, b: any) => {
+          const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
+          const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
+          return timeB - timeA;
+        })
+        .slice(0, 50);
       setRecentAttendance(list);
       setIndexError(false);
     }, (error: any) => {
