@@ -191,6 +191,14 @@ export default function AuthGateway() {
   };
 
   const checkSetup = async () => {
+    // Override: allow forcing setup view via URL query parameter '?setup=true'
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("setup") === "true") {
+      console.log("Forcing teacher-setup via URL query param 'setup=true'");
+      setView("teacher-setup");
+      return;
+    }
+
     try {
       const docRef = doc(db, "config", "appSettings");
       const docSnap = await getDoc(docRef);
@@ -1046,6 +1054,20 @@ export default function AuthGateway() {
                 >
                   Enroll New Student
                 </button>
+              </div>
+
+              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setView("teacher-setup")}
+                  className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 font-medium transition-colors flex items-center gap-1 justify-center w-full"
+                >
+                  <span>⚠️ Locked out or newly deployed?</span>
+                  <span className="underline font-semibold">Force Teacher Setup</span>
+                </button>
+                <div className="text-[9px] text-slate-400 dark:text-slate-500 font-mono tracking-wider">
+                  Firebase Project ID: <span className="font-bold">{(db as any).app?.options?.projectId || "unknown"}</span>
+                </div>
               </div>
             </form>
           </>
