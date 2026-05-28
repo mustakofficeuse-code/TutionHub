@@ -357,7 +357,39 @@ export default function AuthGateway() {
     setLoading(true);
     setError("");
     try {
-      const emailToUse = teacherEmail.trim().toLowerCase() || "teacher@tutionhub.com";
+      let emailToUse = teacherEmail.trim().toLowerCase() || "teacher@tutionhub.com";
+      
+      // Look up if a teacher exists in Firestore with this realEmail or login email
+      try {
+        const usersRef = collection(db, "users");
+        const teacherSnap = await getDocs(
+          query(
+            usersRef,
+            where("role", "==", "teacher")
+          )
+        );
+        
+        let foundAuthEmail = "";
+        teacherSnap.forEach((doc) => {
+          const u = doc.data();
+          if (
+            (u.realEmail && u.realEmail.toLowerCase().trim() === emailToUse) ||
+            (u.email && u.email.toLowerCase().trim() === emailToUse)
+          ) {
+            if (u.email) {
+              foundAuthEmail = u.email.toLowerCase().trim();
+            }
+          }
+        });
+        
+        if (foundAuthEmail) {
+          console.log(`Teacher login: resolved input '${emailToUse}' to Auth email '${foundAuthEmail}'`);
+          emailToUse = foundAuthEmail;
+        }
+      } catch (lookupErr) {
+        console.warn("Failed resolving teacher email via Firestore lookup, falling back directly:", lookupErr);
+      }
+
       await signInWithEmailAndPassword(auth, emailToUse, password);
       localStorage.setItem("preferredLoginView", "teacher-login");
       localStorage.removeItem("postLogoutView");

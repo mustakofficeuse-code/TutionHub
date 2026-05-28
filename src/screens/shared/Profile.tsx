@@ -312,7 +312,15 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
       // Sync Firebase Auth email with updated profile email while recently re-authenticated
       if (auth.currentUser && realEmail && auth.currentUser.email !== realEmail.trim().toLowerCase()) {
         try {
-          await updateEmail(auth.currentUser, realEmail.trim().toLowerCase());
+          const targetEmail = realEmail.trim().toLowerCase();
+          await updateEmail(auth.currentUser, targetEmail);
+          
+          // Also persist the new login email in the user's Firestore document
+          const userRef = doc(db, 'users', profile.uid);
+          await updateDoc(userRef, {
+            email: targetEmail
+          });
+          console.log("Successfully updated Auth login email and Firestore email to:", targetEmail);
         } catch (emailErr: any) {
           console.warn("Could not change auth email during password update:", emailErr);
         }
