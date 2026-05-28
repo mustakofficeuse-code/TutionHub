@@ -368,10 +368,11 @@ export default function AuthGateway() {
       if (
         err.code === "auth/invalid-credential" ||
         err.code === "auth/wrong-password" ||
+        err.code === "auth/user-not-found" ||
         err.message?.includes("auth/invalid-credential")
       ) {
         setError(
-          "Invalid password. Please check your credentials and try again.",
+          "Invalid email or password. Please check your credentials and try again. Note: If you changed your email in the profile, try using your original setup email (e.g. teacher@tutionhub.com).",
         );
       } else {
         setError(err.message || "Teacher account not found.");

@@ -29,7 +29,7 @@ import {
   Bell
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider } from 'firebase/auth';
+import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, updateEmail } from 'firebase/auth';
 import { motion, AnimatePresence } from 'motion/react';
 
 export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
@@ -231,6 +231,15 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
 
       await updateDoc(userRef, updates);
 
+      // Try to keep Firebase Auth credentials in sync with the updated profile email
+      if (auth.currentUser && realEmail && auth.currentUser.email !== realEmail.trim().toLowerCase()) {
+        try {
+          await updateEmail(auth.currentUser, realEmail.trim().toLowerCase());
+        } catch (emailErr: any) {
+          console.warn("Best-effort auth email update skipped (requires recent login / re-authentication):", emailErr);
+        }
+      }
+
       // If teacher, also update global app settings for students to see
       if (profile.role === 'teacher' || profile.role === 'admin') {
         try {
@@ -297,6 +306,15 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
              return;
           }
           throw reauthErr; // Let the main catch block handle other reauth errors
+        }
+      }
+
+      // Sync Firebase Auth email with updated profile email while recently re-authenticated
+      if (auth.currentUser && realEmail && auth.currentUser.email !== realEmail.trim().toLowerCase()) {
+        try {
+          await updateEmail(auth.currentUser, realEmail.trim().toLowerCase());
+        } catch (emailErr: any) {
+          console.warn("Could not change auth email during password update:", emailErr);
         }
       }
 
