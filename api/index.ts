@@ -26,13 +26,15 @@ try {
 
 import { checkScheduleNotifications } from "./cron-helper";
 
-let cachedDbId: string | undefined;
+let cachedDbId: string | undefined = process.env.VITE_FIREBASE_DATABASE_ID || process.env.FIREBASE_DATABASE_ID;
 let cachedProjectId: string | undefined;
 try {
   const configPath = path.join(process.cwd(), "firebase-applet-config.json");
   if (fs.existsSync(configPath)) {
     const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-    cachedDbId = config.firestoreDatabaseId;
+    if (!cachedDbId) {
+      cachedDbId = config.firestoreDatabaseId;
+    }
     cachedProjectId = config.projectId;
   }
 } catch (e) {
@@ -43,7 +45,9 @@ function getDb() {
   if (!admin.apps.length) {
     throw new Error("Firebase Admin is not initialized. If you are deploying your custom version of TuitionHub (e.g., on Vercel), you must download the Service Account Key file from your Firebase Console (Project Settings > Service accounts) and configure the environment variable FIREBASE_SERVICE_ACCOUNT with its JSON or base64 value in Vercel. This is required for backend services to authenticate with Firestore and send FCM notifications.");
   }
-  return getFirestore(undefined, cachedDbId);
+  return (cachedDbId && cachedDbId !== '(default)' && cachedDbId !== '')
+    ? getFirestore(undefined, cachedDbId)
+    : getFirestore();
 }
 
 // Re-initialize Firebase Admin for Vercel
