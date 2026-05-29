@@ -435,12 +435,14 @@ export default function AuthGateway() {
 
       let lastErr: any = null;
       let loginSuccess = false;
+      let loggedInUser: any = null;
 
       for (const candidateEmail of uniqueCandidates) {
         try {
           console.log(`Trying login with email: ${candidateEmail}`);
-          await signInWithEmailAndPassword(auth, candidateEmail, password);
+          const userCredential = await signInWithEmailAndPassword(auth, candidateEmail, password);
           loginSuccess = true;
+          loggedInUser = userCredential.user;
           break;
         } catch (authErr: any) {
           lastErr = authErr;
@@ -448,8 +450,60 @@ export default function AuthGateway() {
         }
       }
 
-      if (!loginSuccess) {
+      if (!loginSuccess || !loggedInUser) {
         throw lastErr || new Error("Failed to sign in with any resolved credentials.");
+      }
+
+      // Heal/recreate profile if missing or has wrong role
+      try {
+        const userDocRef = doc(db, "users", loggedInUser.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        
+        let needsHealing = false;
+        let existingData: any = {};
+        
+        if (!userDocSnap.exists()) {
+          needsHealing = true;
+        } else {
+          existingData = userDocSnap.data() || {};
+          if (existingData.role !== 'teacher' && existingData.role !== 'admin') {
+            needsHealing = true;
+          }
+        }
+        
+        if (needsHealing) {
+          console.log(`[Heal] Healing/recreating teacher profile for UID ${loggedInUser.uid}`);
+          
+          let healName = existingData.name || "Teacher";
+          let healPhone = existingData.phoneNumber || "";
+          
+          try {
+            const settingsSnap = await getDoc(doc(db, "config", "appSettings"));
+            if (settingsSnap.exists()) {
+              const s = settingsSnap.data();
+              if (s.teacherName) healName = s.teacherName;
+              if (s.teacherPhone) healPhone = s.teacherPhone;
+            }
+          } catch (cfgErr) {
+            console.warn("Failed fetching appSettings for healing:", cfgErr);
+          }
+          
+          await setDoc(userDocRef, {
+            ...existingData,
+            uid: loggedInUser.uid,
+            name: healName,
+            email: loggedInUser.email || emailToUse,
+            realEmail: loggedInUser.email || emailToUse,
+            phoneNumber: healPhone,
+            role: "teacher",
+            profileComplete: true,
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+          
+          console.log("[Heal] Teacher profile healed successfully!");
+        }
+      } catch (healErr) {
+        console.error("Failed to auto-heal teacher profile:", healErr);
       }
 
       localStorage.setItem("preferredLoginView", "teacher-login");
@@ -466,7 +520,7 @@ export default function AuthGateway() {
         err.message?.includes("auth/wrong-password")
       ) {
         setError(
-          "Invalid email or password. Please check your credentials and try again. Note: If you changed your email in the profile, try using your original setup email (e.g. barun@gmail.com).",
+          "Invalid email or password. Please check your credentials and try again.",
         );
       } else {
         setError(err.message || "Teacher account not found.");
@@ -1062,20 +1116,6 @@ export default function AuthGateway() {
                 >
                   Enroll New Student
                 </button>
-              </div>
-
-              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800 flex flex-col items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={() => setView("teacher-setup")}
-                  className="text-[11px] text-slate-400 dark:text-slate-500 hover:text-blue-500 dark:hover:text-blue-400 font-medium transition-colors flex items-center gap-1 justify-center w-full"
-                >
-                  <span>⚠️ Locked out or newly deployed?</span>
-                  <span className="underline font-semibold">Force Teacher Setup</span>
-                </button>
-                <div className="text-[9px] text-slate-400 dark:text-slate-500 font-mono tracking-wider">
-                  Firebase Project ID: <span className="font-bold">{(db as any).app?.options?.projectId || "unknown"}</span>
-                </div>
               </div>
             </form>
           </>
