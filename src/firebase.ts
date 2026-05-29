@@ -26,7 +26,8 @@ const firestoreSettings: any = {
 
 
 // We export db using initializeFirestore to ensure settings apply
-const activeDbId = import.meta.env.VITE_FIREBASE_DATABASE_ID || firebaseConfig.firestoreDatabaseId;
+const isCustomProject = import.meta.env.VITE_FIREBASE_PROJECT_ID && import.meta.env.VITE_FIREBASE_PROJECT_ID !== firebaseConfig.projectId;
+const activeDbId = import.meta.env.VITE_FIREBASE_DATABASE_ID || (isCustomProject ? "" : firebaseConfig.firestoreDatabaseId);
 export const db = (activeDbId && activeDbId !== '(default)' && activeDbId !== '') 
   ? initializeFirestore(app, firestoreSettings, activeDbId) 
   : initializeFirestore(app, firestoreSettings);

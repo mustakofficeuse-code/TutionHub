@@ -32,10 +32,14 @@ try {
   const configPath = path.join(process.cwd(), "firebase-applet-config.json");
   if (fs.existsSync(configPath)) {
     const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
-    if (!cachedDbId) {
-      cachedDbId = config.firestoreDatabaseId;
-    }
     cachedProjectId = config.projectId;
+    const isCustomProject = (process.env.VITE_FIREBASE_PROJECT_ID && process.env.VITE_FIREBASE_PROJECT_ID !== config.projectId) ||
+                            (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PROJECT_ID !== config.projectId);
+    if (!cachedDbId) {
+      if (!isCustomProject) {
+        cachedDbId = config.firestoreDatabaseId;
+      }
+    }
   }
 } catch (e) {
   console.error("Failed to read firebase-applet-config.json:", e);

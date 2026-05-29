@@ -287,11 +287,19 @@ export default function AuthGateway() {
           err.code === "auth/user-not-found" ||
           err.code === "auth/invalid-credential"
         ) {
-          userCredential = await createUserWithEmailAndPassword(
-            auth,
-            trimmedEmail,
-            password,
-          );
+          try {
+            userCredential = await createUserWithEmailAndPassword(
+              auth,
+              trimmedEmail,
+              password,
+            );
+          } catch (createErr: any) {
+            if (createErr.code === "auth/email-already-in-use") {
+              throw new Error("This email is already registered in your Firebase Authentication. If you are re-setting up or deploying on Vercel: 1. Please enter the correct password matching this email in your Firebase Auth, or 2. Use the Teacher Login screen to log in, or 3. If you forgot the password, delete this user from your Firebase Console (Authentication > Users) and run this Setup again.");
+            } else {
+              throw createErr;
+            }
+          }
         } else {
           throw err;
         }
