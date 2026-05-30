@@ -153,9 +153,10 @@ app.post("/api/upload-capture", async (req, res) => {
         uploadString = `data:${contentType || 'auto'};base64,${base64}`;
       }
 
+      const isPdf = (contentType && contentType.includes("pdf")) || fileName.toLowerCase().endsWith(".pdf");
       const uploadResult = await cloudinary.uploader.upload(uploadString, {
-        resource_type: "auto",
-        public_id: fileName.replace(/\.[^/.]+$/, "") 
+        resource_type: isPdf ? "raw" : "auto",
+        public_id: isPdf ? fileName : fileName.replace(/\.[^/.]+$/, "") 
       });
 
       res.status(200).json({ success: true, url: uploadResult.secure_url });

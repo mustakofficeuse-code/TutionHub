@@ -1018,9 +1018,10 @@ async function startServer() {
         uploadString = `data:${contentType || 'auto'};base64,${base64}`;
       }
 
+      const isPdf = (contentType && contentType.includes("pdf")) || fileName.toLowerCase().endsWith(".pdf");
       const uploadResult = await cloudinary.uploader.upload(uploadString, {
-        resource_type: "auto",
-        public_id: fileName.replace(/\.[^/.]+$/, "") // Remove only the last extension
+        resource_type: isPdf ? "raw" : "auto",
+        public_id: isPdf ? fileName : fileName.replace(/\.[^/.]+$/, "") // Remove only the last extension
       });
 
       console.log(`Upload successful to Cloudinary: ${uploadResult.secure_url}`);
