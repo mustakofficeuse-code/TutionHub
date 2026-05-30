@@ -583,7 +583,11 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
         }
       }
     }
-  } catch (error) {
-    console.error("[Scheduler] checkScheduleNotifications failed:", error);
+  } catch (error: any) {
+    if (error && error.message && error.message.includes("PERMISSION_DENIED")) {
+      console.warn("[Scheduler] checkScheduleNotifications: Permission Denied. This is expected if the FIREBASE_SERVICE_ACCOUNT is not configured in your current environment.");
+    } else {
+      console.error("[Scheduler] checkScheduleNotifications failed:", error);
+    }
   }
 }

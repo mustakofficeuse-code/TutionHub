@@ -684,10 +684,20 @@ async function startServer() {
     }
   }
 
-  // Start the background cron-like checking interval every 30 seconds
-  setInterval(() => {
-    checkScheduleNotifications(getDb()).catch(e => console.error("Schedule notification task error:", e));
-  }, 30000);
+  // Start the background cron-like checking interval every 30 seconds only if Firebase Service Account belongs to current environment
+  if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+    setInterval(() => {
+      checkScheduleNotifications(getDb()).catch(e => {
+        if (e.message && e.message.includes("PERMISSION_DENIED")) {
+          console.warn("[Scheduler] Permission denied. This is normal if the backend Firebase credentials do not have full Firestore permissions.");
+        } else {
+          console.error("Schedule notification task error:", e);
+        }
+      });
+    }, 30000);
+  } else {
+    console.log("[Scheduler] Background schedule notification intervals skipped: FIREBASE_SERVICE_ACCOUNT environment variable is not configured.");
+  }
 
   app.use(express.json({ limit: '50mb' }));
 

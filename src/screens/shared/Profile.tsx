@@ -25,9 +25,7 @@ import {
   QrCode,
   Edit2,
   X,
-  AlertCircle,
-  Bell,
-  Cloud
+  AlertCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, updateEmail } from 'firebase/auth';
@@ -43,10 +41,6 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
   const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
   const [inviteCode, setInviteCode] = useState('');
   const [copied, setCopied] = useState(false);
-  const [cloudinaryCloudName, setCloudinaryCloudName] = useState('');
-  const [cloudinaryApiKey, setCloudinaryApiKey] = useState('');
-  const [cloudinaryApiSecret, setCloudinaryApiSecret] = useState('');
-  const [cloudinarySaved, setCloudinarySaved] = useState(false);
   const [idCopied, setIdCopied] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -61,72 +55,6 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatarUrl || '');
   const [isEditing, setIsEditing] = useState(false);
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
-
-  // Push notification diagnostics state
-  const [notificationPermission, setNotificationPermission] = useState<string>(
-    typeof window !== 'undefined' ? (window.Notification?.permission || 'default') : 'default'
-  );
-  const [swRegistered, setSwRegistered] = useState<boolean>(false);
-  const [repairing, setRepairing] = useState<boolean>(false);
-
-  const handleRepairNotifications = async () => {
-    setRepairing(true);
-    try {
-      setMessage({ type: 'success', text: 'Repairing... Unregistering current background workers...' });
-      
-      // 1. Unregister existing SWs
-      if ('serviceWorker' in navigator) {
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        for (const reg of registrations) {
-          await reg.unregister();
-          console.log('[Repair] Unregistered service worker:', reg.scope);
-        }
-      }
-      
-      // 2. Clear cached FCM tokens from localStorage to force renegotiating a handshake
-      if (profile?.uid) {
-        localStorage.removeItem(`fcm_token_cache_${profile.uid}`);
-      }
-      localStorage.removeItem('fcm_token_cache');
-      
-      setMessage({ type: 'success', text: 'Re-registering new high-priority Web Push container...' });
-      
-      // 3. Register fresh Service Worker
-      if ('serviceWorker' in navigator) {
-        const newReg = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
-        await newReg.update();
-        console.log('[Repair] Brand new Service Worker active scope:', newReg.scope);
-        setSwRegistered(true);
-      }
-      
-      // 4. Request fresh token & update DB
-      const { setupPushNotifications } = await import('../../services/notificationService');
-      if (profile?.uid) {
-        await setupPushNotifications(profile.uid);
-      }
-      
-      // Update local state permissions
-      if ('Notification' in window) {
-        setNotificationPermission(window.Notification.permission);
-      }
-      
-      setMessage({ type: 'success', text: 'Notification Service successfully cleared, upgraded, and synchronized!' });
-    } catch (e: any) {
-      console.error('[Repair] Service Worker repair failed:', e);
-      setMessage({ type: 'error', text: `Repair failed: ${e.message || e}` });
-    } finally {
-      setRepairing(false);
-    }
-  };
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(registrations => {
-        const activeSW = registrations.some(reg => reg.active && reg.active.scriptURL.includes('sw'));
-        setSwRegistered(activeSW || registrations.length > 0);
-      });
-    }
-  }, []);
 
   const triggerUpload = () => {
     hiddenFileInput.current?.click();
@@ -160,32 +88,9 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
       if (docSnap.exists()) {
         const data = docSnap.data();
         setInviteCode(data.inviteCode || '');
-        setCloudinaryCloudName(data.cloudinaryCloudName || '');
-        setCloudinaryApiKey(data.cloudinaryApiKey || '');
-        setCloudinaryApiSecret(data.cloudinaryApiSecret || '');
       }
     } catch (err) {
       console.error("Error fetching invite code:", err);
-    }
-  };
-
-  const saveCloudinarySettings = async () => {
-    try {
-      setLoading(true);
-      const appSettingsRef = doc(db, 'config', 'appSettings');
-      await setDoc(appSettingsRef, {
-        cloudinaryCloudName: cloudinaryCloudName.trim(),
-        cloudinaryApiKey: cloudinaryApiKey.trim(),
-        cloudinaryApiSecret: cloudinaryApiSecret.trim()
-      }, { merge: true });
-      setCloudinarySaved(true);
-      setMessage({ type: 'success', text: 'Cloudinary configuration updated successfully!' });
-      setTimeout(() => setCloudinarySaved(false), 3500);
-    } catch (err) {
-      console.error("Failed to update Cloudinary settings:", err);
-      setMessage({ type: 'error', text: 'Failed to update Cloudinary settings.' });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -823,230 +728,26 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
               </form>
             </div>
 
-            <div className="mt-4 sm:mt-8 pt-8 border-t border-slate-100 dark:border-white/5">
-              <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
-                <Bell className="w-5 h-5 text-indigo-500" /> Background Push Notifications
-              </h3>
-              <p className="text-sm text-slate-600 dark:text-slate-300 mb-6">
-                Receive important class schedule, payment, and double-chat alerts directly on your device screen even when the browser is completely closed or the app is running in the background.
-              </p>
-
-              {/* Status Section */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                <div className="p-4 bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
-                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Permission</span>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                      {notificationPermission === 'granted' ? 'Allowed ✓' : notificationPermission === 'denied' ? 'Blocked ✗' : 'Default (?)'}
-                    </span>
-                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${notificationPermission === 'granted' ? 'bg-emerald-500 shadow-sm shadow-emerald-500/50' : 'bg-red-500 shadow-sm shadow-red-500/50'}`} />
-                  </div>
-                </div>
-
-                <div className="p-4 bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
-                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Background Sync</span>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                      {swRegistered ? 'Active ✓' : 'Registering...'}
-                    </span>
-                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${swRegistered ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                  </div>
-                </div>
-
-                <div className="p-4 bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
-                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Push Token</span>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-slate-700 dark:text-slate-200">
-                      {profile?.fcmToken ? 'Registered ✓' : 'Setup Pending'}
-                    </span>
-                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${profile?.fcmToken ? 'bg-emerald-500' : 'bg-amber-500'}`} />
-                  </div>
-                </div>
-
-                <div className="p-4 bg-slate-50/50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800/80 rounded-2xl">
-                  <span className="text-xs text-slate-400 font-bold uppercase tracking-wider block mb-1">Web Push Protocol</span>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-200 truncate pr-1">
-                      {(import.meta as any).env?.VITE_FIREBASE_VAPID_KEY ? 'Custom Handshake ✓' : 'Sandbox (Default)'}
-                    </span>
-                    <span className={`inline-block w-2.5 h-2.5 rounded-full ${(import.meta as any).env?.VITE_FIREBASE_VAPID_KEY ? 'bg-emerald-500' : 'bg-indigo-400'}`} />
-                  </div>
-                </div>
-              </div>
-
-              {/* Actions Section */}
-              <div className="flex flex-col xl:flex-row gap-3 mb-6">
-                {notificationPermission !== 'granted' && (
-                  <button
-                    onClick={async () => {
-                      if ('Notification' in window) {
-                        const perm = await window.Notification.requestPermission();
-                        setNotificationPermission(perm);
-                        if (perm === 'granted') {
-                          // Try triggering service worker registrations
-                          const { setupPushNotifications } = await import('../../services/notificationService');
-                          if (profile?.uid) await setupPushNotifications(profile.uid);
-                          setMessage({ type: 'success', text: 'System notifications allowed successfully!' });
-                        } else {
-                          setMessage({ type: 'error', text: 'Permission denied. Please reset standard permissions in site settings.' });
-                        }
-                      }
-                    }}
-                    className="bg-indigo-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-indigo-700 transition-all flex items-center justify-center gap-2 text-sm"
-                  >
-                    <Bell className="w-5 h-5 animate-pulse" />
-                    Enable Banners (Grant Permission)
-                  </button>
-                )}
-
-                <button 
-                  onClick={handleRepairNotifications}
-                  disabled={repairing}
-                  className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-75 text-white font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-md shadow-emerald-500/10"
-                >
-                  {repairing ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 6H16" />
-                    </svg>
-                  )}
-                  Repair & Upgrade background channel
-                </button>
-
-                <button 
-                  onClick={async () => {
-                    try {
-                      setMessage({ type: 'success', text: 'Scheduled! Now close the app/tab completely & wait.' });
-                      
-                      const { setupPushNotifications } = await import('../../services/notificationService');
-                      if (profile?.uid && !profile?.fcmToken) {
-                         await setupPushNotifications(profile.uid);
-                      }
-
-                      await fetch('/api/send-push', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          title: 'TuitionHub Background Test',
-                          body: 'This background banner alert was delivered successfully while the app was closed!',
-                          recipientId: profile?.uid,
-                          delayMs: 10000 // 10 seconds delay
-                        })
-                      });
-                    } catch (e) {
-                      setMessage({ type: 'error', text: 'Failed to schedule push.' });
-                    }
-                  }}
-                  className="bg-purple-600 text-white font-bold py-3 px-6 rounded-xl transition-all flex items-center justify-center hover:bg-purple-700 shadow-md shadow-purple-600/10 gap-2 font-medium text-sm"
-                >
-                  Schedule Background Test Push (10s Delay)
-                </button>
-              </div>
-
-              {/* Troubleshooting Instructions */}
-              <div className="p-5 bg-indigo-50/40 dark:bg-slate-900 border border-indigo-100/30 dark:border-slate-800 rounded-2xl">
-                <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 mb-3 flex items-center gap-2">
-                  <AlertCircle className="w-4 h-4 text-indigo-500" /> Troubleshooting OS Background Policies:
-                </h4>
-                <ul className="space-y-4 text-xs text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-                  <li className="flex gap-2">
-                    <span className="text-indigo-500 font-mono font-bold shrink-0">1.</span>
-                    <span>
-                      <strong>Chrome / Firefox / Edge:</strong> If permissions are set to "Allow" but notifications aren't showing, check your Operating System's Focus Assist (Windows/macOS). Make sure the OS Notification Center is not hiding system banners.
-                    </span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-indigo-500 font-mono font-bold shrink-0">2.</span>
-                    <span>
-                      <strong>iPhone & iPad (iOS):</strong> Apple restricts push notifications inside Safari. To turn them on:
-                      <ol className="list-decimal ml-5 mt-1.5 space-y-1">
-                        <li>Tap the <strong className="text-indigo-500">Share</strong> button in Safari (bottom/top bar).</li>
-                        <li>Select <strong>Add to Home Screen</strong> and name the application.</li>
-                        <li>Open the newly added TuitionHub app from your phone home screen, navigate back here to Profile, and click <strong className="text-indigo-500">Enable Banners</strong>.</li>
-                      </ol>
-                    </span>
-                  </li>
-                  <li className="flex gap-2">
-                    <span className="text-indigo-500 font-mono font-bold shrink-0">3.</span>
-                    <span>
-                      <strong>Android:</strong> Long press the Chrome / TuitionHub icon on your home screen, tap "App Info" / ⓘ, click "Notifications", and guarantee "All Notifications" are toggled ON. Ensure "Battery Saver" is disabled or set to "Unrestricted" so OS does not sleep background tasks.
-                    </span>
-                  </li>
-                </ul>
-              </div>
-            </div>
-
             {profile?.role === 'teacher' && (
-              <>
-                <div className="mt-4 sm:mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                    <Key className="w-5 h-5 text-blue-600" /> Invite Students
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
-                    Share this code with your students so they can access TuitionHub.
-                  </p>
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-lg font-mono font-bold text-slate-900 dark:text-white tracking-normal text-center">
-                      {inviteCode || 'Loading...'}
-                    </div>
-                    <button
-                      onClick={copyInviteCode}
-                      className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-                    >
-                      {copied ? <Check className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
-                    </button>
+              <div className="mt-4 sm:mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
+                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                  <Key className="w-5 h-5 text-blue-600" /> Invite Students
+                </h3>
+                <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
+                  Share this code with your students so they can access TuitionHub.
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-lg font-mono font-bold text-slate-900 dark:text-white tracking-normal text-center">
+                    {inviteCode || 'Loading...'}
                   </div>
+                  <button
+                    onClick={copyInviteCode}
+                    className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                  >
+                    {copied ? <Check className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
+                  </button>
                 </div>
-
-                <div className="mt-4 sm:mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                    <Cloud className="w-5 h-5 text-wa-teal" /> Cloudinary Configuration
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
-                    Configure Cloudinary credentials for secure material and image uploads. These settings are stored securely in Firestore and loaded dynamically on-demand, bypassing Vercel local environment limitations.
-                  </p>
-                  <div className="space-y-4 max-w-xl">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Cloud Name</label>
-                      <input
-                        type="text"
-                        value={cloudinaryCloudName}
-                        onChange={(e) => setCloudinaryCloudName(e.target.value)}
-                        placeholder="e.g., dgutw0ygj"
-                        className="w-full px-4 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:border-wa-teal focus:ring-1 focus:ring-wa-teal outline-none text-slate-800 dark:text-white transition-all shadow-sm font-medium"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">API Key</label>
-                      <input
-                        type="text"
-                        value={cloudinaryApiKey}
-                        onChange={(e) => setCloudinaryApiKey(e.target.value)}
-                        placeholder="e.g., 738423457948574"
-                        className="w-full px-4 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:border-wa-teal focus:ring-1 focus:ring-wa-teal outline-none text-slate-800 dark:text-white transition-all shadow-sm font-medium"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">API Secret</label>
-                      <input
-                        type="password"
-                        value={cloudinaryApiSecret}
-                        onChange={(e) => setCloudinaryApiSecret(e.target.value)}
-                        placeholder="••••••••••••••••"
-                        className="w-full px-4 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:border-wa-teal focus:ring-1 focus:ring-wa-teal outline-none text-slate-800 dark:text-white transition-all shadow-sm font-medium"
-                      />
-                    </div>
-                    <button
-                      onClick={saveCloudinarySettings}
-                      disabled={loading}
-                      className="px-4 py-2 bg-wa-teal hover:opacity-90 text-white font-bold text-sm rounded-xl transition-all shadow-md active:scale-[0.98] disabled:opacity-50"
-                    >
-                      {loading ? 'Saving...' : cloudinarySaved ? 'Saved Successfully!' : 'Save Credentials'}
-                    </button>
-                  </div>
-                </div>
-              </>
+              </div>
             )}
           </div>
         </div>
