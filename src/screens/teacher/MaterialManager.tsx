@@ -19,7 +19,8 @@ import {
   X,
   Upload,
   Check,
-  Search
+  Search,
+  Download
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
@@ -588,8 +589,42 @@ export default function MaterialManager({ isEmbedded }: { isEmbedded?: boolean }
               </div>
 
               {viewMaterial.type === 'pdf' ? (
-                <div className="w-full h-full rounded-2xl overflow-hidden shadow-2xl bg-white border-8 border-slate-800/50">
-                  <iframe src={viewMaterial.url} className="w-full h-full border-none" title="Material View" />
+                <div className="flex flex-col w-full h-full bg-[#111b21] rounded-2xl overflow-hidden shadow-2xl border border-white/5">
+                  {/* Action Header */}
+                  <div className="bg-[#202c33] p-3 sm:px-6 border-b border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 shadow-sm z-10">
+                    <div className="flex items-center gap-2 text-left">
+                      <div className="p-1.5 bg-rose-900/20 rounded-lg text-rose-400">
+                        <FileText className="w-5 h-5 shrink-0" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-white">PDF Reader Options</p>
+                        <p className="text-[11px] text-slate-400 truncate">If browser security blocking the viewer, use open or download options below.</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 w-full sm:w-auto shrink-0 justify-end">
+                      <a 
+                        href={viewMaterial.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex-1 sm:flex-initial px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                      >
+                        <ExternalLink className="w-4 h-4" /> Open PDF in New Tab
+                      </a>
+                      <a 
+                        href={viewMaterial.url} 
+                        download
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 sm:flex-initial px-4 py-2 bg-slate-850 hover:bg-slate-800 text-slate-200 border border-white/5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                      >
+                        <Download className="w-4 h-4" /> Download
+                      </a>
+                    </div>
+                  </div>
+                  {/* Iframe Frame Container */}
+                  <div className="flex-1 w-full p-3 bg-[#111b21] flex items-center justify-center">
+                    <iframe src={viewMaterial.url} className="w-full h-full rounded-xl border border-white/5 bg-white shadow-lg text-center" title="Material View" />
+                  </div>
                 </div>
               ) : (viewMaterial.type === 'image' || viewMaterial.type === 'camera') ? (
                 <div className="relative group max-w-full max-h-full">

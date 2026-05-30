@@ -15,7 +15,8 @@ import {
   Bookmark,
   BookmarkCheck,
   Eye,
-  X
+  X,
+  Download
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -192,25 +193,65 @@ export default function StudentMaterials({ isEmbedded }: { isEmbedded?: boolean 
                 <X className="w-6 h-6" />
               </button>
             </div>
-            <div className="flex-1 bg-[#f0f2f5] dark:bg-[#0b141a] overflow-auto flex items-center justify-center relative">
+            <div className="flex-1 bg-[#f0f2f5] dark:bg-[#0b141a] overflow-auto flex flex-col relative">
               {viewMaterial.type === 'pdf' ? (
-                <iframe src={viewMaterial.url} className="w-full h-full border-none" title="Material View" />
-              ) : (viewMaterial.type === 'image' || viewMaterial.type === 'camera') ? (
-                <img src={viewMaterial.url} alt="Material" className="max-w-full max-h-full object-contain p-4 sm:p-5 sm:p-5 sm:p-6 shadow-2xl rounded-2xl" referrerPolicy="no-referrer" />
-              ) : (
-                <div className="text-center p-4 sm:p-6 sm:p-6 sm:p-5 sm:p-6 bg-white dark:bg-[#202c33] rounded-3xl shadow-2xl max-w-md mx-4 border border-slate-100 dark:border-white/5">
-                  <div className="w-24 h-24 bg-wa-teal/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-8">
-                     <LinkIcon className="w-12 h-12 text-wa-teal" />
+                <div className="flex flex-col w-full h-full">
+                  {/* Premium Action Header */}
+                  <div className="bg-white dark:bg-[#202c33] p-3 sm:px-6 border-b border-slate-150 dark:border-white/5 flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0 shadow-sm z-10">
+                    <div className="flex items-center gap-2 text-left">
+                      <div className="p-1.5 bg-rose-50 dark:bg-rose-900/10 rounded-lg text-rose-500">
+                        <FileText className="w-5 h-5 shrink-0" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">PDF Reader Options</p>
+                        <p className="text-[11px] text-slate-500 truncate">If browser security blocking the viewer, use open or download options below.</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 w-full sm:w-auto shrink-0 justify-end">
+                      <a 
+                        href={viewMaterial.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex-1 sm:flex-initial px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                      >
+                        <ExternalLink className="w-4 h-4" /> Open PDF in New Tab
+                      </a>
+                      <a 
+                        href={viewMaterial.url} 
+                        download
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 sm:flex-initial px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                      >
+                        <Download className="w-4 h-4" /> Download
+                      </a>
+                    </div>
                   </div>
-                  <h4 className="text-[#8696a0] mb-4 sm:mb-8 font-bold  tracking-normal text-xs">External Resource Archive</h4>
-                  <a 
-                    href={viewMaterial.url} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="w-full py-3 sm:py-5 bg-wa-teal text-white rounded-2xl font-bold  tracking-normal text-xs shadow-xl shadow-wa-teal/30 hover:bg-wa-teal/90 transition-all flex items-center justify-center gap-3"
-                  >
-                    Open Resource Hub <ExternalLink className="w-5 h-5" />
-                  </a>
+                  {/* Iframe Frame Container */}
+                  <div className="flex-1 w-full bg-[#f0f2f5] dark:bg-[#0b141a] p-3 flex items-center justify-center">
+                    <iframe src={viewMaterial.url} className="w-full h-full rounded-2xl border border-slate-200/50 dark:border-white/5 bg-white dark:bg-[#111b21] shadow-lg" title="Material View" />
+                  </div>
+                </div>
+              ) : (viewMaterial.type === 'image' || viewMaterial.type === 'camera') ? (
+                <div className="flex-1 flex items-center justify-center p-4">
+                  <img src={viewMaterial.url} alt="Material" className="max-w-full max-h-full object-contain p-4 sm:p-5 sm:p-6 shadow-2xl rounded-2xl" referrerPolicy="no-referrer" />
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center justify-center p-4">
+                  <div className="text-center p-4 sm:p-6 bg-white dark:bg-[#202c33] rounded-3xl shadow-2xl max-w-md mx-4 border border-slate-100 dark:border-white/5 w-full">
+                    <div className="w-24 h-24 bg-wa-teal/10 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-8">
+                       <LinkIcon className="w-12 h-12 text-wa-teal" />
+                    </div>
+                    <h4 className="text-[#8696a0] mb-4 sm:mb-8 font-bold  tracking-normal text-xs">External Resource Archive</h4>
+                    <a 
+                      href={viewMaterial.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="w-full py-3 sm:py-5 bg-wa-teal text-white rounded-2xl font-bold  tracking-normal text-xs shadow-xl shadow-wa-teal/30 hover:bg-wa-teal/90 transition-all flex items-center justify-center gap-3"
+                    >
+                      Open Resource Hub <ExternalLink className="w-5 h-5" />
+                    </a>
+                  </div>
                 </div>
               )}
             </div>

@@ -115,9 +115,38 @@ app.post("/api/upload-capture", async (req, res) => {
       const { base64, fileName, contentType } = req.body;
       if (!base64 || !fileName) return res.status(400).json({ error: "Missing data" });
 
-      if (!process.env.CLOUDINARY_API_SECRET) {
-        return res.status(500).json({ error: "Missing Cloudinary configuration" });
+      let cloudName = process.env.CLOUDINARY_CLOUD_NAME || "dgutw0ygj";
+      let apiKey = process.env.CLOUDINARY_API_KEY || "738423457948574";
+      let apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+      if (!apiSecret) {
+        try {
+          const db = getDb();
+          const settingsSnap = await db.collection('config').doc('appSettings').get();
+          if (settingsSnap.exists) {
+            const data = settingsSnap.data();
+            if (data && data.cloudinaryApiSecret) {
+              cloudName = data.cloudinaryCloudName || cloudName;
+              apiKey = data.cloudinaryApiKey || apiKey;
+              apiSecret = data.cloudinaryApiSecret;
+              console.log("Using Cloudinary credentials loaded from Firestore AppSettings in api/index.ts");
+            }
+          }
+        } catch (e: any) {
+          console.error("Failed to load Cloudinary config from Firestore in api/index.ts:", e.message);
+        }
       }
+
+      if (!apiSecret) {
+        return res.status(500).json({ error: "Missing Cloudinary configuration. Please configure it in profile settings or set CLOUDINARY_API_SECRET in environment variables." });
+      }
+
+      // Re-apply the configuration to ensure the latest keys/credentials are active
+      cloudinary.config({
+        cloud_name: cloudName,
+        api_key: apiKey,
+        api_secret: apiSecret
+      });
 
       let uploadString = base64;
       if (!uploadString.startsWith('data:')) {

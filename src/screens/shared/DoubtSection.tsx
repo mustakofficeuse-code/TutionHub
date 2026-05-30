@@ -8,7 +8,7 @@ import {
   Search, CheckCheck, ArrowLeft, Loader2, User, Send,
   MessageCircle, Paperclip, FileText, X as XIcon, Shield,
   GraduationCap, Plus, ChevronDown, ChevronRight, Hash,
-  Smile, Trash2, Reply, Ban, UserX, Users
+  Smile, Trash2, Reply, Ban, UserX, Users, Download, ExternalLink
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -1470,26 +1470,60 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
 
       {/* Media Viewer Modal */}
       {viewMaterial && (
-        <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-[200] flex items-center justify-center">
-          <div className="absolute top-0 inset-x-0 h-16 flex items-center justify-between px-4 sm:px-6 bg-gradient-to-b from-black/50 text-white z-10">
-             <span className="font-bold truncate text-sm sm:text-base pr-4 opacity-80">{viewMaterial.title}</span>
+        <div className="fixed inset-0 bg-black/95 backdrop-blur-sm z-[200] flex flex-col">
+          {/* Header */}
+          <div className="h-16 flex items-center justify-between px-4 sm:px-6 bg-slate-900 border-b border-white/5 text-white shrink-0 z-10 select-none">
+             <div className="flex items-center gap-2 pr-4 min-w-0">
+               {viewMaterial.type === 'pdf' ? <FileText className="w-5 h-5 text-rose-500 shrink-0" /> : <Users className="w-5 h-5 text-wa-teal shrink-0" />}
+               <span className="font-bold truncate text-sm sm:text-base">{viewMaterial.title}</span>
+             </div>
              <button 
                onClick={() => setViewMaterial(null)}
-               className="p-2 hover:bg-white/10 rounded-full transition-all"
+               className="p-2 hover:bg-white/10 rounded-full transition-all text-slate-300 hover:text-white shrink-0"
                title="Close"
              >
                <XIcon className="w-6 h-6 sm:w-8 sm:h-8" />
              </button>
           </div>
-          <div className="w-full h-full p-4 sm:p-12 flex items-center justify-center">
+
+          {/* Action options specifically for PDF */}
+          {viewMaterial.type === 'pdf' && (
+            <div className="bg-[#222e35] px-4 py-2.5 border-b border-white/5 flex flex-wrap items-center justify-between gap-3 shrink-0">
+              <span className="text-xs font-semibold text-slate-400">
+                If the PDF reader is blocked by browser security, use options on the right:
+              </span>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <a 
+                  href={viewMaterial.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex-1 sm:flex-initial px-4 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                >
+                  <ExternalLink className="w-4 h-4" /> Open PDF in New Tab
+                </a>
+                <a 
+                  href={viewMaterial.url} 
+                  download
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 sm:flex-initial px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 shadow-sm active:scale-95"
+                >
+                  <Download className="w-4 h-4" /> Download
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Viewer Area */}
+          <div className="flex-1 w-full p-4 sm:p-12 flex items-center justify-center overflow-auto min-h-0 bg-slate-950">
              {viewMaterial.type === 'pdf' ? (
-               <iframe src={viewMaterial.url} className="w-full h-full border-none rounded-xl bg-white" />
+               <iframe src={viewMaterial.url} className="w-full h-full border-none rounded-xl bg-white shadow-2xl" title="PDF Reader" />
              ) : (
-               <img src={viewMaterial.url} className="max-w-full max-h-full object-contain" />
+               <img src={viewMaterial.url} className="max-w-full max-h-full object-contain shadow-2xl rounded-lg" referrerPolicy="no-referrer" />
              )}
-           </div>
-         </div>
-       )}
+          </div>
+        </div>
+      )}
 
        {/* Delete Confirmation Modal */}
        {deleteTarget && (

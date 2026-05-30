@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { doc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -26,7 +26,8 @@ import {
   Edit2,
   X,
   AlertCircle,
-  Bell
+  Bell,
+  Cloud
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, updateEmail } from 'firebase/auth';
@@ -42,6 +43,10 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
   const [passwordMessage, setPasswordMessage] = useState({ type: '', text: '' });
   const [inviteCode, setInviteCode] = useState('');
   const [copied, setCopied] = useState(false);
+  const [cloudinaryCloudName, setCloudinaryCloudName] = useState('');
+  const [cloudinaryApiKey, setCloudinaryApiKey] = useState('');
+  const [cloudinaryApiSecret, setCloudinaryApiSecret] = useState('');
+  const [cloudinarySaved, setCloudinarySaved] = useState(false);
   const [idCopied, setIdCopied] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -153,10 +158,34 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
       const docRef = doc(db, 'config', 'appSettings');
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
-        setInviteCode(docSnap.data().inviteCode || '');
+        const data = docSnap.data();
+        setInviteCode(data.inviteCode || '');
+        setCloudinaryCloudName(data.cloudinaryCloudName || '');
+        setCloudinaryApiKey(data.cloudinaryApiKey || '');
+        setCloudinaryApiSecret(data.cloudinaryApiSecret || '');
       }
     } catch (err) {
       console.error("Error fetching invite code:", err);
+    }
+  };
+
+  const saveCloudinarySettings = async () => {
+    try {
+      setLoading(true);
+      const appSettingsRef = doc(db, 'config', 'appSettings');
+      await setDoc(appSettingsRef, {
+        cloudinaryCloudName: cloudinaryCloudName.trim(),
+        cloudinaryApiKey: cloudinaryApiKey.trim(),
+        cloudinaryApiSecret: cloudinaryApiSecret.trim()
+      }, { merge: true });
+      setCloudinarySaved(true);
+      setMessage({ type: 'success', text: 'Cloudinary configuration updated successfully!' });
+      setTimeout(() => setCloudinarySaved(false), 3500);
+    } catch (err) {
+      console.error("Failed to update Cloudinary settings:", err);
+      setMessage({ type: 'error', text: 'Failed to update Cloudinary settings.' });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -949,25 +978,75 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
             </div>
 
             {profile?.role === 'teacher' && (
-              <div className="mt-4 sm:mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
-                  <Key className="w-5 h-5 text-blue-600" /> Invite Students
-                </h3>
-                <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
-                  Share this code with your students so they can access TuitionHub.
-                </p>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-lg font-mono font-bold text-slate-900 dark:text-white tracking-normal text-center">
-                    {inviteCode || 'Loading...'}
+              <>
+                <div className="mt-4 sm:mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Key className="w-5 h-5 text-blue-600" /> Invite Students
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
+                    Share this code with your students so they can access TuitionHub.
+                  </p>
+                  <div className="flex items-center gap-4">
+                    <div className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-lg font-mono font-bold text-slate-900 dark:text-white tracking-normal text-center">
+                      {inviteCode || 'Loading...'}
+                    </div>
+                    <button
+                      onClick={copyInviteCode}
+                      className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
+                    >
+                      {copied ? <Check className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
+                    </button>
                   </div>
-                  <button
-                    onClick={copyInviteCode}
-                    className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-xl hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors"
-                  >
-                    {copied ? <Check className="w-6 h-6" /> : <Copy className="w-6 h-6" />}
-                  </button>
                 </div>
-              </div>
+
+                <div className="mt-4 sm:mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                    <Cloud className="w-5 h-5 text-wa-teal" /> Cloudinary Configuration
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
+                    Configure Cloudinary credentials for secure material and image uploads. These settings are stored securely in Firestore and loaded dynamically on-demand, bypassing Vercel local environment limitations.
+                  </p>
+                  <div className="space-y-4 max-w-xl">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Cloud Name</label>
+                      <input
+                        type="text"
+                        value={cloudinaryCloudName}
+                        onChange={(e) => setCloudinaryCloudName(e.target.value)}
+                        placeholder="e.g., dgutw0ygj"
+                        className="w-full px-4 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:border-wa-teal focus:ring-1 focus:ring-wa-teal outline-none text-slate-800 dark:text-white transition-all shadow-sm font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">API Key</label>
+                      <input
+                        type="text"
+                        value={cloudinaryApiKey}
+                        onChange={(e) => setCloudinaryApiKey(e.target.value)}
+                        placeholder="e.g., 738423457948574"
+                        className="w-full px-4 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:border-wa-teal focus:ring-1 focus:ring-wa-teal outline-none text-slate-800 dark:text-white transition-all shadow-sm font-medium"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">API Secret</label>
+                      <input
+                        type="password"
+                        value={cloudinaryApiSecret}
+                        onChange={(e) => setCloudinaryApiSecret(e.target.value)}
+                        placeholder="••••••••••••••••"
+                        className="w-full px-4 py-2.5 text-sm bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl focus:border-wa-teal focus:ring-1 focus:ring-wa-teal outline-none text-slate-800 dark:text-white transition-all shadow-sm font-medium"
+                      />
+                    </div>
+                    <button
+                      onClick={saveCloudinarySettings}
+                      disabled={loading}
+                      className="px-4 py-2 bg-wa-teal hover:opacity-90 text-white font-bold text-sm rounded-xl transition-all shadow-md active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {loading ? 'Saving...' : cloudinarySaved ? 'Saved Successfully!' : 'Save Credentials'}
+                    </button>
+                  </div>
+                </div>
+              </>
             )}
           </div>
         </div>
