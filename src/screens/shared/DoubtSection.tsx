@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { collection, query, where, addDoc, onSnapshot, orderBy, updateDoc, doc, arrayUnion, deleteDoc, setDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
+import UserProfileModal from '../../components/UserProfileModal';
 import { sendNotification, subscribeToNotifications, markAsRead } from '../../services/notificationService';
 import { useAuth } from '../../context/AuthContext';
 import {
   Search, CheckCheck, ArrowLeft, Loader2, User, Send,
   MessageCircle, Paperclip, FileText, X as XIcon, Shield,
   GraduationCap, Plus, ChevronDown, ChevronRight, Hash,
-  Smile, Trash2, Reply, Ban, UserX
+  Smile, Trash2, Reply, Ban, UserX, Users
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -32,6 +33,8 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
+  const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
+  const [viewingProfileData, setViewingProfileData] = useState<any | null>(null);
   const [departments, setDepartments] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<Record<string, any>>({});
   
@@ -59,8 +62,42 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [chatNotifications, setChatNotifications] = useState<any[]>([]);
   const [historicalAnonChats, setHistoricalAnonChats] = useState<string[]>([]);
+  const [historicalDMs, setHistoricalDMs] = useState<string[]>([]);
+  const [sessionActiveDMs, setSessionActiveDMs] = useState<string[]>([]);
   const [suspendedUsers, setSuspendedUsers] = useState<Record<string, boolean>>({});
   const [sidebarWidth, setSidebarWidth] = useState(350);
+  const [viewingSemesterStudents, setViewingSemesterStudents] = useState<{ department: string; semester: string } | null>(null);
+  const [semesterStudentSearch, setSemesterStudentSearch] = useState('');
+
+  const getSemesterStudentsCount = (deptName?: string, semString?: string) => {
+    if (!deptName || !semString) return 0;
+    const keyDept = String(deptName).toLowerCase();
+    const keySem = String(semString);
+    return Object.values(allUsers).filter((u: any) => 
+      u.role === 'student' && 
+      (
+        String(u.courseId).toLowerCase() === keyDept || 
+        String(u.courseName).toLowerCase() === keyDept || 
+        String(u.department).toLowerCase() === keyDept
+      ) && 
+      String(u.semester) === keySem
+    ).length;
+  };
+
+  const getSemesterStudentsList = (deptName?: string, semString?: string) => {
+    if (!deptName || !semString) return [];
+    const keyDept = String(deptName).toLowerCase();
+    const keySem = String(semString);
+    return Object.values(allUsers).filter((u: any) => 
+      u.role === 'student' && 
+      (
+        String(u.courseId).toLowerCase() === keyDept || 
+        String(u.courseName).toLowerCase() === keyDept || 
+        String(u.department).toLowerCase() === keyDept
+      ) && 
+      String(u.semester) === keySem
+    );
+  };
 
   const startSidebarResize = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -133,6 +170,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               participantId: otherUserId,
               avatarUrl: isAnon ? '' : otherUser?.avatarUrl
             });
+            if (!isAnon) {
+              setSessionActiveDMs(prev => prev.includes(otherUserId) ? prev : [...prev, otherUserId]);
+            }
         } else {
           // Fallback if other user is not found locally yet
           setSelectedChat({
@@ -173,19 +213,29 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       setLoading(false);
     }, (e: any) => {});
 
-    const qAnon = query(
+     const qAnon = query(
       collection(db, 'chat_messages'),
       where('participants', 'array-contains', profile.uid)
     );
     const unsubAnon = onSnapshot(qAnon, (snap) => {
       const anonIds = new Set<string>();
+      const dmUserIds = new Set<string>();
       snap.docs.forEach(doc => {
         const data = doc.data();
-        if (data.chatId && data.chatId.startsWith('anon_')) {
-          anonIds.add(data.chatId);
+        if (data.chatId) {
+          if (data.chatId.startsWith('anon_')) {
+            anonIds.add(data.chatId);
+          } else if (data.chatType === 'private' || data.chatId.startsWith('dm_')) {
+            const parts = data.chatId.replace('dm_', '').split('_');
+            const other = parts.find((id: string) => id !== profile.uid);
+            if (other) {
+              dmUserIds.add(other);
+            }
+          }
         }
       });
       setHistoricalAnonChats(Array.from(anonIds));
+      setHistoricalDMs(Array.from(dmUserIds));
     }, (e: any) => {});
 
     const unsubSuspended = onSnapshot(collection(db, 'suspended_users'), (snap) => {
@@ -430,6 +480,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       participantId: uid,
       avatarUrl: user.avatarUrl
     });
+    setSessionActiveDMs(prev => prev.includes(uid) ? prev : [...prev, uid]);
     setShowStudentsList(false);
   };
 
@@ -478,20 +529,38 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                         {Array.from({ length: dept.totalSemesters || 8 }).map((_, i) => {
                            const chatId = `group_${dept.name}_${i + 1}`;
                            return (
-                             <button
+                             <div
                                key={i}
+                               role="button"
+                               tabIndex={0}
                                onClick={() => setSelectedChat({ id: chatId, type: 'group', name: `${dept.name} - Semester ${i + 1}`, department: dept.name, semester: String(i + 1) })}
-                               className={`w-full flex items-center justify-between gap-3 p-3 pl-14 hover:bg-[#ebebeb] dark:hover:bg-[#2a3942] transition-all text-sm font-medium border-b border-slate-100 dark:border-white/5 ${selectedChat?.id === chatId ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : 'text-slate-600 dark:text-slate-300'}`}
+                               onKeyDown={(e) => {
+                                 if (e.key === 'Enter' || e.key === ' ') {
+                                   e.preventDefault();
+                                   setSelectedChat({ id: chatId, type: 'group', name: `${dept.name} - Semester ${i + 1}`, department: dept.name, semester: String(i + 1) });
+                                 }
+                               }}
+                               className={`w-full flex items-center justify-between gap-3 p-3 pl-14 hover:bg-[#ebebeb] dark:hover:bg-[#2a3942] transition-all text-sm font-medium border-b border-slate-100 dark:border-white/5 cursor-pointer outline-none ${selectedChat?.id === chatId ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : 'text-slate-600 dark:text-slate-300'}`}
                              >
                                 <div className="flex items-center gap-3">
                                   <Hash className="w-4 h-4 text-slate-400" /> Semester {i + 1}
                                 </div>
-                                {unreadCounts[chatId.toLowerCase()] > 0 && (
-                                  <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                                    {unreadCounts[chatId.toLowerCase()]}
-                                  </span>
-                                )}
-                             </button>
+                                <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    title={`View Semester ${i + 1} students list`}
+                                    onClick={() => setViewingSemesterStudents({ department: dept.name, semester: String(i + 1) })}
+                                    className="flex items-center gap-1.5 px-2 py-1 rounded bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-wa-teal hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-[11px]"
+                                  >
+                                    <Users className="w-3.5 h-3.5" />
+                                    <span className="font-bold">{getSemesterStudentsCount(dept.name, String(i + 1))}</span>
+                                  </button>
+                                  {unreadCounts[chatId.toLowerCase()] > 0 && (
+                                    <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                                      {unreadCounts[chatId.toLowerCase()]}
+                                    </span>
+                                  )}
+                                </div>
+                             </div>
                            )
                         })}
                       </motion.div>
@@ -522,24 +591,47 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                   {allStudentsList.length === 0 ? (
                       <div className="p-4 text-center text-xs text-slate-600 dark:text-slate-400">No students found</div>
                   ) : (
-                    allStudentsList.map((s: any) => (
-                      <button key={s.id} onClick={() => startPrivateChat(s.id)} className="w-full flex justify-between items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-[#2a3942] rounded-md transition-all text-left group">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 flex items-center justify-center">
-                            {s.avatarUrl ? <img src={s.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-slate-400" />}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="text-sm font-bold text-slate-800 dark:text-[#e9edef] group-hover:text-wa-teal transition-colors truncate">{s.name}</div>
-                            <div className="text-xs text-slate-600 dark:text-slate-400 truncate">{s.courseId} - Sem {s.semester}</div>
-                          </div>
-                        </div>
-                        {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()] > 0 && (
-                          <span className="bg-wa-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full text-center shrink-0">
-                             {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()]}
-                          </span>
-                        )}
-                      </button>
-                    ))
+                     allStudentsList.map((s: any) => {
+                       const isOwn = s.id === profile?.uid;
+                       return (
+                         <button key={s.id} onClick={() => startPrivateChat(s.id)} className="w-full flex justify-between items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-[#2a3942] rounded-md transition-all text-left group">
+                           <div className="flex items-center gap-3 min-w-0">
+                             <div 
+                               onClick={(e) => { 
+                                 if (!isOwn) {
+                                   e.stopPropagation(); 
+                                   setViewingProfileData(s); 
+                                 }
+                               }}
+                               className={`w-9 h-9 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 flex items-center justify-center ${isOwn ? '' : 'cursor-pointer hover:scale-105 duration-200'}`}
+                               title={isOwn ? undefined : "Click to view profile"}
+                             >
+                               {s.avatarUrl ? <img src={s.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-slate-400" />}
+                             </div>
+                             <div className="flex-1 min-w-0">
+                               <div 
+                                 onClick={(e) => { 
+                                   if (!isOwn) {
+                                     e.stopPropagation(); 
+                                     setViewingProfileData(s); 
+                                   }
+                                 }}
+                                 className={`text-sm font-bold text-slate-800 dark:text-[#e9edef] truncate ${isOwn ? '' : 'group-hover:text-wa-teal cursor-pointer hover:underline transition-colors'}`}
+                                 title={isOwn ? undefined : "Click to view profile"}
+                                >
+                                 {s.name} {isOwn && <span className="text-xs font-normal text-slate-500">(You)</span>}
+                               </div>
+                               <div className="text-xs text-slate-600 dark:text-slate-400 truncate">{s.courseId} - Sem {s.semester}</div>
+                             </div>
+                           </div>
+                           {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()] > 0 && (
+                             <span className="bg-wa-teal text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full text-center shrink-0">
+                                {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()]}
+                             </span>
+                           )}
+                         </button>
+                       );
+                     })
                   )}
                 </div>
               </div>
@@ -583,7 +675,11 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                 })}
 
               {Object.values(allUsers)
-                .filter((u: any) => u.role === 'student' && unreadCounts[getDMId(profile!.uid, u.id).toLowerCase()]! > 0)
+                .filter((u: any) => u.id !== profile?.uid && (
+                  (u.role === 'student' && unreadCounts[getDMId(profile!.uid, u.id).toLowerCase()] > 0) ||
+                  historicalDMs.includes(u.id) ||
+                  sessionActiveDMs.includes(u.id)
+                ))
                 .map((s: any) => (
                   <button
                      key={s.id}
@@ -596,12 +692,16 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                        </div>
                        <div className="text-left max-w-[120px]">
                          <div className="font-bold text-slate-900 dark:text-[#e9edef] truncate">{s.name}</div>
-                         <div className="text-[10px] text-slate-600 dark:text-slate-400 truncate">{s.courseId} - Sem {s.semester}</div>
+                         <div className="text-[10px] text-slate-600 dark:text-slate-400 truncate">
+                           {s.courseId ? `${s.courseId} - Sem ${s.semester}` : (s.role ? s.role.charAt(0).toUpperCase() + s.role.slice(1) : 'Student')}
+                         </div>
                        </div>
                      </div>
-                     <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                        {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()]}
-                     </span>
+                     {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()] > 0 && (
+                       <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                          {unreadCounts[getDMId(profile!.uid, s.id).toLowerCase()]}
+                       </span>
+                     )}
                   </button>
                 ))}
             </div>
@@ -609,7 +709,9 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
         ) : (
           <>
             <div className="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">My Group</div>
-            <button
+            <div
+               role="button"
+               tabIndex={0}
                onClick={() => setSelectedChat({ 
                 id: `group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`, 
                  type: 'group', 
@@ -617,7 +719,19 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                  department: profile?.courseId || profile?.courseName || profile?.department || '',
                  semester: String(profile?.semester || '1')
                })}
-               className={`w-full flex items-center justify-between gap-3 p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-all border-b border-slate-50 dark:border-white/5 ${selectedChat?.id === `group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}` ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : ''}`}
+               onKeyDown={(e) => {
+                 if (e.key === 'Enter' || e.key === ' ') {
+                   e.preventDefault();
+                   setSelectedChat({ 
+                     id: `group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`, 
+                     type: 'group', 
+                     name: `${profile?.courseId || profile?.courseName || profile?.department} - Semester ${profile?.semester}`,
+                     department: profile?.courseId || profile?.courseName || profile?.department || '',
+                     semester: String(profile?.semester || '1')
+                   });
+                 }
+               }}
+               className={`w-full flex items-center justify-between gap-3 p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-all border-b border-slate-50 dark:border-white/5 cursor-pointer outline-none ${selectedChat?.id === `group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}` ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : ''}`}
             >
                <div className="flex items-center gap-3">
                  <div className="w-12 h-12 bg-wa-teal/10 text-wa-teal rounded-full flex items-center justify-center shrink-0">
@@ -628,12 +742,25 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                    <div className="text-xs text-slate-600 dark:text-slate-400">Group Doubt Session</div>
                  </div>
                </div>
-               {unreadCounts[`group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`.toLowerCase()] > 0 && (
-                  <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
-                     {unreadCounts[`group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`.toLowerCase()]}
-                  </span>
-               )}
-            </button>
+               <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                 <button
+                   title="View semester classmates"
+                   onClick={() => setViewingSemesterStudents({
+                     department: profile?.courseId || profile?.courseName || profile?.department || '',
+                     semester: String(profile?.semester || '1')
+                   })}
+                   className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-wa-teal hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-xs font-semibold"
+                 >
+                   <Users className="w-4 h-4" />
+                   <span>{getSemesterStudentsCount(profile?.courseId || profile?.courseName || profile?.department, String(profile?.semester || '1'))} Classmates</span>
+                 </button>
+                 {unreadCounts[`group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`.toLowerCase()] > 0 && (
+                    <span className="bg-wa-teal text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">
+                       {unreadCounts[`group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`.toLowerCase()]}
+                    </span>
+                 )}
+               </div>
+            </div>
 
             <div className="px-4 py-3 bg-white dark:bg-[#182229] border-y border-slate-200 dark:border-white/10 flex justify-between items-center sticky top-0 z-10 shadow-sm mt-4">
                <span className="font-bold text-slate-800 dark:text-[#e9edef] text-sm">Direct Messages</span>
@@ -657,13 +784,33 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                       <div className="p-4 text-center text-xs text-slate-600 dark:text-slate-400">No users found</div>
                   ) : (
                     (teacherObj && teacherObj.name.toLowerCase().includes(searchQuery.toLowerCase()) ? [teacherObj] : []).concat(peers.filter((p: any) => p.name.toLowerCase().includes(searchQuery.toLowerCase()))).map((person: any) => (
-                      <div key={person.id} className="w-full flex justify-between items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-[#2a3942] rounded-md transition-all group">
+                       <div key={person.id} className="w-full flex justify-between items-center gap-2 p-2 hover:bg-slate-50 dark:hover:bg-[#2a3942] rounded-md transition-all group">
                         <button onClick={() => startPrivateChat(person.id)} className="flex-1 flex items-center gap-3 min-w-0 text-left">
-                          <div className="w-9 h-9 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 flex items-center justify-center">
+                          <div 
+                            onClick={(e) => { 
+                              if (person.id !== profile?.uid) {
+                                e.stopPropagation(); 
+                                setViewingProfileData(person); 
+                              }
+                            }}
+                            className={`w-9 h-9 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 flex items-center justify-center ${person.id !== profile?.uid ? 'cursor-pointer hover:scale-105 duration-200' : ''}`}
+                            title={person.id !== profile?.uid ? "Click to view profile" : undefined}
+                          >
                             {person.avatarUrl ? <img src={person.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-slate-400" />}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <div className="text-sm font-bold text-slate-800 dark:text-[#e9edef] group-hover:text-wa-teal transition-colors truncate">{person.name}</div>
+                            <div 
+                              onClick={(e) => { 
+                                if (person.id !== profile?.uid) {
+                                  e.stopPropagation(); 
+                                  setViewingProfileData(person); 
+                                }
+                              }}
+                              className={`text-sm font-bold text-slate-800 dark:text-[#e9edef] truncate ${person.id !== profile?.uid ? 'group-hover:text-wa-teal cursor-pointer hover:underline transition-colors' : ''}`}
+                              title={person.id !== profile?.uid ? "Click to view profile" : undefined}
+                            >
+                              {person.name} {person.id === profile?.uid && <span className="text-xs font-normal text-slate-500">(You)</span>}
+                            </div>
                             <div className="text-xs text-slate-600 dark:text-slate-400 truncate">{person.role === 'teacher' ? 'Teacher' : 'Student'}</div>
                           </div>
                         </button>
@@ -705,10 +852,41 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               >
                  <div className="flex items-center gap-3">
                    <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-wa-teal">
-                      {teacherObj.avatarUrl ? <img src={teacherObj.avatarUrl} className="w-full h-full object-cover" /> : <Shield className="w-6 h-6" />}
+                      {teacherObj.avatarUrl ? (
+                        <img 
+                          src={teacherObj.avatarUrl} 
+                          className={`w-full h-full object-cover ${teacherObj.id === profile?.uid ? '' : 'cursor-pointer hover:scale-105 duration-200'}`} 
+                          onClick={(e) => { 
+                            if (teacherObj.id !== profile?.uid) {
+                              e.stopPropagation(); 
+                              setViewingProfileData(teacherObj); 
+                            }
+                          }} 
+                        />
+                      ) : (
+                        <Shield 
+                          className={`w-6 h-6 ${teacherObj.id === profile?.uid ? '' : 'cursor-pointer'}`} 
+                          onClick={(e) => { 
+                            if (teacherObj.id !== profile?.uid) {
+                              e.stopPropagation(); 
+                              setViewingProfileData(teacherObj); 
+                            }
+                          }} 
+                        />
+                      )}
                    </div>
                    <div className="text-left">
-                     <div className="font-bold text-slate-900 dark:text-[#e9edef]">{teacherObj.name}</div>
+<div 
+                        className={`font-bold text-slate-900 dark:text-[#e9edef] ${teacherObj.id === profile?.uid ? '' : 'cursor-pointer hover:underline'}`} 
+                        onClick={(e) => { 
+                          if (teacherObj.id !== profile?.uid) {
+                            e.stopPropagation(); 
+                            setViewingProfileData(teacherObj); 
+                          }
+                        }}
+                      >
+                        {teacherObj.name} {teacherObj.id === profile?.uid && <span className="text-xs font-normal text-slate-500">(You)</span>}
+                      </div>
                      <div className="text-xs text-slate-600 dark:text-slate-400">Teacher</div>
                    </div>
                  </div>
@@ -721,7 +899,11 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               </>
             )}
 
-            {peers.filter((p: any) => unreadCounts[getDMId(profile!.uid, p.id).toLowerCase()]! > 0).map((peer: any) => (
+            {peers.filter((p: any) => 
+              unreadCounts[getDMId(profile!.uid, p.id).toLowerCase()] > 0 ||
+              historicalDMs.includes(p.id) ||
+              sessionActiveDMs.includes(p.id)
+            ).map((peer: any) => (
               <button
                  key={peer.id}
                  onClick={() => startPrivateChat(peer.id)}
@@ -729,10 +911,41 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
               >
                  <div className="flex items-center gap-3 flex-1 min-w-0">
                    <div className="w-12 h-12 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-slate-600 dark:text-slate-400">
-                      {peer.avatarUrl ? <img src={peer.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-6 h-6" />}
+{peer.avatarUrl ? (
+                        <img 
+                          src={peer.avatarUrl} 
+                          className={`w-full h-full object-cover ${peer.id === profile?.uid ? '' : 'cursor-pointer hover:scale-105 duration-200'}`} 
+                          onClick={(e) => { 
+                            if (peer.id !== profile?.uid) {
+                              e.stopPropagation(); 
+                              setViewingProfileData(peer); 
+                            }
+                          }} 
+                        />
+                      ) : (
+                        <User 
+                          className={`w-6 h-6 ${peer.id === profile?.uid ? '' : 'cursor-pointer'}`} 
+                          onClick={(e) => { 
+                            if (peer.id !== profile?.uid) {
+                              e.stopPropagation(); 
+                              setViewingProfileData(peer); 
+                            }
+                          }} 
+                        />
+                      )}
                    </div>
                    <div className="text-left flex-1 min-w-0">
-                     <div className="font-bold text-slate-900 dark:text-[#e9edef] truncate">{peer.name}</div>
+<div 
+                        className={`font-bold text-slate-900 dark:text-[#e9edef] truncate ${peer.id === profile?.uid ? '' : 'cursor-pointer hover:underline'}`} 
+                        onClick={(e) => { 
+                          if (peer.id !== profile?.uid) {
+                            e.stopPropagation(); 
+                            setViewingProfileData(peer); 
+                          }
+                        }}
+                      >
+                        {peer.name} {peer.id === profile?.uid && <span className="text-xs font-normal text-slate-500">(You)</span>}
+                      </div>
                      <div className="text-xs text-slate-600 dark:text-slate-400 truncate">Student</div>
                    </div>
                  </div>
@@ -751,6 +964,151 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
 
   return (
     <div className={`${isEmbedded ? 'absolute inset-0' : 'fixed inset-0'} bg-[#f0f2f5] dark:bg-[#0b141a] transition-colors flex ${!isEmbedded ? 'top-16 pb-0' : ''}`}>
+      <UserProfileModal 
+        isOpen={viewingProfileId !== null || viewingProfileData !== null} 
+        onClose={() => { setViewingProfileId(null); setViewingProfileData(null); }} 
+        userId={viewingProfileId}
+        userData={viewingProfileData}
+      />
+
+      {viewingSemesterStudents && (() => {
+        const studentList = getSemesterStudentsList(viewingSemesterStudents.department, viewingSemesterStudents.semester);
+        const filteredList = studentList.filter((s: any) => s.name.toLowerCase().includes(semesterStudentSearch.toLowerCase()));
+        return (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-[#222e35] rounded-2xl w-full max-w-lg shadow-2xl flex flex-col h-[500px] overflow-hidden animate-in fade-in duration-200">
+              {/* Header */}
+              <div className="p-4 bg-wa-teal text-white flex justify-between items-center shrink-0">
+                <div className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  <div>
+                    <h3 className="font-bold text-base leading-tight">Semester {viewingSemesterStudents.semester} Students</h3>
+                    <p className="text-xs opacity-90">{viewingSemesterStudents.department} Department</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => { setViewingSemesterStudents(null); setSemesterStudentSearch(''); }}
+                  className="p-1 hover:bg-black/10 rounded-full transition-colors"
+                >
+                  <XIcon className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Count & Search Stats */}
+              <div className="p-4 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-[#111b21] shrink-0">
+                <div className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2 flex justify-between">
+                  <span>Total Students: {studentList.length}</span>
+                  {semesterStudentSearch && <span className="text-slate-500">Filtered: {filteredList.length}</span>}
+                </div>
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Search students in this semester..."
+                    value={semesterStudentSearch}
+                    onChange={(e) => setSemesterStudentSearch(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm bg-white dark:bg-[#202c33] border border-wa-teal/20 focus:border-wa-teal rounded-lg outline-none text-slate-800 dark:text-white transition-colors shadow-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Roster list */}
+              <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar bg-white dark:bg-[#222e35]">
+                {filteredList.length === 0 ? (
+                  <div className="py-8 text-center text-slate-500 dark:text-slate-400 text-sm">
+                    {studentList.length === 0 ? 'No students registered in this semester yet.' : 'No matching students found.'}
+                  </div>
+                ) : (
+                  filteredList.map((st: any) => {
+                    const isOwn = st.id === profile?.uid;
+                    return (
+                      <div 
+                        key={st.id} 
+                        className="flex items-center justify-between p-2 hover:bg-slate-50 dark:hover:bg-[#111b21] rounded-lg transition-colors border-b border-slate-100/50 dark:border-white/5"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div 
+                            onClick={() => {
+                              if (!isOwn) {
+                                setViewingSemesterStudents(null);
+                                setSemesterStudentSearch('');
+                                setViewingProfileData(st);
+                              }
+                            }}
+                            className={`w-9 h-9 rounded-full overflow-hidden bg-slate-200 dark:bg-slate-700 shrink-0 flex items-center justify-center ${isOwn ? '' : 'cursor-pointer hover:scale-105 duration-200'}`}
+                            title={isOwn ? undefined : "Click to view profile"}
+                          >
+                            {st.avatarUrl ? <img src={st.avatarUrl} className="w-full h-full object-cover" /> : <User className="w-5 h-5 text-slate-400" />}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span 
+                                onClick={() => {
+                                  if (!isOwn) {
+                                    setViewingSemesterStudents(null);
+                                    setSemesterStudentSearch('');
+                                    setViewingProfileData(st);
+                                  }
+                                }}
+                                className={`text-sm font-bold text-slate-800 dark:text-[#e9edef] truncate ${isOwn ? '' : 'cursor-pointer hover:underline hover:text-wa-teal'}`}
+                              >
+                                {st.name}
+                              </span>
+                              {isOwn && (
+                                <span className="text-[10px] bg-slate-150 dark:bg-slate-700 px-1 py-0.5 rounded text-slate-500 font-normal shrink-0">
+                                  You
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 truncate">{st.email || 'No email available'}</p>
+                          </div>
+                        </div>
+
+                        {/* Actions */}
+                        {!isOwn && (
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              onClick={() => {
+                                setViewingSemesterStudents(null);
+                                setSemesterStudentSearch('');
+                                setViewingProfileData(st);
+                              }}
+                              className="px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 rounded text-xs transition-colors"
+                            >
+                              Profile
+                            </button>
+                            <button
+                              onClick={() => {
+                                setViewingSemesterStudents(null);
+                                setSemesterStudentSearch('');
+                                startPrivateChat(st.id);
+                              }}
+                              className="px-2 py-1 bg-wa-teal text-white hover:opacity-90 rounded text-xs transition-opacity font-medium"
+                            >
+                              Message
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Close Button Footer */}
+              <div className="p-3 bg-slate-50 dark:bg-[#111b21] border-t border-slate-100 dark:border-white/5 text-right shrink-0">
+                <button
+                  onClick={() => { setViewingSemesterStudents(null); setSemesterStudentSearch(''); }}
+                  className="px-4 py-2 bg-slate-200 hover:bg-slate-300 dark:bg-[#202c33] dark:hover:bg-[#2a3942] text-slate-800 dark:text-slate-200 text-sm font-semibold rounded-lg transition-colors"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       <div className="flex-1 flex max-w-[1600px] mx-auto w-full overflow-hidden">
         
         {/* Left Sidebar */}
@@ -817,10 +1175,33 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                     ) : <User className="w-5 h-5" />
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate">{selectedChat.name}</h3>
+                 <div 
+                  className="flex-1 min-w-0 cursor-pointer"
+                  onClick={() => {
+                    if (selectedChat.type === 'group') {
+                      setViewingSemesterStudents({
+                        department: selectedChat.department || '',
+                        semester: selectedChat.semester || ''
+                      });
+                    } else if (selectedChat.type === 'private' && selectedChat.participantId && selectedChat.name !== 'Anonymous Student') {
+                      setViewingProfileId(selectedChat.participantId);
+                    }
+                  }}
+                  title={selectedChat.type === 'group' ? "View semester student roster" : (selectedChat.type === 'private' && selectedChat.participantId && selectedChat.name !== 'Anonymous Student' ? "View profile credentials" : undefined)}
+                >
+                  <h3 className="font-bold text-slate-900 dark:text-[#e9edef] truncate hover:underline text-wa-teal dark:text-wa-green">
+                    {selectedChat.name}
+                  </h3>
                   <p className="text-xs text-slate-600 dark:text-slate-400 truncate">
-                     {selectedChat.type === 'group' ? 'Group Doubt Chat' : 'Private Conversation'}
+                     {selectedChat.type === 'group' ? (
+                       <span className="flex items-center gap-1 text-[11px] font-medium text-slate-500">
+                         Group Doubt Chat • 
+                         <span className="font-bold underline text-wa-teal dark:text-wa-green flex items-center gap-0.5">
+                           <Users className="w-3 h-3" />
+                           {getSemesterStudentsCount(selectedChat.department, selectedChat.semester)} Students
+                         </span>
+                       </span>
+                     ) : 'Private Conversation'}
                   </p>
                 </div>
                 
@@ -929,7 +1310,17 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                                )}
 
                                {selectedChat.type === 'group' && !isOwn && (
-                                  <p className="text-xs font-bold text-wa-teal dark:text-[#53bdeb] mb-1">{m.senderName}</p>
+                                  <p 
+                                    className={`text-xs font-bold text-wa-teal dark:text-[#53bdeb] mb-1 ${m.senderName !== 'Anonymous Student' ? 'cursor-pointer hover:underline' : ''}`}
+                                    onClick={() => {
+                                      if (m.senderName !== 'Anonymous Student') {
+                                        setViewingProfileId(m.senderId);
+                                      }
+                                    }}
+                                    title={m.senderName !== 'Anonymous Student' ? "View sender profile" : undefined}
+                                  >
+                                    {m.senderName}
+                                  </p>
                                )}
 
                                {m.content && (

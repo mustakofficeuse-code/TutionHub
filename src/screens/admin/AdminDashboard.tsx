@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { collection, query, getDocs, doc, updateDoc, deleteDoc, setDoc, writeBatch, where } from 'firebase/firestore';
 import { db, auth } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
+import UserProfileModal from '../../components/UserProfileModal';
 import { useTheme } from '../../context/ThemeContext';
 import { Logo } from '../../components/Logo';
 import { motion, AnimatePresence } from 'motion/react';
@@ -35,6 +36,8 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
   const [blacklist, setBlacklist] = useState<string[]>([]);
   const [blacklistDocs, setBlacklistDocs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
+  const [viewingProfileData, setViewingProfileData] = useState<any | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [userToDelete, setUserToDelete] = useState<any | null>(null);
   const [userToBlock, setUserToBlock] = useState<any | null>(null);
@@ -334,7 +337,17 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                       </motion.button>
                       <div>
                         <div className="flex flex-wrap items-center gap-3">
-                          <p className="text-lg font-bold text-slate-900 dark:text-[#e9edef] tracking-normal">{user.name}</p>
+                          <p 
+                            onClick={() => {
+                              if (user.id !== profile?.uid) {
+                                setViewingProfileData(user);
+                              }
+                            }}
+                            className={`text-lg font-bold tracking-normal ${user.id !== profile?.uid ? 'cursor-pointer hover:underline text-wa-teal dark:text-wa-green' : 'text-slate-900 dark:text-[#e9edef]'}`}
+                            title={user.id !== profile?.uid ? "Click to view profile credentials" : "You (Active session)"}
+                          >
+                            {user.name} {user.id === profile?.uid && '(You)'}
+                          </p>
                           <span className="px-3 py-1 rounded-full text-xs font-bold bg-white dark:bg-slate-800 text-[#8696a0]  tracking-normal border border-slate-100 dark:border-white/10 shadow-sm">
                             {user.role}
                           </span>
@@ -447,10 +460,18 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                             )}
                           </motion.button>
                           <div className="min-w-0">
-                            <p className="text-lg font-bold text-slate-900 dark:text-[#e9edef] tracking-normal truncate leading-tight">
-                              {user.name}
+                            <p 
+                              onClick={() => {
+                                if (user.id !== profile?.uid) {
+                                  setViewingProfileData(user);
+                                }
+                              }}
+                              className={`text-lg font-bold tracking-normal truncate leading-tight ${user.id !== profile?.uid ? 'cursor-pointer hover:underline text-wa-teal dark:text-wa-green' : 'text-slate-900 dark:text-[#e9edef]'}`}
+                              title={user.id !== profile?.uid ? "Click to view profile credentials" : "You (Active session)"}
+                            >
+                              {user.name} {user.id === profile?.uid && '(You)'}
                             </p>
-                            <p className="text-xs font-bold text-wa-teal  tracking-normal truncate mt-0.5 opacity-80">
+                            <p className="text-xs font-bold text-wa-teal tracking-normal truncate mt-0.5 opacity-80">
                               {user.realEmail || user.email}
                             </p>
                           </div>
@@ -690,6 +711,14 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
           </div>
         </div>
       )}
+
+      {/* Dynamic User Profile Modal */}
+      <UserProfileModal 
+        isOpen={viewingProfileId !== null || viewingProfileData !== null} 
+        onClose={() => { setViewingProfileId(null); setViewingProfileData(null); }} 
+        userId={viewingProfileId}
+        userData={viewingProfileData}
+      />
     </div>
   );
 }
