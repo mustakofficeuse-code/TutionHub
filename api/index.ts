@@ -24,7 +24,7 @@ try {
   console.error("[EnvParser] Custom .env parser failed:", e);
 }
 
-import { checkScheduleNotifications } from "./cron-helper";
+import { checkScheduleNotifications } from "./cron-helper.js";
 
 let cachedDbId: string | undefined = process.env.VITE_FIREBASE_DATABASE_ID || process.env.FIREBASE_DATABASE_ID;
 let cachedProjectId: string | undefined;
@@ -45,17 +45,8 @@ try {
   console.error("Failed to read firebase-applet-config.json:", e);
 }
 
-function getDb() {
-  if (!admin.apps.length) {
-    throw new Error("Firebase Admin is not initialized. If you are deploying your custom version of TuitionHub (e.g., on Vercel), you must download the Service Account Key file from your Firebase Console (Project Settings > Service accounts) and configure the environment variable FIREBASE_SERVICE_ACCOUNT with its JSON or base64 value in Vercel. This is required for backend services to authenticate with Firestore and send FCM notifications.");
-  }
-  return (cachedDbId && cachedDbId !== '(default)' && cachedDbId !== '')
-    ? getFirestore(undefined, cachedDbId)
-    : getFirestore();
-}
-
-// Re-initialize Firebase Admin for Vercel
-if (!admin.apps.length) {
+function ensureFirebaseAdminInitialized() {
+  if (admin.apps.length) return;
   try {
     let projectId = process.env.VITE_FIREBASE_PROJECT_ID || cachedProjectId;
     
@@ -73,24 +64,29 @@ if (!admin.apps.length) {
       });
       console.log("Firebase Admin initialized on Vercel with FIREBASE_SERVICE_ACCOUNT");
     } else {
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-        projectId: projectId
-      });
-      console.log("Firebase Admin initialized on Vercel with Application Default Credentials");
+      // Lazy fallbacks: try initializing with available projectId to avoid crashes from applicationDefault discovery
+      if (projectId) {
+        admin.initializeApp({
+          projectId: projectId
+        });
+        console.log("Firebase Admin initialized with projectId:", projectId);
+      } else {
+        console.warn("Could not auto-initialize Firebase Admin: FIREBASE_SERVICE_ACCOUNT or projectId is missing. Admin SDK operations might fail.");
+      }
     }
   } catch(e) {
-    console.error("Vercel Firebase Admin init error:", e);
-    try {
-      let projectId = process.env.VITE_FIREBASE_PROJECT_ID || cachedProjectId;
-      admin.initializeApp({
-        credential: admin.credential.applicationDefault(),
-        projectId: projectId
-      });
-    } catch(e2) {
-      console.error("Fallback init failed", e2);
-    }
+    console.error("Lazy Firebase Admin initialization error:", e);
   }
+}
+
+function getDb() {
+  ensureFirebaseAdminInitialized();
+  if (!admin.apps.length) {
+    throw new Error("Firebase Admin is not initialized. If you are deploying your custom version of TuitionHub (e.g., on Vercel), you must download the Service Account Key file from your Firebase Console (Project Settings > Service accounts) and configure the environment variable FIREBASE_SERVICE_ACCOUNT with its JSON or base64 value in Vercel. This is required for backend services to authenticate with Firestore and send FCM notifications.");
+  }
+  return (cachedDbId && cachedDbId !== '(default)' && cachedDbId !== '')
+    ? getFirestore(undefined, cachedDbId)
+    : getFirestore();
 }
 
 // Re-initialize Cloudinary
@@ -149,6 +145,7 @@ app.post("/api/admin/create-student", async (req, res) => {
       const uniqueId = 'TH' + Math.floor(10000 + Math.random() * 90000);
       const generatedEmail = `${uniqueId.toLowerCase()}@student.tutionhub.com`;
 
+      ensureFirebaseAdminInitialized();
       const userRecord = await admin.auth().createUser({
         email: generatedEmail,
         password: password,
