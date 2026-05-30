@@ -26,6 +26,7 @@ import { subscribeToNotifications, markAsRead, deleteNotification, Notification,
 import { writeBatch, doc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import TeacherDashboard from './Dashboard';
+import UserProfileModal from '../../components/UserProfileModal';
 import MaterialManager from './MaterialManager';
 import DoubtSection from '../shared/DoubtSection';
 import TeacherAnalytics from './Analytics';
@@ -50,9 +51,22 @@ const TABS = [
 export default function TeacherView() {
   const { profile } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [activeTab, setActiveTab ] = useState(0);
+  const [activeTab, setActiveTab ] = useState(() => {
+    const saved = localStorage.getItem('th_teacher_active_tab');
+    if (saved !== null) {
+      const idx = parseInt(saved, 10);
+      if (!isNaN(idx) && idx >= 0 && idx < TABS.length) return idx;
+    }
+    return 0;
+  });
   const activeTabRef = useRef(activeTab);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+
   useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
+
+  useEffect(() => {
+    localStorage.setItem('th_teacher_active_tab', String(activeTab));
+  }, [activeTab]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [direction, setDirection] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -199,6 +213,7 @@ export default function TeacherView() {
         isOpen={isSidebarOpen} 
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
         badges={badges}
+        onProfileClick={() => setShowProfileModal(true)}
       />
 
       <div className="flex-1 flex flex-col min-w-0">
@@ -237,7 +252,7 @@ export default function TeacherView() {
                 localStorage.setItem("postLogoutView", "teacher-login");
                 signOut(auth);
               }}
-              className="w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-red-500 rounded-2xl transition-all active:scale-95 border border-white/5 text-white"
+              className="w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-red-500 rounded-2xl transition-all active:scale-95 border border-white/5 text-white shrink-0"
             >
               <LogOut className="w-5 h-5" />
             </button>
@@ -437,6 +452,11 @@ export default function TeacherView() {
         </div>
       </footer>
       </div>
+
+      <UserProfileModal 
+        isOpen={showProfileModal} 
+        onClose={() => setShowProfileModal(false)} 
+      />
     </div>
   );
 }

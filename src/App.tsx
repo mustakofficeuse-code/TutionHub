@@ -31,7 +31,7 @@ function AppRoutes() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
         <div className="relative flex flex-col items-center">
           <div className="w-16 h-16 rounded-full overflow-hidden shadow-md mb-4 bg-transparent p-0 flex items-center justify-center">
-            <Logo size="100%" />
+            <Logo size="100%" disableZoom={true} />
           </div>
           <div className="w-12 h-1 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden absolute -bottom-4">
             <div className="w-1/2 h-full bg-blue-500 rounded-full animate-[shimmer_1.5s_infinite]" style={{
@@ -235,7 +235,7 @@ export default function App() {
                     transition={{ duration: 0.8, ease: "easeOut" }}
                     className="relative w-36 h-36 rounded-full overflow-hidden shadow-[0_0_40px_rgba(223,183,60,0.15)] bg-transparent flex items-center justify-center"
                   >
-                    <Logo size="100%" />
+                    <Logo size="100%" disableZoom={true} />
                     <div className="absolute inset-0 bg-gradient-to-tr from-yellow-500/10 to-transparent pointer-events-none" />
                   </motion.div>
 

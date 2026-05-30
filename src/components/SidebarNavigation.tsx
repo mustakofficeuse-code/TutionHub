@@ -1,6 +1,7 @@
 import { motion } from 'motion/react';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, User } from 'lucide-react';
 import { Logo } from './Logo';
+import { useAuth } from '../context/AuthContext';
 
 interface Tab {
   id: string;
@@ -16,9 +17,12 @@ interface SidebarProps {
   isOpen: boolean;
   onToggle: () => void;
   badges?: Record<string, number>;
+  onProfileClick?: () => void;
 }
 
-export default function SidebarNavigation({ tabs, activeTab, onTabChange, isOpen, onToggle, badges = {} }: SidebarProps) {
+export default function SidebarNavigation({ tabs, activeTab, onTabChange, isOpen, onToggle, badges = {}, onProfileClick }: SidebarProps) {
+  const { profile } = useAuth();
+
   return (
     <motion.div 
       initial={false}
@@ -67,6 +71,35 @@ export default function SidebarNavigation({ tabs, activeTab, onTabChange, isOpen
             </button>
           );
         })}
+      </div>
+
+      {/* Persistent User Profile Footer */}
+      <div className="p-4 border-t border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-[#1f2c34]/20 shrink-0">
+        <button
+          onClick={onProfileClick}
+          className="w-full flex items-center gap-3 p-2 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all text-left group"
+          title="View my full profile identity card"
+        >
+          <div className="w-10 h-10 rounded-xl overflow-hidden shadow-sm border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-slate-850 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+            {profile?.avatarUrl ? (
+              <img src={profile.avatarUrl} alt="Avatar" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            ) : (
+              <div className="w-full h-full bg-slate-350 dark:bg-slate-700 font-bold text-[#111b21] dark:text-white text-sm flex items-center justify-center">
+                {profile?.name ? profile.name.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
+              </div>
+            )}
+          </div>
+          {isOpen && (
+            <div className="min-w-0 flex-1">
+              <p className="font-bold text-slate-850 dark:text-white text-xs truncate leading-snug">
+                {profile?.name || 'My Profile'}
+              </p>
+              <p className="text-[10px] font-semibold text-wa-teal dark:text-wa-green uppercase tracking-wide leading-none mt-1">
+                {profile?.role || 'User'}
+              </p>
+            </div>
+          )}
+        </button>
       </div>
     </motion.div>
   );
