@@ -24,7 +24,7 @@ try {
   console.error("[EnvParser] Custom .env parser failed:", e);
 }
 
-import { checkScheduleNotifications } from "./cron-helper";
+import { checkScheduleNotifications } from "./cron-helper.js";
 
 let cachedDbId: string | undefined = process.env.VITE_FIREBASE_DATABASE_ID || process.env.FIREBASE_DATABASE_ID;
 let cachedProjectId: string | undefined;
