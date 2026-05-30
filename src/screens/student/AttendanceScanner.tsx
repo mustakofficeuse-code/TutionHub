@@ -41,7 +41,9 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
       scanner.render(onScanSuccess, onScanFailure);
 
       return () => {
-        scanner.clear().catch(error => logError("Failed to clear scanner", error));
+        if (document.getElementById("reader")) {
+          scanner.clear().catch(error => console.debug("Failed to clear scanner:", error));
+        }
       };
     }
   }, [scanning, status]);

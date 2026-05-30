@@ -63,26 +63,51 @@ export default function StudentAssignments() {
     setSubmissions(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
   };
 
-  const startScanner = () => {
-    setScanning(true);
-    setTimeout(() => {
-      const scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
-      scanner.render((decodedText) => {
-        if (decodedText.startsWith('assignment:')) {
-          const assignmentId = decodedText.split(':')[1];
-          const assignment = assignments.find(a => a.id === assignmentId);
-          if (assignment) {
-            setSelectedAssignment(assignment);
-            scanner.clear();
-            setScanning(false);
-          } else {
-            alert('Assignment not found for your course.');
+  useEffect(() => {
+    let scanner: Html5QrcodeScanner | null = null;
+    if (scanning) {
+      const timer = setTimeout(() => {
+        const readerEl = document.getElementById("reader");
+        if (!readerEl) return;
+        
+        try {
+          scanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 }, false);
+          scanner.render((decodedText) => {
+            if (decodedText.startsWith('assignment:')) {
+              const assignmentId = decodedText.split(':')[1];
+              const assignment = assignments.find(a => a.id === assignmentId);
+              if (assignment) {
+                setSelectedAssignment(assignment);
+                if (scanner) {
+                  scanner.clear().catch(err => console.debug("Scanner clear error on success:", err));
+                }
+                setScanning(false);
+              } else {
+                alert('Assignment not found for your course.');
+              }
+            }
+          }, (error) => {
+            // ignore scanner frame errors
+          });
+        } catch (e) {
+          console.error("Scanner init error:", e);
+        }
+      }, 150);
+
+      return () => {
+        clearTimeout(timer);
+        if (scanner) {
+          const readerEl = document.getElementById("reader");
+          if (readerEl) {
+            scanner.clear().catch(err => console.debug("Scanner clear error on unmount:", err));
           }
         }
-      }, (error) => {
-        // console.warn(error);
-      });
-    }, 100);
+      };
+    }
+  }, [scanning, assignments]);
+
+  const startScanner = () => {
+    setScanning(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
