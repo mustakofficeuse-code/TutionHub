@@ -21,7 +21,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { signOut } from 'firebase/auth';
 import { subscribeToNotifications, markAsRead, deleteNotification, Notification, setupPushNotifications } from '../../services/notificationService';
-import { writeBatch, doc } from 'firebase/firestore';
+import { writeBatch, doc, query, collection, orderBy, onSnapshot } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import Home from './Home';
 import UserProfileModal from '../../components/UserProfileModal';
@@ -68,6 +68,7 @@ export default function StudentView() {
   const [direction, setDirection] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [unreadMaterialsCount, setUnreadMaterialsCount] = useState(0);
   const unreadCount = notifications.filter(n => !n.read).length;
   const formatNotifTime = (notif: Notification) => {
     if (!notif.createdAt) return 'Just now';
@@ -82,7 +83,8 @@ export default function StudentView() {
   // Calculate unread chat messages for badges
   const unreadChatCount = notifications.filter(n => !n.read && (n.type === 'chat_message' || n.type === 'group_chat_message')).length;
   const badges: Record<string, number> = {
-    doubts: unreadChatCount
+    doubts: unreadChatCount,
+    materials: unreadMaterialsCount
   };
 
   useEffect(() => {
@@ -140,9 +142,49 @@ export default function StudentView() {
     };
   }, [profile?.uid, profile?.courseId, profile?.courseName, profile?.department, profile?.semester]);
 
+  useEffect(() => {
+    if (!profile) return;
+    const q = query(collection(db, 'materials'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      let unreadCount = 0;
+      const lastViewStr = localStorage.getItem('th_student_last_materials_view');
+      const lastViewTime = lastViewStr ? parseInt(lastViewStr, 10) : 0;
+      
+      snapshot.docs.forEach((doc) => {
+        const m = doc.data();
+        const isTargetedCourse = m.courseId === 'all' || m.courseId === profile?.courseId || profile?.courseId === 'legacy';
+        const matchesSem = profile?.semester && profile?.courseId !== 'legacy' ? m.semester?.toString() === profile.semester?.toString() : true;
+        if (isTargetedCourse && matchesSem) {
+          let itemTime = 0;
+          if (m.createdAt?.toMillis) itemTime = m.createdAt.toMillis();
+          else if (m.createdAt?.seconds) itemTime = m.createdAt.seconds * 1000;
+          else if (typeof m.createdAt === 'number') itemTime = m.createdAt;
+          
+          if (itemTime > lastViewTime) {
+            unreadCount++;
+          }
+        }
+      });
+      setUnreadMaterialsCount(unreadCount);
+    });
+    return () => unsubscribe();
+  }, [profile]);
+
+  // If already on materials tab on mount
+  useEffect(() => {
+    if (TABS[activeTab].id === 'materials') {
+      localStorage.setItem('th_student_last_materials_view', Date.now().toString());
+      setUnreadMaterialsCount(0);
+    }
+  }, [activeTab]);
+
   const changeTab = (newIndex: number) => {
     setDirection(newIndex > activeTab ? 1 : -1);
     setActiveTab(newIndex);
+    if (TABS[newIndex].id === 'materials') {
+      localStorage.setItem('th_student_last_materials_view', Date.now().toString());
+      setUnreadMaterialsCount(0);
+    }
   };
 
   // Swipe logic
@@ -212,6 +254,16 @@ export default function StudentView() {
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setShowProfileModal(true)}
+              className="w-11 h-11 flex items-center justify-center overflow-hidden bg-white/10 hover:bg-white/20 rounded-2xl transition-all active:scale-95 border border-white/5"
+            >
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                <User className="w-5 h-5 text-white" />
+              )}
+            </button>
             <button 
               onClick={() => setShowNotifications(true)}
               className="relative w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-2xl transition-all active:scale-95 border border-white/5"

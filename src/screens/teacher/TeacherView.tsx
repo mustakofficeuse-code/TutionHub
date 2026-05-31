@@ -231,6 +231,16 @@ export default function TeacherView() {
           </div>
           <div className="flex items-center gap-4">
             <button 
+              onClick={() => setShowProfileModal(true)}
+              className="w-11 h-11 flex items-center justify-center overflow-hidden bg-white/10 hover:bg-white/20 rounded-2xl transition-all active:scale-95 border border-white/5"
+            >
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              ) : (
+                <User className="w-5 h-5 text-white" />
+              )}
+            </button>
+            <button 
               onClick={() => setShowNotifications(true)}
               className="relative w-11 h-11 flex items-center justify-center bg-white/10 hover:bg-white/20 rounded-2xl transition-all active:scale-95 border border-white/5"
             >

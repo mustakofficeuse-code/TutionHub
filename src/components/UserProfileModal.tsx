@@ -76,13 +76,7 @@ export default function UserProfileModal({ isOpen, onClose, userId, userData }: 
     displayProfile.id === currentUserProfile.uid
   );
 
-  useEffect(() => {
-    if (isOpen && isOwnProfile) {
-      onClose();
-    }
-  }, [isOpen, isOwnProfile, onClose]);
-
-  if (!isOpen || isOwnProfile) return null;
+  if (!isOpen) return null;
 
   const handleCopy = (text: string, key: string) => {
     navigator.clipboard.writeText(text);
