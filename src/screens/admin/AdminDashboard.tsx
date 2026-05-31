@@ -319,9 +319,13 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                     <div className="flex items-center gap-3 sm:gap-6">
                       <motion.button 
                         layoutId={`avatar-${user.id}`}
-                        onClick={() => user.avatarUrl && setZoomedImage({ url: user.avatarUrl, id: user.id })}
-                        className={`w-16 h-16 rounded-[1.25rem] flex items-center justify-center overflow-hidden border-2 transition-all group-hover:rotate-3 shadow-inner ${user.avatarUrl ? 'bg-[#f0f2f5] border-white dark:bg-slate-800 dark:border-slate-800 cursor-zoom-in' : 'bg-red-100 dark:bg-red-900/40 text-red-500 border-red-100 dark:border-red-900/40'}`}
-                        title={user.avatarUrl ? "Click to zoom" : "Blocked User"}
+                        onClick={() => {
+                          if (user.id !== profile?.uid) {
+                            setViewingProfileData(user);
+                          }
+                        }}
+                        className={`w-16 h-16 rounded-[1.25rem] flex items-center justify-center overflow-hidden border-2 transition-all group-hover:rotate-3 shadow-inner ${user.avatarUrl ? 'bg-[#f0f2f5] border-white dark:bg-slate-800 dark:border-slate-800 cursor-pointer' : 'bg-red-100 dark:bg-red-900/40 text-red-500 border-red-100 dark:border-red-900/40 cursor-pointer'}`}
+                        title={user.id !== profile?.uid ? "Click to view profile" : "Blocked User"}
                       >
                         {user.avatarUrl ? (
                           <motion.img 
@@ -338,13 +342,8 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                       <div>
                         <div className="flex flex-wrap items-center gap-3">
                           <p 
-                            onClick={() => {
-                              if (user.id !== profile?.uid) {
-                                setViewingProfileData(user);
-                              }
-                            }}
-                            className={`text-lg font-bold tracking-normal ${user.id !== profile?.uid ? 'cursor-pointer hover:underline text-wa-teal dark:text-wa-green' : 'text-slate-900 dark:text-[#e9edef]'}`}
-                            title={user.id !== profile?.uid ? "Click to view profile credentials" : "You (Active session)"}
+                            className={`text-lg font-bold tracking-normal text-slate-900 dark:text-[#e9edef]`}
+                            title={user.id !== profile?.uid ? "" : "You (Active session)"}
                           >
                             {user.name} {user.id === profile?.uid && '(You)'}
                           </p>
@@ -443,9 +442,13 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                         <div className="flex items-center gap-3 sm:gap-6">
                           <motion.button 
                             layoutId={`avatar-${user.id}`}
-                            onClick={() => user.avatarUrl && setZoomedImage({ url: user.avatarUrl, id: user.id })}
-                            className="w-12 h-12 bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl flex items-center justify-center text-[#8696a0] overflow-hidden border border-slate-100 dark:border-white/10 group relative transition-all group-hover:rotate-2 shadow-inner"
-                            title={user.avatarUrl ? "Click to zoom" : ""}
+                            onClick={() => {
+                              if (user.id !== profile?.uid) {
+                                setViewingProfileData(user);
+                              }
+                            }}
+                            className="w-12 h-12 bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl flex items-center justify-center text-[#8696a0] overflow-hidden border border-slate-100 dark:border-white/10 group relative transition-all group-hover:rotate-2 shadow-inner cursor-pointer"
+                            title={user.id !== profile?.uid ? "Click to view profile" : ""}
                           >
                             {user.avatarUrl ? (
                               <motion.img 
@@ -461,13 +464,8 @@ export default function AdminDashboard({ isEmbedded, onTabChange }: { isEmbedded
                           </motion.button>
                           <div className="min-w-0">
                             <p 
-                              onClick={() => {
-                                if (user.id !== profile?.uid) {
-                                  setViewingProfileData(user);
-                                }
-                              }}
-                              className={`text-lg font-bold tracking-normal truncate leading-tight ${user.id !== profile?.uid ? 'cursor-pointer hover:underline text-wa-teal dark:text-wa-green' : 'text-slate-900 dark:text-[#e9edef]'}`}
-                              title={user.id !== profile?.uid ? "Click to view profile credentials" : "You (Active session)"}
+                              className={`text-lg font-bold tracking-normal truncate leading-tight text-slate-900 dark:text-[#e9edef]`}
+                              title={user.id !== profile?.uid ? "" : "You (Active session)"}
                             >
                               {user.name} {user.id === profile?.uid && '(You)'}
                             </p>

@@ -8,7 +8,7 @@ import {
   Search, CheckCheck, ArrowLeft, Loader2, User, Send,
   MessageCircle, Paperclip, FileText, X as XIcon, Shield,
   GraduationCap, Plus, ChevronDown, ChevronRight, Hash,
-  Smile, Trash2, Reply, Ban, UserX, Users, Download, ExternalLink
+  Smile, Trash2, Reply, Ban, UserX, Users, Download, ExternalLink, Upload
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
@@ -65,6 +65,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
   const [historicalDMs, setHistoricalDMs] = useState<string[]>([]);
   const [sessionActiveDMs, setSessionActiveDMs] = useState<string[]>([]);
   const [suspendedUsers, setSuspendedUsers] = useState<Record<string, boolean>>({});
+  const [groupSettings, setGroupSettings] = useState<Record<string, any>>({});
   const [sidebarWidth, setSidebarWidth] = useState(350);
   const [viewingSemesterStudents, setViewingSemesterStudents] = useState<{ department: string; semester: string } | null>(null);
   const [semesterStudentSearch, setSemesterStudentSearch] = useState('');
@@ -248,6 +249,14 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       setSuspendedUsers(sMap);
     }, (e: any) => {});
 
+    const unsubGroupSettings = onSnapshot(collection(db, 'group_settings'), (snap) => {
+      const gMap: Record<string, any> = {};
+      snap.docs.forEach(doc => {
+        gMap[doc.id] = doc.data();
+      });
+      setGroupSettings(gMap);
+    }, (e: any) => {});
+
     const isStudent = profile.role === 'student';
     const dept = isStudent ? (profile.courseId || profile.courseName || profile.department) : undefined;
     const sem = isStudent ? String(profile.semester) : undefined;
@@ -276,6 +285,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
       unsubUsers();
       unsubNotifs();
       unsubSuspended();
+      unsubGroupSettings();
       unsubAnon();
     };
   }, [profile]);
@@ -385,6 +395,46 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       setReplyFile(e.dataTransfer.files[0]);
     }
+  };
+
+  const handleGroupAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedChat || selectedChat.type !== 'group') return;
+
+    if (file.size > 500 * 1024) {
+      alert('Image too large. Please select a photo under 500KB.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64Avatar = reader.result as string;
+      try {
+        await setDoc(doc(db, 'group_settings', selectedChat.id), {
+          avatarUrl: base64Avatar,
+          updatedAt: new Date().toISOString(),
+          updatedBy: profile?.uid
+        }, { merge: true });
+        
+        // Add a system message notifying everyone about the change
+        const systemMsgObj = {
+          chatId: selectedChat.id,
+          chatType: 'group',
+          senderId: 'system',
+          senderName: 'System',
+          senderRole: 'system',
+          content: `${profile?.name} changed the group logo`,
+          createdAt: new Date().toISOString(),
+          type: 'system'
+        };
+        await addDoc(collection(db, 'chat_messages'), systemMsgObj);
+        
+      } catch (err) {
+        console.error("Error updating group logo:", err);
+      }
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
   };
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -543,7 +593,14 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                                className={`w-full flex items-center justify-between gap-3 p-3 pl-14 hover:bg-[#ebebeb] dark:hover:bg-[#2a3942] transition-all text-sm font-medium border-b border-slate-100 dark:border-white/5 cursor-pointer outline-none ${selectedChat?.id === chatId ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : 'text-slate-600 dark:text-slate-300'}`}
                              >
                                 <div className="flex items-center gap-3">
-                                  <Hash className="w-4 h-4 text-slate-400" /> Semester {i + 1}
+                                  {groupSettings[chatId]?.avatarUrl ? (
+                                    <div className="w-6 h-6 rounded-full overflow-hidden shrink-0">
+                                      <img src={groupSettings[chatId].avatarUrl} className="w-full h-full object-cover" />
+                                    </div>
+                                  ) : (
+                                    <Hash className="w-4 h-4 text-slate-400" />
+                                  )}
+                                  Semester {i + 1}
                                 </div>
                                 <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                                   <button
@@ -734,8 +791,12 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                className={`w-full flex items-center justify-between gap-3 p-3 hover:bg-[#f5f6f6] dark:hover:bg-[#202c33] transition-all border-b border-slate-50 dark:border-white/5 cursor-pointer outline-none ${selectedChat?.id === `group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}` ? 'bg-[#ebebeb] dark:bg-[#2a3942]' : ''}`}
             >
                <div className="flex items-center gap-3">
-                 <div className="w-12 h-12 bg-wa-teal/10 text-wa-teal rounded-full flex items-center justify-center shrink-0">
-                    <Hash className="w-6 h-6" />
+                 <div className="w-12 h-12 bg-wa-teal/10 text-wa-teal rounded-full flex items-center justify-center shrink-0 overflow-hidden">
+                    {groupSettings[`group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`]?.avatarUrl ? (
+                      <img src={groupSettings[`group_${profile?.courseId || profile?.courseName || profile?.department}_${profile?.semester}`].avatarUrl} className="w-full h-full object-cover" />
+                    ) : (
+                      <Hash className="w-6 h-6" />
+                    )}
                  </div>
                  <div className="text-left">
                    <div className="font-bold text-slate-900 dark:text-[#e9edef]">{profile?.courseId || profile?.courseName || profile?.department} - Semester {profile?.semester}</div>
@@ -967,11 +1028,85 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
             <div className="bg-white dark:bg-[#222e35] rounded-2xl w-full max-w-lg shadow-2xl flex flex-col h-[500px] overflow-hidden animate-in fade-in duration-200">
               {/* Header */}
               <div className="p-4 bg-wa-teal text-white flex justify-between items-center shrink-0">
-                <div className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
+                <div className="flex items-center gap-3">
+                  <div 
+                    className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center shrink-0 border-2 border-white/40 cursor-pointer overflow-hidden relative group"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      document.getElementById('group-avatar-upload')?.click();
+                    }}
+                    title="Change group logo"
+                  >
+                    {groupSettings[`group_${viewingSemesterStudents.department}_${viewingSemesterStudents.semester}`]?.avatarUrl ? (
+                      <img src={groupSettings[`group_${viewingSemesterStudents.department}_${viewingSemesterStudents.semester}`].avatarUrl} className="w-full h-full object-cover group-hover:opacity-50 transition-opacity" />
+                    ) : (
+                      <Hash className="w-6 h-6 group-hover:opacity-50 transition-opacity" />
+                    )}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/40 transition-opacity text-white">
+                      <Upload className="w-4 h-4" />
+                    </div>
+                  </div>
+                  <input 
+                    type="file" 
+                    id="group-avatar-upload" 
+                    accept="image/*" 
+                    className="hidden" 
+                    onChange={(e) => {
+                       // We need to set the group avatar.
+                       // We have selectedChat which points to the group chat, but to be safe, we should use handleGroupAvatarUpload inside standard logic.
+                       // The handleGroupAvatarUpload depends on selectedChat.
+                       // If we are opening this modal from chat, selectedChat is already the right group.
+                       // BUT if we open this from the directory (left sidebar), selectedChat might be null.
+                       // Let's modify handleGroupAvatarUpload or handle it here directly.
+                       const file = e.target.files?.[0];
+                       const groupId = `group_${viewingSemesterStudents.department}_${viewingSemesterStudents.semester}`;
+                       if (!file) return;
+
+                       if (file.size > 500 * 1024) {
+                         alert('Image too large. Please select a photo under 500KB.');
+                         return;
+                       }
+
+                       const reader = new FileReader();
+                       reader.onloadend = async () => {
+                         const base64Avatar = reader.result as string;
+                         try {
+                           const { setDoc, doc, addDoc, collection } = await import('firebase/firestore');
+                           const { db } = await import('../../firebase');
+                           await setDoc(doc(db, 'group_settings', groupId), {
+                             avatarUrl: base64Avatar,
+                             updatedAt: new Date().toISOString(),
+                             updatedBy: profile?.uid
+                           }, { merge: true });
+                           
+                           // Add a system message notifying everyone about the change
+                           const systemMsgObj = {
+                             chatId: groupId,
+                             chatType: 'group',
+                             senderId: 'system',
+                             senderName: 'System',
+                             senderRole: 'system',
+                             content: `${profile?.name} changed the group logo`,
+                             createdAt: new Date().toISOString(),
+                             type: 'system'
+                           };
+                           await addDoc(collection(db, 'chat_messages'), systemMsgObj);
+                           
+                         } catch (err) {
+                           console.error("Error updating group logo:", err);
+                         }
+                       };
+                       reader.readAsDataURL(file);
+                       e.target.value = '';
+                    }} 
+                    onClick={(e) => e.stopPropagation()} 
+                  />
                   <div>
                     <h3 className="font-bold text-base leading-tight">Semester {viewingSemesterStudents.semester} Students</h3>
-                    <p className="text-xs opacity-90">{viewingSemesterStudents.department} Department</p>
+                    <div className="flex flex-col gap-0.5">
+                       <p className="text-xs opacity-90">{viewingSemesterStudents.department} Department</p>
+                       <p className="text-[10px] bg-white/20 px-2 py-0.5 rounded w-fit italic">Tap logo to change</p>
+                    </div>
                   </div>
                 </div>
                 <button 
@@ -1145,17 +1280,47 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                 <button onClick={() => setSelectedChat(null)} className="md:hidden text-slate-600 dark:text-slate-400 p-2 -ml-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700">
                    <ArrowLeft className="w-6 h-6" />
                 </button>
-                <div className="w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-wa-teal">
-                  {selectedChat.type === 'group' ? <Hash className="w-5 h-5" /> : (
+                <button 
+                  className="relative w-10 h-10 bg-slate-200 dark:bg-slate-700 rounded-full flex items-center justify-center shrink-0 overflow-hidden text-wa-teal group/avatar"
+                  onClick={(e) => {
+                    if (selectedChat.type === 'group') {
+                      setViewingSemesterStudents({
+                        department: selectedChat.department || '',
+                        semester: selectedChat.semester || ''
+                      });
+                    } else if (selectedChat.avatarUrl) {
+                      setViewMaterial({ url: selectedChat.avatarUrl, title: selectedChat.name, type: 'image' });
+                    }
+                  }}
+                  title={selectedChat.type === 'group' ? "View group details" : "View profile"}
+                >
+                  {selectedChat.type === 'group' ? (
+                    <>
+                      {groupSettings[selectedChat.id]?.avatarUrl ? (
+                         <img src={groupSettings[selectedChat.id].avatarUrl} className="w-full h-full object-cover transition-opacity" />
+                      ) : (
+                         <Hash className="w-5 h-5 transition-opacity" />
+                      )}
+                    </>
+                  ) : (
                     selectedChat.avatarUrl ? (
                       <img 
                         src={selectedChat.avatarUrl} 
-                        onClick={() => setViewMaterial({ url: selectedChat.avatarUrl, title: selectedChat.name, type: 'image' })}
-                        className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity" 
+                        className="w-full h-full object-cover hover:opacity-90 transition-opacity" 
                       />
                     ) : <User className="w-5 h-5" />
                   )}
-                </div>
+                  {selectedChat.type === 'group' && (
+                    <input 
+                      type="file" 
+                      id="group-avatar-upload" 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={handleGroupAvatarUpload} 
+                      onClick={(e) => e.stopPropagation()} 
+                    />
+                  )}
+                </button>
                  <div 
                   className="flex-1 min-w-0 cursor-pointer"
                   onClick={() => {
@@ -1218,6 +1383,15 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                   </div>
                 ) : (
                   messages.map((m) => {
+                    if (m.type === 'system') {
+                      return (
+                        <div key={m.id} className="flex justify-center w-full my-2">
+                          <div className="bg-wa-teal/10 dark:bg-wa-teal/20 text-wa-teal dark:text-wa-green text-xs font-bold px-3 py-1.5 rounded-full">
+                            {m.content}
+                          </div>
+                        </div>
+                      );
+                    }
                     const isOwn = m.senderId === profile?.uid;
                     const reactionsMapping: Record<string, string[]> = {};
                     if (m.reactions) {

@@ -82,7 +82,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
   });
   const [upcomingClasses, setUpcomingClasses] = useState<any[]>([]);
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
-  const [teacherInfo, setTeacherInfo] = useState<{name: string, phone?: string, email?: string} | null>(null);
+  const [teacherInfo, setTeacherInfo] = useState<{name: string, phone?: string, email?: string, avatarUrl?: string} | null>(null);
   const [loading, setLoading] = useState(true);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [showNotifications, setShowNotifications] = useState(false);

@@ -49,6 +49,8 @@ const getTomorrowString = () => {
   return `${year}-${month}-${day}`;
 };
 
+import UserProfileModal from '../../components/UserProfileModal';
+
 export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boolean }) {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
@@ -59,6 +61,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
   const [activeSchedules, setActiveSchedules] = useState<any[]>([]);
   const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
   const [indexError, setIndexError] = useState(false);
+  const [viewingProfileId, setViewingProfileId] = useState<string | null>(null);
   
   // Schedule state replacements
   const [globalRequireGPS, setGlobalRequireGPS] = useState(true);
@@ -575,6 +578,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
     filtered.forEach(rec => {
       if (!studentCounts[rec.studentId]) {
         studentCounts[rec.studentId] = { 
+          id: rec.studentId,
           name: rec.studentName || 'Unknown Student',
           dept: rec.department || 'N/A',
           sem: rec.semester || 'N/A',
@@ -928,8 +932,8 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                     >
                       <div className="flex items-center gap-5 min-w-0">
                         <div 
-                          onClick={() => record.studentAvatarUrl && setZoomedPhoto(record.studentAvatarUrl)}
-                          className={`w-14 h-14 bg-white dark:bg-[#202c33] rounded-[1.25rem] flex items-center justify-center shadow-inner shrink-0 group-hover:scale-105 transition-transform overflow-hidden border-2 border-transparent group-hover:border-wa-teal/30 ${record.studentAvatarUrl ? 'cursor-zoom-in' : ''}`}
+                          onClick={() => { if (record.studentId) setViewingProfileId(record.studentId); }}
+                          className={`w-14 h-14 bg-white dark:bg-[#202c33] rounded-[1.25rem] flex items-center justify-center shadow-inner shrink-0 group-hover:scale-105 transition-transform overflow-hidden border-2 border-transparent group-hover:border-wa-teal/30 cursor-pointer`}
                         >
                           {record.studentAvatarUrl ? (
                             <img src={record.studentAvatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -1054,8 +1058,8 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                                 <td className="px-5 sm:px-8 py-4 sm:py-6 whitespace-nowrap">
                                   <div className="flex items-center gap-4">
                                     <div 
-                                      onClick={() => student.avatarUrl && setZoomedPhoto(student.avatarUrl)}
-                                      className={`shrink-0 w-12 h-12 bg-white dark:bg-[#111b21] rounded-2xl flex items-center justify-center text-wa-teal font-bold text-sm overflow-hidden border border-slate-100 dark:border-white/5 shadow-sm ${student.avatarUrl ? 'cursor-zoom-in group-hover:scale-110 transition-transform' : ''}`}
+                                      onClick={() => { if (student.id) setViewingProfileId(student.id); }}
+                                      className={`shrink-0 w-12 h-12 bg-white dark:bg-[#111b21] rounded-2xl flex items-center justify-center text-wa-teal font-bold text-sm overflow-hidden border border-slate-100 dark:border-white/5 shadow-sm cursor-pointer group-hover:scale-110 transition-transform`}
                                     >
                                       {student.avatarUrl ? (
                                         <img src={student.avatarUrl} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -1524,6 +1528,11 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
         )}
       </AnimatePresence>
 
+      <UserProfileModal 
+        isOpen={viewingProfileId !== null} 
+        onClose={() => setViewingProfileId(null)} 
+        userId={viewingProfileId}
+      />
     </div>
   );
 }
