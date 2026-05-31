@@ -331,7 +331,7 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
         }
       }
 
-      // --- NEW: Insistent 5-minute attendance reminders during active window ---
+      // --- NEW: Insistent 15-minute attendance reminders during active window ---
       const gp = schedule.gracePeriod || "until_end";
       let reminderActiveEnd = classEndMs;
       if (gp !== "until_end") {
@@ -388,13 +388,13 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
             }
           }
           
-          const fiveMinutesMs = 5 * 60 * 1000;
-          if (nowMs - lastRemindedMs >= fiveMinutesMs) {
+          const fifteenMinutesMs = 15 * 60 * 1000;
+          if (nowMs - lastRemindedMs >= fifteenMinutesMs) {
             allowReminder = true;
           }
           
           if (allowReminder) {
-            console.log(`[Scheduler] Sending insistent 5-min attendance reminder to student ${studentUid} for class ${subject}`);
+            console.log(`[Scheduler] Sending insistent 15-min attendance reminder to student ${studentUid} for class ${subject}`);
             
             if (sData.fcmToken) {
               const rTitle = `⚠️ Attendance Pending: ${subject}`;
@@ -444,7 +444,7 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
                   token: sData.fcmToken
                 });
               } catch (e) {
-                console.error(`[Scheduler] Failed sending 5-min push:`, e);
+                console.error(`[Scheduler] Failed sending 15-min push:`, e);
               }
             }
             

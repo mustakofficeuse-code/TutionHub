@@ -856,6 +856,10 @@ async function startServer() {
       await sendPushWrapper();
       return res.json({ success: true, message: "Push attempt completed" });
     } catch (e: any) {
+      if (e && e.message && e.message.includes("PERMISSION_DENIED")) {
+         console.warn("[FCM] Push skipped: Backend Firebase credentials missing.");
+         return res.json({ success: true, message: "Push skipped (no backend credentials)" });
+      }
       console.error("Push send error:", e);
       return res.status(500).json({ error: e.message });
     }
@@ -974,6 +978,10 @@ async function startServer() {
 
       return res.json({ success: true, messageId: docRef.id });
     } catch(e: any) {
+      if (e && e.message && e.message.includes("PERMISSION_DENIED")) {
+         console.warn("[FCM] Chat reply push skipped: Backend Firebase credentials missing.");
+         return res.json({ success: true, message: "Chat reply logged (Push skipped due to no backend credentials)" });
+      }
       console.error("Chat reply error:", e);
       return res.status(500).json({ error: e.message });
     }
