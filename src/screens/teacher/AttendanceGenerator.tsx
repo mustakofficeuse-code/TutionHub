@@ -4,6 +4,7 @@ import { db } from '../../firebase';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAuth } from '../../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
+import * as XLSX from 'xlsx';
 import { 
   QrCode, 
   MapPin, 
@@ -634,6 +635,47 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
     }
   };
 
+  const handleExportExcel = () => {
+    const aggregated = getAggregatedHistory();
+    if (aggregated.length === 0) {
+      alert("No data to export");
+      return;
+    }
+    
+    // Prepare data
+    const exportData = aggregated.map(student => ({
+      'Student Name': student.name,
+      'Department': student.dept,
+      'Semester': student.sem,
+      'Last Entry': new Date(student.lastTime).toLocaleString(),
+      'Attendance Count': student.count,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance History");
+    
+    XLSX.writeFile(workbook, "Attendance_Sheet.xlsx");
+  };
+
+  const handleDeleteStudentHistory = async (records: any[], studentName: string) => {
+    if (!window.confirm(`Are you sure you want to delete all attendance records for ${studentName}?`)) return;
+    
+    setSaving(true);
+    try {
+      const batch = writeBatch(db);
+      records.forEach((record) => {
+        batch.delete(doc(db, 'attendance', record.id));
+      });
+      await batch.commit();
+    } catch (error) {
+      console.error("Error deleting student attendance:", error);
+      alert("Failed to delete records.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className={`min-h-screen ${isEmbedded ? '' : 'bg-[#f0f2f5] dark:bg-[#111b21] p-4 sm:p-5 sm:p-5 sm:p-6'} transition-colors font-sans print:p-0 print:bg-white`}>
       <div className="w-full max-w-none mx-auto px-1 md:px-4 print:max-w-none">
@@ -972,7 +1014,15 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                       </div>
                       <h3 className="text-xl font-bold text-slate-800 dark:text-[#e9edef]  tracking-normal">Attendance Stats</h3>
                     </div>
-                    <span className="px-4 py-2 bg-white dark:bg-[#202c33] border border-slate-100 dark:border-white/5 rounded-full text-xs font-bold text-slate-400  tracking-normal">{getAggregatedHistory().length} Students Present</span>
+                    <div className="flex items-center gap-3">
+                      <span className="px-4 py-2 bg-white dark:bg-[#202c33] border border-slate-100 dark:border-white/5 rounded-full text-xs font-bold text-slate-400 tracking-normal">{getAggregatedHistory().length} Students Present</span>
+                      <button 
+                        onClick={handleExportExcel}
+                        className="px-4 py-2 bg-wa-teal hover:bg-wa-teal/90 text-white rounded-full text-xs font-bold transition-colors flex items-center gap-2 shadow-sm"
+                      >
+                        <FileText className="w-4 h-4" /> Export Excel
+                      </button>
+                    </div>
                   </div>
                   
                   <div className="w-full overflow-x-auto scrollbar-hide"><table className="w-full min-w-max text-left border-collapse min-w-max">
@@ -981,14 +1031,15 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                           <th className="px-5 sm:px-8 py-4 sm:py-6 text-xs font-bold text-slate-400  tracking-normal">Student</th>
                           <th className="px-5 sm:px-8 py-4 sm:py-6 text-xs font-bold text-slate-400  tracking-normal">Department</th>
                           <th className="px-5 sm:px-8 py-4 sm:py-6 text-xs font-bold text-slate-400  tracking-normal">Last Entry</th>
-                          <th className="px-5 sm:px-8 py-4 sm:py-6 text-xs font-bold text-slate-400  tracking-normal text-center">Score</th>
+                          <th className="px-5 sm:px-8 py-4 sm:py-6 text-xs font-bold text-slate-400 tracking-normal text-center">Score</th>
+                          <th className="px-5 sm:px-8 py-4 sm:py-6 text-xs font-bold text-slate-400 tracking-normal text-center">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-50 dark:divide-white/5 text-slate-900 dark:text-[#e9edef]">
                         {Object.entries(getGroupedHistory()).sort(([a], [b]) => a.localeCompare(b)).map(([dept, students]) => (
                           <Fragment key={dept}>
                             <tr className="bg-slate-50/50 dark:bg-[#111b21]/50">
-                              <td colSpan={4} className="px-5 sm:px-8 py-4">
+                              <td colSpan={5} className="px-5 sm:px-8 py-4">
                                 <div className="flex items-center gap-3">
                                   <div className="w-2 h-2 bg-wa-teal rounded-full animate-pulse"></div>
                                   <span className="text-xs font-bold text-slate-800 dark:text-[#e9edef]  tracking-normal">{dept} DEPARTMENT</span>
@@ -1040,6 +1091,16 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
                                       />
                                     </div>
                                   </div>
+                                </td>
+                                <td className="px-5 sm:px-8 py-4 sm:py-6 whitespace-nowrap text-center">
+                                  <button
+                                    onClick={() => handleDeleteStudentHistory(student.records, student.name)}
+                                    disabled={saving}
+                                    title="Delete Student Records"
+                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-xl transition-colors inline-flex disabled:opacity-50"
+                                  >
+                                    <Trash2 className="w-5 h-5" />
+                                  </button>
                                 </td>
                               </tr>
                             ))}
