@@ -877,13 +877,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                    </div>
                    <div className="text-left">
 <div 
-                        className={`font-bold text-slate-900 dark:text-[#e9edef] ${teacherObj.id === profile?.uid ? '' : 'cursor-pointer hover:underline'}`} 
-                        onClick={(e) => { 
-                          if (teacherObj.id !== profile?.uid) {
-                            e.stopPropagation(); 
-                            setViewingProfileData(teacherObj); 
-                          }
-                        }}
+                        className={`font-bold text-slate-900 dark:text-[#e9edef] truncate`} 
                       >
                         {teacherObj.name} {teacherObj.id === profile?.uid && <span className="text-xs font-normal text-slate-500">(You)</span>}
                       </div>
@@ -936,13 +930,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                    </div>
                    <div className="text-left flex-1 min-w-0">
 <div 
-                        className={`font-bold text-slate-900 dark:text-[#e9edef] truncate ${peer.id === profile?.uid ? '' : 'cursor-pointer hover:underline'}`} 
-                        onClick={(e) => { 
-                          if (peer.id !== profile?.uid) {
-                            e.stopPropagation(); 
-                            setViewingProfileData(peer); 
-                          }
-                        }}
+                        className={`font-bold text-slate-900 dark:text-[#e9edef] truncate`} 
                       >
                         {peer.name} {peer.id === profile?.uid && <span className="text-xs font-normal text-slate-500">(You)</span>}
                       </div>
@@ -1043,14 +1031,7 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span 
-                                onClick={() => {
-                                  if (!isOwn) {
-                                    setViewingSemesterStudents(null);
-                                    setSemesterStudentSearch('');
-                                    setViewingProfileData(st);
-                                  }
-                                }}
-                                className={`text-sm font-bold text-slate-800 dark:text-[#e9edef] truncate ${isOwn ? '' : 'cursor-pointer hover:underline hover:text-wa-teal'}`}
+                                className={`text-sm font-bold text-slate-800 dark:text-[#e9edef] truncate`}
                               >
                                 {st.name}
                               </span>
