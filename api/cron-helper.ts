@@ -582,6 +582,136 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
           console.log(`[Scheduler] Finished missed class notification for schedule ${scheduleId}. Missed student count: ${missedStudents.length}`);
         }
       }
+
+      // --- NEW: Class Ending notification ---
+      const classEndingWindowEnd = classEndMs + 24 * 60 * 60 * 1000;
+      if (nowMs >= classEndMs && nowMs <= classEndingWindowEnd) {
+        if (!schedule.classEndingNotified) {
+          console.log(`[Scheduler] Class ending for "${subject}". Sending notifications...`);
+          const durationStr = `${formatTime12h(startTime)} - ${formatTime12h(endTime)}`;
+          const title = `🏁 Class Ended - ${subject}`;
+          const body = `The class for ${subject} (${durationStr}) has officially ended. Great job today! Please make sure you have submitted any assignments or pending attendance.`;
+          
+          const host = "tuitionhubapp.firebaseapp.com";
+          const origin = `https://${host}`;
+          const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
+          const absoluteBadge = `${origin}/notification-badge.png`;
+          
+          const endingPayload: any = {
+            data: {
+              title,
+              body,
+              type: "class_ending",
+              scheduleId,
+              subject: String(subject || ""),
+              startTime: String(startTime || ""),
+              endTime: String(endTime || "")
+            },
+            notification: {
+              title,
+              body,
+              icon: absoluteLogo
+            },
+            android: {
+              priority: "high"
+            },
+            webpush: {
+              headers: { Urgency: "high" },
+              notification: {
+                title,
+                body,
+                icon: absoluteLogo,
+                badge: absoluteBadge,
+                requireInteraction: true
+              },
+              fcm_options: {
+                link: origin + "/"
+              }
+            }
+          };
+          
+          const teachId = teacherId || schedule.teacherUid;
+          if (teachId) {
+            const teachDoc = await db.collection("users").doc(teachId).get();
+            if (teachDoc.exists) {
+              const teachData = teachDoc.data();
+              if (teachData && teachData.fcmToken) {
+                try {
+                  await admin.messaging().send({
+                    ...endingPayload,
+                    token: teachData.fcmToken
+                  } as any);
+                } catch (e) {
+                  console.error(`[Scheduler] Error sending class ending to teacher:`, e);
+                }
+              }
+            }
+          }
+          
+          const studentsSnapForEnding = await db.collection("users").where("role", "==", "student").get();
+          const endingTokens: string[] = [];
+          const searchDeptEnding = String(department || "").trim().toUpperCase();
+          const searchSemEnding = String(semester || "").trim();
+          
+          studentsSnapForEnding.forEach((sDoc: any) => {
+            const sData = sDoc.data();
+            let matches = true;
+            
+            if (searchDeptEnding && searchDeptEnding !== "ALL") {
+              const uDept = String(sData.courseId || sData.courseName || sData.department || "").trim().toUpperCase();
+              if (uDept && uDept !== searchDeptEnding) {
+                matches = false;
+              }
+            }
+            if (searchSemEnding && searchSemEnding !== "ALL") {
+              const uSem = String(sData.semester || "").trim();
+              if (uSem && uSem !== searchSemEnding) {
+                matches = false;
+              }
+            }
+            
+            if (matches && sData.fcmToken) {
+              endingTokens.push(sData.fcmToken);
+            }
+          });
+          
+          if (endingTokens.length > 0) {
+            try {
+              await admin.messaging().sendEachForMulticast({
+                ...endingPayload,
+                tokens: endingTokens
+              } as any);
+              console.log(`[Scheduler] Multicast class ending push sent to ${endingTokens.length} students`);
+            } catch (e) {
+              console.error(`[Scheduler] Error sending class ending multicast:`, e);
+            }
+          }
+          
+          const notifyId = `ending_${scheduleId}_${nowMs}`;
+          await db.collection("notifications").doc(notifyId).set({
+            recipientId: "all_matched",
+            targetDept: searchDeptEnding,
+            targetSem: searchSemEnding,
+            teacherId: teachId || "auto",
+            senderId: "system",
+            senderName: "Class System",
+            title,
+            message: body,
+            type: "class_ending",
+            read: false,
+            createdAt: admin.firestore.FieldValue.serverTimestamp(),
+            relatedId: scheduleId
+          }).catch(() => {});
+          
+          await db.collection("schedules").doc(scheduleId).update({
+            classEndingNotified: true
+          }).catch(() => {});
+
+          await db.collection("attendance_schedules").doc(`ATT_SCHED_${scheduleId}`).update({
+            classEndingNotified: true
+          }).catch(() => {});
+        }
+      }
     }
   } catch (error: any) {
     if (error && error.message && error.message.includes("PERMISSION_DENIED")) {

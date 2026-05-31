@@ -435,8 +435,8 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
           {/* Left Sidebar (Profile & Stats) */}
           <div className="lg:col-span-4 space-y-6 sticky lg:top-8">
             {/* Profile Card */}
-            <div className="bg-white dark:bg-[#202c33] p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform">
+            <div className="bg-white dark:bg-[#202c33] p-6 rounded-3xl shadow-sm border border-slate-50 dark:border-white/5 relative group">
+              <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-110 transition-transform pointer-events-none">
                  <Shield className="w-16 h-16 text-wa-teal" />
               </div>
               <div className="flex flex-col sm:flex-row lg:flex-col items-center sm:items-start lg:items-center text-center sm:text-left lg:text-center gap-6 relative z-10">
@@ -454,7 +454,7 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-center sm:justify-start lg:justify-center gap-2 mb-1">
-                     <span className="w-2.5 h-2.5 bg-wa-green rounded-full animate-pulse shadow-[0_0_10px_rgba(37,211,102,0.5)]"></span>
+                     <span className="w-2 h-2 bg-wa-green rounded-full"></span>
                      <p className="text-sm font-bold tracking-normal text-wa-teal uppercase">Student</p>
                   </div>
                   <h2 className="text-3xl font-bold text-slate-900 dark:text-[#e9edef] truncate tracking-tight mb-2">{profile?.name}</h2>
@@ -481,13 +481,13 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                 <button 
                   key={i} 
                   onClick={() => handleNav(stat.link, stat.tabId)}
-                  className="bg-white dark:bg-[#202c33] p-3 sm:p-4 lg:p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center gap-2 sm:gap-4 group transition-all hover:bg-wa-teal/5 active:scale-95"
+                  className="bg-white dark:bg-[#202c33] p-3 sm:p-4 lg:p-5 rounded-2xl shadow-sm border border-slate-50 dark:border-white/5 flex items-center gap-2 sm:gap-4 group hover:bg-wa-teal/5 relative overflow-hidden"
                 >
                   <div className="w-8 h-8 lg:w-12 lg:h-12 bg-[#f0f2f5] dark:bg-[#111b21] rounded-2xl flex items-center justify-center group-hover:bg-wa-teal group-hover:text-white transition-colors shrink-0">
                     <stat.icon className="w-4 h-4 lg:w-6 lg:h-6" />
                   </div>
                   <div className="text-left min-w-0">
-                    <p className="text-[9px] sm:text-[10px] lg:text-xs text-slate-600 dark:text-slate-400 dark:text-slate-300 font-bold uppercase tracking-wider mb-0.5 truncate">{stat.label}</p>
+                    <p className="text-[9px] sm:text-[10px] lg:text-xs text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider mb-0.5 truncate">{stat.label}</p>
                     <p className="text-xs sm:text-sm lg:text-lg font-bold text-slate-900 dark:text-[#e9edef] tracking-tight truncate">{stat.value}</p>
                   </div>
                 </button>
@@ -653,7 +653,9 @@ export default function StudentHome({ isEmbedded, onTabChange }: { isEmbedded?: 
                             </div>
                             {cls.type === 'active' ? (
                               <div className="flex items-center justify-end gap-1.5 mt-1.5">
-                                 <span className="w-2.5 h-2.5 bg-wa-green rounded-full animate-pulse shadow-[0_0_8px_rgba(37,211,102,0.5)]"></span>
+                                 <span className="w-2.5 h-2.5 bg-wa-green rounded-full flex items-center justify-center">
+                                   <span className="absolute w-2.5 h-2.5 bg-wa-green rounded-full animate-ping opacity-75"></span>
+                                 </span>
                                  <span className="text-sm font-bold text-wa-green uppercase tracking-wider">Live</span>
                               </div>
                             ) : (

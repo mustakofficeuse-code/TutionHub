@@ -691,7 +691,7 @@ export default function FeeManagement({
                                       {statusText}
                                     </span>
                                     {pendingPayments.length > 0 && (
-                                      <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500 rounded-lg animate-pulse shadow-lg shadow-rose-500/20">
+                                      <div className="flex items-center gap-2 px-3 py-1.5 bg-rose-500 rounded-lg animate-pulse shadow-sm">
                                         <div className="w-1.5 h-1.5 bg-white rounded-full" />
                                         <span className="text-[8px] font-bold text-white  tracking-normal">Review Alert</span>
                                       </div>
