@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import React, { useState, useEffect, useRef } from 'react';
+import { Html5Qrcode } from 'html5-qrcode';
 import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db, auth, logError } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
-import { Camera, MapPin, CheckCircle, AlertCircle, Loader2, ArrowLeft } from 'lucide-react';
+import { Camera, MapPin, CheckCircle, AlertCircle, Loader2, ArrowLeft, Upload, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const STATIC_QR_VALUE = "TUITIONHUB_WALL_QR_2026_SECURE";
@@ -29,24 +29,92 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
   const [scanning, setScanning] = useState(true);
   const [status, setStatus] = useState<'idle' | 'verifying' | 'success' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [isCameraActive, setIsCameraActive] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (scanning && status === 'idle') {
-      const scanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: { width: 250, height: 250 } },
-        /* verbose= */ false
-      );
+    let html5QrCode: Html5Qrcode | null = null;
+    let isMounted = true;
 
-      scanner.render(onScanSuccess, onScanFailure);
+    if (scanning && status === 'idle') {
+      const startScanner = async () => {
+        try {
+          // Guard against element existence
+          const readerEl = document.getElementById("reader");
+          if (!readerEl) return;
+
+          html5QrCode = new Html5Qrcode("reader");
+          
+          await html5QrCode.start(
+            { facingMode: "environment" },
+            {
+              fps: 10,
+              qrbox: { width: 250, height: 250 }
+            },
+            (decodedText: string) => {
+              if (isMounted) {
+                onScanSuccess(decodedText);
+              }
+            },
+            () => {
+              // Ignore frame analysis errors
+            }
+          );
+
+          if (isMounted) {
+            setIsCameraActive(true);
+            setCameraError(null);
+          }
+        } catch (err: any) {
+          console.error("Camera start failed:", err);
+          if (isMounted) {
+            setIsCameraActive(false);
+            const errStr = err?.message || String(err);
+            if (errStr.includes("NotReadableError") || errStr.includes("Could not start video source")) {
+              setCameraError("Camera is currently in use/locked by another tab, app (like Zoom, WhatsApp), or lacks permissions.");
+            } else {
+              setCameraError(errStr);
+            }
+          }
+        }
+      };
+
+      // Add a slight delay to ensure container DOM is fully painted
+      const timer = setTimeout(startScanner, 150);
 
       return () => {
-        if (document.getElementById("reader")) {
-          scanner.clear().catch(error => console.debug("Failed to clear scanner:", error));
+        isMounted = false;
+        clearTimeout(timer);
+        if (html5QrCode && html5QrCode.isScanning) {
+          html5QrCode.stop()
+            .then(() => {
+              console.log("Scanner stopped safely");
+            })
+            .catch(error => console.debug("Failed to stop scanner on cleanup:", error));
         }
       };
     }
   }, [scanning, status]);
+
+  const handleFileScan = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setStatus('verifying');
+    setMessage('Reading QR code from image file...');
+
+    try {
+      // Create a temporary Html5Qrcode instance bound to our target container
+      const tempScanner = new Html5Qrcode("reader-file-temp");
+      const decodedText = await tempScanner.scanFile(file, false);
+      await onScanSuccess(decodedText);
+    } catch (err: any) {
+      console.error("Image QR scan error:", err);
+      setStatus('error');
+      setMessage("Invalid QR Code or could not detect any QR pattern in the image. Please snap a clearer picture closer to the center QR code.");
+    }
+  };
 
   async function onScanSuccess(decodedText: string) {
     const cleanText = decodedText.trim();
@@ -272,6 +340,9 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
         </button>
       )}
 
+      {/* Hidden element required to process local uploaded images offline */}
+      <div id="reader-file-temp" className="hidden" />
+
       <div className="max-w-md mx-auto bg-white dark:bg-[#202c33] rounded-3xl shadow-2xl overflow-hidden border border-slate-50 dark:border-white/5 animate-in zoom-in-95 duration-500">
         <div className="bg-wa-teal p-4 sm:p-6 sm:p-10 text-center text-white relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
@@ -288,15 +359,63 @@ export default function AttendanceScanner({ isEmbedded, onTabChange }: { isEmbed
 
         <div className="p-4 sm:p-6 sm:p-10">
           {status === 'idle' && (
-            <div className="space-y-2 sm:space-y-4 sm:space-y-8">
-              <div id="reader" className="overflow-hidden rounded-2xl border-4 border-slate-50 dark:border-white/5 shadow-inner bg-[#f0f2f5] dark:bg-[#111b21] aspect-square flex items-center justify-center relative">
-                 <div className="absolute inset-0 pointer-events-none border-2 border-wa-teal/20 rounded-2xl animate-pulse" />
+            <div className="space-y-4 sm:space-y-6">
+              {cameraError ? (
+                <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/30 rounded-2xl text-center">
+                  <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-2 animate-bounce" />
+                  <h3 className="text-sm font-bold text-red-700 dark:text-red-400 mb-1">Camera Access Restricted</h3>
+                  <p className="text-xs text-red-600 dark:text-red-300/80 leading-relaxed font-semibold">
+                    {cameraError}
+                  </p>
+                </div>
+              ) : (
+                <div id="reader" className="overflow-hidden rounded-2xl border-4 border-slate-50 dark:border-white/5 shadow-inner bg-[#f0f2f5] dark:bg-[#111b21] aspect-square flex items-center justify-center relative">
+                  <div className="absolute inset-0 pointer-events-none border-2 border-wa-teal/20 rounded-2xl animate-pulse" />
+                </div>
+              )}
+
+              {/* Troubleshooting helper block when camera fails */}
+              {cameraError && (
+                <div className="bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30 rounded-2xl p-4 text-xs font-medium text-amber-800 dark:text-amber-400 leading-relaxed">
+                  <span className="font-bold block mb-1">💡 Troubleshooting Camera Locks:</span>
+                  <ul className="list-disc ml-4 space-y-1">
+                    <li>Close any other browser tabs or apps using the camera (Zoom, WhatsApp Web, FaceTime, etc.).</li>
+                    <li>Ensure site settings allow camera access for this web address.</li>
+                    <li>Or use the bulletproof <strong>Image Upload & Scan</strong> option below!</li>
+                  </ul>
+                </div>
+              )}
+
+              {/* Beautiful, Glowing Alternative File Scan Option */}
+              <div className="pt-2 border-t border-dashed border-slate-100 dark:border-white/5">
+                <p className="text-slate-400 dark:text-slate-500 text-xs text-center font-bold uppercase tracking-wider mb-2">Instant Fallback Option</p>
+                
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  accept="image/*" 
+                  onChange={handleFileScan} 
+                  className="hidden" 
+                />
+                
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-3 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-650 dark:hover:bg-indigo-650 hover:scale-[1.01] active:scale-95 text-white py-4 px-6 rounded-2xl font-bold text-xs tracking-normal shadow-lg transition-all"
+                >
+                  <Upload className="w-5 h-5 shrink-0" />
+                  Take Instant Photo & Scan QR
+                </button>
+                <div className="mt-2 text-[10px] text-center text-slate-400 font-bold uppercase leading-relaxed">
+                  Tip: Opens standard Phone Camera to bypass browser lockouts completely.
+                </div>
               </div>
+
               <div className="flex items-center gap-4 p-4 sm:p-5 bg-wa-teal/5 dark:bg-wa-teal/10 rounded-2xl border border-wa-teal/10">
                 <div className="w-10 h-10 bg-wa-teal rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg shadow-wa-teal/20">
                    <MapPin className="w-5 h-5 text-white" />
                 </div>
-                <p className="text-xs font-bold text-wa-teal  tracking-normal leading-relaxed">
+                <p className="text-xs font-bold text-wa-teal tracking-normal leading-relaxed">
                   Encryption active: Ensure high-accuracy GPS permissions are granted for location verification.
                 </p>
               </div>
