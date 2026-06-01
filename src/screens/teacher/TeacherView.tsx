@@ -17,7 +17,8 @@ import {
   LogOut,
   Clock,
   Megaphone,
-  Calendar
+  Calendar,
+  Info
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
 import { useAuth } from '../../context/AuthContext';
@@ -27,6 +28,7 @@ import { writeBatch, doc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import TeacherDashboard from './Dashboard';
 import UserProfileModal from '../../components/UserProfileModal';
+import NotificationGuideModal from '../../components/NotificationGuideModal';
 import MaterialManager from './MaterialManager';
 import DoubtSection from '../shared/DoubtSection';
 import TeacherAnalytics from './Analytics';
@@ -45,6 +47,7 @@ const TABS = [
   { id: 'stats', label: 'Stats', icon: TrendingUp, component: TeacherAnalytics },
   { id: 'fees', label: 'Fees', icon: CreditCard, component: FeeManagement },
   { id: 'admin', label: 'Admin', icon: Shield, component: AdminDashboard },
+  { id: 'profile', label: 'Profile', icon: User, component: Profile },
 ];
 
 export default function TeacherView() {
@@ -60,6 +63,7 @@ export default function TeacherView() {
   });
   const activeTabRef = useRef(activeTab);
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showGuideModal, setShowGuideModal ] = useState(false);
 
   useEffect(() => { activeTabRef.current = activeTab; }, [activeTab]);
 
@@ -296,7 +300,18 @@ export default function TeacherView() {
                 </div>
               </div>
               
-              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-2 sm:space-y-4 no-scrollbar">
+              <div className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-2 sm:space-y-4 no-scrollbar border-t border-slate-100 dark:border-white/5">
+                <div 
+                  onClick={() => setShowGuideModal(true)}
+                  className="mb-4 p-3 bg-amber-500/10 hover:bg-amber-500/20 rounded-2xl border border-amber-500/20 text-amber-800 dark:text-amber-400 text-xs font-semibold tracking-tight transition-all cursor-pointer flex gap-2.5 items-center justify-between shadow-sm active:scale-98"
+                >
+                  <div className="flex gap-2 items-center">
+                    <Info className="w-4 h-4 text-amber-500 shrink-0" />
+                    <span className="leading-tight">Notifications not working when app is closed?</span>
+                  </div>
+                  <span className="text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full shrink-0">FIX NOW</span>
+                </div>
+
                 {notifications.length === 0 ? (
                   <div className="py-24 text-center">
                     <div className="w-20 h-20 bg-[#f0f2f5] dark:bg-slate-800/10 rounded-2xl flex items-center justify-center mx-auto mb-4 sm:mb-6">
@@ -455,6 +470,11 @@ export default function TeacherView() {
       <UserProfileModal 
         isOpen={showProfileModal} 
         onClose={() => setShowProfileModal(false)} 
+      />
+
+      <NotificationGuideModal 
+        isOpen={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
       />
     </div>
   );
