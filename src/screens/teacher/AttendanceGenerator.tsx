@@ -573,7 +573,7 @@ export default function AttendanceGenerator({ isEmbedded }: { isEmbedded?: boole
       return nameMatch && deptMatch && semMatch;
     });
 
-    const studentCounts: Record<string, { name: string, dept: string, sem: string, avatarUrl: string, count: number, lastTime: string, records: any[] }> = {};
+    const studentCounts: Record<string, { id: string, name: string, dept: string, sem: string, avatarUrl: string, count: number, lastTime: string, records: any[] }> = {};
     
     filtered.forEach(rec => {
       if (!studentCounts[rec.studentId]) {

@@ -103,52 +103,56 @@ self.addEventListener('notificationclick', (event) => {
 });
 
 
-// Load Firebase compatibility scripts in background
-importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
+try {
+  // Load Firebase compatibility scripts in background
+  importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
-firebase.initializeApp({
-  apiKey: "AIzaSyBKkmzN2fWlpDIoBPcRVP5dt6oKXfOL2AI",
-  authDomain: "tutionhub-e41cd.firebaseapp.com",
-  projectId: "tutionhub-e41cd",
-  storageBucket: "tutionhub-e41cd.firebasestorage.app",
-  messagingSenderId: "327044071382",
-  appId: "1:327044071382:web:9c4d14d0d6c6650b456e77"
-});
+  firebase.initializeApp({
+    apiKey: "AIzaSyBKkmzN2fWlpDIoBPcRVP5dt6oKXfOL2AI",
+    authDomain: "tutionhub-e41cd.firebaseapp.com",
+    projectId: "tutionhub-e41cd",
+    storageBucket: "tutionhub-e41cd.firebasestorage.app",
+    messagingSenderId: "327044071382",
+    appId: "1:327044071382:web:9c4d14d0d6c6650b456e77"
+  });
 
-const messaging = firebase.messaging();
+  const messaging = firebase.messaging();
 
-messaging.onBackgroundMessage((payload) => {
-  console.log('[SW] Firebase SDK Background message received:', payload);
-  
-  const title = payload.notification?.title || payload.data?.title || 'New TuitionHub Alert';
-  const body = payload.notification?.body || payload.data?.body || '';
-  const chatId = payload.data?.chatId || payload.notification?.chatId || '';
-  let tag = payload.data?.tag || payload.notification?.tag || (chatId ? `chat_${chatId}` : `notif_fcm_${Date.now()}`);
+  messaging.onBackgroundMessage((payload) => {
+    console.log('[SW] Firebase SDK Background message received:', payload);
+    
+    const title = payload.notification?.title || payload.data?.title || 'New TuitionHub Alert';
+    const body = payload.notification?.body || payload.data?.body || '';
+    const chatId = payload.data?.chatId || payload.notification?.chatId || '';
+    let tag = payload.data?.tag || payload.notification?.tag || (chatId ? `chat_${chatId}` : `notif_fcm_${Date.now()}`);
 
-  if (processedPushTags.has(tag)) {
-    console.log('[SW] Firebase background skipped duplicate tag:', tag);
-    return;
-  }
-  
-  processedPushTags.add(tag);
+    if (processedPushTags.has(tag)) {
+      console.log('[SW] Firebase background skipped duplicate tag:', tag);
+      return;
+    }
+    
+    processedPushTags.add(tag);
 
-  const notificationOptions = {
-    body: body,
-    icon: '/gold_tuitionhub_logo_1779680854835.png',
-    badge: '/notification-badge.svg',
-    vibrate: [200, 100, 200],
-    data: payload.data || {},
-    tag: tag,
-    renotify: true,
-    requireInteraction: true,
-    actions: [
-      { action: 'open', title: 'Open App 🏫' }
-    ]
-  };
+    const notificationOptions = {
+      body: body,
+      icon: '/gold_tuitionhub_logo_1779680854835.png',
+      badge: '/notification-badge.svg',
+      vibrate: [200, 100, 200],
+      data: payload.data || {},
+      tag: tag,
+      renotify: true,
+      requireInteraction: true,
+      actions: [
+        { action: 'open', title: 'Open App 🏫' }
+      ]
+    };
 
-  return self.registration.showNotification(title, notificationOptions);
-});
+    return self.registration.showNotification(title, notificationOptions);
+  });
+} catch (e) {
+  console.warn('[SW] Non-blocking offline-tolerant Firebase script load skipped:', e);
+}
 
 // Active real service worker cache implementation to satisfy guide and remove console warnings of no-op fetch handler
 const CACHE_NAME = 'tuitionhub-static-cache-v10';

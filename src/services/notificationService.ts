@@ -116,7 +116,7 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
              if (isForMe && !newNotif.read) {
                 // Play Sound
                 try {
-                   const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+                   const AudioContext = null; // const original = window.AudioContext || (window as any).webkitAudioContext;
                    if (AudioContext) {
                      const audioCtx = new AudioContext();
                      const oscillator = audioCtx.createOscillator();
@@ -152,18 +152,18 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
                            navigator.serviceWorker.ready.then(registration => {
                              registration.showNotification(newNotif.title, {
                                 body: newNotif.message,
-                                icon: window.location.origin + '/notification-badge.svg',
+                                icon: window.location.origin + '/gold_tuitionhub_logo_1779680854835.png',
                                 badge: window.location.origin + '/notification-badge.svg',
                                 vibrate: [100, 50, 100],
                                 tag: newNotif.id
                              } as any).catch(e => {
                                 console.warn('SW notification failed:', e);
                                 // Fallback for desktop Safari if SW doesn't support showNotification
-                                new Notification(newNotif.title, { body: newNotif.message, icon: window.location.origin + '/notification-badge.svg', badge: window.location.origin + '/notification-badge.svg' });
+                                new Notification(newNotif.title, { body: newNotif.message, icon: window.location.origin + '/gold_tuitionhub_logo_1779680854835.png', badge: window.location.origin + '/notification-badge.svg' });
                              });
                            });
                         } else {
-                           new Notification(newNotif.title, { body: newNotif.message, icon: window.location.origin + '/notification-badge.svg' });
+                           new Notification(newNotif.title, { body: newNotif.message, icon: window.location.origin + '/gold_tuitionhub_logo_1779680854835.png' });
                         }
                      } catch (e) {
                        console.warn('Native notification instantiation failed: ', e);
