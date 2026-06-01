@@ -1310,16 +1310,6 @@ export default function DoubtSection({ isEmbedded }: { isEmbedded?: boolean }) {
                       />
                     ) : <User className="w-5 h-5" />
                   )}
-                  {selectedChat.type === 'group' && (
-                    <input 
-                      type="file" 
-                      id="group-avatar-upload" 
-                      accept="image/*" 
-                      className="hidden" 
-                      onChange={handleGroupAvatarUpload} 
-                      onClick={(e) => e.stopPropagation()} 
-                    />
-                  )}
                 </button>
                  <div 
                   className="flex-1 min-w-0 cursor-pointer"

@@ -5,6 +5,7 @@
 const processedPushTags = new Set();
 
 self.addEventListener('push', (event) => {
+  event.stopImmediatePropagation();
   console.log('[SW] High-priority native direct push event received.', event);
   
   let payload = {};
@@ -53,7 +54,7 @@ self.addEventListener('push', (event) => {
   const notificationOptions = {
     body: body,
     icon: '/gold_tuitionhub_logo_1779680854835.png',
-    badge: '/notification-badge.png',
+    badge: '/notification-badge.svg',
     vibrate: [200, 100, 200, 100, 200], // Intense vibration for quick alerts
     data: {
       chatId: chatId,
@@ -135,7 +136,7 @@ messaging.onBackgroundMessage((payload) => {
   const notificationOptions = {
     body: body,
     icon: '/gold_tuitionhub_logo_1779680854835.png',
-    badge: '/notification-badge.png',
+    badge: '/notification-badge.svg',
     vibrate: [200, 100, 200],
     data: payload.data || {},
     tag: tag,
@@ -157,7 +158,7 @@ const ASSETS_TO_CACHE = [
   '/gold_tuitionhub_logo_1779680854835.png',
   '/gold_tuitionhub_logo_192.png',
   '/gold_tuitionhub_logo_512.png',
-  '/notification-badge.png',
+  '/notification-badge.svg',
   '/manifest.json'
 ];
 

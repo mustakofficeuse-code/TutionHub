@@ -163,7 +163,7 @@ async function startServer() {
             const host = "tuitionhubapp.firebaseapp.com";
             const origin = `https://${host}`;
             const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
-            const absoluteBadge = `${origin}/notification-badge.png`;
+            const absoluteBadge = `${origin}/notification-badge.svg`;
             
             const activePayload: any = {
               data: {
@@ -184,7 +184,7 @@ async function startServer() {
                 priority: "high"
               },
               webpush: {
-                headers: { Urgency: "high" },
+                headers: { Urgency: "high", TTL: "86400" },
                 notification: {
                   title,
                   body,
@@ -303,7 +303,7 @@ async function startServer() {
             const host = "tuitionhubapp.firebaseapp.com";
             const origin = `https://${host}`;
             const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
-            const absoluteBadge = `${origin}/notification-badge.png`;
+            const absoluteBadge = `${origin}/notification-badge.svg`;
             
             const payload: any = {
               data: {
@@ -324,7 +324,7 @@ async function startServer() {
                 priority: "high"
               },
               webpush: {
-                headers: { Urgency: "high" },
+                headers: { Urgency: "high", TTL: "86400" },
                 notification: {
                   title,
                   body,
@@ -499,7 +499,7 @@ async function startServer() {
                 const host = "tuitionhubapp.firebaseapp.com";
                 const origin = `https://${host}`;
                 const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
-                const absoluteBadge = `${origin}/notification-badge.png`;
+                const absoluteBadge = `${origin}/notification-badge.svg`;
                 
                 const reminderPayload: any = {
                   data: {
@@ -520,7 +520,7 @@ async function startServer() {
                     priority: "high"
                   },
                   webpush: {
-                    headers: { Urgency: "high" },
+                    headers: { Urgency: "high", TTL: "86400" },
                     notification: {
                       title: rTitle,
                       body: rBody,
@@ -619,7 +619,7 @@ async function startServer() {
                   const host = "tuitionhubapp.firebaseapp.com";
                   const origin = `https://${host}`;
                   const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
-                  const absoluteBadge = `${origin}/notification-badge.png`;
+                  const absoluteBadge = `${origin}/notification-badge.svg`;
                   
                   const missedPayload: any = {
                     data: {
@@ -640,7 +640,7 @@ async function startServer() {
                       priority: "high"
                     },
                     webpush: {
-                      headers: { Urgency: "high" },
+                      headers: { Urgency: "high", TTL: "86400" },
                       notification: {
                         title: mTitle,
                         body: mBody,
@@ -723,7 +723,7 @@ async function startServer() {
       const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
       const origin = `${protocol}://${host}`;
       const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
-      const absoluteBadge = `${origin}/notification-badge.png`;
+      const absoluteBadge = `${origin}/notification-badge.svg`;
 
       const sendPushWrapper = async () => {
         const formattedTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -753,7 +753,8 @@ async function startServer() {
           },
           webpush: {
             headers: { 
-              Urgency: "high" 
+              Urgency: "high",
+              TTL: "86400" 
             },
             notification: {
               title: String(title || "New Notification"),
@@ -876,7 +877,7 @@ async function startServer() {
       const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
       const origin = `${protocol}://${host}`;
       const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
-      const absoluteBadge = `${origin}/notification-badge.png`;
+      const absoluteBadge = `${origin}/notification-badge.svg`;
 
       const db = getDb();
       const userDoc = await db.collection("users").doc(senderId).get();
@@ -956,7 +957,7 @@ async function startServer() {
                    priority: "high"
                  },
                  webpush: {
-                    headers: { Urgency: "high" },
+                    headers: { Urgency: "high", TTL: "86400" },
                     notification: {
                       title: String(`New Message from ${senderName}`),
                       body: String(text.trim()),

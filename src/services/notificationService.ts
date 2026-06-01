@@ -152,18 +152,18 @@ export const subscribeToNotifications = (userId: string, targetRole: string, cal
                            navigator.serviceWorker.ready.then(registration => {
                              registration.showNotification(newNotif.title, {
                                 body: newNotif.message,
-                                icon: window.location.origin + '/notification-badge.png',
-                                badge: window.location.origin + '/notification-badge.png',
+                                icon: window.location.origin + '/notification-badge.svg',
+                                badge: window.location.origin + '/notification-badge.svg',
                                 vibrate: [100, 50, 100],
                                 tag: newNotif.id
                              } as any).catch(e => {
                                 console.warn('SW notification failed:', e);
                                 // Fallback for desktop Safari if SW doesn't support showNotification
-                                new Notification(newNotif.title, { body: newNotif.message, icon: window.location.origin + '/notification-badge.png', badge: window.location.origin + '/notification-badge.png' });
+                                new Notification(newNotif.title, { body: newNotif.message, icon: window.location.origin + '/notification-badge.svg', badge: window.location.origin + '/notification-badge.svg' });
                              });
                            });
                         } else {
-                           new Notification(newNotif.title, { body: newNotif.message, icon: window.location.origin + '/notification-badge.png' });
+                           new Notification(newNotif.title, { body: newNotif.message, icon: window.location.origin + '/notification-badge.svg' });
                         }
                      } catch (e) {
                        console.warn('Native notification instantiation failed: ', e);
