@@ -56,6 +56,39 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
   const [isEditing, setIsEditing] = useState(false);
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
 
+  // Companion notifications (Option 2)
+  const [telegramChatId, setTelegramChatId] = useState(profile?.telegramChatId || '');
+  const [enableTelegramNotification, setEnableTelegramNotification] = useState(profile?.enableTelegramNotification || false);
+  const [whatsappNumber, setWhatsappNumber] = useState(profile?.whatsappNumber || '');
+  const [enableWhatsappNotification, setEnableWhatsappNotification] = useState(profile?.enableWhatsappNotification || false);
+
+  // Telegram auto-detection
+  const [detectingTelegram, setDetectingTelegram] = useState(false);
+  const [detectedSenders, setDetectedSenders] = useState<Array<{ id: number; name: string; username?: string; text: string; date: number }> | null>(null);
+  const [detectionError, setDetectionError] = useState<string | null>(null);
+
+  const handleDetectTelegramId = async () => {
+    setDetectingTelegram(true);
+    setDetectionError(null);
+    setDetectedSenders(null);
+    try {
+      const res = await fetch('/api/telegram-get-updates');
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to check bot status.');
+      }
+      if (data.senders && data.senders.length > 0) {
+        setDetectedSenders(data.senders);
+      } else {
+        setDetectionError("We checked but didn't find any recent messages in your bot's inbox. Double check that you've sent /start or any test message to your Custom Bot username *on Telegram*, then try again!");
+      }
+    } catch (err: any) {
+      setDetectionError(err.message || 'Error auto-detecting chat ID. Verify that TELEGRAM_BOT_TOKEN is set in your server Environment.');
+    } finally {
+      setDetectingTelegram(false);
+    }
+  };
+
   const triggerUpload = () => {
     hiddenFileInput.current?.click();
   };
@@ -74,6 +107,10 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
       setSemester(profile.semester || '');
       setCourseId(profile.courseId || '');
       setAvatarUrl(profile.avatarUrl || '');
+      setTelegramChatId(profile.telegramChatId || '');
+      setEnableTelegramNotification(profile.enableTelegramNotification || false);
+      setWhatsappNumber(profile.whatsappNumber || '');
+      setEnableWhatsappNotification(profile.enableWhatsappNotification || false);
       
       if (profile.role === 'teacher') {
         fetchInviteCode();
@@ -157,7 +194,11 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
         phoneNumber,
         realEmail: cleanEmail,
         avatarUrl,
-        profileComplete: true
+        profileComplete: true,
+        telegramChatId: telegramChatId.trim(),
+        enableTelegramNotification: !!enableTelegramNotification,
+        whatsappNumber: whatsappNumber.trim(),
+        enableWhatsappNotification: !!enableWhatsappNotification
       };
 
       if (profile.role === 'student') {
@@ -484,6 +525,10 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                       setSemester(profile?.semester || '');
                       setCourseId(profile?.courseId || '');
                       setAvatarUrl(profile?.avatarUrl || '');
+                      setTelegramChatId(profile?.telegramChatId || '');
+                      setEnableTelegramNotification(profile?.enableTelegramNotification || false);
+                      setWhatsappNumber(profile?.whatsappNumber || '');
+                      setEnableWhatsappNotification(profile?.enableWhatsappNotification || false);
                     }}
                     className="mt-6 flex items-center gap-3 px-6 py-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-2xl text-sm font-bold hover:bg-red-100 dark:hover:bg-red-900/40 transition-all border border-red-100 dark:border-red-900/30"
                   >
@@ -623,6 +668,152 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                     </div>
                   </>
                 )}
+              </div>
+
+              {/* Option 2: Companion Messenger Bypass Card Integration */}
+              <div className="mt-8 pt-8 border-t border-slate-100 dark:border-white/5 space-y-4">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 bg-wa-teal dark:bg-wa-green rounded-full animate-ping shrink-0" />
+                    Option 2: Direct Messaging Bypass (Instant Alerts)
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-[#8696a0] leading-relaxed mt-1">
+                    Since aggressive device battery-savers forcefully kill background browsers and PWA service workers, standard push alerts can sometimes fail when closed. Bypassing this is incredibly easy! Run a direct feed to your personal messaging accounts (like Telegram or WhatsApp), which are globally prioritized by your OS and receive alerts 100% of the time instantly.
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Telegram Integration */}
+                  <div className="p-5 rounded-2xl bg-[#24a1de]/5 border border-[#24a1de]/10 dark:border-[#24a1de]/20 space-y-4 flex flex-col justify-between">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-xl bg-[#24a1de]/10 text-[#24a1de] flex items-center justify-center">
+                            <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15.82-.7 3.59-1.22 6.31-.22 1.15-.65 1.54-.92 1.57-.59.05-1.04-.39-1.61-.76-.89-.58-1.39-.94-2.26-1.51-.99-.68-.35-1.05.22-1.63.15-.15 2.72-2.49 2.76-2.67.01-.02.01-.1-.04-.15-.05-.05-.12-.03-.17-.02-.07.01-1.12.71-3.17 2.1-.3.2-.57.31-.81.3-.26-.01-.76-.15-1.13-.27-.46-.15-.83-.23-.8-.49.02-.13.2-.27.53-.4 2.11-.92 4.07-1.54 5.92-2.18 1.05-.36 2.18-.38 2.94-.38.17 0 .55.03.8.2.22.15.26.39.23.53z" />
+                            </svg>
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-black uppercase text-[#24a1de] tracking-wider">Telegram Channel Forwarder</h4>
+                            <p className="text-[10px] text-slate-400 dark:text-[#8696a0] font-medium leading-none">Instant chat bot gateway</p>
+                          </div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer select-none shrink-0 border border-slate-100 dark:border-white/5 rounded-full p-0.5 bg-slate-50 dark:bg-[#111b21] shadow-inner">
+                          <input 
+                            type="checkbox" 
+                            disabled={!isEditing}
+                            className="sr-only peer" 
+                            checked={enableTelegramNotification}
+                            onChange={(e) => setEnableTelegramNotification(e.target.checked)}
+                          />
+                          <div className="w-10 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#24a1de]"></div>
+                        </label>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between pl-0.5">
+                          <label className="text-[10px] font-black text-slate-500 dark:text-[#8696a0] uppercase tracking-widest block">Your Telegram Chat ID</label>
+                          <button
+                            type="button"
+                            onClick={handleDetectTelegramId}
+                            disabled={detectingTelegram}
+                            className="text-[10px] font-extrabold text-[#24a1de] hover:underline flex items-center gap-1 focus:outline-none disabled:opacity-50"
+                          >
+                            {detectingTelegram ? 'Detecting...' : '⚡ Auto-Detect'}
+                          </button>
+                        </div>
+                        <input 
+                          type="text"
+                          placeholder="e.g. 581948593"
+                          disabled={!isEditing}
+                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#24a1de] text-slate-900 dark:text-white disabled:opacity-50"
+                          value={telegramChatId}
+                          onChange={(e) => setTelegramChatId(e.target.value.replace(/\D/g, ''))}
+                        />
+
+                        {/* Display detected senders */}
+                        {detectedSenders && (
+                          <div className="bg-slate-900/95 dark:bg-[#111b21] p-3 rounded-xl border border-[#24a1de]/30 text-[11px] text-white space-y-1.5 animate-fadeIn max-h-36 overflow-y-auto">
+                            <p className="font-bold text-[#24a1de] text-[10px] uppercase tracking-wider">Select your Telegram account below:</p>
+                            {detectedSenders.map((sender) => (
+                              <button
+                                key={sender.id}
+                                type="button"
+                                onClick={() => {
+                                  setTelegramChatId(String(sender.id));
+                                  setDetectedSenders(null);
+                                }}
+                                className="w-full text-left p-2 rounded bg-white/5 hover:bg-[#24a1de]/20 transition-all border border-white/5 flex items-center justify-between"
+                              >
+                                <div className="truncate pr-1">
+                                  <span className="font-bold">{sender.name}</span> {sender.username && <span className="opacity-60">(@{sender.username})</span>}
+                                  <p className="opacity-50 text-[10px] truncate">Last text: "{sender.text}"</p>
+                                </div>
+                                <span className="font-mono text-[9px] bg-white/10 px-1.5 py-0.5 rounded text-[#24a1de] font-bold shrink-0">{sender.id}</span>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {detectionError && (
+                          <div className="bg-red-500/10 dark:bg-red-500/5 p-2.5 rounded-xl border border-red-500/20 text-[10px] text-red-600 dark:text-red-400 leading-snug animate-fadeIn">
+                            {detectionError}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-3 text-[10px] text-slate-400 dark:text-[#8696a0] bg-[#24a1de]/5 dark:bg-[#24a1de]/10 px-3 py-2 rounded-xl border border-[#24a1de]/5 space-y-2">
+                      <div>
+                        <strong>Get Chat ID in 5 Seconds:</strong> Send <code>/start</code> to the bot <a href="https://t.me/GetChatID_bot" target="_blank" rel="noopener noreferrer" className="text-[#24a1de] hover:underline font-extrabold focus:outline-none">@GetChatID_bot</a> or search and start a conversation with your own Custom Bot.
+                      </div>
+                      <div className="border-t border-[#24a1de]/10 pt-1.5 text-[10px] leading-relaxed">
+                        🎉 <strong>Using Your Custom Bot:</strong> Message your bot first (e.g., send '/start'), then click the <strong className="text-[#24a1de]">⚡ Auto-Detect</strong> link above, and we will instantly fetch your ID from your bot's inbox!
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* WhatsApp Integration */}
+                  <div className="p-5 rounded-2xl bg-[#25D366]/5 border border-[#25D366]/10 dark:border-[#25D366]/20 space-y-4 flex flex-col justify-between">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-9 h-9 rounded-xl bg-[#25D366]/10 text-[#25D366] flex items-center justify-center">
+                            <Phone className="w-5 h-5 text-[#25D366]" />
+                          </div>
+                          <div>
+                            <h4 className="text-xs font-black uppercase text-[#25D366] tracking-wider">WhatsApp Alert Service</h4>
+                            <p className="text-[10px] text-slate-400 dark:text-[#8696a0] font-medium leading-none">Twilio system integration feed</p>
+                          </div>
+                        </div>
+                        <label className="relative inline-flex items-center cursor-pointer select-none shrink-0 border border-slate-100 dark:border-white/5 rounded-full p-0.5 bg-slate-50 dark:bg-[#111b21] shadow-inner">
+                          <input 
+                            type="checkbox" 
+                            disabled={!isEditing}
+                            className="sr-only peer" 
+                            checked={enableWhatsappNotification}
+                            onChange={(e) => setEnableWhatsappNotification(e.target.checked)}
+                          />
+                          <div className="w-10 h-5 bg-slate-200 dark:bg-slate-700 rounded-full peer peer-checked:after:translate-x-5 peer-checked:after:border-white after:content-[''] after:absolute after:top-[4px] after:left-[4px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#25D366]"></div>
+                        </label>
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-500 dark:text-[#8696a0] uppercase tracking-widest block pl-0.5">WhatsApp Number</label>
+                        <input 
+                          type="tel"
+                          placeholder="e.g. +919876543210"
+                          disabled={!isEditing}
+                          className="w-full px-4 py-2.5 bg-slate-50 dark:bg-[#111b21] border border-slate-200 dark:border-white/10 rounded-xl text-xs outline-none transition-all focus:ring-2 focus:ring-[#25D366] text-slate-900 dark:text-white disabled:opacity-50"
+                          value={whatsappNumber}
+                          onChange={(e) => setWhatsappNumber(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3 text-[10px] text-slate-400 dark:text-[#8696a0] bg-[#25D366]/5 dark:bg-[#25D366]/10 px-3 py-2 rounded-xl leading-relaxed border border-[#25D366]/5">
+                      <strong>Twilio Sandbox Setup:</strong> On your phone, send a text containing <code>join sandbox-code</code> to <strong>+1 415 523 8886</strong> to authorize alerts.
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {isEditing && (

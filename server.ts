@@ -713,6 +713,162 @@ async function startServer() {
     }
   });
 
+  // Helper to send Option 2 Companion Notifications (Telegram & WhatsApp)
+  async function sendCompanionNotifications(options: {
+    recipientId?: string;
+    targetRole?: string;
+    targetDept?: string;
+    targetSem?: string;
+    title: string;
+    body: string;
+  }) {
+    const { recipientId, targetRole, targetDept, targetSem, title, body } = options;
+    const db = getDb();
+    
+    // Telegram Bot Token - Read from env
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) {
+      console.log("[Companion Logs] TELEGRAM_BOT_TOKEN is not configured in .env. Skip actual request.");
+    }
+
+    try {
+      let usersToAlert: any[] = [];
+      
+      if (recipientId) {
+        const uDoc = await db.collection("users").doc(recipientId).get();
+        if (uDoc.exists) {
+          usersToAlert.push({ id: uDoc.id, ...uDoc.data() });
+        }
+      } else if (targetRole) {
+        let snap;
+        if (targetRole === "ALL") {
+          snap = await db.collection("users").get();
+        } else {
+          snap = await db.collection("users").where("role", "==", targetRole).get();
+        }
+        snap.forEach((doc) => {
+          const userData = doc.data();
+          let matched = true;
+          if (targetDept) {
+            const searchDept = String(targetDept).trim().toUpperCase();
+            const userDept = String(userData.courseId || userData.courseName || userData.department || "").trim().toUpperCase();
+            if (searchDept !== "ALL" && userDept !== "ALL" && userDept && userDept !== searchDept) {
+              matched = false;
+            }
+          }
+          if (targetSem) {
+            const searchSem = String(targetSem).trim();
+            const userSem = String(userData.semester || "").trim();
+            if (searchSem !== "ALL" && userSem !== "ALL" && userSem && userSem !== searchSem) {
+              matched = false;
+            }
+          }
+          if (matched) {
+            usersToAlert.push({ id: doc.id, ...userData });
+          }
+        });
+      }
+
+      for (const u of usersToAlert) {
+        // Send Telegram if configured
+        if (u.enableTelegramNotification && u.telegramChatId) {
+          const chat_id = String(u.telegramChatId).trim();
+          const telegramMessage = `<b>🔔 TuitionHub Alert</b>\n\n<b>${title}</b>\n\n${body}\n\n📱 <i>Access Portal:</i> <a href="https://tuitionhubapp.firebaseapp.com/">TuitionHub App</a>`;
+          
+          if (botToken) {
+            console.log(`[Companion] Sending Telegram alert to Chat ID: ${chat_id}`);
+            try {
+              const url = `https://api.telegram.org/bot${botToken}/sendMessage`
+                .concat(`?chat_id=${chat_id}`)
+                .concat(`&text=${encodeURIComponent(telegramMessage)}`)
+                .concat(`&parse_mode=HTML`);
+              
+              const fetchResult = await fetch(url, { method: "POST" });
+              const fetchResultJson = await fetchResult.json();
+              console.log(`[Companion] Telegram API response:`, fetchResultJson);
+            } catch (tErr) {
+              console.error(`[Companion] Error firing Telegram bot:`, tErr);
+            }
+          } else {
+            console.log(`[Companion Setup Simulation] Would send Telegram to target chat ${chat_id}. Configure TELEGRAM_BOT_TOKEN in environment variable to process live requests!`);
+          }
+        }
+
+        // Send WhatsApp log (simulate/mock Twilio since we don't have static credentials)
+        if (u.enableWhatsappNotification && u.whatsappNumber) {
+          const phone = String(u.whatsappNumber).trim();
+          console.log(`[Companion Simulation] Would trigger Twilio WhatsApp templates to number ${phone} for message: "${title}: ${body}"!`);
+        }
+      }
+    } catch (err) {
+      console.error("[Companion Notification Router] Error executing companion logic:", err);
+    }
+  }
+
+  // API to fetch recent updates from Telegram bot to easily retrieve Chat ID
+  app.get("/api/telegram-get-updates", async (req, res) => {
+    try {
+      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      if (!botToken) {
+        return res.status(400).json({ 
+          error: "TELEGRAM_BOT_TOKEN is not configured in `.env` yet. Please setup your bot token in App Settings or server environment first." 
+        });
+      }
+
+      // Query Telegram getUpdates api
+      const url = `https://api.telegram.org/bot${botToken}/getUpdates?timeout=5`;
+      const response = await fetch(url);
+      const data: any = await response.json();
+
+      if (!data.ok) {
+        return res.status(500).json({ 
+          error: `Telegram API returned error: ${data.description || "Unknown error"}. Is your bot token correct?` 
+        });
+      }
+
+      const recentSenders: Array<{ id: number; name: string; username?: string; text: string; date: number }> = [];
+      const seenIds = new Set<number>();
+
+      if (data.result && Array.isArray(data.result)) {
+        // Inspect updates backwards (most recent first)
+        for (let i = data.result.length - 1; i >= 0; i--) {
+          const u = data.result[i];
+          const msg = u.message || u.edited_message || u.channel_post;
+          if (msg && msg.chat) {
+            const chatId = msg.chat.id;
+            if (!seenIds.has(chatId)) {
+              seenIds.add(chatId);
+              
+              let fullName = "";
+              if (msg.chat.type === "private") {
+                fullName = [msg.chat.first_name, msg.chat.last_name].filter(Boolean).join(" ");
+              } else {
+                fullName = msg.chat.title || "Group Chat";
+              }
+
+              if (!fullName && msg.from) {
+                fullName = [msg.from.first_name, msg.from.last_name].filter(Boolean).join(" ");
+              }
+
+              recentSenders.push({
+                id: chatId,
+                name: fullName || "Telegram User",
+                username: msg.chat.username || msg.from?.username || "",
+                text: msg.text || "(Media / Command)",
+                date: msg.date || Math.floor(Date.now() / 1000)
+              });
+            }
+          }
+        }
+      }
+
+      return res.json({ success: true, senders: recentSenders });
+    } catch (e: any) {
+      console.error("[Telegram Updates Helper Error]:", e);
+      return res.status(500).json({ error: e.message || e });
+    }
+  });
+
   // API to send push notification using FCM
   app.post("/api/send-push", async (req, res) => {
     try {
@@ -850,11 +1006,15 @@ async function startServer() {
         // Send a response immediately and setup a delayed push on the server side
         setTimeout(() => {
           sendPushWrapper().catch(e => console.error("Delayed push failed:", e));
+          sendCompanionNotifications({ recipientId, targetRole, targetDept, targetSem, title, body })
+            .catch(e => console.error("Delayed Companion Error:", e));
         }, delayMs);
         return res.json({ success: true, message: `Push scheduled to be sent in ${delayMs}ms` });
       }
 
       await sendPushWrapper();
+      sendCompanionNotifications({ recipientId, targetRole, targetDept, targetSem, title, body })
+        .catch(e => console.error("Companion Error:", e));
       return res.json({ success: true, message: "Push attempt completed" });
     } catch (e: any) {
       if (e && e.message && e.message.includes("PERMISSION_DENIED")) {
@@ -936,44 +1096,57 @@ async function startServer() {
          });
 
          // Trigger push notification to the recipient of this new reply!
-         // (This works nicely with our background fetch setup)
          const recipientDoc = await db.collection("users").doc(recipientId).get();
-         if (recipientDoc.exists && recipientDoc.data()?.fcmToken) {
-             const payload: any = {
-                 data: {
-                     title: String(`New Message from ${senderName}`),
-                     body: String(text.trim()),
-                     type: "chat_message",
-                     chatId: String(chatId),
-                     senderId: String(senderId),
-                     targetId: String(recipientId)
-                 },
-                 notification: {
-                   title: String(`New Message from ${senderName}`),
-                   body: String(text.trim()),
-                   icon: absoluteLogo
-                 },
-                 android: {
-                   priority: "high"
-                 },
-                 webpush: {
-                    headers: { Urgency: "high", TTL: "86400" },
-                    notification: {
-                      title: String(`New Message from ${senderName}`),
-                      body: String(text.trim()),
-                      icon: absoluteLogo,
-                      badge: absoluteBadge,
-                      requireInteraction: true
-                    },
-                    fcm_options: {
-                      link: origin + "/"
-                    }
-                  }
-             };
-             await admin.messaging().send({
-                ...payload,
-                token: recipientDoc.data()!.fcmToken
-             });
+         if (recipientDoc.exists) {
+             const recipientData = recipientDoc.data();
+             if (recipientData?.fcmToken) {
+                 const payload: any = {
+                     data: {
+                         title: String(`New Message from ${senderName}`),
+                         body: String(text.trim()),
+                         type: "chat_message",
+                         chatId: String(chatId),
+                         senderId: String(senderId),
+                         targetId: String(recipientId)
+                     },
+                     notification: {
+                       title: String(`New Message from ${senderName}`),
+                       body: String(text.trim()),
+                       icon: absoluteLogo
+                     },
+                     android: {
+                       priority: "high"
+                     },
+                     webpush: {
+                        headers: { Urgency: "high", TTL: "86400" },
+                        notification: {
+                          title: String(`New Message from ${senderName}`),
+                          body: String(text.trim()),
+                          icon: absoluteLogo,
+                          badge: absoluteBadge,
+                          requireInteraction: true
+                        },
+                        fcm_options: {
+                          link: origin + "/"
+                        }
+                      }
+                 };
+                 try {
+                     await admin.messaging().send({
+                        ...payload,
+                        token: recipientData.fcmToken
+                     });
+                 } catch (fcmErr) {
+                     console.error("[FCM] Chat reply FCM broadcast error:", fcmErr);
+                 }
+             }
+
+             // Send Option 2 Companion Notifications (Telegram/WhatsApp fallback)
+             await sendCompanionNotifications({
+                 recipientId: recipientId,
+                 title: `New Message from ${senderName}`,
+                 body: text.trim()
+             }).catch(err => console.error("[Companion Chat reply error]", err));
          }
       }
 
