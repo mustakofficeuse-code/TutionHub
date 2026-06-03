@@ -221,62 +221,6 @@ export const deleteNotification = async (notificationId: string) => {
 };
 
 export const setupPushNotifications = async (userId: string) => {
-  if (!messaging) return;
-  
-  try {
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      let registration: ServiceWorkerRegistration | undefined = undefined;
-      if ('serviceWorker' in navigator) {
-        registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', { scope: '/' });
-        try {
-          await registration.update();
-        } catch (e) {
-          console.warn('SW registration update failed:', e);
-        }
-        console.log('Service Worker registered and verified active with scope: /');
-      }
-      
-      // Cache-bypass for Firestore updates to avoid quota limits, but SW is guaranteed registered
-      const cachedToken = localStorage.getItem(`fcm_token_cache_${userId}`);
-      if (cachedToken) {
-        console.log('FCM token found in cache, skipping token fetch to prevent quota limits.');
-        return;
-      }
-      
-      // Use env-defined VAPID Key if available, otherwise fallback to the default key
-      const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY || 'BGcpvXhvVH4uIrCpxRi5D1YykZEvDGKIkP5V2CFTiqp7GZNR166gaaWhfkBnD7foYacjghc8-tUDcD5pMr2Ah78';
-      
-      const token = await getToken(messaging, { 
-        vapidKey: vapidKey,
-        serviceWorkerRegistration: registration
-      });
-      if (token) {
-        await updateDoc(doc(db, 'users', userId), { fcmToken: token });
-        localStorage.setItem(`fcm_token_cache_${userId}`, token);
-        console.log('Push notifications enabled with FCM token');
-      }
-    }
-  } catch (error: any) {
-    const isAuthOrVapidMismatch = 
-      error?.code === 'messaging/token-subscribe-failed' || 
-      error?.message?.includes('authentication credential') || 
-      error?.message?.includes('credential') ||
-      error?.message?.includes('subscribe-failed') ||
-      error?.message?.includes('OAuth 2 access token');
-
-    if (isAuthOrVapidMismatch) {
-      console.warn(
-        'FCM Subscription Notice: Since a custom Firebase project is active, push notifications require generating a Web Push Certificate (VAPID Key) in the Firebase Console (Project Settings > Cloud Messaging > Web Push certificates). Please configure the environment variable VITE_FIREBASE_VAPID_KEY with this certificate value. In-app and browser notifications will continue to function normally.'
-      );
-    } else {
-      console.error('Error setting up push notifications:', error);
-    }
-    
-    // If we hit a quota exceeded or token subscribe failed, cache a placeholder so we don't spam requests
-    if (isAuthOrVapidMismatch || (error?.message && (error.message.includes('Quota exceeded') || error.message.includes('quota') || error.message.includes('subscribe')))) {
-      localStorage.setItem(`fcm_token_cache_${userId}`, 'registration_throttled');
-    }
-  }
+  console.log('FCM subscription bypassed. Telegram is currently the configured push messaging system.');
 };
 

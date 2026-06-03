@@ -69,78 +69,8 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
           const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
           const absoluteBadge = `${origin}/notification-badge.png`;
           
-          const activePayload: any = {
-            data: {
-              title,
-              body,
-              type: "attendance_active",
-              scheduleId,
-              subject: String(subject || ""),
-              startTime: String(startTime || ""),
-              endTime: String(endTime || "")
-            },
-            notification: {
-              title,
-              body,
-              icon: absoluteLogo
-            },
-            android: {
-              priority: "high"
-            },
-            webpush: {
-              headers: { Urgency: "high" },
-              notification: {
-                title,
-                body,
-                icon: absoluteLogo,
-                badge: absoluteBadge,
-                requireInteraction: true
-              },
-              fcm_options: {
-                link: origin + "/"
-              }
-            }
-          };
-          
-          // Send push to matching students
-          const studentsSnap = await db.collection("users").where("role", "==", "student").get();
-          const tokens: string[] = [];
           const searchDept = String(department || "").trim().toUpperCase();
           const searchSem = String(semester || "").trim();
-          
-          studentsSnap.forEach((sDoc: any) => {
-            const sData = sDoc.data();
-            let matches = true;
-            
-            if (searchDept && searchDept !== "ALL") {
-              const uDept = String(sData.courseId || sData.courseName || sData.department || "").trim().toUpperCase();
-              if (uDept && uDept !== searchDept) {
-                matches = false;
-              }
-            }
-            if (searchSem && searchSem !== "ALL") {
-              const uSem = String(sData.semester || "").trim();
-              if (uSem && uSem !== searchSem) {
-                matches = false;
-              }
-            }
-            
-            if (matches && sData.fcmToken) {
-              tokens.push(sData.fcmToken);
-            }
-          });
-          
-          if (tokens.length > 0) {
-            try {
-              await admin.messaging().sendEachForMulticast({
-                ...activePayload,
-                tokens
-              } as any);
-              console.log(`[Scheduler] Multicast active attendance push sent to ${tokens.length} students`);
-            } catch (e) {
-              console.error(`[Scheduler] Error sending active attendance multicast:`, e);
-            }
-          }
 
           // Send Companion Telegram/WhatsApp alerts
           sendCompanionNotifications(db, {
@@ -218,99 +148,9 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
           const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
           const absoluteBadge = `${origin}/notification-badge.png`;
           
-          const payload: any = {
-            data: {
-              title,
-              body,
-              type: "class_reminder",
-              scheduleId,
-              subject: String(subject || ""),
-              startTime: String(startTime || ""),
-              endTime: String(endTime || "")
-            },
-            notification: {
-              title,
-              body,
-              icon: absoluteLogo
-            },
-            android: {
-              priority: "high"
-            },
-            webpush: {
-              headers: { Urgency: "high" },
-              notification: {
-                title,
-                body,
-                icon: absoluteLogo,
-                badge: absoluteBadge,
-                requireInteraction: true
-              },
-              fcm_options: {
-                link: origin + "/"
-              }
-            }
-          };
-
-          // Notify Teacher
           const teachId = teacherId || schedule.teacherUid;
-          if (teachId) {
-            const teachDoc = await db.collection("users").doc(teachId).get();
-            if (teachDoc.exists) {
-              const teachData = teachDoc.data();
-              if (teachData && teachData.fcmToken) {
-                try {
-                  await admin.messaging().send({
-                    ...payload,
-                    token: teachData.fcmToken
-                  } as any);
-                  console.log(`[Scheduler] Sent push to teacher ${teachId}`);
-                } catch (e) {
-                  console.error(`[Scheduler] Error sending to teacher:`, e);
-                }
-              }
-            }
-          }
-          
-          // Notify Students matching department and semester
-          const studentsSnap = await db.collection("users").where("role", "==", "student").get();
-          const tokens: string[] = [];
-          
           const searchDept = String(department || "").trim().toUpperCase();
           const searchSem = String(semester || "").trim();
-          
-          studentsSnap.forEach((sDoc: any) => {
-            const sData = sDoc.data();
-            let matches = true;
-            
-            if (searchDept && searchDept !== "ALL") {
-              const uDept = String(sData.courseId || sData.courseName || sData.department || "").trim().toUpperCase();
-              if (uDept && uDept !== searchDept) {
-                matches = false;
-              }
-            }
-            if (searchSem && searchSem !== "ALL") {
-              const uSem = String(sData.semester || "").trim();
-              if (uSem && uSem !== searchSem) {
-                matches = false;
-              }
-            }
-            
-            if (matches && sData.fcmToken) {
-              tokens.push(sData.fcmToken);
-            }
-          });
-          
-          if (tokens.length > 0) {
-            try {
-              await admin.messaging().sendEachForMulticast({
-                ...payload,
-                tokens
-              } as any);
-              console.log(`[Scheduler] Multicast push to ${tokens.length} students`);
-            } catch (e) {
-              console.error(`[Scheduler] Error sending multicast:`, e);
-            }
-          }
 
           // Record this in "notifications" collection so it is visible inside the UI Notification Inbox too
           const notifyId = `remind_${scheduleId}_${nowMs}`;
@@ -414,64 +254,15 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
           if (allowReminder) {
             console.log(`[Scheduler] Sending insistent 15-min attendance reminder to student ${studentUid} for class ${subject}`);
             
-            if (sData.fcmToken) {
-              const rTitle = `⚠️ Attendance Pending: ${subject}`;
-              const rBody = `Your attendance is pending for the class: ${subject}. Please open the app and scan the QR code to record your attendance! 🕒`;
-              
-              const host = "tuitionhubapp.firebaseapp.com";
-              const origin = `https://${host}`;
-              const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
-              const absoluteBadge = `${origin}/notification-badge.png`;
-              
-              const reminderPayload: any = {
-                data: {
-                  title: rTitle,
-                  body: rBody,
-                  type: "attendance_reminder_insistent",
-                  scheduleId,
-                  subject: String(subject || ""),
-                  startTime: String(startTime || ""),
-                  endTime: String(endTime || "")
-                },
-                notification: {
-                  title: rTitle,
-                  body: rBody,
-                  icon: absoluteLogo
-                },
-                android: {
-                  priority: "high"
-                },
-                webpush: {
-                  headers: { Urgency: "high" },
-                  notification: {
-                    title: rTitle,
-                    body: rBody,
-                    icon: absoluteLogo,
-                    badge: absoluteBadge,
-                    requireInteraction: true
-                  },
-                  fcm_options: {
-                    link: origin + "/"
-                  }
-                }
-              };
-              
-              try {
-                await admin.messaging().send({
-                  ...reminderPayload,
-                  token: sData.fcmToken
-                });
-              } catch (e) {
-                console.error(`[Scheduler] Failed sending 15-min push:`, e);
-              }
-
-              // Send Companion Telegram/WhatsApp alert
-              sendCompanionNotifications(db, {
-                recipientId: studentUid,
-                title: rTitle,
-                body: rBody
-              }).catch(e => console.error("[Cron-Helper Companion Error]:", e));
-            }
+            const rTitle = `⚠️ Attendance Pending: ${subject}`;
+            const rBody = `Your attendance is pending for the class: ${subject}. Please open the app and scan the QR code to record your attendance! 🕒`;
+            
+            // Send Companion Telegram/WhatsApp alert
+            sendCompanionNotifications(db, {
+              recipientId: studentUid,
+              title: rTitle,
+              body: rBody
+            }).catch(e => console.error("[Cron-Helper Companion Error]:", e));
             
             // Persist tracker document
             await db.collection("attendance_reminders").doc(trackerId).set({
@@ -543,62 +334,12 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
                 relatedId: scheduleId
               }).catch(() => {});
               
-              // Send push notification
-              if (sData.fcmToken) {
-                const host = "tuitionhubapp.firebaseapp.com";
-                const origin = `https://${host}`;
-                const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
-                const absoluteBadge = `${origin}/notification-badge.png`;
-                
-                const missedPayload: any = {
-                  data: {
-                    title: mTitle,
-                    body: mBody,
-                    type: "class_missed",
-                    scheduleId,
-                    subject: String(subject || ""),
-                    startTime: String(startTime || ""),
-                    endTime: String(endTime || "")
-                  },
-                  notification: {
-                    title: mTitle,
-                    body: mBody,
-                    icon: absoluteLogo
-                  },
-                  android: {
-                    priority: "high"
-                  },
-                  webpush: {
-                    headers: { Urgency: "high" },
-                    notification: {
-                      title: mTitle,
-                      body: mBody,
-                      icon: absoluteLogo,
-                      badge: absoluteBadge,
-                      requireInteraction: true
-                    },
-                    fcm_options: {
-                      link: origin + "/"
-                    }
-                  }
-                };
-                
-                try {
-                  await admin.messaging().send({
-                    ...missedPayload,
-                    token: sData.fcmToken
-                  });
-                } catch (e) {
-                  console.error(`[Scheduler] Failed sending missed push to ${studentUid}:`, e);
-                }
-
-                // Send Companion Telegram/WhatsApp alert
-                sendCompanionNotifications(db, {
-                  recipientId: studentUid,
-                  title: mTitle,
-                  body: mBody
-                }).catch(e => console.error("[Cron-Helper Companion Error]:", e));
-              }
+              // Send Companion Telegram/WhatsApp alert
+              sendCompanionNotifications(db, {
+                recipientId: studentUid,
+                title: mTitle,
+                body: mBody
+              }).catch(e => console.error("[Cron-Helper Companion Error]:", e));
             }
           }
           
@@ -629,95 +370,9 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
           const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
           const absoluteBadge = `${origin}/notification-badge.png`;
           
-          const endingPayload: any = {
-            data: {
-              title,
-              body,
-              type: "class_ending",
-              scheduleId,
-              subject: String(subject || ""),
-              startTime: String(startTime || ""),
-              endTime: String(endTime || "")
-            },
-            notification: {
-              title,
-              body,
-              icon: absoluteLogo
-            },
-            android: {
-              priority: "high"
-            },
-            webpush: {
-              headers: { Urgency: "high" },
-              notification: {
-                title,
-                body,
-                icon: absoluteLogo,
-                badge: absoluteBadge,
-                requireInteraction: true
-              },
-              fcm_options: {
-                link: origin + "/"
-              }
-            }
-          };
-          
           const teachId = teacherId || schedule.teacherUid;
-          if (teachId) {
-            const teachDoc = await db.collection("users").doc(teachId).get();
-            if (teachDoc.exists) {
-              const teachData = teachDoc.data();
-              if (teachData && teachData.fcmToken) {
-                try {
-                  await admin.messaging().send({
-                    ...endingPayload,
-                    token: teachData.fcmToken
-                  } as any);
-                } catch (e) {
-                  console.error(`[Scheduler] Error sending class ending to teacher:`, e);
-                }
-              }
-            }
-          }
-          
-          const studentsSnapForEnding = await db.collection("users").where("role", "==", "student").get();
-          const endingTokens: string[] = [];
           const searchDeptEnding = String(department || "").trim().toUpperCase();
           const searchSemEnding = String(semester || "").trim();
-          
-          studentsSnapForEnding.forEach((sDoc: any) => {
-            const sData = sDoc.data();
-            let matches = true;
-            
-            if (searchDeptEnding && searchDeptEnding !== "ALL") {
-              const uDept = String(sData.courseId || sData.courseName || sData.department || "").trim().toUpperCase();
-              if (uDept && uDept !== searchDeptEnding) {
-                matches = false;
-              }
-            }
-            if (searchSemEnding && searchSemEnding !== "ALL") {
-              const uSem = String(sData.semester || "").trim();
-              if (uSem && uSem !== searchSemEnding) {
-                matches = false;
-              }
-            }
-            
-            if (matches && sData.fcmToken) {
-              endingTokens.push(sData.fcmToken);
-            }
-          });
-          
-          if (endingTokens.length > 0) {
-            try {
-              await admin.messaging().sendEachForMulticast({
-                ...endingPayload,
-                tokens: endingTokens
-              } as any);
-              console.log(`[Scheduler] Multicast class ending push sent to ${endingTokens.length} students`);
-            } catch (e) {
-              console.error(`[Scheduler] Error sending class ending multicast:`, e);
-            }
-          }
 
           // Send Companion Telegram/WhatsApp alert
           sendCompanionNotifications(db, {
@@ -763,7 +418,32 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
   }
 }
 
-// Option 2 Web/Telegram Notification Broadcaster for Cron Jobs
+function getTelegramReplyMarkup(title: string, body: string) {
+  const t = (title + " " + body).toLowerCase();
+  const portalUrl = "https://ais-pre-oahrpb6rn47hcj6z2buf4u-826144498385.asia-southeast1.run.app";
+  
+  let buttons: Array<{ text: string; url: string }> = [];
+  
+  if (t.includes("chat") || t.includes("reply") || t.includes("message") || t.includes("doubt")) {
+    buttons.push({ text: "✉️ Reply / Chat List", url: `${portalUrl}/chat` });
+  } else if (t.includes("attendance") || t.includes("class starting") || t.includes("schedule")) {
+    buttons.push({ text: "📋 Scan QR & Attend", url: `${portalUrl}/student/attendance` });
+  } else if (t.includes("fee") || t.includes("payment") || t.includes("dues")) {
+    buttons.push({ text: "💳 View Fees/Receipts", url: `${portalUrl}/student/fees` });
+  } else {
+    buttons.push({ text: "🔔 Open Personal Inbox", url: `${portalUrl}/student/dashboard` });
+  }
+  
+  buttons.push({ text: "🏠 TuitionHub Portal", url: portalUrl });
+  
+  return {
+    inline_keyboard: [
+      buttons
+    ]
+  };
+}
+
+// Option 2 Web/Telegram Notification Broadcaster for Cron Jobs (Fully Interactive)
 export async function sendCompanionNotifications(
   db: admin.firestore.Firestore,
   options: {
@@ -781,17 +461,24 @@ export async function sendCompanionNotifications(
   const globalChatId = (process.env.TELEGRAM_CHAT_ID || "8848327573").trim();
 
   try {
-    // 1. Send live Telegram alert to global/admin chat ID in the backend
+    const markup = getTelegramReplyMarkup(title, body);
+
+    // 1. Send live Telegram alert to global/admin chat ID in the backend with beautiful interactive reply buttons
     if (botToken && globalChatId) {
-      const telegramMessage = `<b>🔔 TuitionHub Alert</b>\n\n<b>${title}</b>\n\n${body}\n\n📱 <i>Access Portal:</i> <a href="https://ais-pre-oahrpb6rn47hcj6z2buf4u-826144498385.asia-southeast1.run.app">TuitionHub Portal</a>`;
-      console.log(`[Companion-Cron] Forwarding alert to global Telegram Chat ID: ${globalChatId}`);
+      const telegramMessage = `<b>🔔 TuitionHub Alert</b>\n\n<b>${title}</b>\n\n${body}\n\n📱 <i>Access Portal instantly from button or link below:</i> <a href="https://ais-pre-oahrpb6rn47hcj6z2buf4u-826144498385.asia-southeast1.run.app">TuitionHub Portal</a>`;
+      console.log(`[Companion-Cron] Forwarding interactive alert to global Telegram Chat ID: ${globalChatId}`);
       try {
-        const url = `https://api.telegram.org/bot${botToken}/sendMessage`
-          .concat(`?chat_id=${globalChatId}`)
-          .concat(`&text=${encodeURIComponent(telegramMessage)}`)
-          .concat(`&parse_mode=HTML`);
-        
-        const fetchResult = await fetch(url, { method: "POST" });
+        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        const fetchResult = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: globalChatId,
+            text: telegramMessage,
+            parse_mode: "HTML",
+            reply_markup: markup
+          })
+        });
         const fetchResultJson = await fetchResult.json();
         console.log(`[Companion-Cron] Global Telegram response:`, fetchResultJson);
       } catch (tErr) {
@@ -802,39 +489,134 @@ export async function sendCompanionNotifications(
     // 2. Fallback to sending to custom student IDs registered in Firestore
     let usersToAlert: any[] = [];
     
-    if (recipientId) {
-      const uDoc = await db.collection("users").doc(recipientId).get();
-      if (uDoc.exists) {
-        usersToAlert.push({ id: uDoc.id, ...uDoc.data() });
+    try {
+      if (recipientId) {
+        const uDoc = await db.collection("users").doc(recipientId).get();
+        if (uDoc.exists) {
+          usersToAlert.push({ id: uDoc.id, ...uDoc.data() });
+        }
+      } else if (targetRole) {
+        let snap;
+        if (targetRole === "ALL") {
+          snap = await db.collection("users").get();
+        } else {
+          snap = await db.collection("users").where("role", "==", targetRole).get();
+        }
+        snap.forEach((doc) => {
+          const userData = doc.data();
+          let matched = true;
+          if (targetDept) {
+            const searchDept = String(targetDept).trim().toUpperCase();
+            const userDept = String(userData.courseId || userData.courseName || userData.department || "").trim().toUpperCase();
+            if (searchDept !== "ALL" && userDept !== "ALL" && userDept && userDept !== searchDept) {
+              matched = false;
+            }
+          }
+          if (targetSem) {
+            const searchSem = String(targetSem).trim();
+            const userSem = String(userData.semester || "").trim();
+            if (searchSem !== "ALL" && userSem !== "ALL" && userSem && userSem !== searchSem) {
+              matched = false;
+            }
+          }
+          if (matched) {
+            usersToAlert.push({ id: doc.id, ...userData });
+          }
+        });
       }
-    } else if (targetRole) {
-      let snap;
-      if (targetRole === "ALL") {
-        snap = await db.collection("users").get();
-      } else {
-        snap = await db.collection("users").where("role", "==", targetRole).get();
-      }
-      snap.forEach((doc) => {
-        const userData = doc.data();
-        let matched = true;
-        if (targetDept) {
-          const searchDept = String(targetDept).trim().toUpperCase();
-          const userDept = String(userData.courseId || userData.courseName || userData.department || "").trim().toUpperCase();
-          if (searchDept !== "ALL" && userDept !== "ALL" && userDept && userDept !== searchDept) {
-            matched = false;
+    } catch (adminErr: any) {
+      console.warn("[Companion-Cron Warning] Admin SDK Firestore query failed or had insufficient permissions. Falling back to secure public REST API bypass: ", adminErr.message || adminErr);
+      
+      // Helper to parse Firestore REST JSON fields
+      const parseREST = (fields: any) => {
+        const result: any = {};
+        if (!fields) return result;
+        for (const [key, val] of Object.entries(fields)) {
+          const v = val as any;
+          if ("stringValue" in v) {
+            result[key] = v.stringValue;
+          } else if ("booleanValue" in v) {
+            result[key] = v.booleanValue;
+          } else if ("integerValue" in v) {
+            result[key] = parseInt(v.integerValue);
+          } else if ("doubleValue" in v) {
+            result[key] = parseFloat(v.doubleValue);
+          } else if ("arrayValue" in v) {
+            result[key] = (v.arrayValue.values || []).map((arrVal: any) => {
+              const itemObj = parseREST({ temp: arrVal });
+              return itemObj.temp;
+            });
+          } else if ("mapValue" in v) {
+            result[key] = parseREST(v.mapValue.fields);
+          } else {
+            result[key] = v;
           }
         }
-        if (targetSem) {
-          const searchSem = String(targetSem).trim();
-          const userSem = String(userData.semester || "").trim();
-          if (searchSem !== "ALL" && userSem !== "ALL" && userSem && userSem !== searchSem) {
-            matched = false;
+        return result;
+      };
+
+      // Safe load firebase config
+      let projId = "tutionhub-e41cd";
+      try {
+        const fs = require("fs");
+        const path = require("path");
+        const configPath = path.join(process.cwd(), "firebase-applet-config.json");
+        if (fs.existsSync(configPath)) {
+          const config = JSON.parse(fs.readFileSync(configPath, "utf-8"));
+          if (config.projectId) {
+            projId = config.projectId;
           }
         }
-        if (matched) {
-          usersToAlert.push({ id: doc.id, ...userData });
+      } catch (e) {
+        // Fallback to import or default
+      }
+
+      if (recipientId) {
+        try {
+          const res = await fetch(`https://firestore.googleapis.com/v1/projects/${projId}/databases/(default)/documents/users/${recipientId}`);
+          if (res.status === 200) {
+            const docJson: any = await res.json();
+            usersToAlert.push({ id: recipientId, ...parseREST(docJson.fields) });
+          }
+        } catch (fetchErr) {
+          console.error("[Companion-Cron REST Fallback Error] Failed to get single user via REST API:", fetchErr);
         }
-      });
+      } else if (targetRole) {
+        try {
+          const res = await fetch(`https://firestore.googleapis.com/v1/projects/${projId}/databases/(default)/documents/users?pageSize=400`);
+          if (res.status === 200) {
+            const collectionJson: any = await res.json();
+            const allUsers = (collectionJson.documents || []).map((docObj: any) => {
+              const docId = docObj.name.split("/").pop();
+              return { id: docId, ...parseREST(docObj.fields) };
+            });
+            
+            // Apply safe memory filters
+            usersToAlert = allUsers.filter((userData: any) => {
+              if (targetRole !== "ALL" && userData.role !== targetRole) {
+                return false;
+              }
+              if (targetDept) {
+                const searchDept = String(targetDept).trim().toUpperCase();
+                const userDept = String(userData.courseId || userData.courseName || userData.department || "").trim().toUpperCase();
+                if (searchDept !== "ALL" && userDept !== "ALL" && userDept && userDept !== searchDept) {
+                  return false;
+                }
+              }
+              if (targetSem) {
+                const searchSem = String(targetSem).trim();
+                const userSem = String(userData.semester || "").trim();
+                if (searchSem !== "ALL" && userSem !== "ALL" && userSem && userSem !== searchSem) {
+                  return false;
+                }
+              }
+              return true;
+            });
+          }
+        } catch (fetchErr) {
+          console.error("[Companion-Cron REST Fallback Error] Failed to list users via REST API:", fetchErr);
+        }
+      }
     }
 
     for (const u of usersToAlert) {
@@ -844,17 +626,22 @@ export async function sendCompanionNotifications(
 
       if (u.enableTelegramNotification && u.telegramChatId) {
         const chat_id = String(u.telegramChatId).trim();
-        const telegramMessage = `<b>🔔 TuitionHub Alert</b>\n\n<b>${title}</b>\n\n${body}\n\n📱 <i>Access Portal:</i> <a href="https://ais-pre-oahrpb6rn47hcj6z2buf4u-826144498385.asia-southeast1.run.app">TuitionHub Portal</a>`;
+        const telegramMessage = `<b>🔔 TuitionHub Alert</b>\n\n<b>${title}</b>\n\n${body}\n\n📱 <i>Access Portal instantly from button or link below:</i> <a href="https://ais-pre-oahrpb6rn47hcj6z2buf4u-826144498385.asia-southeast1.run.app">TuitionHub Portal</a>`;
         
         if (botToken) {
-          console.log(`[Companion-Cron] Sending Telegram alert to User Chat ID: ${chat_id}`);
+          console.log(`[Companion-Cron] Sending interactive Telegram alert to User Chat ID: ${chat_id}`);
           try {
-            const url = `https://api.telegram.org/bot${botToken}/sendMessage`
-              .concat(`?chat_id=${chat_id}`)
-              .concat(`&text=${encodeURIComponent(telegramMessage)}`)
-              .concat(`&parse_mode=HTML`);
-            
-            const fetchResult = await fetch(url, { method: "POST" });
+            const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+            const fetchResult = await fetch(url, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                chat_id,
+                text: telegramMessage,
+                parse_mode: "HTML",
+                reply_markup: markup
+              })
+            });
             const fetchResultJson = await fetchResult.json();
             console.log(`[Companion-Cron] User Telegram API response:`, fetchResultJson);
           } catch (tErr) {

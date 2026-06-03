@@ -25,7 +25,10 @@ import {
   QrCode,
   Edit2,
   X,
-  AlertCircle
+  AlertCircle,
+  Send,
+  Bell,
+  ExternalLink
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, updateEmail } from 'firebase/auth';
@@ -45,6 +48,13 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [zoomedImage, setZoomedImage] = useState<string | null>(null);
+
+  // Telegram Companion state
+  const [enableTelegramNotification, setEnableTelegramNotification] = useState(profile?.enableTelegramNotification || false);
+  const [telegramChatId, setTelegramChatId] = useState(profile?.telegramChatId || '');
+  const [telegramStatusMsg, setTelegramStatusMsg] = useState({ type: '', text: '' });
+  const [savingTelegram, setSavingTelegram] = useState(false);
+  const [testingTelegram, setTestingTelegram] = useState(false);
 
   // Form state
   const [name, setName] = useState(profile?.name || '');
@@ -74,12 +84,66 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
       setSemester(profile.semester || '');
       setCourseId(profile.courseId || '');
       setAvatarUrl(profile.avatarUrl || '');
+      setEnableTelegramNotification(profile.enableTelegramNotification || false);
+      setTelegramChatId(profile.telegramChatId || '');
       
       if (profile.role === 'teacher') {
         fetchInviteCode();
       }
     }
   }, [profile]);
+
+  const handleSaveTelegramSettings = async () => {
+    if (!profile?.uid) return;
+    setSavingTelegram(true);
+    setTelegramStatusMsg({ type: '', text: '' });
+    try {
+      const userRef = doc(db, 'users', profile.uid);
+      await updateDoc(userRef, {
+        enableTelegramNotification,
+        telegramChatId: telegramChatId.trim()
+      });
+      await refreshProfile();
+      setTelegramStatusMsg({ type: 'success', text: 'Telegram configuration saved successfully!' });
+    } catch (err: any) {
+      console.error(err);
+      setTelegramStatusMsg({ type: 'error', text: 'Failed to save configuration.' });
+    } finally {
+      setSavingTelegram(false);
+    }
+  };
+
+  const handleTestTelegramNotification = async () => {
+    if (!profile?.uid) return;
+    if (!telegramChatId) {
+      setTelegramStatusMsg({ type: 'error', text: 'Please enter and save your Telegram Chat ID first.' });
+      return;
+    }
+    setTestingTelegram(true);
+    setTelegramStatusMsg({ type: '', text: '' });
+    try {
+      const res = await fetch('/api/send-push', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: '⚡ TuitionHub Connection Test',
+          body: 'Congratulations! Your interactive backend premium messaging channel has been connected successfully.',
+          recipientId: profile.uid
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setTelegramStatusMsg({ type: 'success', text: 'Test message triggered! Please check your Telegram chat.' });
+      } else {
+        setTelegramStatusMsg({ type: 'error', text: data.error || 'Failed to trigger test alert.' });
+      }
+    } catch (err: any) {
+      console.error(err);
+      setTelegramStatusMsg({ type: 'error', text: 'Connection failed. Please ensure the bot is started.' });
+    } finally {
+      setTestingTelegram(false);
+    }
+  };
 
   const fetchInviteCode = async () => {
     try {
@@ -726,6 +790,123 @@ export default function Profile({ isEmbedded }: { isEmbedded?: boolean }) {
                   {passwordLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Update Password'}
                 </button>
               </form>
+            </div>
+
+            {/* Telegram Companion Notifications (Bypass System) */}
+            <div className="mt-8 pt-8 border-t border-slate-100 dark:border-slate-800">
+              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-2">
+                <Bell className="w-5 h-5 text-wa-teal dark:text-wa-green" /> Telegram Companion Notifications
+              </h3>
+              <p className="text-sm text-slate-600 dark:text-[#8696a0] mb-6">
+                Receive instant interactive push alerts and respond to chat or mark attendance even when the app is closed.
+              </p>
+
+              {telegramStatusMsg.text && (
+                <div className={`mb-6 p-4 rounded-2xl flex items-center gap-3 ${
+                  telegramStatusMsg.type === 'success' 
+                    ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border border-green-100 dark:border-green-900/30' 
+                    : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border border-red-100 dark:border-red-900/30'
+                }`}>
+                  {telegramStatusMsg.type === 'success' ? <Check className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
+                  <p className="text-sm font-medium">{telegramStatusMsg.text}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                {/* Setup Controls */}
+                <div className="lg:col-span-5 bg-slate-50 dark:bg-[#111b21] p-6 rounded-2xl border border-slate-200 dark:border-white/5 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-bold text-slate-700 dark:text-slate-300">
+                      Enable Notifications
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setEnableTelegramNotification(!enableTelegramNotification)}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        enableTelegramNotification ? 'bg-wa-teal dark:bg-wa-green' : 'bg-slate-200 dark:bg-slate-700'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                          enableTelegramNotification ? 'translate-x-5' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-bold text-slate-700 dark:text-slate-300 block">
+                      Telegram Chat ID
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full px-4 py-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-slate-900 dark:text-white font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+                      placeholder="e.g. 5621448849"
+                      value={telegramChatId}
+                      onChange={(e) => setTelegramChatId(e.target.value.replace(/\D/g, ''))}
+                    />
+                    <p className="text-[11px] text-slate-400 dark:text-[#8696a0]">
+                      Your numeric Chat ID linked to your Telegram account.
+                    </p>
+                  </div>
+
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={handleSaveTelegramSettings}
+                      disabled={savingTelegram}
+                      className="flex-1 bg-wa-teal hover:bg-wa-teal-dark dark:bg-wa-green text-white font-bold py-2.5 rounded-xl text-xs transition-all flex items-center justify-center gap-1.5 disabled:opacity-70 shadow-lg shadow-wa-teal/10"
+                    >
+                      {savingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Save className="w-4 h-4" /> Save</>}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleTestTelegramNotification}
+                      disabled={testingTelegram}
+                      className="flex-1 bg-slate-900 dark:bg-slate-800 text-white hover:bg-slate-800 font-bold py-2.5 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 disabled:opacity-70"
+                    >
+                      {testingTelegram ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-4 h-4 text-sky-400" /> Send Test</>}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Setup Instructions / Student Guide Box */}
+                <div className="lg:col-span-7 bg-sky-50/50 dark:bg-sky-950/10 border border-sky-100 dark:border-sky-950/30 p-6 rounded-2xl relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-sky-100/30 dark:bg-sky-950/20 rounded-full blur-2xl -mr-8 -mt-8 pointer-events-none"></div>
+                  
+                  <h4 className="text-sm font-black text-sky-700 dark:text-sky-400 tracking-wider uppercase mb-3">
+                    STEP-BY-STEP SETUP GUIDE FOR ALL STUDENTS
+                  </h4>
+
+                  <div className="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-sans">
+                    {/* Method 1: standard */}
+                    <div>
+                      <span className="font-bold text-sky-700 dark:text-sky-400 block mb-1">Option 1: Using the Telegram Mobile/Desktop App (Recommended)</span>
+                      <ol className="list-decimal list-inside space-y-1 ml-1 text-slate-500 dark:text-slate-400">
+                        <li>Install <strong>Telegram</strong> from your App Store.</li>
+                        <li>Search and open <a href="https://t.me/TuitionHubAlerts_bot" target="_blank" rel="noopener noreferrer" className="text-sky-600 dark:text-sky-400 font-bold underline inline-flex items-center gap-0.5">@TuitionHubAlerts_bot<ExternalLink className="w-3 h-3 inline" /></a> and click <strong>Start</strong>.</li>
+                        <li>Find your numeric ID by sending any message to <a href="https://t.me/userinfobot" target="_blank" rel="noopener noreferrer" className="text-sky-600 dark:text-sky-400 font-bold underline inline-flex items-center gap-0.5">@userinfobot<ExternalLink className="w-3 h-3 inline" /></a>.</li>
+                        <li>Paste your numeric Chat ID to the left, click **Save**, and run the **Send Test** button!</li>
+                      </ol>
+                    </div>
+
+                    {/* Method 2: web-only */}
+                    <div className="border-t border-sky-100 dark:border-sky-900/40 pt-3">
+                      <span className="font-bold text-sky-700 dark:text-sky-400 block mb-1">Option 2: No Telegram App Installed? (Web-Only Fallback)</span>
+                      <p className="mb-1 text-slate-500 dark:text-slate-400">
+                        You can receive instant secure push notifications strictly using your browser without installing any app on your mobile phone:
+                      </p>
+                      <ol className="list-decimal list-inside space-y-1 ml-1 text-slate-500 dark:text-slate-400">
+                        <li>Open <a href="https://web.telegram.org" target="_blank" rel="noopener noreferrer" className="text-sky-600 dark:text-sky-400 font-bold underline inline-flex items-center gap-0.5">Telegram Web<ExternalLink className="w-3 h-3 inline" /></a> in your mobile phone browser.</li>
+                        <li>Sign up instantly with your active phone number to create your space.</li>
+                        <li>Allow notifications when prompted by your browser so popups can wake your device.</li>
+                        <li>Search for bot <span className="font-bold">@TuitionHubAlerts_bot</span>, click Start, get your Chat ID from <span className="font-bold">@userinfobot</span>, and save it on the left!</li>
+                      </ol>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {profile?.role === 'teacher' && (

@@ -232,146 +232,21 @@ app.post("/api/send-push", async (req, res) => {
   try {
     const { title, body, recipientId, targetRole, delayMs, targetDept, targetSem } = req.body;
     const db = getDb();
-
-    const host = req.get("host") || "tuitionhubapp.firebaseapp.com";
-    const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
-    const origin = `${protocol}://${host}`;
-    const absoluteLogo = `${origin}/gold_tuitionhub_logo_1779680854835.png`;
-    const absoluteBadge = `${origin}/notification-badge.png`;
-
-    const sendPushWrapper = async () => {
-      const formattedTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
-      const bodyWithTime = body ? `${body} (${formattedTime})` : formattedTime;
-
-      const payload: any = {
-        data: {
-          title: String(title || "New Notification"),
-          body: String(bodyWithTime),
-          type: String(req.body.type || "general"),
-          chatId: String(req.body.chatId || ""),
-          senderId: String(req.body.senderId || ""),
-          targetId: String(recipientId || "")
-        },
-        notification: {
-          title: String(title || "New Notification"),
-          body: String(bodyWithTime),
-          icon: absoluteLogo
-        },
-        android: {
-          priority: "high"
-        },
-        webpush: {
-          headers: {
-            Urgency: "high"
-          },
-          notification: {
-            title: String(title || "New Notification"),
-            body: String(bodyWithTime),
-            icon: absoluteLogo,
-            badge: absoluteBadge,
-            requireInteraction: true
-          },
-          fcm_options: {
-            link: origin + "/"
-          }
-        }
-      };
-
-      if (recipientId) {
-        const userDoc = await db.collection("users").doc(recipientId).get();
-        if (userDoc.exists) {
-          const userData = userDoc.data();
-          if (userData && userData.fcmToken) {
-            try {
-              await admin.messaging().send({
-                ...payload,
-                token: userData.fcmToken,
-              });
-            } catch (err: any) {
-              console.error("[FCM] Error sending single-cast push:", err);
-              // Auto-heal/cleanup stale or invalid tokens so we don't try again
-              const errMsg = String(err?.message || "").toLowerCase();
-              const errCode = String(err?.code || "").toLowerCase();
-              if (
-                errCode.includes("not-registered") ||
-                errCode.includes("invalid-registration-token") ||
-                errMsg.includes("not-registered") ||
-                errMsg.includes("invalid") ||
-                errMsg.includes("bad-token") ||
-                errMsg.includes("not registered")
-              ) {
-                console.log(`[FCM] Token is stale/invalid for user ${recipientId}. Resetting fcmToken field to heal the DB.`);
-                await db.collection("users").doc(recipientId).update({ fcmToken: null });
-              }
-            }
-            return;
-          }
-        }
-      } else if (targetRole) {
-         let usersSnap;
-         if (targetRole === "ALL") {
-             usersSnap = await db.collection("users").get();
-         } else {
-             usersSnap = await db.collection("users").where("role", "==", targetRole).get();
-         }
-         const tokens: string[] = [];
-         usersSnap.forEach((doc: any) => {
-           const userData = doc.data();
-           let shouldSend = true;
-           
-           if (targetDept) {
-                const searchDept = String(targetDept).trim().toUpperCase();
-                const userDept = String(userData.courseId || userData.courseName || userData.department || "").trim().toUpperCase();
-                if (searchDept !== "ALL" && userDept !== "ALL" && userDept && userDept !== searchDept) {
-                  shouldSend = false;
-                }
-              }
-              if (targetSem) {
-                const searchSem = String(targetSem).trim();
-                const userSem = String(userData.semester || "").trim();
-                if (searchSem !== "ALL" && userSem !== "ALL" && userSem && userSem !== searchSem) {
-                  shouldSend = false;
-                }
-              }
-           
-           if (shouldSend && userData.fcmToken) {
-               tokens.push(userData.fcmToken);
-           }
-         });
-
-         if (tokens.length > 0) {
-            try {
-               await admin.messaging().sendEachForMulticast({
-                  ...payload,
-                  tokens,
-               } as admin.messaging.MulticastMessage);
-            } catch (err: any) {
-               console.error("[FCM] Error sending multicast push:", err);
-            }
-            return;
-         }
-      }
-    };
+    const formattedTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+    const bodyWithTime = body ? `${body} (${formattedTime})` : formattedTime;
 
     if (delayMs) {
       setTimeout(() => {
-        sendPushWrapper().catch(e => console.error("Delayed push failed:", e));
-        sendCompanionNotifications(db, { recipientId, targetRole, targetDept, targetSem, title, body })
-          .catch(e => console.error("[FCM Direct Debug] Delayed Companion Error:", e));
+        sendCompanionNotifications(db, { recipientId, targetRole, targetDept, targetSem, title, body: bodyWithTime })
+          .catch(e => console.error("Delayed Companion Error:", e));
       }, delayMs);
-      return res.json({ success: true, message: `Push scheduled to be sent in ${delayMs}ms` });
+      return res.json({ success: true, message: `Notification scheduled to be sent in ${delayMs}ms via Telegram` });
     }
 
-    await sendPushWrapper();
-    sendCompanionNotifications(db, { recipientId, targetRole, targetDept, targetSem, title, body })
-      .catch(e => console.error("[FCM Direct Debug] Companion Error:", e));
-    return res.json({ success: true, message: "Push attempt completed" });
+    await sendCompanionNotifications(db, { recipientId, targetRole, targetDept, targetSem, title, body: bodyWithTime });
+    return res.json({ success: true, message: "Telegram notification processed successfully" });
   } catch (e: any) {
-    if (e && e.message && e.message.includes("PERMISSION_DENIED")) {
-       console.log("[FCM] Push skipped: Backend Firebase credentials missing.");
-       return res.json({ success: true, message: "Push skipped (no backend credentials)" });
-    }
-    console.error("Push send error:", e);
+    console.error("Telegram notifier route error:", e);
     return res.status(500).json({ error: e.message });
   }
 });
