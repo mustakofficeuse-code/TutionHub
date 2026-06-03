@@ -1017,7 +1017,12 @@ async function startServer() {
   app.post("/api/send-push", async (req, res) => {
     try {
       const { title, body, recipientId, targetRole, delayMs, targetDept, targetSem } = req.body;
-      const formattedTime = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+      const formattedTime = new Date().toLocaleTimeString('en-US', {
+        timeZone: 'Asia/Kolkata',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
       const bodyWithTime = body ? `${body} (${formattedTime})` : formattedTime;
 
       if (delayMs) {
@@ -1319,6 +1324,298 @@ async function startServer() {
       res.status(500).json({ error: error.message });
     }
   });
+
+  // --- TELEGRAM BOT BACKGROUND POLLING FOR LIVE INLINE/DIRECT REPLIES ---
+  let lastTelegramUpdateId = 0;
+  let isTelegramPolling = false;
+
+  async function pollTelegramUpdates() {
+    if (isTelegramPolling) return;
+    const botToken = process.env.TELEGRAM_BOT_TOKEN ? process.env.TELEGRAM_BOT_TOKEN.trim() : "";
+    if (!botToken) return;
+
+    isTelegramPolling = true;
+    try {
+      const url = `https://api.telegram.org/bot${botToken}/getUpdates?offset=${lastTelegramUpdateId + 1}&timeout=3`;
+      const response = await fetch(url);
+      const data: any = await response.json();
+
+      if (data.ok && Array.isArray(data.result)) {
+        // Safe Helpers for Firestore REST API fallback
+        const parseRESTFields = (fields: any) => {
+          const result: any = {};
+          if (!fields) return result;
+          for (const [key, val] of Object.entries(fields)) {
+            const v = val as any;
+            if ("stringValue" in v) {
+              result[key] = v.stringValue;
+            } else if ("booleanValue" in v) {
+              result[key] = v.booleanValue;
+            } else if ("integerValue" in v) {
+              result[key] = parseInt(v.integerValue);
+            } else if ("doubleValue" in v) {
+              result[key] = parseFloat(v.doubleValue);
+            } else if ("arrayValue" in v) {
+              result[key] = (v.arrayValue.values || []).map((arrVal: any) => {
+                const itemObj = parseRESTFields({ temp: arrVal });
+                return itemObj.temp;
+              });
+            } else if ("mapValue" in v) {
+              result[key] = parseRESTFields(v.mapValue.fields);
+            } else {
+              result[key] = v;
+            }
+          }
+          return result;
+        };
+
+        const toRESTFields = (obj: any): any => {
+          const fields: any = {};
+          for (const [key, val] of Object.entries(obj)) {
+            if (val === undefined || val === null) {
+              continue;
+            }
+            if (typeof val === 'string') {
+              fields[key] = { stringValue: val };
+            } else if (typeof val === 'boolean') {
+              fields[key] = { booleanValue: val };
+            } else if (typeof val === 'number') {
+              if (Number.isInteger(val)) {
+                fields[key] = { integerValue: String(val) };
+              } else {
+                fields[key] = { doubleValue: val };
+              }
+            } else if (Array.isArray(val)) {
+              fields[key] = {
+                arrayValue: {
+                  values: val.map(item => {
+                    if (typeof item === 'string') return { stringValue: item };
+                    if (typeof item === 'boolean') return { booleanValue: item };
+                    if (typeof item === 'number') {
+                      return Number.isInteger(item) ? { integerValue: String(item) } : { doubleValue: item };
+                    }
+                    if (typeof item === 'object') return { mapValue: { fields: toRESTFields(item) } };
+                    return { stringValue: String(item) };
+                  })
+                }
+              };
+            } else if (typeof val === 'object') {
+              fields[key] = { mapValue: { fields: toRESTFields(val) } };
+            }
+          }
+          return fields;
+        };
+
+        const projId = firebaseConfig.projectId || "tutionhub-e41cd";
+        const apiKeyQS = firebaseConfig.apiKey ? `?key=${firebaseConfig.apiKey}` : "";
+
+        // Get users and chat messages using high-performance secure client API endpoint with automatic bypass 
+        let allUsers: any[] = [];
+        try {
+          const usersRes = await fetch(`https://firestore.googleapis.com/v1/projects/${projId}/databases/(default)/documents/users?pageSize=1000${apiKeyQS}`);
+          if (usersRes.status === 200) {
+            const usersData = await usersRes.json();
+            allUsers = (usersData.documents || []).map((docObj: any) => {
+              const docId = docObj.name.split("/").pop();
+              return { id: docId, ...parseRESTFields(docObj.fields) };
+            });
+          }
+        } catch (usersErr: any) {
+          console.error("[Telegram Poller Fallback Error] Failed to fetch users:", usersErr.message || usersErr);
+        }
+
+        let allMsgs: any[] = [];
+        try {
+          const msgsRes = await fetch(`https://firestore.googleapis.com/v1/projects/${projId}/databases/(default)/documents/chat_messages?pageSize=1000${apiKeyQS}`);
+          if (msgsRes.status === 200) {
+            const msgsJson = await msgsRes.json();
+            allMsgs = (msgsJson.documents || []).map((docObj: any) => {
+              const docId = docObj.name.split("/").pop();
+              return { id: docId, ...parseRESTFields(docObj.fields) };
+            });
+          }
+        } catch (msgsErr: any) {
+          console.error("[Telegram Poller Fallback Error] Failed to fetch messages:", msgsErr.message || msgsErr);
+        }
+
+        for (const update of data.result) {
+          lastTelegramUpdateId = Math.max(lastTelegramUpdateId, update.update_id);
+          const msg = update.message;
+          if (!msg || !msg.text || !msg.chat) continue;
+
+          const chatId = String(msg.chat.id);
+          const text = msg.text.trim();
+
+          // Skip slash commands like /start, /help, /setup
+          if (text.startsWith("/")) continue;
+
+          // Find TuitionHub user matching this telegramChatId in-memory from our preloaded users
+          const matchedUser = allUsers.find((u: any) => String(u.telegramChatId || "").trim() === chatId);
+          if (!matchedUser) continue;
+
+          const userUid = matchedUser.id;
+          const senderName = matchedUser.name || "Telegram Student";
+          const senderRole = matchedUser.role || "student";
+
+          // Intelligently find the most active/recent chat room this user was part of in our database
+          const userMsgs = allMsgs.filter((m: any) => {
+            const parts = m.participants || [];
+            if (parts.includes(userUid)) return true;
+            if (m.senderId === userUid) return true;
+            if (String(m.chatId || "").includes(userUid)) return true;
+            return false;
+          });
+
+          // Sort descendingly by createdAt
+          userMsgs.sort((a: any, b: any) => {
+            return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+          });
+
+          let targetChatId = "";
+          let chatType = 'private';
+          let recipientId = "";
+
+          if (userMsgs.length > 0) {
+            const lastMsgData = userMsgs[0];
+            targetChatId = lastMsgData.chatId;
+            chatType = lastMsgData.chatType || 'private';
+            const participants = lastMsgData.participants || [];
+            recipientId = participants.find((id: string) => id !== userUid) || "";
+          } else {
+            // Fallback: If no chat history, initiate first private chat room between student and active teachers
+            if (senderRole === 'student') {
+              const teachers = allUsers.filter((u: any) => u.role === "teacher");
+              if (teachers.length > 0) {
+                recipientId = teachers[0].id;
+                targetChatId = `dm_${userUid}_${recipientId}`;
+              }
+            } else {
+              const students = allUsers.filter((u: any) => u.role === "student");
+              if (students.length > 0) {
+                recipientId = students[0].id;
+                targetChatId = `dm_${recipientId}_${userUid}`;
+              }
+            }
+          }
+
+          if (!targetChatId) continue;
+
+          // Check if message is already created to prevent infinite duplication
+          const existingMsg = allMsgs.find((m: any) => 
+            m.chatId === targetChatId && 
+            m.senderId === userUid && 
+            m.content === text
+          );
+
+          if (existingMsg) {
+            const timeDiffMs = Date.now() - new Date(existingMsg.createdAt).getTime();
+            if (timeDiffMs < 4000) {
+              console.log("[Telegram Poller] Skipped duplicate message created in last 4s");
+              continue; // Skip clone message within 4 seconds window
+            }
+          }
+
+          console.log(`[Telegram Poller] Received text reply: "${text}" from user: ${senderName}. Inserting to chat: ${targetChatId}`);
+
+          const newMsgObj: any = {
+            chatId: targetChatId,
+            chatType: chatType,
+            senderId: userUid,
+            senderName: senderName,
+            senderRole: senderRole,
+            isAnonymous: false,
+            content: text,
+            attachmentUrl: "",
+            attachmentName: "",
+            attachmentType: "",
+            createdAt: new Date().toISOString(),
+            status: 'sent',
+            seenBy: [],
+            reactions: {},
+            participants: chatType === 'private' && recipientId ? [userUid, recipientId] : []
+          };
+
+          // Post message using secure public REST write option
+          try {
+            const addMsgRes = await fetch(`https://firestore.googleapis.com/v1/projects/${projId}/databases/(default)/documents/chat_messages${apiKeyQS}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                fields: toRESTFields(newMsgObj)
+              })
+            });
+            console.log(`[Telegram Poller REST] Message creation status code: ${addMsgRes.status}`);
+          } catch (writeErr: any) {
+            console.error("[Telegram Poller] Failed web post of message:", writeErr);
+          }
+
+          if (chatType === 'private' && recipientId) {
+            const notifObj = {
+              title: `New Message from ${senderName}`,
+              message: text,
+              type: 'chat_message',
+              senderId: userUid,
+              senderName: senderName,
+              recipientId: recipientId,
+              relatedId: targetChatId,
+              isAnonymous: false,
+              read: false,
+              createdAt: new Date().toISOString(),
+              timestamp: new Date().toISOString()
+            };
+
+            try {
+              const addNotifRes = await fetch(`https://firestore.googleapis.com/v1/projects/${projId}/databases/(default)/documents/notifications${apiKeyQS}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  fields: toRESTFields(notifObj)
+                })
+              });
+              console.log(`[Telegram Poller REST] Notification creation status code: ${addNotifRes.status}`);
+            } catch (notifErr: any) {
+              console.error("[Telegram Poller] Failed web post of notification:", notifErr);
+            }
+
+            // Trigger outbound notify of other participant using memory-cached lookup
+            const recipientData = allUsers.find((u: any) => u.id === recipientId);
+            if (recipientData) {
+              if (recipientData.enableTelegramNotification && recipientData.telegramChatId) {
+                const targetTgId = String(recipientData.telegramChatId).trim();
+                const portalUrl = "https://ais-pre-oahrpb6rn47hcj6z2buf4u-826144498385.asia-southeast1.run.app";
+                const responseText = `<b>🔔 TuitionHub Alert</b>\n\n<b>New Message from ${senderName}</b>\n\n${text}\n\n📱 <i>Access Portal:</i> <a href="${portalUrl}">TuitionHub Portal</a>`;
+                
+                // Get reply markup buttons for ease of continuous flow
+                let buttons: Array<{ text: string; url: string }> = [];
+                buttons.push({ text: "✉️ Reply / Chat List", url: `${portalUrl}/chat` });
+                const markup = { inline_keyboard: [buttons] };
+
+                await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    chat_id: targetTgId,
+                    text: responseText,
+                    parse_mode: "HTML",
+                    reply_markup: markup
+                  })
+                }).catch(e => console.error("[Telegram Poll Sendback Error]:", e));
+              }
+            }
+          }
+        }
+      }
+    } catch (e: any) {
+      console.error("[Telegram Poll Error]:", e.message || e);
+    } finally {
+      isTelegramPolling = false;
+    }
+  }
+
+  // Poll Telegram updates every 5 seconds for direct live replies from notification popups & chats
+  setInterval(() => {
+    pollTelegramUpdates();
+  }, 5000);
 
   // Vite middleware for development
   if (process.env.NODE_ENV !== "production") {

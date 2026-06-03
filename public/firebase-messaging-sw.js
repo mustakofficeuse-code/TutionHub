@@ -66,6 +66,7 @@ self.addEventListener('push', (event) => {
     renotify: true,
     requireInteraction: true,
     actions: [
+      { action: 'reply', title: '💬 Quick Reply', type: 'text', placeholder: 'Type your reply...' },
       { action: 'open', title: 'Open App 🏫' }
     ]
   };
@@ -81,6 +82,31 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const data = event.notification.data || {};
+
+  if (event.action === 'reply' && event.reply) {
+    const text = event.reply.trim();
+    if (text) {
+      console.log('[SW] User clicked reply direct with text:', text);
+      const replyPromise = fetch('/api/chat-reply', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          text: text,
+          chatId: data.chatId || '',
+          recipientId: data.senderId || '',
+          senderId: data.targetId || data.recipientId || '',
+          originalType: data.type || 'chat_message'
+        })
+      }).then(r => r.json())
+        .then(res => console.log('[SW Direct Reply API Success]:', res))
+        .catch(err => console.error('[SW Direct Reply API Error]:', err));
+      
+      event.waitUntil(replyPromise);
+      return;
+    }
+  }
 
   let targetUrl = '/';
   if (data.chatId) {
@@ -109,13 +135,13 @@ try {
   importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
   firebase.initializeApp({
-    apiKey: "AIzaSyBKkmzN2fWlpDIoBPcRVP5dt6oKXfOL2AI",
-    authDomain: "tutionhub-e41cd.firebaseapp.com",
-    projectId: "tutionhub-e41cd",
-    storageBucket: "tutionhub-e41cd.firebasestorage.app",
-    messagingSenderId: "327044071382",
-    appId: "1:327044071382:web:9c4d14d0d6c6650b456e77"
-  });
+  apiKey: "AIzaSyBKkmzN2fWlpDIoBPcRVP5dt6oKXfOL2AI",
+  authDomain: "tutionhub-e41cd.firebaseapp.com",
+  projectId: "tutionhub-e41cd",
+  storageBucket: "tutionhub-e41cd.firebasestorage.app",
+  messagingSenderId: "327044071382",
+  appId: "1:327044071382:web:9c4d14d0d6c6650b456e77"
+});
 
   const messaging = firebase.messaging();
 
@@ -144,6 +170,7 @@ try {
       renotify: true,
       requireInteraction: true,
       actions: [
+        { action: 'reply', title: '💬 Quick Reply', type: 'text', placeholder: 'Type your reply...' },
         { action: 'open', title: 'Open App 🏫' }
       ]
     };
