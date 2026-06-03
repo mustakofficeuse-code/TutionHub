@@ -24,7 +24,7 @@ try {
   console.error("[EnvParser] Custom .env parser failed:", e);
 }
 
-import { checkScheduleNotifications } from "./cron-helper.js";
+import { checkScheduleNotifications, sendCompanionNotifications } from "./cron-helper.js";
 
 let cachedDbId: string | undefined = process.env.VITE_FIREBASE_DATABASE_ID || process.env.FIREBASE_DATABASE_ID;
 let cachedProjectId: string | undefined;
@@ -356,11 +356,15 @@ app.post("/api/send-push", async (req, res) => {
     if (delayMs) {
       setTimeout(() => {
         sendPushWrapper().catch(e => console.error("Delayed push failed:", e));
+        sendCompanionNotifications(db, { recipientId, targetRole, targetDept, targetSem, title, body })
+          .catch(e => console.error("[FCM Direct Debug] Delayed Companion Error:", e));
       }, delayMs);
       return res.json({ success: true, message: `Push scheduled to be sent in ${delayMs}ms` });
     }
 
     await sendPushWrapper();
+    sendCompanionNotifications(db, { recipientId, targetRole, targetDept, targetSem, title, body })
+      .catch(e => console.error("[FCM Direct Debug] Companion Error:", e));
     return res.json({ success: true, message: "Push attempt completed" });
   } catch (e: any) {
     if (e && e.message && e.message.includes("PERMISSION_DENIED")) {
@@ -481,6 +485,13 @@ app.post("/api/chat-reply", async (req, res) => {
            } as any);
        }
     }
+
+        // Send Option 2 Companion Notifications (Telegram/WhatsApp fallback)
+        sendCompanionNotifications(db, {
+            recipientId: recipientId,
+            title: `New Message from ${senderName}`,
+            body: text.trim()
+        }).catch(err => console.error("[Companion Chat reply error] inside api/index.ts:", err));
 
     res.json({ success: true, messageId: docRef.id });
   } catch(e: any) {

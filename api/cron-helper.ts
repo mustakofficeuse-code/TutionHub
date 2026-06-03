@@ -764,7 +764,7 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
 }
 
 // Option 2 Web/Telegram Notification Broadcaster for Cron Jobs
-async function sendCompanionNotifications(
+export async function sendCompanionNotifications(
   db: admin.firestore.Firestore,
   options: {
     recipientId?: string;
@@ -777,7 +777,7 @@ async function sendCompanionNotifications(
 ) {
   const { recipientId, targetRole, targetDept, targetSem, title, body } = options;
   
-  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const botToken = process.env.TELEGRAM_BOT_TOKEN ? process.env.TELEGRAM_BOT_TOKEN.trim() : "";
   const globalChatId = (process.env.TELEGRAM_CHAT_ID || "8848327573").trim();
 
   try {

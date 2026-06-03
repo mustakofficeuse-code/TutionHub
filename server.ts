@@ -725,8 +725,8 @@ async function startServer() {
     const { recipientId, targetRole, targetDept, targetSem, title, body } = options;
     const db = getDb();
     
-    // Telegram Bot Token - Read from env
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    // Telegram Bot Token - Read from env (with strict trimming for safety)
+    const botToken = process.env.TELEGRAM_BOT_TOKEN ? process.env.TELEGRAM_BOT_TOKEN.trim() : "";
     if (!botToken) {
       console.log("[Companion Logs] TELEGRAM_BOT_TOKEN is not configured in .env. Skip actual request.");
     }
@@ -835,7 +835,7 @@ async function startServer() {
   // API to fetch recent updates from Telegram bot to easily retrieve Chat ID
   app.get("/api/telegram-get-updates", async (req, res) => {
     try {
-      const botToken = process.env.TELEGRAM_BOT_TOKEN;
+      const botToken = process.env.TELEGRAM_BOT_TOKEN ? process.env.TELEGRAM_BOT_TOKEN.trim() : "";
       if (!botToken) {
         return res.status(400).json({ 
           error: "TELEGRAM_BOT_TOKEN is not configured in `.env` yet. Please setup your bot token in App Settings or server environment first." 
