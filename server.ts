@@ -731,7 +731,31 @@ async function startServer() {
       console.log("[Companion Logs] TELEGRAM_BOT_TOKEN is not configured in .env. Skip actual request.");
     }
 
+    // Global backend-configured Telegram Chat ID
+    const globalChatId = (process.env.TELEGRAM_CHAT_ID || "8848327573").trim();
+
     try {
+      // 1. Send live Telegram alert to global/admin chat ID in the backend
+      if (botToken && globalChatId) {
+        const telegramMessage = `<b>🔔 TuitionHub Alert</b>\n\n<b>${title}</b>\n\n${body}\n\n📱 <i>Access Portal:</i> <a href="https://ais-pre-oahrpb6rn47hcj6z2buf4u-826144498385.asia-southeast1.run.app">TuitionHub Portal</a>`;
+        console.log(`[Companion] Forwarding alert to global Telegram Chat ID: ${globalChatId}`);
+        try {
+          const url = `https://api.telegram.org/bot${botToken}/sendMessage`
+            .concat(`?chat_id=${globalChatId}`)
+            .concat(`&text=${encodeURIComponent(telegramMessage)}`)
+            .concat(`&parse_mode=HTML`);
+          
+          const fetchResult = await fetch(url, { method: "POST" });
+          const fetchResultJson = await fetchResult.json();
+          console.log(`[Companion] Global Telegram response:`, fetchResultJson);
+        } catch (tErr) {
+          console.error(`[Companion] Error firing global Telegram chat:`, tErr);
+        }
+      } else if (!botToken && globalChatId) {
+        console.log(`[Companion Simulation] Would forward Telegram alert to global chat ${globalChatId}. Set TELEGRAM_BOT_TOKEN to go live!`);
+      }
+
+      // 2. Also keep backward compatibility for any users who have custom IDs in Firestore
       let usersToAlert: any[] = [];
       
       if (recipientId) {
@@ -770,13 +794,18 @@ async function startServer() {
       }
 
       for (const u of usersToAlert) {
-        // Send Telegram if configured
+        // Skip duplicate sending if the user is already covered by the global forward
+        if (u.telegramChatId && String(u.telegramChatId).trim() === globalChatId) {
+          continue;
+        }
+
+        // Send Telegram if configured in their Firestore user doc
         if (u.enableTelegramNotification && u.telegramChatId) {
           const chat_id = String(u.telegramChatId).trim();
-          const telegramMessage = `<b>🔔 TuitionHub Alert</b>\n\n<b>${title}</b>\n\n${body}\n\n📱 <i>Access Portal:</i> <a href="https://tuitionhubapp.firebaseapp.com/">TuitionHub App</a>`;
+          const telegramMessage = `<b>🔔 TuitionHub Alert</b>\n\n<b>${title}</b>\n\n${body}\n\n📱 <i>Access Portal:</i> <a href="https://ais-pre-oahrpb6rn47hcj6z2buf4u-826144498385.asia-southeast1.run.app">TuitionHub Portal</a>`;
           
           if (botToken) {
-            console.log(`[Companion] Sending Telegram alert to Chat ID: ${chat_id}`);
+            console.log(`[Companion] Sending Telegram alert to User Chat ID: ${chat_id}`);
             try {
               const url = `https://api.telegram.org/bot${botToken}/sendMessage`
                 .concat(`?chat_id=${chat_id}`)
@@ -785,12 +814,10 @@ async function startServer() {
               
               const fetchResult = await fetch(url, { method: "POST" });
               const fetchResultJson = await fetchResult.json();
-              console.log(`[Companion] Telegram API response:`, fetchResultJson);
+              console.log(`[Companion] User Telegram API response:`, fetchResultJson);
             } catch (tErr) {
               console.error(`[Companion] Error firing Telegram bot:`, tErr);
             }
-          } else {
-            console.log(`[Companion Setup Simulation] Would send Telegram to target chat ${chat_id}. Configure TELEGRAM_BOT_TOKEN in environment variable to process live requests!`);
           }
         }
 
