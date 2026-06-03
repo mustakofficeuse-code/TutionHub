@@ -141,6 +141,15 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
               console.error(`[Scheduler] Error sending active attendance multicast:`, e);
             }
           }
+
+          // Send Companion Telegram/WhatsApp alerts
+          sendCompanionNotifications(db, {
+            targetRole: "student",
+            targetDept: searchDept,
+            targetSem: searchSem,
+            title,
+            body
+          }).catch(e => console.error("[Cron-Helper Companion Error]:", e));
           
           // Record this in the "notifications" collection
           const notifyId = `active_attn_${scheduleId}_${nowMs}`;
@@ -320,6 +329,15 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
             relatedId: scheduleId
           });
 
+          // Send Companion Telegram/WhatsApp alerts
+          sendCompanionNotifications(db, {
+            targetRole: "student",
+            targetDept: searchDept,
+            targetSem: searchSem,
+            title,
+            body
+          }).catch(e => console.error("[Cron-Helper Companion Error]:", e));
+
           // Persist the lastNotifiedAt timestamp on the schedule doc to prevent double triggering
           await db.collection("schedules").doc(scheduleId).update({
             lastNotifiedAt: now.toISOString()
@@ -446,6 +464,13 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
               } catch (e) {
                 console.error(`[Scheduler] Failed sending 15-min push:`, e);
               }
+
+              // Send Companion Telegram/WhatsApp alert
+              sendCompanionNotifications(db, {
+                recipientId: studentUid,
+                title: rTitle,
+                body: rBody
+              }).catch(e => console.error("[Cron-Helper Companion Error]:", e));
             }
             
             // Persist tracker document
@@ -566,6 +591,13 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
                 } catch (e) {
                   console.error(`[Scheduler] Failed sending missed push to ${studentUid}:`, e);
                 }
+
+                // Send Companion Telegram/WhatsApp alert
+                sendCompanionNotifications(db, {
+                  recipientId: studentUid,
+                  title: mTitle,
+                  body: mBody
+                }).catch(e => console.error("[Cron-Helper Companion Error]:", e));
               }
             }
           }
@@ -686,6 +718,15 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
               console.error(`[Scheduler] Error sending class ending multicast:`, e);
             }
           }
+
+          // Send Companion Telegram/WhatsApp alert
+          sendCompanionNotifications(db, {
+            targetRole: "student",
+            targetDept: searchDeptEnding,
+            targetSem: searchSemEnding,
+            title,
+            body
+          }).catch(e => console.error("[Cron-Helper Companion Error]:", e));
           
           const notifyId = `ending_${scheduleId}_${nowMs}`;
           await db.collection("notifications").doc(notifyId).set({
@@ -719,5 +760,110 @@ export async function checkScheduleNotifications(db: admin.firestore.Firestore) 
     } else {
       console.error("[Scheduler] checkScheduleNotifications failed:", error);
     }
+  }
+}
+
+// Option 2 Web/Telegram Notification Broadcaster for Cron Jobs
+async function sendCompanionNotifications(
+  db: admin.firestore.Firestore,
+  options: {
+    recipientId?: string;
+    targetRole?: string;
+    targetDept?: string;
+    targetSem?: string;
+    title: string;
+    body: string;
+  }
+) {
+  const { recipientId, targetRole, targetDept, targetSem, title, body } = options;
+  
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const globalChatId = (process.env.TELEGRAM_CHAT_ID || "8848327573").trim();
+
+  try {
+    // 1. Send live Telegram alert to global/admin chat ID in the backend
+    if (botToken && globalChatId) {
+      const telegramMessage = `<b>🔔 TuitionHub Alert</b>\n\n<b>${title}</b>\n\n${body}\n\n📱 <i>Access Portal:</i> <a href="https://ais-pre-oahrpb6rn47hcj6z2buf4u-826144498385.asia-southeast1.run.app">TuitionHub Portal</a>`;
+      console.log(`[Companion-Cron] Forwarding alert to global Telegram Chat ID: ${globalChatId}`);
+      try {
+        const url = `https://api.telegram.org/bot${botToken}/sendMessage`
+          .concat(`?chat_id=${globalChatId}`)
+          .concat(`&text=${encodeURIComponent(telegramMessage)}`)
+          .concat(`&parse_mode=HTML`);
+        
+        const fetchResult = await fetch(url, { method: "POST" });
+        const fetchResultJson = await fetchResult.json();
+        console.log(`[Companion-Cron] Global Telegram response:`, fetchResultJson);
+      } catch (tErr) {
+        console.error(`[Companion-Cron] Error firing global Telegram chat:`, tErr);
+      }
+    }
+
+    // 2. Fallback to sending to custom student IDs registered in Firestore
+    let usersToAlert: any[] = [];
+    
+    if (recipientId) {
+      const uDoc = await db.collection("users").doc(recipientId).get();
+      if (uDoc.exists) {
+        usersToAlert.push({ id: uDoc.id, ...uDoc.data() });
+      }
+    } else if (targetRole) {
+      let snap;
+      if (targetRole === "ALL") {
+        snap = await db.collection("users").get();
+      } else {
+        snap = await db.collection("users").where("role", "==", targetRole).get();
+      }
+      snap.forEach((doc) => {
+        const userData = doc.data();
+        let matched = true;
+        if (targetDept) {
+          const searchDept = String(targetDept).trim().toUpperCase();
+          const userDept = String(userData.courseId || userData.courseName || userData.department || "").trim().toUpperCase();
+          if (searchDept !== "ALL" && userDept !== "ALL" && userDept && userDept !== searchDept) {
+            matched = false;
+          }
+        }
+        if (targetSem) {
+          const searchSem = String(targetSem).trim();
+          const userSem = String(userData.semester || "").trim();
+          if (searchSem !== "ALL" && userSem !== "ALL" && userSem && userSem !== searchSem) {
+            matched = false;
+          }
+        }
+        if (matched) {
+          usersToAlert.push({ id: doc.id, ...userData });
+        }
+      });
+    }
+
+    for (const u of usersToAlert) {
+      if (u.telegramChatId && String(u.telegramChatId).trim() === globalChatId) {
+        continue;
+      }
+
+      if (u.enableTelegramNotification && u.telegramChatId) {
+        const chat_id = String(u.telegramChatId).trim();
+        const telegramMessage = `<b>🔔 TuitionHub Alert</b>\n\n<b>${title}</b>\n\n${body}\n\n📱 <i>Access Portal:</i> <a href="https://ais-pre-oahrpb6rn47hcj6z2buf4u-826144498385.asia-southeast1.run.app">TuitionHub Portal</a>`;
+        
+        if (botToken) {
+          console.log(`[Companion-Cron] Sending Telegram alert to User Chat ID: ${chat_id}`);
+          try {
+            const url = `https://api.telegram.org/bot${botToken}/sendMessage`
+              .concat(`?chat_id=${chat_id}`)
+              .concat(`&text=${encodeURIComponent(telegramMessage)}`)
+              .concat(`&parse_mode=HTML`);
+            
+            const fetchResult = await fetch(url, { method: "POST" });
+            const fetchResultJson = await fetchResult.json();
+            console.log(`[Companion-Cron] User Telegram API response:`, fetchResultJson);
+          } catch (tErr) {
+            console.error(`[Companion-Cron] Error firing Telegram bot:`, tErr);
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[Companion-Cron Alert error]:", err);
   }
 }
